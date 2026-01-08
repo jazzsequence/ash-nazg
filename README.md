@@ -2,6 +2,8 @@
 
 **One ring to rule them all** - Manage your Pantheon hosting environment directly from WordPress.
 
+![One Ring](https://static.wikia.nocookie.net/lotr/images/0/0d/The_One_Ring_on_a_map_of_Middle-earth.jpg)
+
 Ash Nazg is a WordPress plugin that integrates the Pantheon Public API into your WordPress admin dashboard, allowing site administrators to manage critical Pantheon platform features without leaving WordPress.
 
 ## Why "Ash Nazg"?
