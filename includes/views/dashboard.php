@@ -104,7 +104,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 		<?php if ( null !== $site_info ) : ?>
 			<div class="ash-nazg-card">
-				<h2><?php esc_html_e( 'Site Information (from API)', 'ash-nazg' ); ?></h2>
+				<h2>
+					<?php esc_html_e( 'Site Information (from API)', 'ash-nazg' ); ?>
+					<?php if ( $site_info_cached_at ) : ?>
+						<span style="font-size: 12px; font-weight: normal; color: #757575;">
+							(Last checked: <?php echo esc_html( human_time_diff( $site_info_cached_at ) ); ?> ago)
+						</span>
+					<?php endif; ?>
+				</h2>
 				<table class="widefat striped">
 					<tbody>
 						<?php if ( ! empty( $site_info['name'] ) ) : ?>
@@ -154,7 +161,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 		<?php if ( null !== $environment_info ) : ?>
 			<div class="ash-nazg-card">
-				<h2><?php esc_html_e( 'Current Environment Details (from API)', 'ash-nazg' ); ?></h2>
+				<h2>
+					<?php esc_html_e( 'Current Environment Details (from API)', 'ash-nazg' ); ?>
+					<?php if ( $env_info_cached_at ) : ?>
+						<span style="font-size: 12px; font-weight: normal; color: #757575;">
+							(Last checked: <?php echo esc_html( human_time_diff( $env_info_cached_at ) ); ?> ago)
+						</span>
+					<?php endif; ?>
+				</h2>
 				<table class="widefat striped">
 					<tbody>
 						<?php if ( ! empty( $environment_info['id'] ) ) : ?>
@@ -219,7 +233,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 			?>
 			<div class="ash-nazg-card" style="grid-column: 1 / -1;">
 				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-					<h2 style="margin: 0;"><?php esc_html_e( 'Available API Endpoints', 'ash-nazg' ); ?></h2>
+					<h2 style="margin: 0;">
+						<?php esc_html_e( 'Available API Endpoints', 'ash-nazg' ); ?>
+						<?php if ( $endpoints_cached_at ) : ?>
+							<span style="font-size: 12px; font-weight: normal; color: #757575;">
+								(Last checked: <?php echo esc_html( human_time_diff( $endpoints_cached_at ) ); ?> ago)
+							</span>
+						<?php endif; ?>
+					</h2>
 					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&refresh_cache=1' ), 'ash_nazg_refresh_cache' ) ); ?>" class="button button-secondary">
 						<span class="dashicons dashicons-update" style="margin-top: 3px;"></span>
 						<?php esc_html_e( 'Refresh Data', 'ash-nazg' ); ?>

@@ -252,6 +252,10 @@ function get_site_info( $site_id = null ) {
 	$cache_key = 'ash_nazg_site_info_' . $site_id;
 	$cached    = get_transient( $cache_key );
 	if ( false !== $cached ) {
+		// Handle both old and new cache formats.
+		if ( is_array( $cached ) && isset( $cached['data'] ) ) {
+			return $cached['data'];
+		}
 		return $cached;
 	}
 
@@ -262,8 +266,12 @@ function get_site_info( $site_id = null ) {
 		return $data;
 	}
 
-	// Cache for 5 minutes.
-	set_transient( $cache_key, $data, 5 * MINUTE_IN_SECONDS );
+	// Cache for 24 hours with timestamp.
+	$cached_data = array(
+		'data' => $data,
+		'cached_at' => time(),
+	);
+	set_transient( $cache_key, $cached_data, DAY_IN_SECONDS );
 
 	return $data;
 }
@@ -300,6 +308,10 @@ function get_environment_info( $site_id = null, $env = null ) {
 	$cache_key = 'ash_nazg_env_info_' . $site_id . '_' . $env;
 	$cached    = get_transient( $cache_key );
 	if ( false !== $cached ) {
+		// Handle both old and new cache formats.
+		if ( is_array( $cached ) && isset( $cached['data'] ) ) {
+			return $cached['data'];
+		}
 		return $cached;
 	}
 
@@ -324,8 +336,12 @@ function get_environment_info( $site_id = null, $env = null ) {
 
 	$data = $environments[ $env ];
 
-	// Cache for 2 minutes.
-	set_transient( $cache_key, $data, 2 * MINUTE_IN_SECONDS );
+	// Cache for 24 hours with timestamp.
+	$cached_data = array(
+		'data' => $data,
+		'cached_at' => time(),
+	);
+	set_transient( $cache_key, $cached_data, DAY_IN_SECONDS );
 
 	return $data;
 }
@@ -457,6 +473,10 @@ function get_endpoints_status( $site_id = null, $env = null, $refresh = false ) 
 	if ( ! $refresh ) {
 		$cached = get_transient( $cache_key );
 		if ( false !== $cached ) {
+			// Handle both old and new cache formats.
+			if ( is_array( $cached ) && isset( $cached['data'] ) ) {
+				return $cached['data'];
+			}
 			return $cached;
 		}
 	}
@@ -468,8 +488,12 @@ function get_endpoints_status( $site_id = null, $env = null, $refresh = false ) 
 
 	$endpoints = get_all_endpoints_status( $site_id, $env, $user_id );
 
-	// Cache for 10 minutes.
-	set_transient( $cache_key, $endpoints, 10 * MINUTE_IN_SECONDS );
+	// Cache for 24 hours with timestamp.
+	$cached_data = array(
+		'data' => $endpoints,
+		'cached_at' => time(),
+	);
+	set_transient( $cache_key, $cached_data, DAY_IN_SECONDS );
 
 	return $endpoints;
 }
@@ -521,6 +545,10 @@ function get_site_addons( $site_id = null ) {
 	$cache_key = sprintf( 'ash_nazg_site_addons_%s', $site_id );
 	$cached = get_transient( $cache_key );
 	if ( false !== $cached ) {
+		// Handle both old and new cache formats.
+		if ( is_array( $cached ) && isset( $cached['data'] ) ) {
+			return $cached['data'];
+		}
 		return $cached;
 	}
 
@@ -553,8 +581,12 @@ function get_site_addons( $site_id = null ) {
 		$addons[] = $addon;
 	}
 
-	// Cache for 5 minutes.
-	set_transient( $cache_key, $addons, 5 * MINUTE_IN_SECONDS );
+	// Cache for 24 hours with timestamp.
+	$cached_data = array(
+		'data' => $addons,
+		'cached_at' => time(),
+	);
+	set_transient( $cache_key, $cached_data, DAY_IN_SECONDS );
 
 	return $addons;
 }
@@ -639,6 +671,26 @@ function clear_addons_cache( $site_id ) {
 function clear_addon_endpoint_cache( $site_id, $env ) {
 	$cache_key = sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $env );
 	delete_transient( $cache_key );
+}
+
+/**
+ * Get cache timestamp for a given cache key.
+ *
+ * @param string $cache_key The transient cache key.
+ * @return int|null Timestamp when cached, or null if not cached or old format.
+ */
+function get_cache_timestamp( $cache_key ) {
+	$cached = get_transient( $cache_key );
+	if ( false === $cached ) {
+		return null;
+	}
+
+	// New format includes cached_at timestamp.
+	if ( is_array( $cached ) && isset( $cached['cached_at'] ) ) {
+		return $cached['cached_at'];
+	}
+
+	return null;
 }
 
 /**

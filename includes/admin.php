@@ -178,6 +178,17 @@ function render_dashboard_page() {
 		}
 	}
 
+	// Get cache timestamps.
+	$site_info_cached_at = null;
+	$env_info_cached_at = null;
+	$endpoints_cached_at = null;
+
+	if ( $is_pantheon && $site_id ) {
+		$site_info_cached_at = API\get_cache_timestamp( 'ash_nazg_site_info_' . $site_id );
+		$env_info_cached_at = API\get_cache_timestamp( 'ash_nazg_env_info_' . $site_id . '_' . $environment );
+		$endpoints_cached_at = API\get_cache_timestamp( sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $environment ) );
+	}
+
 	require ASH_NAZG_PLUGIN_DIR . 'includes/views/dashboard.php';
 }
 
