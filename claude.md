@@ -49,8 +49,11 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
    - ✅ Display environment status and metrics
    - ✅ Comprehensive API endpoints testing with status indicators
    - ✅ Local environment mapping (lando/local/localhost/ddev → dev for API queries)
+   - ✅ Environment state management with persistent storage
+   - ✅ Connection mode tracking (SFTP/Git) with automatic synchronization
+   - ✅ Debug log viewer with fetch/clear functionality
+   - ✅ Automatic mode switching for file operations (switches to SFTP when needed)
    - ⏳ Show launch check status information (planned)
-   - ⏳ Display error/debug logs by reading `$WP_CONTENT_DIR/debug.log` (planned)
 
 2. **Site Addons Management**
    - ✅ Enable/disable Redis addon via API (PUT to enable, DELETE to disable)
@@ -67,12 +70,15 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
    - ⏳ Additional workflow types beyond scaffold_extensions (to be discovered)
    - ⏳ Workflow monitoring/polling for long-running operations (planned)
 
-4. **Development Workflow** (Planned)
-   - ⏳ Toggle between SFTP mode and Git mode
-   - ⏳ Detect available upstream updates
-   - ⏳ Apply upstream updates from WP admin
-   - ⏳ Push code to test/live environments
-   - ⏳ Create multidev environments
+4. **Development Workflow**
+   - ✅ Toggle between SFTP mode and Git mode with AJAX interface
+   - ✅ Polling verification to ensure mode changes complete before updating UI
+   - ✅ Automatic state synchronization after mode changes
+   - ✅ Loading indicators during mode switching operations
+   - ⏳ Detect available upstream updates (planned)
+   - ⏳ Apply upstream updates from WP admin (planned)
+   - ⏳ Push code to test/live environments (planned)
+   - ⏳ Create multidev environments (planned)
 
 5. **Domain Management** (Experimental/PoC)
    - ⏳ Hook into WordPress multisite subdomain creation
@@ -98,12 +104,13 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 **Menu Structure:**
 - Top-level menu: "Ash Nazg" (slug: ash-nazg)
 - Implemented submenu pages:
-  - Dashboard - environment status, site/environment info, comprehensive API endpoints testing with status
+  - Dashboard - environment status, site/environment info, connection mode toggle, comprehensive API endpoints testing
+  - Logs - debug log viewer with fetch/clear functionality and auto-mode switching
   - Addons - enable/disable Pantheon site addons (Redis, Solr)
   - Workflows - trigger Pantheon workflows (scaffold_extensions for Object Cache Pro installation)
   - Settings - machine token configuration
 - Planned submenu pages:
-  - Development - SFTP/Git toggle, upstream updates, code deployment
+  - Development - upstream updates, code deployment (SFTP/Git toggle now on Dashboard)
   - Backups - backup management
   - Multisite Domains - domain management (experimental, if viable)
 
@@ -206,6 +213,159 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 - Cache frequently accessed data to improve performance
 - Use Pantheon Design System components for consistent UI/UX
 
+### Phase 2 Features - Detailed Documentation
+
+#### Environment State Management
+
+**Purpose**: Track and persist Pantheon environment state in WordPress to minimize API calls and provide consistent data across page loads.
+
+**Implementation** (`includes/api.php`):
+- **Storage**: WordPress options table (`ash_nazg_environment_state`)
+- **State Structure**:
+  ```php
+  array(
+      'site_id' => 'abc-123-def',
+      'environment' => 'dev',
+      'connection_mode' => 'git',
+      'last_synced' => 1234567890,
+  )
+  ```
+- **Functions**:
+  - `get_environment_state()` - Retrieve current state
+  - `update_environment_state($updates)` - Update specific fields
+  - `sync_environment_state()` - Fetch fresh data from API and update state
+  - `get_connection_mode()` - Get current SFTP/Git mode
+  - `update_connection_mode($site_id, $env, $mode)` - Change connection mode via API
+
+**Key Patterns**:
+- State is only updated after verifying changes complete (e.g., after polling confirms mode switch)
+- Local environment names (lando, local, localhost, ddev) map to 'dev' for API queries
+- Cache invalidation after state changes to ensure UI reflects current state
+
+#### SFTP/Git Mode Toggle
+
+**Purpose**: Allow WordPress admins to switch between SFTP and Git mode without leaving WordPress admin.
+
+**Implementation** (`includes/admin.php`):
+- **Location**: Dashboard page, inline with Connection Mode display
+- **UI Pattern**: Button with icon (dashicons) that changes based on current mode
+- **AJAX Handler**: `ajax_toggle_connection_mode()`
+- **API Endpoint**: `PUT /v0/sites/{site_id}/environments/{env}/connection-mode`
+- **Request Body**: `{ "mode": "sftp" }` or `{ "mode": "git" }`
+
+**Verification Pattern**:
+- After initiating mode change via API, poll to verify completion
+- Poll every 2 seconds, max 10 attempts (20 seconds total)
+- Check `on_server_development` field in environment info:
+  - `true` = SFTP mode
+  - `false` = Git mode
+- Only update stored state after verification succeeds
+- Show loading indicator during verification
+- Display error if verification times out
+
+**Code Flow**:
+1. User clicks "Switch to Git Mode" button
+2. JavaScript sends AJAX request with nonce and desired mode
+3. PHP handler initiates API request to change mode
+4. PHP polls API every 2s to verify mode changed
+5. After verification, update state and return success
+6. JavaScript reloads page to show updated state
+
+**Files**:
+- `includes/admin.php` - AJAX handler with verification loop
+- `includes/api.php` - API request function
+- `assets/js/dashboard.js` - Client-side AJAX handling
+- `includes/views/dashboard.php` - UI display
+
+#### Debug Log Viewer
+
+**Purpose**: Read and display WordPress debug.log contents without SSH access, with ability to clear logs.
+
+**Implementation** (`includes/admin.php` and `includes/views/logs.php`):
+- **Location**: Logs submenu page
+- **File Read**: Direct read from `WP_CONTENT_DIR/debug.log`
+- **Cache**: Transient `ash_nazg_debug_logs` (24 hour expiration)
+- **Timestamp**: Transient `ash_nazg_debug_logs_timestamp` for "Last fetched" display
+
+**Features**:
+1. **Fetch Logs**:
+   - AJAX handler: `ajax_fetch_logs()`
+   - Switches to SFTP mode if currently in Git mode (file not readable in Git mode)
+   - Reads debug.log file
+   - Stores in transient cache
+   - Switches back to original mode
+   - Returns log contents or empty message
+
+2. **Clear Logs**:
+   - AJAX handler: `ajax_clear_logs()`
+   - Switches to SFTP mode if needed
+   - Deletes debug.log file with `unlink()`
+   - Verifies deletion with `file_exists()`
+   - Switches back to original mode
+   - Updates transient with empty string (not deleted)
+   - Returns success/error
+
+**Auto-Mode Switching**:
+- Debug.log is only accessible in SFTP mode
+- If site is in Git mode when fetching/clearing:
+  1. Store original mode ('git')
+  2. Switch to SFTP mode via API
+  3. Wait 2 seconds for mode change
+  4. Perform file operation
+  5. Switch back to Git mode
+  6. Display message indicating mode was temporarily switched
+
+**Files**:
+- `includes/admin.php` - AJAX handlers (`ajax_fetch_logs`, `ajax_clear_logs`)
+- `assets/js/logs.js` - Client-side AJAX handling
+- `includes/views/logs.php` - UI with fetch/clear buttons and log display
+- `assets/css/admin.css` - Log display styling (`.ash-nazg-log-contents`)
+
+**Security**:
+- Nonce verification on all AJAX requests
+- Capability check: `manage_options`
+- File path validation (only reads from WP_CONTENT_DIR)
+- Output escaping with `esc_html()`
+
+#### JavaScript Organization
+
+**Pattern**: All JavaScript in separate files, enqueued properly with WordPress APIs.
+
+**Files**:
+- `assets/js/dashboard.js` - Connection mode toggle functionality
+- `assets/js/logs.js` - Fetch/clear logs functionality
+
+**Enqueuing** (`includes/admin.php`):
+```php
+wp_enqueue_script(
+    'ash-nazg-dashboard',
+    plugins_url( 'assets/js/dashboard.js', ASH_NAZG_PLUGIN_FILE ),
+    array( 'jquery' ),
+    ASH_NAZG_VERSION,
+    true
+);
+
+wp_localize_script(
+    'ash-nazg-dashboard',
+    'ashNazgDashboard',
+    array(
+        'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+        'toggleModeNonce' => wp_create_nonce( 'ash_nazg_toggle_connection_mode' ),
+        'i18n' => array(
+            'toggleError' => __( 'Failed to toggle connection mode.', 'ash-nazg' ),
+            'ajaxError' => __( 'AJAX request failed.', 'ash-nazg' ),
+        ),
+    )
+);
+```
+
+**Benefits**:
+- Clean separation of concerns (PHP handles data, JS handles interactivity)
+- Proper nonce passing via `wp_localize_script`
+- i18n support through localized strings
+- Easier debugging and maintenance
+- No inline `<script>` tags in PHP view files
+
 ### Development Standards
 
 #### Code Organization
@@ -257,6 +417,73 @@ ash-nazg/
   - ✅ Correct: `$variable = value;` and `'key' => value`
   - ❌ Wrong: `$variable  = value;` and `'key'  => value`
   - Never use alignment spacing for variables or array keys
+
+#### CSS Organization Standards
+
+**CRITICAL: All CSS must follow this structure. Never use inline styles.**
+
+**File Location:** `assets/css/admin.css`
+
+**Required Structure** (in this exact order):
+
+1. **Base Layout** - Grid systems, card layouts, fundamental page structure
+   - Dashboard grid
+   - Card containers
+   - Full-width elements
+
+2. **Typography** - Text styling and colors
+   - Text sizes (meta, small, tiny, label)
+   - Text colors (success, error, warning, muted, light, meta)
+   - Icon colors (success, error, warning, locked, unlocked)
+
+3. **Components** - Reusable UI elements
+   - Badges (dev, test, live, multidev, sftp, git, active, frozen)
+   - Notices (WordPress admin notices)
+   - Workflow cards
+   - Addon toggle switches
+
+4. **Tables** - Table-specific styling
+   - Table spacing and padding
+   - Column widths (th-icon, th-20, th-30, th-15)
+   - Table utilities (table-mb)
+
+5. **Page-specific Sections** - Styles for individual admin pages
+   - Dashboard (connection mode toggle, mode loading)
+   - Logs page (log contents, loading, buttons)
+   - Other page-specific elements
+
+6. **Utility Classes** - Single-purpose helper classes
+   - Display (inline-block, hidden, flex, flex-between)
+   - Spacing (m-0, ml-10, mt-20, mb-10, mb-20, my-10)
+   - Alignment (text-center)
+
+7. **Responsive Styles** - Mobile/tablet breakpoints
+   - Media queries for screen size adjustments
+   - Mobile-specific overrides
+
+**Rules:**
+- **NO inline styles** (`style=""` attributes) allowed in PHP view files
+- All styling must use CSS classes from admin.css
+- New CSS classes must be added to the appropriate section
+- Class naming: Use `ash-nazg-` prefix for all custom classes
+- Class naming convention: Use descriptive, hyphenated names (e.g., `ash-nazg-card`, `ash-nazg-text-success`)
+- Utility classes should be single-purpose (e.g., `ash-nazg-mb-10` only sets margin-bottom)
+- Page-specific classes should be prefixed with purpose (e.g., `ash-nazg-logs-container`)
+
+**Example:**
+```css
+/* WRONG - inline style in PHP */
+<div style="margin-bottom: 10px; color: #666;">
+
+/* CORRECT - CSS class */
+<div class="ash-nazg-mb-10 ash-nazg-text-muted">
+```
+
+**Adding New Styles:**
+1. Determine which section the style belongs to (Base Layout, Typography, etc.)
+2. Add the class definition to that section in admin.css
+3. Use the class in your PHP view file
+4. Never add inline styles - always use classes
 
 #### Dependency Management
 - Use Composer for all dependencies
