@@ -118,20 +118,77 @@ if ( ! defined( 'ABSPATH' ) ) {
 							$connection_mode = isset( $environment_info['on_server_development'] ) && $environment_info['on_server_development'] ? 'sftp' : 'git';
 						}
 						?>
-						<?php if ( $connection_mode ) : ?>
-							<tr>
-								<th><?php esc_html_e( 'Connection Mode', 'ash-nazg' ); ?></th>
-								<td>
+					<?php if ( $connection_mode ) : ?>
+						<tr>
+							<th><?php esc_html_e( 'Connection Mode', 'ash-nazg' ); ?></th>
+							<td>
+								<?php if ( 'sftp' === $connection_mode ) : ?>
+									<span class="ash-nazg-badge ash-nazg-badge-sftp">SFTP Mode</span>
+								<?php else : ?>
+									<span class="ash-nazg-badge ash-nazg-badge-git">Git Mode</span>
+								<?php endif; ?>
+								<div id="ash-nazg-connection-mode-toggle" style="display: inline-block; margin-left: 10px;">
 									<?php if ( 'sftp' === $connection_mode ) : ?>
-										<span class="ash-nazg-badge ash-nazg-badge-sftp">SFTP Mode</span>
-										<span style="color: #666;">— <?php esc_html_e( 'Changes made directly on server', 'ash-nazg' ); ?></span>
+										<button type="button" id="ash-nazg-toggle-mode" data-mode="git" class="button button-primary button-small">
+											<span class="dashicons dashicons-media-code" style="margin-top: 3px;"></span>
+											<?php esc_html_e( 'Switch to Git Mode', 'ash-nazg' ); ?>
+										</button>
 									<?php else : ?>
-										<span class="ash-nazg-badge ash-nazg-badge-git">Git Mode</span>
-										<span style="color: #666;">— <?php esc_html_e( 'Changes must be committed via Git', 'ash-nazg' ); ?></span>
+										<button type="button" id="ash-nazg-toggle-mode" data-mode="sftp" class="button button-primary button-small">
+											<span class="dashicons dashicons-admin-tools" style="margin-top: 3px;"></span>
+											<?php esc_html_e( 'Switch to SFTP Mode', 'ash-nazg' ); ?>
+										</button>
 									<?php endif; ?>
-								</td>
-							</tr>
-						<?php endif; ?>
+									<div id="ash-nazg-mode-loading" style="display: none; margin-left: 10px;">
+										<span class="spinner is-active" style="float: none; margin: 0 10px 0 0;"></span>
+										<em><?php esc_html_e( 'Switching connection mode...', 'ash-nazg' ); ?></em>
+									</div>
+								</div>
+							</td>
+						</tr>
+					<?php endif; ?>
+					<?php if ( $environment_info && ! empty( $environment_info['php_version'] ) ) : ?>
+						<tr>
+							<th><?php esc_html_e( 'PHP Version', 'ash-nazg' ); ?></th>
+							<td>
+								<code>
+									<?php
+									// Format PHP version: "82" -> "8.2", "74" -> "7.4", etc.
+									$php_version = $environment_info['php_version'];
+									if ( preg_match( '/^(\d)(\d+)$/', $php_version, $matches ) ) {
+										$php_version = $matches[1] . '.' . $matches[2];
+									}
+									echo esc_html( $php_version );
+									?>
+								</code>
+							</td>
+						</tr>
+					<?php endif; ?>
+					<?php if ( $environment_info && isset( $environment_info['lock'] ) ) : ?>
+						<tr>
+							<th><?php esc_html_e( 'Environment Lock', 'ash-nazg' ); ?></th>
+							<td>
+								<?php if ( ! empty( $environment_info['lock']['locked'] ) ) : ?>
+									<span class="dashicons dashicons-lock" style="color: #dc3232;"></span>
+									<?php esc_html_e( 'Locked', 'ash-nazg' ); ?>
+									<?php if ( ! empty( $environment_info['lock']['username'] ) ) : ?>
+										<span style="color: #666;">
+											<?php
+											printf(
+												/* translators: %s: username */
+												esc_html__( '— by %s', 'ash-nazg' ),
+												esc_html( $environment_info['lock']['username'] )
+											);
+											?>
+										</span>
+									<?php endif; ?>
+								<?php else : ?>
+									<span class="dashicons dashicons-unlock" style="color: #46b450;"></span>
+									<?php esc_html_e( 'Unlocked', 'ash-nazg' ); ?>
+								<?php endif; ?>
+							</td>
+						</tr>
+					<?php endif; ?>
 					</tbody>
 				</table>
 			</div>
@@ -275,124 +332,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<?php endif; ?>
 					</tbody>
 				</table>
-			</div>
-		<?php endif; ?>
-
-		<?php if ( null !== $environment_info ) : ?>
-			<div class="ash-nazg-card">
-				<h2>
-					<?php esc_html_e( 'Current Environment Details (from API)', 'ash-nazg' ); ?>
-					<?php if ( $env_info_cached_at ) : ?>
-						<span style="font-size: 12px; font-weight: normal; color: #757575;">
-							(Last checked: <?php echo esc_html( human_time_diff( $env_info_cached_at ) ); ?> ago)
-						</span>
-					<?php endif; ?>
-				</h2>
-				<table class="widefat striped">
-					<tbody>
-						<?php if ( ! empty( $environment_info['id'] ) ) : ?>
-							<tr>
-								<th><?php esc_html_e( 'Environment ID', 'ash-nazg' ); ?></th>
-								<td><code><?php echo esc_html( $environment_info['id'] ); ?></code></td>
-							</tr>
-						<?php endif; ?>
-						<?php if ( isset( $environment_info['on_server_development'] ) ) : ?>
-							<tr>
-								<th><?php esc_html_e( 'Development Mode', 'ash-nazg' ); ?></th>
-								<td>
-									<?php if ( $environment_info['on_server_development'] ) : ?>
-										<span class="ash-nazg-badge ash-nazg-badge-sftp">SFTP Mode</span>
-									<?php else : ?>
-										<span class="ash-nazg-badge ash-nazg-badge-git">Git Mode</span>
-									<?php endif; ?>
-								</td>
-							</tr>
-						<?php endif; ?>
-						<?php if ( ! empty( $environment_info['php_version'] ) ) : ?>
-							<tr>
-								<th><?php esc_html_e( 'PHP Version', 'ash-nazg' ); ?></th>
-								<td><code><?php echo esc_html( $environment_info['php_version'] ); ?></code></td>
-							</tr>
-						<?php endif; ?>
-						<?php if ( isset( $environment_info['lock'] ) ) : ?>
-							<tr>
-								<th><?php esc_html_e( 'Environment Lock', 'ash-nazg' ); ?></th>
-								<td>
-									<?php if ( ! empty( $environment_info['lock']['locked'] ) ) : ?>
-										<span class="dashicons dashicons-lock" style="color: #dc3232;"></span>
-										<?php esc_html_e( 'Locked', 'ash-nazg' ); ?>
-										<?php if ( ! empty( $environment_info['lock']['username'] ) ) : ?>
-											<br>
-											<small>
-												<?php
-												printf(
-													/* translators: %s: username */
-													esc_html__( 'by %s', 'ash-nazg' ),
-													esc_html( $environment_info['lock']['username'] )
-												);
-												?>
-											</small>
-										<?php endif; ?>
-									<?php else : ?>
-										<span class="dashicons dashicons-unlock" style="color: #46b450;"></span>
-										<?php esc_html_e( 'Unlocked', 'ash-nazg' ); ?>
-									<?php endif; ?>
-								</td>
-							</tr>
-						<?php endif; ?>
-					</tbody>
-				</table>
-			</div>
-		<?php endif; ?>
-
-		<?php if ( null !== $environment_info ) : ?>
-			<div class="ash-nazg-card">
-				<h2><?php esc_html_e( 'Connection Mode', 'ash-nazg' ); ?></h2>
-				<p>
-					<?php esc_html_e( 'Switch between SFTP mode (for installing/updating plugins and themes) and Git mode (for code commits).', 'ash-nazg' ); ?>
-				</p>
-
-				<?php
-				$current_mode = isset( $environment_info['on_server_development'] ) && $environment_info['on_server_development'] ? 'sftp' : 'git';
-				$is_sftp = ( 'sftp' === $current_mode );
-				?>
-
-				<div style="margin: 15px 0;">
-					<p>
-						<strong><?php esc_html_e( 'Current Mode:', 'ash-nazg' ); ?></strong>
-						<?php if ( $is_sftp ) : ?>
-							<span class="ash-nazg-badge ash-nazg-badge-sftp">SFTP Mode</span>
-							<span style="color: #666;"><?php esc_html_e( '— Changes are made directly on the server', 'ash-nazg' ); ?></span>
-						<?php else : ?>
-							<span class="ash-nazg-badge ash-nazg-badge-git">Git Mode</span>
-							<span style="color: #666;"><?php esc_html_e( '— Changes must be committed via Git', 'ash-nazg' ); ?></span>
-						<?php endif; ?>
-					</p>
-				</div>
-
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=ash-nazg' ) ); ?>">
-					<?php wp_nonce_field( 'ash_nazg_toggle_connection_mode', 'ash_nazg_connection_mode_nonce' ); ?>
-
-					<?php if ( $is_sftp ) : ?>
-						<input type="hidden" name="connection_mode" value="git">
-						<button type="submit" class="button button-primary">
-							<span class="dashicons dashicons-media-code" style="margin-top: 3px;"></span>
-							<?php esc_html_e( 'Switch to Git Mode', 'ash-nazg' ); ?>
-						</button>
-						<p class="description">
-							<?php esc_html_e( 'Switching to Git mode will require you to commit changes via Git. Plugin and theme installations from the WordPress admin will be disabled.', 'ash-nazg' ); ?>
-						</p>
-					<?php else : ?>
-						<input type="hidden" name="connection_mode" value="sftp">
-						<button type="submit" class="button button-primary">
-							<span class="dashicons dashicons-admin-tools" style="margin-top: 3px;"></span>
-							<?php esc_html_e( 'Switch to SFTP Mode', 'ash-nazg' ); ?>
-						</button>
-						<p class="description">
-							<?php esc_html_e( 'Switching to SFTP mode allows you to install and update plugins/themes directly from the WordPress admin.', 'ash-nazg' ); ?>
-						</p>
-					<?php endif; ?>
-				</form>
 			</div>
 		<?php endif; ?>
 

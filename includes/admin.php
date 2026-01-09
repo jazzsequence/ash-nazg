@@ -19,8 +19,8 @@ function init() {
 	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\enqueue_assets' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_addon_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_workflow_form_submission' );
-	add_action( 'admin_init', __NAMESPACE__ . '\\handle_connection_mode_toggle' );
 	add_action( 'wp_ajax_ash_nazg_fetch_logs', __NAMESPACE__ . '\\ajax_fetch_logs' );
+	add_action( 'wp_ajax_ash_nazg_toggle_connection_mode', __NAMESPACE__ . '\\ajax_toggle_connection_mode' );
 }
 
 /**
@@ -116,6 +116,61 @@ function enqueue_assets( $hook ) {
 		array(),
 		ASH_NAZG_VERSION
 	);
+
+	// Enqueue dashboard JavaScript on main dashboard page.
+	if ( 'toplevel_page_ash-nazg' === $hook ) {
+		wp_enqueue_script(
+			'ash-nazg-dashboard',
+			ASH_NAZG_PLUGIN_URL . 'assets/js/dashboard.js',
+			array( 'jquery' ),
+			ASH_NAZG_VERSION,
+			true
+		);
+
+		// Localize script with AJAX URL and nonces.
+		wp_localize_script(
+			'ash-nazg-dashboard',
+			'ashNazgDashboard',
+			array(
+				'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+				'toggleModeNonce' => wp_create_nonce( 'ash_nazg_toggle_connection_mode' ),
+				'i18n'            => array(
+					'toggleError' => __( 'Failed to switch connection mode.', 'ash-nazg' ),
+					'ajaxError'   => __( 'An error occurred while switching connection mode.', 'ash-nazg' ),
+				),
+			)
+		);
+	}
+
+	// Enqueue logs JavaScript on logs page.
+	if ( 'ash-nazg_page_ash-nazg-logs' === $hook ) {
+		wp_enqueue_script(
+			'ash-nazg-logs',
+			ASH_NAZG_PLUGIN_URL . 'assets/js/logs.js',
+			array( 'jquery' ),
+			ASH_NAZG_VERSION,
+			true
+		);
+
+		// Localize script with AJAX URL and nonces.
+		wp_localize_script(
+			'ash-nazg-logs',
+			'ashNazgLogs',
+			array(
+				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
+				'fetchLogsNonce' => wp_create_nonce( 'ash_nazg_fetch_logs' ),
+				'i18n'           => array(
+					'logContents'       => __( 'Log Contents', 'ash-nazg' ),
+					'emptyLog'          => __( 'Debug log is empty or does not exist yet.', 'ash-nazg' ),
+					'justNow'           => __( 'just now', 'ash-nazg' ),
+					'success'           => __( 'Logs fetched successfully.', 'ash-nazg' ),
+					'successWithSwitch' => __( 'Logs fetched successfully. Connection mode was temporarily switched to SFTP.', 'ash-nazg' ),
+					'fetchError'        => __( 'Failed to fetch logs.', 'ash-nazg' ),
+					'ajaxError'         => __( 'An error occurred while fetching logs.', 'ash-nazg' ),
+				),
+			)
+		);
+	}
 }
 
 /**
@@ -429,63 +484,6 @@ function handle_workflow_form_submission() {
 }
 
 /**
- * Handle connection mode toggle form submission.
- *
- * Runs on admin_init to process form before any output.
- *
- * @return void
- */
-function handle_connection_mode_toggle() {
-	// Only process on connection mode toggle submissions.
-	if ( ! isset( $_POST['ash_nazg_connection_mode_nonce'] ) ) {
-		return;
-	}
-
-	// Verify nonce.
-	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ash_nazg_connection_mode_nonce'] ) ), 'ash_nazg_toggle_connection_mode' ) ) {
-		return;
-	}
-
-	// Check user capabilities.
-	if ( ! current_user_can( 'manage_options' ) ) {
-		return;
-	}
-
-	$site_id = API\get_pantheon_site_id();
-	$environment = API\get_pantheon_environment();
-
-	if ( $site_id && $environment && isset( $_POST['connection_mode'] ) ) {
-		$new_mode = sanitize_text_field( wp_unslash( $_POST['connection_mode'] ) );
-
-		// Validate mode.
-		if ( ! in_array( $new_mode, array( 'sftp', 'git' ), true ) ) {
-			$redirect_args = array(
-				'page' => 'ash-nazg',
-				'mode_error' => 'invalid_mode',
-			);
-			wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
-			exit;
-		}
-
-		// Toggle connection mode.
-		$result = API\update_connection_mode( $site_id, $environment, $new_mode );
-
-		$redirect_args = array( 'page' => 'ash-nazg' );
-
-		if ( is_wp_error( $result ) ) {
-			$redirect_args['mode_error'] = '1';
-			set_transient( 'ash_nazg_mode_error', $result->get_error_message(), 30 );
-		} else {
-			$redirect_args['mode_changed'] = '1';
-			$redirect_args['new_mode'] = $new_mode;
-		}
-
-		wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
-		exit;
-	}
-}
-
-/**
  * Render workflows page.
  *
  * @return void
@@ -622,6 +620,92 @@ function ajax_fetch_logs() {
 			'logs' => $logs,
 			'timestamp' => time(),
 			'switched_mode' => $switched_mode,
+		)
+	);
+}
+
+/**
+ * Handle AJAX request to toggle connection mode.
+ *
+ * @return void
+ */
+function ajax_toggle_connection_mode() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_toggle_connection_mode', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'ash-nazg' ) ) );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
+
+	if ( ! $site_id || ! $environment ) {
+		wp_send_json_error( array( 'message' => __( 'Not running on Pantheon.', 'ash-nazg' ) ) );
+	}
+
+	// Get the requested mode.
+	$new_mode = isset( $_POST['mode'] ) ? sanitize_text_field( wp_unslash( $_POST['mode'] ) ) : '';
+
+	if ( ! in_array( $new_mode, array( 'sftp', 'git' ), true ) ) {
+		wp_send_json_error( array( 'message' => __( 'Invalid connection mode.', 'ash-nazg' ) ) );
+	}
+
+	// Update the connection mode.
+	$result = API\update_connection_mode( $site_id, $environment, $new_mode );
+
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+	}
+
+	// Wait and verify the mode has actually changed.
+	// The API returns success when the workflow is initiated, but we need to wait for completion.
+	$expected_on_server_dev = ( 'sftp' === $new_mode );
+	$max_attempts = 10; // 10 attempts * 2 seconds = 20 seconds max wait.
+	$verified = false;
+
+	for ( $i = 0; $i < $max_attempts; $i++ ) {
+		// Wait 2 seconds before checking.
+		sleep( 2 );
+
+		// Clear cache and fetch fresh environment info.
+		delete_transient( sprintf( 'ash_nazg_all_env_info_%s', $site_id ) );
+		$env_info = API\get_environment_info( $site_id, $environment );
+
+		if ( ! is_wp_error( $env_info ) && isset( $env_info['on_server_development'] ) ) {
+			if ( $env_info['on_server_development'] === $expected_on_server_dev ) {
+				$verified = true;
+				break;
+			}
+		}
+	}
+
+	if ( ! $verified ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'Mode change initiated but could not verify completion. Please refresh the page.', 'ash-nazg' ),
+			)
+		);
+	}
+
+	// Update stored state now that the mode has been verified.
+	API\update_environment_state(
+		array(
+			'connection_mode' => $new_mode,
+		)
+	);
+
+	error_log( sprintf( 'Ash-Nazg: Connection mode verified and state updated to %s on %s/%s', $new_mode, $site_id, $environment ) );
+
+	wp_send_json_success(
+		array(
+			'mode' => $new_mode,
+			'message' => sprintf(
+				/* translators: %s: connection mode (SFTP or Git) */
+				__( 'Successfully switched to %s mode.', 'ash-nazg' ),
+				strtoupper( $new_mode )
+			),
 		)
 	);
 }

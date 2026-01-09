@@ -367,6 +367,9 @@ function get_environment_info( $site_id = null, $env = null ) {
 		}
 	}
 
+	// Map local environments to dev for API queries.
+	$api_env = in_array( $env, array( 'lando', 'local', 'localhost', 'ddev' ), true ) ? 'dev' : $env;
+
 	// Fetch all environments from API (there's no single-environment endpoint).
 	$endpoint = sprintf( '/v0/sites/%s/environments', $site_id );
 	$cache_key_all = sprintf( 'ash_nazg_all_env_info_%s', $site_id );
@@ -377,7 +380,7 @@ function get_environment_info( $site_id = null, $env = null ) {
 	}
 
 	// Extract the specific environment from the map.
-	if ( ! isset( $environments[ $env ] ) ) {
+	if ( ! isset( $environments[ $api_env ] ) ) {
 		return new \WP_Error(
 			'environment_not_found',
 			sprintf(
@@ -388,7 +391,7 @@ function get_environment_info( $site_id = null, $env = null ) {
 		);
 	}
 
-	return $environments[ $env ];
+	return $environments[ $api_env ];
 }
 
 /**
@@ -904,17 +907,12 @@ function update_connection_mode( $site_id, $env, $mode ) {
 		return $result;
 	}
 
-	// Update stored state.
-	update_environment_state(
-		array(
-			'connection_mode' => $mode,
-		)
-	);
-
 	// Clear environment info cache to force refresh.
+	// Note: We do NOT update the state here. The state should only be updated
+	// after the mode change is verified, which is done by the caller.
 	delete_transient( sprintf( 'ash_nazg_all_env_info_%s', $site_id ) );
 
-	error_log( sprintf( 'Ash-Nazg: Updated connection mode to %s on %s/%s', $mode, $site_id, $env ) );
+	error_log( sprintf( 'Ash-Nazg: Connection mode change to %s initiated on %s/%s', $mode, $site_id, $env ) );
 
 	return $result;
 }
