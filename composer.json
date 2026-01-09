@@ -22,9 +22,9 @@
       "@lint:phpcs"
     ],
     "lint:php": "find . -name '*.php' -not -path './vendor/*' -not -path './.git/*' -exec php -l {} \\;",
-    "lint:phpcs": "./vendor/bin/phpcs",
+    "lint:phpcs": "./vendor/bin/phpcs -s",
     "phpcs": "@lint:phpcs",
-    "phpcbf": "./vendor/bin/phpcbf",
+    "phpcbf": "./vendor/bin/phpcbf -s",
     "phpunit": "./vendor/bin/phpunit --do-not-cache-result",
     "test": "@phpunit",
     "test:install": "bin/install-local-tests.sh --no-db",
