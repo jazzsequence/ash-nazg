@@ -1,6 +1,28 @@
 
-
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
 .codacy/
 .claude/
+
+# Composer
+/vendor/
+composer.lock
+
+# WordPress
+wp-config-local.php
+.htaccess
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+/tests/tmp/
+/tests/data/
+phpunit.xml

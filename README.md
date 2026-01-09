@@ -92,12 +92,16 @@ This plugin uses [Pantheon Secrets](https://docs.pantheon.io/guides/secrets) to 
 
 2. **Store the token in Pantheon Secrets:**
    - SSH into your Pantheon environment or use Terminus
-   - Store the token using the Pantheon Secrets API with the label `machine_token`:
+   - Store the token using the Pantheon Secrets API with the label `ash_nazg_machine_token`:
      ```bash
      # Example using terminus
-     terminus secret:site:set <site-name> machine_token <your-token-here>
+     terminus secret:set ash_nazg_machine_token <your-token-here> --scope=site --env=live
      ```
-   - The plugin will retrieve the token using `pantheon_get_secret('machine_token')`
+   - The plugin will retrieve the token using `pantheon_get_secret('ash_nazg_machine_token')`
+
+   **For Development/Testing Only:**
+   - If you don't have access to Pantheon Secrets (local development), you can configure the token in the WordPress admin under **Pantheon > Settings**
+   - This stores the token in WordPress options (less secure, not recommended for production)
 
 3. **Activate and configure:**
    - The plugin will auto-detect your Pantheon environment variables
@@ -105,8 +109,9 @@ This plugin uses [Pantheon Secrets](https://docs.pantheon.io/guides/secrets) to 
 
 ### Security Notes
 
-- Machine tokens are **never stored in the WordPress database**
-- Tokens are retrieved from Pantheon Secrets at runtime via `pantheon_get_secret('machine_token')`
+- **Production:** Machine tokens should be stored in **Pantheon Secrets**, not the WordPress database
+- Tokens are retrieved from Pantheon Secrets at runtime via `pantheon_get_secret('ash_nazg_machine_token')`
+- **Development fallback:** For local development, tokens can be stored in WordPress options (less secure)
 - Consider using a dedicated "machine user" Pantheon account for the token
 - Never share your token or commit it to version control
 - WordPress admin compromise = Pantheon API access (within operational scope only)
@@ -153,11 +158,28 @@ cd ash-nazg
 composer install
 npm install  # or yarn install
 
-# Run coding standards checks
+# Run all checks (lint + tests) - recommended before committing
+composer check
+
+# Run all linting (PHP syntax + coding standards)
+composer lint
+
+# Run PHP syntax check only
+composer lint:php
+
+# Run coding standards checks only
+composer lint:phpcs
+# or
 composer phpcs
 
-# Run tests (requires wpunit-helpers setup)
+# Auto-fix coding standards issues
+composer phpcbf
+
+# Run tests only
 composer test
+
+# Install test environment (for WordPress integration tests)
+composer test:install
 
 # Run Playwright E2E tests (future)
 npm test
@@ -167,20 +189,22 @@ npm test
 
 - **Composer:**
   - `pantheon-systems/pantheon-wp-coding-standards` - Coding standards
-  - `pantheon-systems/wpunit-helpers` - PHPUnit test framework
+  - `pantheon-systems/wpunit-helpers` - WordPress testing helpers
+  - `phpunit/phpunit` - PHP testing framework
 
 - **npm/yarn:**
   - Pantheon Design System (PDS Core) - UI components
 
 ## Roadmap
 
-### Phase 1: Foundation & Core Status (Current)
-- [ ] Plugin bootstrap and activation
-- [ ] Composer setup with dependencies
-- [ ] Basic API client with authentication (`get_api_token()`)
-- [ ] Pantheon environment detection
-- [ ] Settings page (minimal)
-- [ ] Environment status display
+### Phase 1: Foundation & Core Status (Complete)
+- [x] Plugin bootstrap and activation
+- [x] Composer setup with dependencies
+- [x] Basic API client with authentication (`get_api_token()`)
+- [x] Pantheon environment detection
+- [x] Settings page with machine token setup
+- [x] Environment status display via API
+- [x] API connection testing interface
 - [ ] Launch check status information
 - [ ] Error/debug log viewer
 
@@ -281,5 +305,21 @@ Named after Tolkien's One Ring inscription: "Ash nazg durbatulûk, ash nazg gimb
 ## Changelog
 
 ### 0.1.0 - In Development
-- Initial plugin structure
-- Documentation and planning phase
+- Initial plugin framework and structure
+- Pantheon API client with authentication (machine token → session token exchange)
+- Settings page with machine token configuration
+- Dashboard page displaying:
+  - Pantheon environment detection
+  - Site information from API
+  - Current environment details from API
+  - SFTP/Git mode indicator
+  - API connection status
+- Connection testing interface
+- Composer setup with WordPress coding standards and testing tools
+- Development/testing token storage fallback in WordPress options
+- PHPUnit test suite with basic plugin tests
+- Comprehensive linting infrastructure:
+  - PHP syntax checking (`composer lint:php`)
+  - WordPress coding standards (`composer lint:phpcs`)
+  - Combined lint command (`composer lint`)
+  - Pre-commit check command (`composer check`)

@@ -1,0 +1,135 @@
+/**
+ * Admin styles for Ash-Nazg plugin.
+ */
+
+/* Dashboard Grid */
+.ash-nazg-dashboard {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+	gap: 20px;
+	margin-top: 20px;
+}
+
+/* Cards */
+.ash-nazg-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 20px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.ash-nazg-card h2 {
+	margin-top: 0;
+	margin-bottom: 15px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #dcdcde;
+	font-size: 18px;
+}
+
+.ash-nazg-card table {
+	margin-bottom: 0;
+}
+
+.ash-nazg-card th {
+	width: 30%;
+	font-weight: 600;
+	padding: 12px 10px;
+}
+
+.ash-nazg-card td {
+	padding: 12px 10px;
+}
+
+/* Badges */
+.ash-nazg-badge {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin-left: 8px;
+}
+
+.ash-nazg-badge-dev {
+	background: #f0f6fc;
+	color: #0969da;
+	border: 1px solid #0969da;
+}
+
+.ash-nazg-badge-test {
+	background: #fff8c5;
+	color: #9a6700;
+	border: 1px solid #d4a72c;
+}
+
+.ash-nazg-badge-live {
+	background: #dafbe1;
+	color: #1a7f37;
+	border: 1px solid #1a7f37;
+}
+
+.ash-nazg-badge-multidev {
+	background: #f3e8ff;
+	color: #8250df;
+	border: 1px solid #8250df;
+}
+
+.ash-nazg-badge-sftp {
+	background: #fff8c5;
+	color: #9a6700;
+	border: 1px solid #d4a72c;
+}
+
+.ash-nazg-badge-git {
+	background: #dafbe1;
+	color: #1a7f37;
+	border: 1px solid #1a7f37;
+}
+
+.ash-nazg-badge-active {
+	background: #dafbe1;
+	color: #1a7f37;
+	border: 1px solid #1a7f37;
+}
+
+.ash-nazg-badge-frozen {
+	background: #ffebe9;
+	color: #cf222e;
+	border: 1px solid #cf222e;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 782px) {
+	.ash-nazg-dashboard {
+		grid-template-columns: 1fr;
+	}
+
+	.ash-nazg-card th,
+	.ash-nazg-card td {
+		display: block;
+		width: 100%;
+		padding: 8px 10px;
+	}
+
+	.ash-nazg-card th {
+		border-bottom: none;
+		padding-bottom: 4px;
+	}
+
+	.ash-nazg-card td {
+		padding-top: 4px;
+		padding-bottom: 12px;
+		border-bottom: 1px solid #f0f0f1;
+	}
+}
+
+/* Notice improvements */
+.notice.notice-success p:first-child strong,
+.notice.notice-error p:first-child strong,
+.notice.notice-warning p:first-child strong {
+	display: block;
+	margin-bottom: 5px;
+}

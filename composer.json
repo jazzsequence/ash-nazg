@@ -1,0 +1,43 @@
+{
+  "name": "pantheon-systems/ash-nazg",
+  "description": "WordPress plugin that integrates Pantheon Public API into the WordPress admin dashboard",
+  "type": "wordpress-plugin",
+  "license": "MIT",
+  "require": {
+    "php": ">=8.0"
+  },
+  "require-dev": {
+    "pantheon-systems/pantheon-wp-coding-standards": "^2.0",
+    "pantheon-systems/wpunit-helpers": "^1.0",
+    "phpunit/phpunit": "^9.6"
+  },
+  "autoload": {
+    "files": [
+      "ash-nazg.php"
+    ]
+  },
+  "scripts": {
+    "lint": [
+      "@lint:php",
+      "@lint:phpcs"
+    ],
+    "lint:php": "find . -name '*.php' -not -path './vendor/*' -not -path './.git/*' -exec php -l {} \\;",
+    "lint:phpcs": "phpcs --standard=Pantheon-WP .",
+    "phpcs": "@lint:phpcs",
+    "phpcbf": "phpcbf --standard=Pantheon-WP .",
+    "phpunit": "phpunit --do-not-cache-result",
+    "test": "@phpunit",
+    "test:install": "bin/install-local-tests.sh --no-db",
+    "test:install:withdb": "bin/install-local-tests.sh",
+    "check": [
+      "@lint",
+      "@test"
+    ]
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "pantheon-systems/wpunit-helpers": true
+    }
+  }
+}
