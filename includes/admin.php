@@ -214,18 +214,39 @@ function render_addons_page() {
 				}
 			}
 
-			// Set success/error messages.
+			// Set success/error messages and redirect to avoid form resubmission.
+			$redirect_args = array( 'page' => 'ash-nazg-addons' );
+
 			if ( $updated_count > 0 ) {
-				$message = sprintf(
-					/* translators: %d: number of addons updated */
-					_n( '%d addon updated successfully.', '%d addons updated successfully.', $updated_count, 'ash-nazg' ),
-					$updated_count
-				);
+				$redirect_args['updated'] = $updated_count;
 			}
 
 			if ( ! empty( $errors ) ) {
-				$error = implode( '<br>', $errors );
+				$redirect_args['error'] = '1';
+				// Store errors in transient for display after redirect.
+				set_transient( 'ash_nazg_addon_errors', $errors, 30 );
 			}
+
+			wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+			exit;
+		}
+	}
+
+	// Handle redirect messages.
+	if ( isset( $_GET['updated'] ) ) {
+		$updated_count = absint( $_GET['updated'] );
+		$message = sprintf(
+			/* translators: %d: number of addons updated */
+			_n( '%d addon updated successfully.', '%d addons updated successfully.', $updated_count, 'ash-nazg' ),
+			$updated_count
+		);
+	}
+
+	if ( isset( $_GET['error'] ) ) {
+		$stored_errors = get_transient( 'ash_nazg_addon_errors' );
+		if ( $stored_errors ) {
+			$error = implode( '<br>', $stored_errors );
+			delete_transient( 'ash_nazg_addon_errors' );
 		}
 	}
 
