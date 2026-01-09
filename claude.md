@@ -394,11 +394,15 @@ ash-nazg/
   - `site_id` - Site UUID
   - `addon_id` - Addon identifier ('redis', 'solr')
 
-**Addon State Detection**:
+**Addon State Management**:
 - Addon endpoints do NOT support GET requests (return 405)
-- Current addon state may be available in `GET /v0/sites/{site_id}` response under `addons` field
-- If not available, display addons with unknown state and allow users to toggle
-- After successful update: Clear both addon cache and endpoint status cache
+- Site info response does NOT include addon state
+- **Solution**: Track addon state locally in wp_options after each update
+- Store state in `ash_nazg_addon_states` option: `array( 'redis' => true, 'solr' => false )`
+- Default to disabled (false) if no stored state exists
+- Display stored state as "Enabled" or "Disabled"
+- After successful update: Store state in options, clear addon cache and endpoint status cache
+- **Limitation**: State may be out of sync if addons are changed via Pantheon Dashboard
 
 ### Authorization
 
