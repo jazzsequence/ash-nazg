@@ -36,6 +36,16 @@ function add_admin_menu() {
 		80
 	);
 
+	// Addons page.
+	add_submenu_page(
+		'ash-nazg',
+		__( 'Site Addons', 'ash-nazg' ),
+		__( 'Addons', 'ash-nazg' ),
+		'manage_options',
+		'ash-nazg-addons',
+		__NAMESPACE__ . '\\render_addons_page'
+	);
+
 	// Settings page.
 	add_submenu_page(
 		'ash-nazg',
@@ -55,7 +65,21 @@ function add_admin_menu() {
  */
 function enqueue_assets( $hook ) {
 	// Only load on our admin pages.
-	if ( ! str_starts_with( $hook, 'toplevel_page_ash-nazg' ) && ! str_starts_with( $hook, 'pantheon_page_ash-nazg' ) ) {
+	$ash_nazg_pages = array(
+		'toplevel_page_ash-nazg',
+		'pantheon_page_ash-nazg-addons',
+		'pantheon_page_ash-nazg-settings',
+	);
+
+	$is_ash_nazg_page = false;
+	foreach ( $ash_nazg_pages as $page ) {
+		if ( str_starts_with( $hook, $page ) ) {
+			$is_ash_nazg_page = true;
+			break;
+		}
+	}
+
+	if ( ! $is_ash_nazg_page ) {
 		return;
 	}
 
@@ -142,4 +166,76 @@ function render_dashboard_page() {
 	}
 
 	require ASH_NAZG_PLUGIN_DIR . 'includes/views/dashboard.php';
+}
+
+/**
+ * Render addons page.
+ *
+ * @return void
+ */
+function render_addons_page() {
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$message = null;
+	$error = null;
+
+	// Handle form submission.
+	if ( isset( $_POST['ash_nazg_addons_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ash_nazg_addons_nonce'] ) ), 'ash_nazg_update_addons' ) ) {
+		$site_id = API\get_pantheon_site_id();
+
+		if ( $site_id && isset( $_POST['addons'] ) && is_array( $_POST['addons'] ) ) {
+			$updated_count = 0;
+			$errors = array();
+
+			// Process each addon.
+			foreach ( $_POST['addons'] as $addon_id => $state ) {
+				$addon_id = sanitize_text_field( $addon_id );
+				$enabled = ( 'on' === $state );
+
+				$result = API\update_site_addon( $site_id, $addon_id, $enabled );
+
+				if ( is_wp_error( $result ) ) {
+					$errors[] = sprintf(
+						/* translators: 1: addon ID, 2: error message */
+						__( 'Failed to update %1$s: %2$s', 'ash-nazg' ),
+						$addon_id,
+						$result->get_error_message()
+					);
+				} else {
+					$updated_count++;
+				}
+			}
+
+			// Set success/error messages.
+			if ( $updated_count > 0 ) {
+				$message = sprintf(
+					/* translators: %d: number of addons updated */
+					_n( '%d addon updated successfully.', '%d addons updated successfully.', $updated_count, 'ash-nazg' ),
+					$updated_count
+				);
+			}
+
+			if ( ! empty( $errors ) ) {
+				$error = implode( '<br>', $errors );
+			}
+		}
+	}
+
+	// Get current addon states.
+	$site_id = API\get_pantheon_site_id();
+	$addons = array();
+	$api_error = null;
+
+	if ( $site_id ) {
+		$addons = API\get_site_addons( $site_id );
+		if ( is_wp_error( $addons ) ) {
+			$api_error = $addons;
+			$addons = array();
+		}
+	}
+
+	require ASH_NAZG_PLUGIN_DIR . 'includes/views/addons.php';
 }
