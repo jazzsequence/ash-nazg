@@ -140,6 +140,12 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 			__( 'Available Plans', 'ash-nazg' ),
 			__( 'Plans available for upgrade/downgrade', 'ash-nazg' )
 		);
+
+		$site_endpoints['Sites'][] = test_endpoint(
+			sprintf( '/v0/sites/%s/addons', $site_id ),
+			__( 'Site Addons', 'ash-nazg' ),
+			__( 'Available addons and their current state (Redis, Solr, etc.)', 'ash-nazg' )
+		);
 	}
 
 	// Authorization & Access.
