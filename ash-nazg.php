@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'ASH_NAZG_VERSION', '0.1.0' );
+define( 'ASH_NAZG_VERSION', '0.1.1' );
 define( 'ASH_NAZG_PLUGIN_FILE', __FILE__ );
 define( 'ASH_NAZG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ASH_NAZG_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
