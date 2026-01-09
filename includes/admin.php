@@ -558,23 +558,31 @@ function ajax_fetch_logs() {
 	$environment = API\get_pantheon_environment();
 
 	if ( ! $site_id || ! $environment ) {
+		error_log( 'Ash-Nazg: AJAX fetch logs - Not running on Pantheon' );
 		wp_send_json_error( array( 'message' => __( 'Not running on Pantheon.', 'ash-nazg' ) ) );
 	}
+
+	error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Site: %s, Env: %s', $site_id, $environment ) );
 
 	// Get current connection mode from state.
 	$original_mode = API\get_connection_mode();
 	if ( ! $original_mode ) {
 		// Sync state if not known.
+		error_log( 'Ash-Nazg: AJAX fetch logs - Syncing environment state' );
 		API\sync_environment_state( $site_id, $environment );
 		$original_mode = API\get_connection_mode();
 	}
+
+	error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Original mode: %s', $original_mode ) );
 
 	$switched_mode = false;
 
 	// If in Git mode, switch to SFTP temporarily.
 	if ( 'git' === $original_mode ) {
+		error_log( 'Ash-Nazg: AJAX fetch logs - Switching to SFTP mode' );
 		$result = API\update_connection_mode( $site_id, $environment, 'sftp' );
 		if ( is_wp_error( $result ) ) {
+			error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Failed to switch to SFTP: %s', $result->get_error_message() ) );
 			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 		}
 		$switched_mode = true;
@@ -586,12 +594,18 @@ function ajax_fetch_logs() {
 	$log_path = WP_CONTENT_DIR . '/debug.log';
 	$logs = '';
 
+	error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Looking for log at: %s', $log_path ) );
+
 	if ( file_exists( $log_path ) && is_readable( $log_path ) ) {
 		$logs = file_get_contents( $log_path );
+		error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Log file read, size: %d bytes', strlen( $logs ) ) );
+	} else {
+		error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Log file not found or not readable. Exists: %s, Readable: %s', file_exists( $log_path ) ? 'yes' : 'no', is_readable( $log_path ) ? 'yes' : 'no' ) );
 	}
 
 	// Switch back to original mode if we changed it.
 	if ( $switched_mode ) {
+		error_log( 'Ash-Nazg: AJAX fetch logs - Switching back to Git mode' );
 		API\update_connection_mode( $site_id, $environment, 'git' );
 	}
 

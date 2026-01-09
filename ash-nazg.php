@@ -50,5 +50,6 @@ function bootstrap() {
 	Settings\init();
 }
 
-// Bootstrap the plugin.
-add_action( 'plugins_loaded', __NAMESPACE__ . '\\bootstrap' );
+// Bootstrap the plugin immediately.
+// This ensures functions are available before admin_init fires.
+bootstrap();

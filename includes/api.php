@@ -836,8 +836,11 @@ function sync_environment_state( $site_id = null, $env = null ) {
 		return false;
 	}
 
+	// Map local environments to dev for API queries.
+	$api_env = in_array( $env, array( 'lando', 'local', 'localhost', 'ddev' ), true ) ? 'dev' : $env;
+
 	// Get environment info from API.
-	$env_info = get_environment_info( $site_id, $env );
+	$env_info = get_environment_info( $site_id, $api_env );
 
 	if ( is_wp_error( $env_info ) ) {
 		error_log( sprintf( 'Ash-Nazg: Failed to sync environment state - %s', $env_info->get_error_message() ) );
@@ -889,9 +892,9 @@ function update_connection_mode( $site_id, $env, $mode ) {
 	// Map local environments to dev for API queries.
 	$api_env = in_array( $env, array( 'lando', 'local', 'localhost', 'ddev' ), true ) ? 'dev' : $env;
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s', $site_id, $api_env );
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/connection-mode', $site_id, $api_env );
 	$body = array(
-		'on_server_development' => ( 'sftp' === $mode ),
+		'mode' => $mode,
 	);
 
 	$result = api_request( $endpoint, 'PUT', $body );

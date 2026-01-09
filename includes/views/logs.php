@@ -35,12 +35,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php esc_html_e( 'View the contents of your WordPress debug.log file. If the site is in Git mode, it will temporarily switch to SFTP mode to read the file, then switch back.', 'ash-nazg' ); ?>
 			</p>
 
-			<?php if ( $logs_fetched_at ) : ?>
-				<p style="margin-bottom: 15px;">
-					<strong><?php esc_html_e( 'Last fetched:', 'ash-nazg' ); ?></strong>
-					<?php echo esc_html( human_time_diff( $logs_fetched_at ) ); ?> <?php esc_html_e( 'ago', 'ash-nazg' ); ?>
-				</p>
-			<?php endif; ?>
+			<p id="ash-nazg-logs-timestamp" style="margin-bottom: 15px; <?php echo $logs_fetched_at ? '' : 'display: none;'; ?>">
+				<strong><?php esc_html_e( 'Last fetched:', 'ash-nazg' ); ?></strong>
+				<span id="ash-nazg-logs-timestamp-value">
+					<?php
+					if ( $logs_fetched_at ) {
+						echo esc_html( human_time_diff( $logs_fetched_at ) ) . ' ' . esc_html__( 'ago', 'ash-nazg' );
+					}
+					?>
+				</span>
+			</p>
 
 			<button type="button" id="ash-nazg-fetch-logs" class="button button-primary">
 				<span class="dashicons dashicons-update" style="margin-top: 3px;"></span>
@@ -107,6 +111,10 @@ jQuery(document).ready(function($) {
 					} else {
 						$container.html('<p style="color: #666;"><em><?php echo esc_js( __( 'Debug log is empty or does not exist yet.', 'ash-nazg' ) ); ?></em></p>');
 					}
+
+					// Update timestamp display.
+					$('#ash-nazg-logs-timestamp').show();
+					$('#ash-nazg-logs-timestamp-value').text('<?php echo esc_js( __( 'just now', 'ash-nazg' ) ); ?>');
 
 					// Show success message.
 					var message = switchedMode ?
