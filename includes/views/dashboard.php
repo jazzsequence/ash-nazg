@@ -111,6 +111,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 								</span>
 							</td>
 						</tr>
+						<?php
+						// Get connection mode from state or environment info.
+						$connection_mode = API\get_connection_mode();
+						if ( ! $connection_mode && $environment_info ) {
+							$connection_mode = isset( $environment_info['on_server_development'] ) && $environment_info['on_server_development'] ? 'sftp' : 'git';
+						}
+						?>
+						<?php if ( $connection_mode ) : ?>
+							<tr>
+								<th><?php esc_html_e( 'Connection Mode', 'ash-nazg' ); ?></th>
+								<td>
+									<?php if ( 'sftp' === $connection_mode ) : ?>
+										<span class="ash-nazg-badge ash-nazg-badge-sftp">SFTP Mode</span>
+										<span style="color: #666;">— <?php esc_html_e( 'Changes made directly on server', 'ash-nazg' ); ?></span>
+									<?php else : ?>
+										<span class="ash-nazg-badge ash-nazg-badge-git">Git Mode</span>
+										<span style="color: #666;">— <?php esc_html_e( 'Changes must be committed via Git', 'ash-nazg' ); ?></span>
+									<?php endif; ?>
+								</td>
+							</tr>
+						<?php endif; ?>
 					</tbody>
 				</table>
 			</div>
