@@ -20,6 +20,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php esc_html_e( 'Manage Pantheon site addons such as Redis, Solr, and other available services.', 'ash-nazg' ); ?>
 	</p>
 
+	<p class="description">
+		<strong><?php esc_html_e( 'Note:', 'ash-nazg' ); ?></strong>
+		<?php esc_html_e( 'Addon status shown reflects the last known state from this plugin. If addons are enabled/disabled via the Pantheon Dashboard, those changes will not be reflected here until you toggle them again.', 'ash-nazg' ); ?>
+	</p>
+
 	<?php if ( $message ) : ?>
 		<div class="notice notice-success is-dismissible">
 			<p><?php echo esc_html( $message ); ?></p>
@@ -29,23 +34,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php if ( $error ) : ?>
 		<div class="notice notice-error is-dismissible">
 			<p><?php echo wp_kses_post( $error ); ?></p>
-		</div>
-	<?php endif; ?>
-
-	<?php
-	// Temporary debug: Show site info structure to find addon data.
-	$debug_site_id = \Pantheon\AshNazg\API\get_pantheon_site_id();
-	$debug_site_info = \Pantheon\AshNazg\API\get_site_info( $debug_site_id );
-	if ( ! is_wp_error( $debug_site_info ) && current_user_can( 'manage_options' ) ) :
-		?>
-		<div class="notice notice-info">
-			<p><strong><?php esc_html_e( 'Debug: Site Info Structure', 'ash-nazg' ); ?></strong></p>
-			<p><?php esc_html_e( 'Available fields:', 'ash-nazg' ); ?> <code><?php echo esc_html( implode( ', ', array_keys( $debug_site_info ) ) ); ?></code></p>
-			<?php if ( isset( $debug_site_info['addons'] ) ) : ?>
-				<p><?php esc_html_e( 'Addons field found:', 'ash-nazg' ); ?> <code><?php echo esc_html( wp_json_encode( $debug_site_info['addons'] ) ); ?></code></p>
-			<?php else : ?>
-				<p><em><?php esc_html_e( 'No "addons" field found in site info.', 'ash-nazg' ); ?></em></p>
-			<?php endif; ?>
 		</div>
 	<?php endif; ?>
 
@@ -71,8 +59,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						$addon_id = isset( $addon['id'] ) ? $addon['id'] : '';
 						$addon_name = isset( $addon['name'] ) ? $addon['name'] : $addon_id;
 						$addon_description = isset( $addon['description'] ) ? $addon['description'] : '';
-						$is_enabled = isset( $addon['enabled'] ) && null !== $addon['enabled'] ? (bool) $addon['enabled'] : false;
-						$state_unknown = ! isset( $addon['enabled'] ) || null === $addon['enabled'];
+						$is_enabled = isset( $addon['enabled'] ) ? (bool) $addon['enabled'] : false;
 						?>
 						<tr>
 							<th scope="row">
@@ -93,23 +80,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 										<span class="addon-toggle-slider"></span>
 									</label>
 									<span class="addon-status">
-										<?php
-										if ( $state_unknown ) {
-											esc_html_e( 'Unknown', 'ash-nazg' );
-										} else {
-											echo $is_enabled ? esc_html__( 'Enabled', 'ash-nazg' ) : esc_html__( 'Disabled', 'ash-nazg' );
-										}
-										?>
+										<?php echo $is_enabled ? esc_html__( 'Enabled', 'ash-nazg' ) : esc_html__( 'Disabled', 'ash-nazg' ); ?>
 									</span>
 								</div>
 								<?php if ( $addon_description ) : ?>
 									<p class="description">
 										<?php echo esc_html( $addon_description ); ?>
-									</p>
-								<?php endif; ?>
-								<?php if ( $state_unknown ) : ?>
-									<p class="description">
-										<em><?php esc_html_e( 'Current state cannot be determined. Toggle to desired state and save.', 'ash-nazg' ); ?></em>
 									</p>
 								<?php endif; ?>
 							</td>

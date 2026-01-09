@@ -498,9 +498,9 @@ function test_connection() {
 /**
  * Get site addons.
  *
- * Returns list of known Pantheon addons with their current state.
+ * Returns list of known Pantheon addons with their last known state.
  * Note: The Pantheon API addon endpoints only accept PUT/DELETE, not GET.
- * We attempt to get addon state from site info, or return unknown state.
+ * We track addon state locally after each update.
  *
  * @param string $site_id Optional. Site UUID. If not provided, auto-detected.
  * @return array|\WP_Error Array of addon objects on success, WP_Error on failure.
@@ -524,14 +524,8 @@ function get_site_addons( $site_id = null ) {
 		return $cached;
 	}
 
-	// Try to get site info which may include addon information.
-	$site_info = get_site_info( $site_id );
-	$addon_states = array();
-
-	if ( ! is_wp_error( $site_info ) && isset( $site_info['addons'] ) ) {
-		// Site info includes addon states.
-		$addon_states = $site_info['addons'];
-	}
+	// Get stored addon states from options.
+	$stored_states = get_option( 'ash_nazg_addon_states', array() );
 
 	// Known Pantheon addons with their metadata.
 	$known_addons = array(
@@ -549,17 +543,12 @@ function get_site_addons( $site_id = null ) {
 
 	$addons = array();
 
-	// Build addon list with available state information.
+	// Build addon list with stored state information.
 	foreach ( $known_addons as $addon_id => $addon_meta ) {
 		$addon = $addon_meta;
 
-		// Check if we have state information from site info.
-		if ( isset( $addon_states[ $addon_id ] ) ) {
-			$addon['enabled'] = (bool) $addon_states[ $addon_id ];
-		} else {
-			// State unknown - set to null to indicate we don't know.
-			$addon['enabled'] = null;
-		}
+		// Get stored state for this addon (defaults to false if never set).
+		$addon['enabled'] = isset( $stored_states[ $addon_id ] ) ? (bool) $stored_states[ $addon_id ] : false;
 
 		$addons[] = $addon;
 	}
@@ -610,6 +599,11 @@ function update_site_addon( $site_id, $addon_id, $enabled ) {
 
 	// Log the addon state change.
 	error_log( sprintf( 'Ash-Nazg: Addon %s %s for site %s', $addon_id, $enabled ? 'enabled' : 'disabled', $site_id ) );
+
+	// Store the new addon state in options.
+	$stored_states = get_option( 'ash_nazg_addon_states', array() );
+	$stored_states[ $addon_id ] = $enabled;
+	update_option( 'ash_nazg_addon_states', $stored_states );
 
 	// Clear addon cache.
 	clear_addons_cache( $site_id );
