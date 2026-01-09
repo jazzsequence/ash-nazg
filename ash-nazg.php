@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: Ash-Nazg - Pantheon Integration
- * Plugin URI: https://github.com/pantheon-systems/ash-nazg
+ * Plugin Name: Ash-Nazg - One Ring to Rule Them All
+ * Plugin URI: https://github.com/jazzsequence/ash-nazg
  * Description: Integrates Pantheon Public API into WordPress admin dashboard
  * Version: 0.1.0
- * Author: Pantheon
- * Author URI: https://pantheon.io
+ * Author: Chris Reynolds
+ * Author URI: https://chrisreynolds.io
  * License: MIT
  * Text Domain: ash-nazg
  * Domain Path: /languages

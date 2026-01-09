@@ -1,5 +1,5 @@
 {
-  "name": "pantheon-systems/ash-nazg",
+  "name": "jazzsequence/ash-nazg",
   "description": "WordPress plugin that integrates Pantheon Public API into the WordPress admin dashboard",
   "type": "wordpress-plugin",
   "license": "MIT",
