@@ -296,15 +296,52 @@ ash-nazg/
 
 ### Testing Strategy
 
-#### PHPUnit Tests
-- Use `pantheon-systems/wpunit-helpers` for test setup and execution
-- Write unit tests for API client functions
-- Test error handling and edge cases
-- Test with various WordPress versions and PHP versions
-- Test token retrieval and session token caching
-- Verify security measures (nonce, capabilities, sanitization)
+#### Running Tests
 
-#### Playwright Tests
+**Command:** `composer test`
+
+This runs PHPUnit with the configuration in `phpunit.xml.dist`.
+
+**Test Location:** `tests/` directory
+
+**Test File Naming:** Files must be prefixed with `test-` and suffixed with `.php` (e.g., `test-api.php`)
+
+#### PHPUnit Tests
+
+**Configuration:**
+- Bootstrap: `tests/bootstrap.php`
+- Test suite: All files matching `test-*.php` in `tests/` directory
+- Uses `pantheon-systems/wpunit-helpers` for WordPress test environment
+
+**Existing Test Files:**
+- `test-basic.php` - Basic plugin functionality
+- `test-plugin.php` - Plugin structure and constants
+- `test-api.php` - API client functions and patterns
+- `test-state-management.php` - Environment state management functions
+- `test-ajax-handlers.php` - AJAX handler security and functionality
+
+**Test Types:**
+1. **Structural Tests** - Verify functions exist and are properly namespaced
+2. **Pattern Tests** - Check code contains required patterns (error codes, endpoints, security checks)
+3. **Integration Tests** - Verify functions work together correctly (requires WordPress test environment)
+
+**What to Test:**
+- API client functions exist and use correct endpoints
+- Error handling with proper error codes
+- State management (get/update/sync)
+- AJAX handlers check nonces and capabilities
+- Connection mode validation and switching
+- Local environment mapping (lando → dev)
+- Cache clearing after updates
+- JavaScript enqueuing and localization
+
+**Adding New Tests:**
+1. Create file in `tests/` with prefix `test-` (e.g., `test-new-feature.php`)
+2. Extend `PHPUnit\Framework\TestCase`
+3. Write test methods prefixed with `test_`
+4. Run `composer test` to verify
+
+#### Playwright Tests (Future)
 - E2E tests for admin interface workflows
 - Test user flows: token setup, environment management, backup operations
 - Test error states and user feedback
