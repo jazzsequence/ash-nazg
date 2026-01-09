@@ -142,23 +142,6 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 		);
 	}
 
-	// Addons (individual endpoints only, no list endpoint).
-	$site_endpoints['Addons'] = array();
-
-	if ( $site_id ) {
-		$site_endpoints['Addons'][] = test_endpoint(
-			sprintf( '/v0/sites/%s/addons/redis', $site_id ),
-			__( 'Redis Addon', 'ash-nazg' ),
-			__( 'Object caching with Redis', 'ash-nazg' )
-		);
-
-		$site_endpoints['Addons'][] = test_endpoint(
-			sprintf( '/v0/sites/%s/addons/solr', $site_id ),
-			__( 'Solr Addon', 'ash-nazg' ),
-			__( 'Apache Solr search service', 'ash-nazg' )
-		);
-	}
-
 	// Authorization & Access.
 	$site_endpoints['Authorization'] = array();
 

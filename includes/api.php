@@ -491,9 +491,9 @@ function test_connection() {
 /**
  * Get site addons.
  *
- * Fetches available addons and their current state from the Pantheon API.
- * Note: The Pantheon API does not have a list endpoint for addons.
- * We query individual known addon endpoints.
+ * Returns list of known Pantheon addons with their current state.
+ * Note: The Pantheon API addon endpoints only accept PUT/DELETE, not GET.
+ * We attempt to get addon state from site info, or return unknown state.
  *
  * @param string $site_id Optional. Site UUID. If not provided, auto-detected.
  * @return array|\WP_Error Array of addon objects on success, WP_Error on failure.
@@ -517,6 +517,15 @@ function get_site_addons( $site_id = null ) {
 		return $cached;
 	}
 
+	// Try to get site info which may include addon information.
+	$site_info = get_site_info( $site_id );
+	$addon_states = array();
+
+	if ( ! is_wp_error( $site_info ) && isset( $site_info['addons'] ) ) {
+		// Site info includes addon states.
+		$addon_states = $site_info['addons'];
+	}
+
 	// Known Pantheon addons with their metadata.
 	$known_addons = array(
 		'redis' => array(
@@ -533,19 +542,18 @@ function get_site_addons( $site_id = null ) {
 
 	$addons = array();
 
-	// Query each addon endpoint individually.
+	// Build addon list with available state information.
 	foreach ( $known_addons as $addon_id => $addon_meta ) {
-		$endpoint = sprintf( '/v0/sites/%s/addons/%s', $site_id, $addon_id );
-		$result = api_request( $endpoint );
+		$addon = $addon_meta;
 
-		if ( is_wp_error( $result ) ) {
-			// Addon endpoint returned an error (likely not available for this site).
-			error_log( sprintf( 'Ash-Nazg: Addon %s not available for site %s: %s', $addon_id, $site_id, $result->get_error_message() ) );
-			continue;
+		// Check if we have state information from site info.
+		if ( isset( $addon_states[ $addon_id ] ) ) {
+			$addon['enabled'] = (bool) $addon_states[ $addon_id ];
+		} else {
+			// State unknown - set to null to indicate we don't know.
+			$addon['enabled'] = null;
 		}
 
-		// Merge API response with addon metadata.
-		$addon = array_merge( $addon_meta, $result );
 		$addons[] = $addon;
 	}
 
@@ -559,6 +567,7 @@ function get_site_addons( $site_id = null ) {
  * Update site addon.
  *
  * Enable or disable a specific site addon via the Pantheon API.
+ * Uses PUT to enable, DELETE to disable.
  *
  * @param string $site_id Site UUID.
  * @param string $addon_id Addon identifier (e.g., 'redis', 'solr').
@@ -580,14 +589,14 @@ function update_site_addon( $site_id, $addon_id, $enabled ) {
 		);
 	}
 
-	// Make API request to update addon.
+	// Addon endpoints use PUT to enable, DELETE to disable.
 	$endpoint = sprintf( '/v0/sites/%s/addons/%s', $site_id, $addon_id );
-	$body = array( 'enabled' => (bool) $enabled );
+	$method = $enabled ? 'PUT' : 'DELETE';
 
-	$result = api_request( $endpoint, 'PUT', $body );
+	$result = api_request( $endpoint, $method );
 
 	if ( is_wp_error( $result ) ) {
-		error_log( sprintf( 'Ash-Nazg: Failed to update addon %s for site %s: %s', $addon_id, $site_id, $result->get_error_message() ) );
+		error_log( sprintf( 'Ash-Nazg: Failed to %s addon %s for site %s: %s', $enabled ? 'enable' : 'disable', $addon_id, $site_id, $result->get_error_message() ) );
 		return $result;
 	}
 

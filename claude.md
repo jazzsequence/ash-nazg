@@ -378,24 +378,27 @@ ash-nazg/
 - **Parameters**: `site_id` - Site UUID
 - **Returns**: Array of available plan objects
 
-#### `GET /v0/sites/{site_id}/addons/{addon_id}`
-- **Purpose**: Get specific addon status
+#### `PUT /v0/sites/{site_id}/addons/{addon_id}`
+- **Purpose**: Enable a specific addon
+- **Method**: PUT
 - **Parameters**:
   - `site_id` - Site UUID
   - `addon_id` - Addon identifier ('redis', 'solr')
-- **Returns**: Addon object with enabled status
-- **Cache**: 5 minutes
-- **Note**: No list endpoint exists - must query individual addons
+- **Note**: Use PUT to enable, DELETE to disable
 - **Known addons**: redis, solr
 
-#### `PUT /v0/sites/{site_id}/addons/{addon_id}`
-- **Purpose**: Enable or disable a specific addon
+#### `DELETE /v0/sites/{site_id}/addons/{addon_id}`
+- **Purpose**: Disable a specific addon
+- **Method**: DELETE
 - **Parameters**:
   - `site_id` - Site UUID
   - `addon_id` - Addon identifier ('redis', 'solr')
-- **Request Body**: `{ "enabled": true/false }`
-- **Note**: Clear both addon cache and endpoint status cache after successful update
-- **Implementation**: Define known addons list, query each individually
+
+**Addon State Detection**:
+- Addon endpoints do NOT support GET requests (return 405)
+- Current addon state may be available in `GET /v0/sites/{site_id}` response under `addons` field
+- If not available, display addons with unknown state and allow users to toggle
+- After successful update: Clear both addon cache and endpoint status cache
 
 ### Authorization
 

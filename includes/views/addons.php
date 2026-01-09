@@ -54,7 +54,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 						$addon_id = isset( $addon['id'] ) ? $addon['id'] : '';
 						$addon_name = isset( $addon['name'] ) ? $addon['name'] : $addon_id;
 						$addon_description = isset( $addon['description'] ) ? $addon['description'] : '';
-						$is_enabled = isset( $addon['enabled'] ) ? (bool) $addon['enabled'] : false;
+						$is_enabled = isset( $addon['enabled'] ) && null !== $addon['enabled'] ? (bool) $addon['enabled'] : false;
+						$state_unknown = ! isset( $addon['enabled'] ) || null === $addon['enabled'];
 						?>
 						<tr>
 							<th scope="row">
@@ -75,12 +76,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 										<span class="addon-toggle-slider"></span>
 									</label>
 									<span class="addon-status">
-										<?php echo $is_enabled ? esc_html__( 'Enabled', 'ash-nazg' ) : esc_html__( 'Disabled', 'ash-nazg' ); ?>
+										<?php
+										if ( $state_unknown ) {
+											esc_html_e( 'Unknown', 'ash-nazg' );
+										} else {
+											echo $is_enabled ? esc_html__( 'Enabled', 'ash-nazg' ) : esc_html__( 'Disabled', 'ash-nazg' );
+										}
+										?>
 									</span>
 								</div>
 								<?php if ( $addon_description ) : ?>
 									<p class="description">
 										<?php echo esc_html( $addon_description ); ?>
+									</p>
+								<?php endif; ?>
+								<?php if ( $state_unknown ) : ?>
+									<p class="description">
+										<em><?php esc_html_e( 'Current state cannot be determined. Toggle to desired state and save.', 'ash-nazg' ); ?></em>
 									</p>
 								<?php endif; ?>
 							</td>
