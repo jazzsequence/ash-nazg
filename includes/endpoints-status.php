@@ -8,6 +8,26 @@
 namespace Pantheon\AshNazg\API;
 
 /**
+ * Mark an endpoint as unavailable without testing.
+ *
+ * @param string $path        API endpoint path.
+ * @param string $name        Human-readable endpoint name.
+ * @param string $description Endpoint description.
+ * @param string $reason      Reason for unavailability.
+ * @return array Endpoint status data.
+ */
+function mark_endpoint_unavailable( $path, $name, $description = '', $reason = '' ) {
+	return array(
+		'name' => $name,
+		'path' => $path,
+		'description' => $description,
+		'status' => 'unavailable',
+		'data' => null,
+		'error' => $reason ?: __( 'Not available for this site', 'ash-nazg' ),
+	);
+}
+
+/**
  * Test a single endpoint.
  *
  * @param string $path        API endpoint path.
@@ -67,6 +87,15 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	$api_env = $env;
 	if ( $env && in_array( strtolower( $env ), $local_env_names, true ) ) {
 		$api_env = 'dev';
+	}
+
+	// Check if site uses integrated composer by checking environment settings.
+	$has_integrated_composer = false;
+	if ( $site_id && $api_env ) {
+		$env_settings = api_request( sprintf( '/v0/sites/%s/environments/%s/settings', $site_id, $api_env ) );
+		if ( ! is_wp_error( $env_settings ) && isset( $env_settings['build_step'] ) ) {
+			$has_integrated_composer = (bool) $env_settings['build_step'];
+		}
 	}
 
 	$site_endpoints = array();
@@ -154,11 +183,21 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 			__( 'Git diff for uncommitted changes (SFTP mode)', 'ash-nazg' )
 		);
 
-		$site_endpoints['Code'][] = test_endpoint(
-			sprintf( '/v0/sites/%s/environments/%s/build/updates', $site_id, $api_env ),
-			__( 'Composer Updates', 'ash-nazg' ),
-			__( 'Composer dependencies changes', 'ash-nazg' )
-		);
+		// Only test Composer Updates if site uses integrated composer.
+		if ( $has_integrated_composer ) {
+			$site_endpoints['Code'][] = test_endpoint(
+				sprintf( '/v0/sites/%s/environments/%s/build/updates', $site_id, $api_env ),
+				__( 'Composer Updates', 'ash-nazg' ),
+				__( 'Composer dependencies changes', 'ash-nazg' )
+			);
+		} else {
+			$site_endpoints['Code'][] = mark_endpoint_unavailable(
+				sprintf( '/v0/sites/%s/environments/%s/build/updates', $site_id, $api_env ),
+				__( 'Composer Updates', 'ash-nazg' ),
+				__( 'Composer dependencies changes', 'ash-nazg' ),
+				__( 'Not available - site does not use Integrated Composer (build_step is disabled)', 'ash-nazg' )
+			);
+		}
 	}
 
 	// Backups.
