@@ -270,6 +270,53 @@ function get_cached_endpoint( $endpoint, $cache_key, $ttl = DAY_IN_SECONDS ) {
 }
 
 /**
+ * Get a specific field from a cached API endpoint.
+ *
+ * Generic helper to retrieve individual fields from API responses.
+ *
+ * @param string $endpoint_type Endpoint type (e.g., 'site', 'environment', 'user').
+ * @param string $field         Field name to retrieve from the response.
+ * @param mixed  $default       Default value if field doesn't exist. Default null.
+ * @return mixed Field value, default value, or WP_Error on API failure.
+ */
+function get_api_field( $endpoint_type, $field, $default = null ) {
+	$data = null;
+
+	// Map endpoint type to getter function.
+	switch ( $endpoint_type ) {
+		case 'site':
+			$data = get_site_info();
+			break;
+
+		case 'environment':
+			$data = get_environment_info();
+			break;
+
+		case 'user':
+			$data = get_user_info();
+			break;
+
+		default:
+			return new \WP_Error(
+				'invalid_endpoint_type',
+				sprintf(
+					/* translators: %s: endpoint type */
+					__( 'Unknown endpoint type: %s', 'ash-nazg' ),
+					$endpoint_type
+				)
+			);
+	}
+
+	// If API call failed, return the error.
+	if ( is_wp_error( $data ) ) {
+		return $data;
+	}
+
+	// Return the field value or default.
+	return isset( $data[ $field ] ) ? $data[ $field ] : $default;
+}
+
+/**
  * Get site information.
  *
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.

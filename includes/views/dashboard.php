@@ -114,28 +114,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</h2>
 				<table class="widefat striped">
 					<tbody>
-						<?php if ( ! empty( $site_info['name'] ) ) : ?>
+						<?php
+						// Use get_api_field() for cleaner field access.
+						$site_name = \Pantheon\AshNazg\API\get_api_field( 'site', 'name' );
+						$site_label = \Pantheon\AshNazg\API\get_api_field( 'site', 'label' );
+						$site_framework = \Pantheon\AshNazg\API\get_api_field( 'site', 'framework' );
+						$site_created = \Pantheon\AshNazg\API\get_api_field( 'site', 'created' );
+						?>
+						<?php if ( $site_name ) : ?>
 							<tr>
 								<th><?php esc_html_e( 'Site Name', 'ash-nazg' ); ?></th>
-								<td><?php echo esc_html( $site_info['name'] ); ?></td>
+								<td><?php echo esc_html( $site_name ); ?></td>
 							</tr>
 						<?php endif; ?>
-						<?php if ( ! empty( $site_info['label'] ) ) : ?>
+						<?php if ( $site_label ) : ?>
 							<tr>
 								<th><?php esc_html_e( 'Site Label', 'ash-nazg' ); ?></th>
-								<td><?php echo esc_html( $site_info['label'] ); ?></td>
+								<td><?php echo esc_html( $site_label ); ?></td>
 							</tr>
 						<?php endif; ?>
-						<?php if ( ! empty( $site_info['framework'] ) ) : ?>
+						<?php if ( $site_framework ) : ?>
 							<tr>
 								<th><?php esc_html_e( 'Framework', 'ash-nazg' ); ?></th>
-								<td><?php echo esc_html( $site_info['framework'] ); ?></td>
+								<td><?php echo esc_html( $site_framework ); ?></td>
 							</tr>
 						<?php endif; ?>
-						<?php if ( ! empty( $site_info['created'] ) ) : ?>
+						<?php if ( $site_created ) : ?>
 							<tr>
 								<th><?php esc_html_e( 'Created', 'ash-nazg' ); ?></th>
-								<td><?php echo esc_html( gmdate( 'Y-m-d H:i:s', $site_info['created'] ) ); ?></td>
+								<td><?php echo esc_html( gmdate( 'Y-m-d H:i:s', $site_created ) ); ?></td>
 							</tr>
 						<?php endif; ?>
 						<?php if ( ! empty( $site_info['frozen'] ) ) : ?>
