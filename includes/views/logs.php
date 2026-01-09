@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php esc_html_e( 'View the contents of your WordPress debug.log file. If the site is in Git mode, it will temporarily switch to SFTP mode to read the file, then switch back.', 'ash-nazg' ); ?>
 			</p>
 
-			<p id="ash-nazg-logs-timestamp" style="margin-bottom: 15px; <?php echo $logs_fetched_at ? '' : 'display: none;'; ?>">
+			<p id="ash-nazg-logs-timestamp" <?php echo $logs_fetched_at ? '' : 'style="display: none;"'; ?>>
 				<strong><?php esc_html_e( 'Last fetched:', 'ash-nazg' ); ?></strong>
 				<span id="ash-nazg-logs-timestamp-value">
 					<?php
@@ -47,30 +47,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</p>
 
 			<button type="button" id="ash-nazg-fetch-logs" class="button button-primary">
-				<span class="dashicons dashicons-update" style="margin-top: 3px;"></span>
+				<span class="dashicons dashicons-update"></span>
 				<?php esc_html_e( 'Fetch Logs', 'ash-nazg' ); ?>
 			</button>
 
-			<button type="button" id="ash-nazg-clear-logs" class="button button-secondary" style="margin-left: 10px;">
-				<span class="dashicons dashicons-trash" style="margin-top: 3px;"></span>
+			<button type="button" id="ash-nazg-clear-logs" class="button button-secondary ash-nazg-clear-button">
+				<span class="dashicons dashicons-trash"></span>
 				<?php esc_html_e( 'Clear Log', 'ash-nazg' ); ?>
 			</button>
 
-			<div id="ash-nazg-logs-loading" style="display: none; margin-top: 20px;">
+			<div id="ash-nazg-logs-loading">
 				<p>
-					<span class="spinner is-active" style="float: none; margin: 0 10px 0 0;"></span>
+					<span class="spinner is-active"></span>
 					<em id="ash-nazg-logs-loading-message"><?php esc_html_e( 'Fetching logs... This may take a moment if we need to switch connection modes.', 'ash-nazg' ); ?></em>
 				</p>
 			</div>
 
-			<div id="ash-nazg-logs-container" style="margin-top: 20px;">
+			<div id="ash-nazg-logs-container">
 				<?php if ( $logs ) : ?>
 					<h3><?php esc_html_e( 'Log Contents', 'ash-nazg' ); ?></h3>
-					<div style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; border-radius: 4px; max-height: 600px; overflow-y: auto;">
-						<pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: monospace; font-size: 12px;"><?php echo esc_html( $logs ); ?></pre>
+					<div class="ash-nazg-log-contents">
+						<pre><?php echo esc_html( $logs ); ?></pre>
 					</div>
 				<?php elseif ( false !== $logs ) : ?>
-					<p style="color: #666;">
+					<p class="ash-nazg-log-empty">
 						<em><?php esc_html_e( 'Debug log is empty or does not exist yet.', 'ash-nazg' ); ?></em>
 					</p>
 				<?php endif; ?>

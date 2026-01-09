@@ -1,8 +1,20 @@
 /**
  * Admin styles for Ash-Nazg plugin.
+ *
+ * Structure:
+ * 1. Base Layout
+ * 2. Typography
+ * 3. Components (Badges, Notices, Cards)
+ * 4. Tables
+ * 5. Page-specific Sections
+ * 6. Utility Classes
+ * 7. Responsive Styles
  */
 
-/* Dashboard Grid */
+/* ==========================================================================
+   1. BASE LAYOUT
+   ========================================================================== */
+
 .ash-nazg-dashboard {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -10,13 +22,16 @@
 	margin-top: 20px;
 }
 
-/* Cards */
 .ash-nazg-card {
 	background: #fff;
 	border: 1px solid #c3c4c7;
 	border-radius: 4px;
 	padding: 20px;
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.ash-nazg-card-full {
+	grid-column: 1 / -1;
 }
 
 .ash-nazg-card h2 {
@@ -27,19 +42,87 @@
 	font-size: 18px;
 }
 
-.ash-nazg-card table {
-	margin-bottom: 0;
+/* ==========================================================================
+   2. TYPOGRAPHY
+   ========================================================================== */
+
+.ash-nazg-section-header {
+	margin-top: 20px;
+	margin-bottom: 10px;
+	font-size: 16px;
+	border-bottom: 1px solid #dcdcde;
+	padding-bottom: 5px;
 }
 
-.ash-nazg-card th {
-	width: 30%;
-	font-weight: 600;
-	padding: 12px 10px;
+.ash-nazg-meta-text {
+	font-size: 12px;
+	font-weight: normal;
+	color: #757575;
 }
 
-.ash-nazg-card td {
-	padding: 12px 10px;
+.ash-nazg-small-text {
+	font-size: 12px;
 }
+
+.ash-nazg-tiny-text {
+	font-size: 11px;
+}
+
+.ash-nazg-label-text {
+	font-size: 13px;
+	font-weight: normal;
+	color: #666;
+}
+
+/* Text Colors */
+.ash-nazg-text-success {
+	color: #46b450;
+}
+
+.ash-nazg-text-error {
+	color: #dc3232;
+}
+
+.ash-nazg-text-warning {
+	color: #dba617;
+}
+
+.ash-nazg-text-muted {
+	color: #666;
+}
+
+.ash-nazg-text-light {
+	color: #999;
+}
+
+.ash-nazg-text-meta {
+	color: #757575;
+}
+
+/* Icon Colors */
+.ash-nazg-icon-success {
+	color: #46b450;
+}
+
+.ash-nazg-icon-error {
+	color: #dc3232;
+}
+
+.ash-nazg-icon-warning {
+	color: #dba617;
+}
+
+.ash-nazg-icon-locked {
+	color: #dc3232;
+}
+
+.ash-nazg-icon-unlocked {
+	color: #46b450;
+}
+
+/* ==========================================================================
+   3. COMPONENTS
+   ========================================================================== */
 
 /* Badges */
 .ash-nazg-badge {
@@ -101,32 +184,7 @@
 	border: 1px solid #cf222e;
 }
 
-/* Responsive adjustments */
-@media screen and (max-width: 782px) {
-	.ash-nazg-dashboard {
-		grid-template-columns: 1fr;
-	}
-
-	.ash-nazg-card th,
-	.ash-nazg-card td {
-		display: block;
-		width: 100%;
-		padding: 8px 10px;
-	}
-
-	.ash-nazg-card th {
-		border-bottom: none;
-		padding-bottom: 4px;
-	}
-
-	.ash-nazg-card td {
-		padding-top: 4px;
-		padding-bottom: 12px;
-		border-bottom: 1px solid #f0f0f1;
-	}
-}
-
-/* Notice improvements */
+/* Notices */
 .notice.notice-success p:first-child strong,
 .notice.notice-error p:first-child strong,
 .notice.notice-warning p:first-child strong {
@@ -134,30 +192,38 @@
 	margin-bottom: 5px;
 }
 
-/* Endpoints status table */
-.ash-nazg-card .widefat thead th {
-	font-weight: 600;
+/* Workflow Cards */
+.workflows-container {
+	margin-top: 20px;
+}
+
+.workflow-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 20px;
+	margin-bottom: 20px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.workflow-card h3 {
+	margin-top: 0;
+	margin-bottom: 10px;
+	font-size: 16px;
+}
+
+.workflow-card.workflow-disabled {
 	background: #f6f7f7;
+	border-color: #dcdcde;
+	opacity: 0.7;
 }
 
-.ash-nazg-card .widefat tbody tr:hover {
-	background: #f6f7f7;
+.workflow-card .submit {
+	margin-bottom: 0;
+	padding-top: 10px;
 }
 
-.ash-nazg-card .widefat td .dashicons {
-	font-size: 20px;
-	width: 20px;
-	height: 20px;
-}
-
-.ash-nazg-card .widefat td code {
-	background: #f6f7f7;
-	padding: 2px 6px;
-	border-radius: 3px;
-	font-family: 'Courier New', Courier, monospace;
-}
-
-/* Addon toggle switches */
+/* Addon Toggle Switches */
 .addon-toggle-wrapper {
 	display: flex;
 	align-items: center;
@@ -226,14 +292,6 @@
 	cursor: not-allowed;
 }
 
-.addon-status {
-	font-size: 13px;
-	font-weight: 500;
-	color: #50575e;
-	min-width: 60px;
-}
-
-/* Hover effect */
 .addon-toggle:hover input[type="checkbox"]:not(:disabled) + .addon-toggle-slider {
 	background-color: #6c7781;
 }
@@ -242,59 +300,82 @@
 	background-color: #135e96;
 }
 
-/* Accessibility improvements */
 .addon-toggle:focus-within .addon-toggle-slider {
 	box-shadow: 0 0 0 3px rgba(34, 113, 177, 0.2);
 }
 
-/* Responsive adjustments for addon toggles */
-@media screen and (max-width: 782px) {
-	.addon-toggle-wrapper {
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 8px;
-	}
+.addon-status {
+	font-size: 13px;
+	font-weight: 500;
+	color: #50575e;
+	min-width: 60px;
 }
 
-/* Workflows page */
-.workflows-container {
-	margin-top: 20px;
-}
+/* ==========================================================================
+   4. TABLES
+   ========================================================================== */
 
-.workflow-card {
-	background: #fff;
-	border: 1px solid #c3c4c7;
-	border-radius: 4px;
-	padding: 20px;
-	margin-bottom: 20px;
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
-}
-
-.workflow-card h3 {
-	margin-top: 0;
-	margin-bottom: 10px;
-	font-size: 16px;
-}
-
-.workflow-card.workflow-disabled {
-	background: #f6f7f7;
-	border-color: #dcdcde;
-	opacity: 0.7;
-}
-
-.workflow-card .submit {
+.ash-nazg-card table {
 	margin-bottom: 0;
-	padding-top: 10px;
 }
 
-/* Responsive adjustments for workflows */
-@media screen and (max-width: 782px) {
-	.workflow-card {
-		padding: 15px;
-	}
+.ash-nazg-card th {
+	width: 30%;
+	font-weight: 600;
+	padding: 12px 10px;
 }
 
-/* Connection mode toggle */
+.ash-nazg-card td {
+	padding: 12px 10px;
+}
+
+.ash-nazg-card .widefat thead th {
+	font-weight: 600;
+	background: #f6f7f7;
+}
+
+.ash-nazg-card .widefat tbody tr:hover {
+	background: #f6f7f7;
+}
+
+.ash-nazg-card .widefat td .dashicons {
+	font-size: 20px;
+	width: 20px;
+	height: 20px;
+}
+
+.ash-nazg-card .widefat td code {
+	background: #f6f7f7;
+	padding: 2px 6px;
+	border-radius: 3px;
+	font-family: 'Courier New', Courier, monospace;
+}
+
+.ash-nazg-table-mb {
+	margin-bottom: 20px;
+}
+
+.ash-nazg-th-icon {
+	width: 35px;
+}
+
+.ash-nazg-th-20 {
+	width: 20%;
+}
+
+.ash-nazg-th-30 {
+	width: 30%;
+}
+
+.ash-nazg-th-15 {
+	width: 15%;
+}
+
+/* ==========================================================================
+   5. PAGE-SPECIFIC SECTIONS
+   ========================================================================== */
+
+/* Dashboard - Connection Mode Toggle */
 #ash-nazg-connection-mode-toggle {
 	display: inline-block;
 	margin-left: 10px;
@@ -314,7 +395,11 @@
 	margin: 0 10px 0 0;
 }
 
-/* Logs page */
+.ash-nazg-card .dashicons-update {
+	margin-top: 3px;
+}
+
+/* Logs Page */
 #ash-nazg-logs-timestamp {
 	margin-bottom: 15px;
 }
@@ -358,7 +443,11 @@
 	margin-left: 10px;
 }
 
-/* Utility classes */
+/* ==========================================================================
+   6. UTILITY CLASSES
+   ========================================================================== */
+
+/* Display */
 .ash-nazg-inline-block {
 	display: inline-block;
 }
@@ -377,6 +466,11 @@
 	align-items: center;
 }
 
+/* Spacing */
+.ash-nazg-m-0 {
+	margin: 0;
+}
+
 .ash-nazg-ml-10 {
 	margin-left: 10px;
 }
@@ -393,120 +487,49 @@
 	margin-bottom: 20px;
 }
 
-.ash-nazg-m-0 {
-	margin: 0;
-}
-
 .ash-nazg-my-10 {
 	margin: 10px 0;
 }
 
+/* Alignment */
 .ash-nazg-text-center {
 	text-align: center;
 }
 
-/* Icon colors */
-.ash-nazg-icon-success {
-	color: #46b450;
-}
+/* ==========================================================================
+   7. RESPONSIVE STYLES
+   ========================================================================== */
 
-.ash-nazg-icon-error {
-	color: #dc3232;
-}
+@media screen and (max-width: 782px) {
+	.ash-nazg-dashboard {
+		grid-template-columns: 1fr;
+	}
 
-.ash-nazg-icon-warning {
-	color: #dba617;
-}
+	.ash-nazg-card th,
+	.ash-nazg-card td {
+		display: block;
+		width: 100%;
+		padding: 8px 10px;
+	}
 
-.ash-nazg-icon-locked {
-	color: #dc3232;
-}
+	.ash-nazg-card th {
+		border-bottom: none;
+		padding-bottom: 4px;
+	}
 
-.ash-nazg-icon-unlocked {
-	color: #46b450;
-}
+	.ash-nazg-card td {
+		padding-top: 4px;
+		padding-bottom: 12px;
+		border-bottom: 1px solid #f0f0f1;
+	}
 
-/* Text colors */
-.ash-nazg-text-success {
-	color: #46b450;
-}
+	.addon-toggle-wrapper {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+	}
 
-.ash-nazg-text-error {
-	color: #dc3232;
-}
-
-.ash-nazg-text-warning {
-	color: #dba617;
-}
-
-.ash-nazg-text-muted {
-	color: #666;
-}
-
-.ash-nazg-text-light {
-	color: #999;
-}
-
-.ash-nazg-text-meta {
-	color: #757575;
-}
-
-/* Typography */
-.ash-nazg-meta-text {
-	font-size: 12px;
-	font-weight: normal;
-	color: #757575;
-}
-
-.ash-nazg-small-text {
-	font-size: 12px;
-}
-
-.ash-nazg-tiny-text {
-	font-size: 11px;
-}
-
-.ash-nazg-label-text {
-	font-size: 13px;
-	font-weight: normal;
-	color: #666;
-}
-
-.ash-nazg-section-header {
-	margin-top: 20px;
-	margin-bottom: 10px;
-	font-size: 16px;
-	border-bottom: 1px solid #dcdcde;
-	padding-bottom: 5px;
-}
-
-/* Full width card */
-.ash-nazg-card-full {
-	grid-column: 1 / -1;
-}
-
-/* Tables */
-.ash-nazg-table-mb {
-	margin-bottom: 20px;
-}
-
-.ash-nazg-th-icon {
-	width: 35px;
-}
-
-.ash-nazg-th-20 {
-	width: 20%;
-}
-
-.ash-nazg-th-30 {
-	width: 30%;
-}
-
-.ash-nazg-th-15 {
-	width: 15%;
-}
-
-/* Dashicons alignment */
-.ash-nazg-card .dashicons-update {
-	margin-top: 3px;
+	.workflow-card {
+		padding: 15px;
+	}
 }

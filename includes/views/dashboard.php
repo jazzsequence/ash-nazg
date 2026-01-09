@@ -127,20 +127,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 								<?php else : ?>
 									<span class="ash-nazg-badge ash-nazg-badge-git">Git Mode</span>
 								<?php endif; ?>
-								<div id="ash-nazg-connection-mode-toggle" style="display: inline-block; margin-left: 10px;">
+								<div id="ash-nazg-connection-mode-toggle">
 									<?php if ( 'sftp' === $connection_mode ) : ?>
 										<button type="button" id="ash-nazg-toggle-mode" data-mode="git" class="button button-primary button-small">
-											<span class="dashicons dashicons-media-code" style="margin-top: 3px;"></span>
+											<span class="dashicons dashicons-media-code"></span>
 											<?php esc_html_e( 'Switch to Git Mode', 'ash-nazg' ); ?>
 										</button>
 									<?php else : ?>
 										<button type="button" id="ash-nazg-toggle-mode" data-mode="sftp" class="button button-primary button-small">
-											<span class="dashicons dashicons-admin-tools" style="margin-top: 3px;"></span>
+											<span class="dashicons dashicons-admin-tools"></span>
 											<?php esc_html_e( 'Switch to SFTP Mode', 'ash-nazg' ); ?>
 										</button>
 									<?php endif; ?>
-									<div id="ash-nazg-mode-loading" style="display: none; margin-left: 10px;">
-										<span class="spinner is-active" style="float: none; margin: 0 10px 0 0;"></span>
+									<div id="ash-nazg-mode-loading">
+										<span class="spinner is-active"></span>
 										<em><?php esc_html_e( 'Switching connection mode...', 'ash-nazg' ); ?></em>
 									</div>
 								</div>
@@ -169,10 +169,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<th><?php esc_html_e( 'Environment Lock', 'ash-nazg' ); ?></th>
 							<td>
 								<?php if ( ! empty( $environment_info['lock']['locked'] ) ) : ?>
-									<span class="dashicons dashicons-lock" style="color: #dc3232;"></span>
+									<span class="dashicons dashicons-lock ash-nazg-icon-locked"></span>
 									<?php esc_html_e( 'Locked', 'ash-nazg' ); ?>
 									<?php if ( ! empty( $environment_info['lock']['username'] ) ) : ?>
-										<span style="color: #666;">
+										<span class="ash-nazg-text-muted">
 											<?php
 											printf(
 												/* translators: %s: username */
@@ -183,7 +183,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 										</span>
 									<?php endif; ?>
 								<?php else : ?>
-									<span class="dashicons dashicons-unlock" style="color: #46b450;"></span>
+									<span class="dashicons dashicons-unlock ash-nazg-icon-unlocked"></span>
 									<?php esc_html_e( 'Unlocked', 'ash-nazg' ); ?>
 								<?php endif; ?>
 							</td>
@@ -199,7 +199,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<h2>
 					<?php esc_html_e( 'Site Information', 'ash-nazg' ); ?>
 					<?php if ( $site_info_cached_at ) : ?>
-						<span style="font-size: 12px; font-weight: normal; color: #757575;">
+						<span class="ash-nazg-meta-text">
 							(Last checked: <?php echo esc_html( human_time_diff( $site_info_cached_at ) ); ?> ago)
 						</span>
 					<?php endif; ?>
@@ -340,18 +340,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 			// Determine active tab.
 			$active_tab = isset( $_GET['endpoints_tab'] ) ? sanitize_text_field( wp_unslash( $_GET['endpoints_tab'] ) ) : 'site';
 			?>
-			<div class="ash-nazg-card" style="grid-column: 1 / -1;">
-				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-					<h2 style="margin: 0;">
+			<div class="ash-nazg-card ash-nazg-card-full">
+				<div class="ash-nazg-flex-between ash-nazg-mb-10">
+					<h2 class="ash-nazg-m-0">
 						<?php esc_html_e( 'Available API Endpoints', 'ash-nazg' ); ?>
 						<?php if ( $endpoints_cached_at ) : ?>
-							<span style="font-size: 12px; font-weight: normal; color: #757575;">
+							<span class="ash-nazg-meta-text">
 								(Last checked: <?php echo esc_html( human_time_diff( $endpoints_cached_at ) ); ?> ago)
 							</span>
 						<?php endif; ?>
 					</h2>
 					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&refresh_cache=1' ), 'ash_nazg_refresh_cache' ) ); ?>" class="button button-secondary">
-						<span class="dashicons dashicons-update" style="margin-top: 3px;"></span>
+						<span class="dashicons dashicons-update"></span>
 						<?php esc_html_e( 'Refresh Data', 'ash-nazg' ); ?>
 					</a>
 				</div>
@@ -397,77 +397,77 @@ if ( ! defined( 'ABSPATH' ) ) {
 					}
 				}
 				?>
-				<p style="margin: 10px 0;">
+				<p class="ash-nazg-my-10">
 					<strong><?php esc_html_e( 'Summary:', 'ash-nazg' ); ?></strong>
-					<span style="color: #46b450;">✓ <?php echo esc_html( $successful ); ?> <?php esc_html_e( 'working', 'ash-nazg' ); ?></span>
+					<span class="ash-nazg-text-success">✓ <?php echo esc_html( $successful ); ?> <?php esc_html_e( 'working', 'ash-nazg' ); ?></span>
 					<?php if ( $unavailable > 0 ) : ?>
-						<span style="margin-left: 10px; color: #dba617;">⊘ <?php echo esc_html( $unavailable ); ?> <?php esc_html_e( 'unavailable', 'ash-nazg' ); ?></span>
+						<span class="ash-nazg-ml-10 ash-nazg-text-warning">⊘ <?php echo esc_html( $unavailable ); ?> <?php esc_html_e( 'unavailable', 'ash-nazg' ); ?></span>
 					<?php endif; ?>
 					<?php if ( $errors > 0 ) : ?>
-						<span style="margin-left: 10px; color: #dc3232;">✗ <?php echo esc_html( $errors ); ?> <?php esc_html_e( 'errors', 'ash-nazg' ); ?></span>
+						<span class="ash-nazg-ml-10 ash-nazg-text-error">✗ <?php echo esc_html( $errors ); ?> <?php esc_html_e( 'errors', 'ash-nazg' ); ?></span>
 					<?php endif; ?>
-					<span style="margin-left: 10px; color: #666;">
+					<span class="ash-nazg-ml-10 ash-nazg-text-muted">
 						(<?php echo esc_html( $total_endpoints ); ?> <?php esc_html_e( 'total endpoints', 'ash-nazg' ); ?>)
 					</span>
 				</p>
 
 				<?php foreach ( $endpoints_status as $category => $endpoints ) : ?>
-					<h3 style="margin-top: 20px; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #dcdcde; padding-bottom: 5px;">
+					<h3 class="ash-nazg-section-header">
 						<?php echo esc_html( $category ); ?>
-						<span style="color: #666; font-weight: normal; font-size: 13px;">
+						<span class="ash-nazg-label-text">
 							(<?php echo count( $endpoints ); ?> <?php echo _n( 'endpoint', 'endpoints', count( $endpoints ), 'ash-nazg' ); ?>)
 						</span>
 					</h3>
-					<table class="widefat striped" style="margin-bottom: 20px;">
+					<table class="widefat striped ash-nazg-table-mb">
 						<thead>
 							<tr>
-								<th style="width: 35px;"></th>
-								<th style="width: 20%;"><?php esc_html_e( 'Endpoint', 'ash-nazg' ); ?></th>
-								<th style="width: 30%;"><?php esc_html_e( 'Path', 'ash-nazg' ); ?></th>
-								<th style="width: 15%;"><?php esc_html_e( 'Last Checked', 'ash-nazg' ); ?></th>
+								<th class="ash-nazg-th-icon"></th>
+								<th class="ash-nazg-th-20"><?php esc_html_e( 'Endpoint', 'ash-nazg' ); ?></th>
+								<th class="ash-nazg-th-30"><?php esc_html_e( 'Path', 'ash-nazg' ); ?></th>
+								<th class="ash-nazg-th-15"><?php esc_html_e( 'Last Checked', 'ash-nazg' ); ?></th>
 								<th><?php esc_html_e( 'Status / Data', 'ash-nazg' ); ?></th>
 							</tr>
 						</thead>
 						<tbody>
 							<?php foreach ( $endpoints as $endpoint ) : ?>
 								<tr>
-									<td style="text-align: center;">
+									<td class="ash-nazg-text-center">
 										<?php if ( 'success' === $endpoint['status'] ) : ?>
-											<span class="dashicons dashicons-yes-alt" style="color: #46b450;" title="<?php esc_attr_e( 'Available', 'ash-nazg' ); ?>"></span>
+											<span class="dashicons dashicons-yes-alt ash-nazg-icon-success" title="<?php esc_attr_e( 'Available', 'ash-nazg' ); ?>"></span>
 										<?php elseif ( 'unavailable' === $endpoint['status'] ) : ?>
-											<span class="dashicons dashicons-minus" style="color: #dba617;" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Unavailable', 'ash-nazg' ) ); ?>"></span>
+											<span class="dashicons dashicons-minus ash-nazg-icon-warning" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Unavailable', 'ash-nazg' ) ); ?>"></span>
 										<?php else : ?>
-											<span class="dashicons dashicons-dismiss" style="color: #dc3232;" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Error', 'ash-nazg' ) ); ?>"></span>
+											<span class="dashicons dashicons-dismiss ash-nazg-icon-error" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Error', 'ash-nazg' ) ); ?>"></span>
 										<?php endif; ?>
 									</td>
 									<td>
 										<strong><?php echo esc_html( $endpoint['name'] ); ?></strong>
 										<?php if ( ! empty( $endpoint['description'] ) ) : ?>
-											<br><small style="color: #666;"><?php echo esc_html( $endpoint['description'] ); ?></small>
+											<br><small class="ash-nazg-text-muted"><?php echo esc_html( $endpoint['description'] ); ?></small>
 										<?php endif; ?>
 									</td>
-									<td><code style="font-size: 11px;"><?php echo esc_html( $endpoint['path'] ); ?></code></td>
+									<td><code class="ash-nazg-tiny-text"><?php echo esc_html( $endpoint['path'] ); ?></code></td>
 									<td>
 										<?php if ( $endpoints_cached_at ) : ?>
-											<small style="color: #666;"><?php echo esc_html( human_time_diff( $endpoints_cached_at ) ); ?> ago</small>
+											<small class="ash-nazg-text-muted"><?php echo esc_html( human_time_diff( $endpoints_cached_at ) ); ?> ago</small>
 										<?php else : ?>
-											<small style="color: #999;">—</small>
+											<small class="ash-nazg-text-light">—</small>
 										<?php endif; ?>
 									</td>
 									<td>
 										<?php if ( 'success' === $endpoint['status'] && ! empty( $endpoint['data'] ) ) : ?>
 											<?php foreach ( $endpoint['data'] as $data_key => $data_value ) : ?>
 												<?php if ( is_scalar( $data_value ) ) : ?>
-													<div style="font-size: 12px;">
+													<div class="ash-nazg-small-text">
 														<strong><?php echo esc_html( ucfirst( $data_key ) ); ?>:</strong>
 														<?php echo esc_html( $data_value ); ?>
 													</div>
 												<?php endif; ?>
 											<?php endforeach; ?>
 										<?php elseif ( 'success' !== $endpoint['status'] && ! empty( $endpoint['error'] ) ) : ?>
-											<small style="color: #dc3232;"><?php echo esc_html( $endpoint['error'] ); ?></small>
+											<small class="ash-nazg-text-error"><?php echo esc_html( $endpoint['error'] ); ?></small>
 										<?php else : ?>
-											<small style="color: #999;">—</small>
+											<small class="ash-nazg-text-light">—</small>
 										<?php endif; ?>
 									</td>
 								</tr>

@@ -59,10 +59,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<th><?php esc_html_e( 'Running on Pantheon:', 'ash-nazg' ); ?></th>
 				<td>
 					<?php if ( $is_pantheon ) : ?>
-						<span class="dashicons dashicons-yes-alt" style="color: #46b450;"></span>
+						<span class="dashicons dashicons-yes-alt ash-nazg-icon-success"></span>
 						<?php esc_html_e( 'Yes', 'ash-nazg' ); ?>
 					<?php else : ?>
-						<span class="dashicons dashicons-no" style="color: #dc3232;"></span>
+						<span class="dashicons dashicons-no ash-nazg-icon-error"></span>
 						<?php esc_html_e( 'No', 'ash-nazg' ); ?>
 					<?php endif; ?>
 				</td>
@@ -81,10 +81,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<th><?php esc_html_e( 'Pantheon Secrets API:', 'ash-nazg' ); ?></th>
 				<td>
 					<?php if ( $has_secret_api ) : ?>
-						<span class="dashicons dashicons-yes-alt" style="color: #46b450;"></span>
+						<span class="dashicons dashicons-yes-alt ash-nazg-icon-success"></span>
 						<?php esc_html_e( 'Available', 'ash-nazg' ); ?>
 					<?php else : ?>
-						<span class="dashicons dashicons-no" style="color: #dc3232;"></span>
+						<span class="dashicons dashicons-no ash-nazg-icon-error"></span>
 						<?php esc_html_e( 'Not available', 'ash-nazg' ); ?>
 					<?php endif; ?>
 				</td>
