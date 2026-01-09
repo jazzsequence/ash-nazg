@@ -640,3 +640,83 @@ function clear_addon_endpoint_cache( $site_id, $env ) {
 	$cache_key = sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $env );
 	delete_transient( $cache_key );
 }
+
+/**
+ * Get available Pantheon workflows.
+ *
+ * Returns a list of workflows that can be triggered from the WordPress admin.
+ *
+ * @return array Array of workflow definitions.
+ */
+function get_available_workflows() {
+	return array(
+		'install_ocp' => array(
+			'id' => 'install_ocp',
+			'name' => __( 'Install Object Cache Pro', 'ash-nazg' ),
+			'description' => __( 'Installs Object Cache Pro plugin with automated configuration.', 'ash-nazg' ),
+			'workflow_type' => 'scaffold_extensions',
+			'params' => array(
+				'job_name' => 'install_ocp',
+				'with_db' => true,
+			),
+			'allowed_envs' => array( 'dev' ),
+		),
+	);
+}
+
+/**
+ * Trigger a Pantheon workflow.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $env Environment name.
+ * @param string $workflow_type Workflow type (e.g., 'scaffold_extensions').
+ * @param array $params Workflow parameters.
+ * @return array|WP_Error Workflow response or WP_Error on failure.
+ */
+function trigger_workflow( $site_id, $env, $workflow_type, $params ) {
+	// Validate environment.
+	if ( ! in_array( $env, array( 'dev' ), true ) ) {
+		return new \WP_Error(
+			'invalid_environment',
+			sprintf(
+				/* translators: %s: environment name */
+				__( 'Workflows can only be triggered on dev environments. Current environment: %s', 'ash-nazg' ),
+				$env
+			)
+		);
+	}
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/workflows', $site_id, $env );
+	$body = array(
+		'type' => $workflow_type,
+		'params' => $params,
+	);
+
+	$result = api_request( $endpoint, 'POST', $body );
+
+	if ( is_wp_error( $result ) ) {
+		error_log( sprintf( 'Ash-Nazg: Failed to trigger workflow %s on %s/%s - Error: %s', $workflow_type, $site_id, $env, $result->get_error_message() ) );
+		return $result;
+	}
+
+	error_log( sprintf( 'Ash-Nazg: Triggered workflow %s on %s/%s - Response: %s', $workflow_type, $site_id, $env, wp_json_encode( $result ) ) );
+
+	return $result;
+}
+
+/**
+ * Get workflow status.
+ *
+ * @param string $workflow_id Workflow UUID.
+ * @return array|WP_Error Workflow data or WP_Error on failure.
+ */
+function get_workflow_status( $workflow_id ) {
+	$endpoint = sprintf( '/v0/workflows/%s', $workflow_id );
+	$result = api_request( $endpoint, 'GET' );
+
+	if ( is_wp_error( $result ) ) {
+		return $result;
+	}
+
+	return $result;
+}

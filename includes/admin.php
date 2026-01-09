@@ -18,6 +18,7 @@ function init() {
 	add_action( 'admin_menu', __NAMESPACE__ . '\\add_admin_menu' );
 	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\enqueue_assets' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_addon_form_submission' );
+	add_action( 'admin_init', __NAMESPACE__ . '\\handle_workflow_form_submission' );
 }
 
 /**
@@ -47,6 +48,16 @@ function add_admin_menu() {
 		__NAMESPACE__ . '\\render_addons_page'
 	);
 
+	// Workflows page.
+	add_submenu_page(
+		'ash-nazg',
+		__( 'Pantheon Workflows', 'ash-nazg' ),
+		__( 'Workflows', 'ash-nazg' ),
+		'manage_options',
+		'ash-nazg-workflows',
+		__NAMESPACE__ . '\\render_workflows_page'
+	);
+
 	// Settings page.
 	add_submenu_page(
 		'ash-nazg',
@@ -69,6 +80,7 @@ function enqueue_assets( $hook ) {
 	$ash_nazg_pages = array(
 		'toplevel_page_ash-nazg',
 		'pantheon_page_ash-nazg-addons',
+		'pantheon_page_ash-nazg-workflows',
 		'pantheon_page_ash-nazg-settings',
 	);
 
@@ -290,4 +302,127 @@ function render_addons_page() {
 	}
 
 	require ASH_NAZG_PLUGIN_DIR . 'includes/views/addons.php';
+}
+
+/**
+ * Handle workflow form submission.
+ *
+ * Runs on admin_init to process form before any output.
+ *
+ * @return void
+ */
+function handle_workflow_form_submission() {
+	// Only process on workflow page submissions.
+	if ( ! isset( $_POST['ash_nazg_workflows_nonce'] ) ) {
+		return;
+	}
+
+	// Verify nonce.
+	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ash_nazg_workflows_nonce'] ) ), 'ash_nazg_trigger_workflow' ) ) {
+		return;
+	}
+
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
+
+	if ( $site_id && isset( $_POST['workflow_id'] ) ) {
+		$workflow_id = sanitize_text_field( wp_unslash( $_POST['workflow_id'] ) );
+		$available_workflows = API\get_available_workflows();
+
+		if ( isset( $available_workflows[ $workflow_id ] ) ) {
+			$workflow = $available_workflows[ $workflow_id ];
+
+			// Check if environment is allowed.
+			if ( ! in_array( $environment, $workflow['allowed_envs'], true ) ) {
+				$redirect_args = array(
+					'page' => 'ash-nazg-workflows',
+					'error' => 'invalid_env',
+				);
+				wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+				exit;
+			}
+
+			// Trigger the workflow.
+			$result = API\trigger_workflow(
+				$site_id,
+				$environment,
+				$workflow['workflow_type'],
+				$workflow['params']
+			);
+
+			$redirect_args = array( 'page' => 'ash-nazg-workflows' );
+
+			if ( is_wp_error( $result ) ) {
+				$redirect_args['error'] = '1';
+				set_transient( 'ash_nazg_workflow_error', $result->get_error_message(), 30 );
+			} else {
+				$redirect_args['triggered'] = '1';
+				// Store workflow ID if available in response.
+				if ( isset( $result['id'] ) ) {
+					set_transient( 'ash_nazg_workflow_id', $result['id'], 30 );
+				}
+			}
+
+			wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+			exit;
+		}
+	}
+}
+
+/**
+ * Render workflows page.
+ *
+ * @return void
+ */
+function render_workflows_page() {
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$message = null;
+	$error = null;
+	$workflow_id = null;
+
+	// Handle redirect messages.
+	if ( isset( $_GET['triggered'] ) ) {
+		$message = __( 'Workflow triggered successfully.', 'ash-nazg' );
+		$stored_workflow_id = get_transient( 'ash_nazg_workflow_id' );
+		if ( $stored_workflow_id ) {
+			$workflow_id = $stored_workflow_id;
+			delete_transient( 'ash_nazg_workflow_id' );
+		}
+	}
+
+	if ( isset( $_GET['error'] ) ) {
+		if ( 'invalid_env' === $_GET['error'] ) {
+			$error = __( 'This workflow can only be triggered on dev or multidev environments.', 'ash-nazg' );
+		} else {
+			$stored_error = get_transient( 'ash_nazg_workflow_error' );
+			if ( $stored_error ) {
+				$error = $stored_error;
+				delete_transient( 'ash_nazg_workflow_error' );
+			}
+		}
+	}
+
+	// Get available workflows.
+	$workflows = API\get_available_workflows();
+
+	// Get current environment.
+	$environment = API\get_pantheon_environment();
+	$site_id = API\get_pantheon_site_id();
+
+	// Get workflow status if we have a workflow ID.
+	$workflow_status = null;
+	if ( $workflow_id ) {
+		$workflow_status = API\get_workflow_status( $workflow_id );
+	}
+
+	require ASH_NAZG_PLUGIN_DIR . 'includes/views/workflows.php';
 }
