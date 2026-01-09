@@ -719,9 +719,9 @@ function ajax_clear_logs() {
 		API\update_connection_mode( $site_id, $environment, 'git' );
 	}
 
-	// Clear transient cache.
-	delete_transient( 'ash_nazg_debug_logs' );
-	delete_transient( 'ash_nazg_debug_logs_timestamp' );
+	// Store empty logs in transient (instead of deleting) so page refresh shows empty state.
+	set_transient( 'ash_nazg_debug_logs', '', YEAR_IN_SECONDS );
+	set_transient( 'ash_nazg_debug_logs_timestamp', time(), YEAR_IN_SECONDS );
 
 	error_log( 'Ash-Nazg: AJAX clear logs - Log cleared and verified successfully' );
 
