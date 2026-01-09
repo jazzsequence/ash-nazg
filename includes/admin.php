@@ -79,9 +79,9 @@ function enqueue_assets( $hook ) {
 	// Only load on our admin pages.
 	$ash_nazg_pages = array(
 		'toplevel_page_ash-nazg',
-		'pantheon_page_ash-nazg-addons',
-		'pantheon_page_ash-nazg-workflows',
-		'pantheon_page_ash-nazg-settings',
+		'ash-nazg_page_ash-nazg-addons',
+		'ash-nazg_page_ash-nazg-workflows',
+		'ash-nazg_page_ash-nazg-settings',
 	);
 
 	$is_ash_nazg_page = false;
