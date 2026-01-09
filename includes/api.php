@@ -597,8 +597,21 @@ function get_site_addons( $site_id = null ) {
 		return $cached;
 	}
 
-	// Get stored addon states from options.
-	$stored_states = get_option( 'ash_nazg_addon_states', array() );
+	// Get stored addon states from environment state.
+	$env_state = get_environment_state();
+	$stored_states = ( $env_state && isset( $env_state['addons'] ) ) ? $env_state['addons'] : array();
+
+	// Fallback: check old addon_states option for migration.
+	if ( empty( $stored_states ) ) {
+		$old_states = get_option( 'ash_nazg_addon_states', array() );
+		if ( ! empty( $old_states ) ) {
+			// Migrate old addon states to new environment state.
+			update_environment_state( array( 'addons' => $old_states ) );
+			$stored_states = $old_states;
+			// Clean up old option.
+			delete_option( 'ash_nazg_addon_states' );
+		}
+	}
 
 	// Known Pantheon addons with their metadata.
 	$known_addons = array(
@@ -677,10 +690,11 @@ function update_site_addon( $site_id, $addon_id, $enabled ) {
 	// Log the addon state change and API response.
 	error_log( sprintf( 'Ash-Nazg: Addon %s %s for site %s - API Response: %s', $addon_id, $enabled ? 'enabled' : 'disabled', $site_id, wp_json_encode( $result ) ) );
 
-	// Store the new addon state in options.
-	$stored_states = get_option( 'ash_nazg_addon_states', array() );
+	// Store the new addon state in environment state.
+	$env_state = get_environment_state();
+	$stored_states = ( $env_state && isset( $env_state['addons'] ) ) ? $env_state['addons'] : array();
 	$stored_states[ $addon_id ] = $enabled;
-	update_option( 'ash_nazg_addon_states', $stored_states );
+	update_environment_state( array( 'addons' => $stored_states ) );
 
 	// Clear addon cache.
 	clear_addons_cache( $site_id );
@@ -736,6 +750,170 @@ function get_cache_timestamp( $cache_key ) {
 	}
 
 	return null;
+}
+
+/**
+ * Get environment state from options.
+ *
+ * Returns the stored state of the current Pantheon environment including
+ * connection mode, addon states, and last sync time.
+ *
+ * @return array|null Environment state array or null if not set.
+ */
+function get_environment_state() {
+	$site_id = get_pantheon_site_id();
+	$env = get_pantheon_environment();
+
+	if ( ! $site_id || ! $env ) {
+		return null;
+	}
+
+	// Get stored state.
+	$state = get_option( 'ash_nazg_environment_state', array() );
+
+	// Return null if state doesn't exist for this site/env.
+	$state_key = "{$site_id}_{$env}";
+	if ( ! isset( $state[ $state_key ] ) ) {
+		return null;
+	}
+
+	return $state[ $state_key ];
+}
+
+/**
+ * Update environment state in options.
+ *
+ * @param array $state_data State data to merge with existing state.
+ * @return bool True on success, false on failure.
+ */
+function update_environment_state( $state_data ) {
+	$site_id = get_pantheon_site_id();
+	$env = get_pantheon_environment();
+
+	if ( ! $site_id || ! $env ) {
+		return false;
+	}
+
+	$state_key = "{$site_id}_{$env}";
+	$all_states = get_option( 'ash_nazg_environment_state', array() );
+
+	// Merge with existing state for this environment.
+	if ( ! isset( $all_states[ $state_key ] ) ) {
+		$all_states[ $state_key ] = array(
+			'site_id' => $site_id,
+			'environment' => $env,
+			'connection_mode' => null,
+			'addons' => array(),
+			'last_synced' => null,
+		);
+	}
+
+	$all_states[ $state_key ] = array_merge( $all_states[ $state_key ], $state_data );
+	$all_states[ $state_key ]['last_synced'] = time();
+
+	return update_option( 'ash_nazg_environment_state', $all_states );
+}
+
+/**
+ * Sync environment state from Pantheon API.
+ *
+ * Queries the Pantheon API to get current connection mode and updates stored state.
+ *
+ * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @param string $env Optional. Environment name. Auto-detected if not provided.
+ * @return bool True on success, false on failure.
+ */
+function sync_environment_state( $site_id = null, $env = null ) {
+	if ( null === $site_id ) {
+		$site_id = get_pantheon_site_id();
+	}
+
+	if ( null === $env ) {
+		$env = get_pantheon_environment();
+	}
+
+	if ( ! $site_id || ! $env ) {
+		return false;
+	}
+
+	// Get environment info from API.
+	$env_info = get_environment_info( $site_id, $env );
+
+	if ( is_wp_error( $env_info ) ) {
+		error_log( sprintf( 'Ash-Nazg: Failed to sync environment state - %s', $env_info->get_error_message() ) );
+		return false;
+	}
+
+	// Extract connection mode.
+	$connection_mode = isset( $env_info['on_server_development'] ) && $env_info['on_server_development'] ? 'sftp' : 'git';
+
+	// Update state.
+	$state_data = array(
+		'connection_mode' => $connection_mode,
+	);
+
+	return update_environment_state( $state_data );
+}
+
+/**
+ * Get connection mode from stored state.
+ *
+ * @return string|null 'git', 'sftp', or null if not known.
+ */
+function get_connection_mode() {
+	$state = get_environment_state();
+
+	if ( ! $state || ! isset( $state['connection_mode'] ) ) {
+		return null;
+	}
+
+	return $state['connection_mode'];
+}
+
+/**
+ * Update connection mode (SFTP/Git toggle).
+ *
+ * @param string $site_id Site UUID.
+ * @param string $env Environment name.
+ * @param string $mode Connection mode: 'sftp' or 'git'.
+ * @return array|WP_Error Environment data or WP_Error on failure.
+ */
+function update_connection_mode( $site_id, $env, $mode ) {
+	if ( ! in_array( $mode, array( 'sftp', 'git' ), true ) ) {
+		return new \WP_Error(
+			'invalid_mode',
+			__( 'Invalid connection mode. Must be "sftp" or "git".', 'ash-nazg' )
+		);
+	}
+
+	// Map local environments to dev for API queries.
+	$api_env = in_array( $env, array( 'lando', 'local', 'localhost', 'ddev' ), true ) ? 'dev' : $env;
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s', $site_id, $api_env );
+	$body = array(
+		'on_server_development' => ( 'sftp' === $mode ),
+	);
+
+	$result = api_request( $endpoint, 'PUT', $body );
+
+	if ( is_wp_error( $result ) ) {
+		error_log( sprintf( 'Ash-Nazg: Failed to update connection mode to %s on %s/%s - Error: %s', $mode, $site_id, $env, $result->get_error_message() ) );
+		return $result;
+	}
+
+	// Update stored state.
+	update_environment_state(
+		array(
+			'connection_mode' => $mode,
+		)
+	);
+
+	// Clear environment info cache to force refresh.
+	delete_transient( sprintf( 'ash_nazg_all_env_info_%s', $site_id ) );
+
+	error_log( sprintf( 'Ash-Nazg: Updated connection mode to %s on %s/%s', $mode, $site_id, $env ) );
+
+	return $result;
 }
 
 /**

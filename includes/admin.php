@@ -159,6 +159,11 @@ function render_dashboard_page() {
 			}
 		}
 
+		// Sync environment state if we successfully fetched environment info.
+		if ( null !== $environment_info && null === $api_error ) {
+			API\sync_environment_state( $site_id, $environment );
+		}
+
 		// Get endpoints status if we can connect to the API.
 		// We fetch endpoints even if the environment doesn't exist on Pantheon (local dev).
 		if ( null === $api_error ) {

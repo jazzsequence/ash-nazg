@@ -214,8 +214,8 @@ npm test
 - [x] Site addons management (Redis, Solr)
 - [x] Workflows integration (trigger scaffold_extensions workflows)
 - [x] Smart caching with timestamps (24-hour cache)
-- [ ] Launch check status information
-- [ ] Error/debug log viewer
+- [~] Launch check status information (not available via API - terminus only)
+- [~] Error/debug log viewer (files may not exist due to read-only filesystem)
 
 ### Phase 2: Development Workflow Features
 - [ ] SFTP/Git mode toggle
