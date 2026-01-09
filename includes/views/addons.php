@@ -34,15 +34,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	<?php
 	// Temporary debug: Show site info structure to find addon data.
-	$site_id = Pantheon\AshNazg\API\get_pantheon_site_id();
-	$site_info = Pantheon\AshNazg\API\get_site_info( $site_id );
-	if ( ! is_wp_error( $site_info ) && current_user_can( 'manage_options' ) ) :
+	$debug_site_id = \Pantheon\AshNazg\API\get_pantheon_site_id();
+	$debug_site_info = \Pantheon\AshNazg\API\get_site_info( $debug_site_id );
+	if ( ! is_wp_error( $debug_site_info ) && current_user_can( 'manage_options' ) ) :
 		?>
 		<div class="notice notice-info">
 			<p><strong><?php esc_html_e( 'Debug: Site Info Structure', 'ash-nazg' ); ?></strong></p>
-			<p><?php esc_html_e( 'Available fields:', 'ash-nazg' ); ?> <code><?php echo esc_html( implode( ', ', array_keys( $site_info ) ) ); ?></code></p>
-			<?php if ( isset( $site_info['addons'] ) ) : ?>
-				<p><?php esc_html_e( 'Addons field found:', 'ash-nazg' ); ?> <code><?php echo esc_html( wp_json_encode( $site_info['addons'] ) ); ?></code></p>
+			<p><?php esc_html_e( 'Available fields:', 'ash-nazg' ); ?> <code><?php echo esc_html( implode( ', ', array_keys( $debug_site_info ) ) ); ?></code></p>
+			<?php if ( isset( $debug_site_info['addons'] ) ) : ?>
+				<p><?php esc_html_e( 'Addons field found:', 'ash-nazg' ); ?> <code><?php echo esc_html( wp_json_encode( $debug_site_info['addons'] ) ); ?></code></p>
 			<?php else : ?>
 				<p><em><?php esc_html_e( 'No "addons" field found in site info.', 'ash-nazg' ); ?></em></p>
 			<?php endif; ?>
