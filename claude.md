@@ -181,6 +181,10 @@ ash-nazg/
 - Fallback prefix for global scope: `ash_nazg_`
 - Use proper WordPress i18n functions for all user-facing strings
 - Text domain: `ash-nazg`
+- **CRITICAL: Spacing Rule** - Only ONE space after variable names and array keys
+  - ✅ Correct: `$variable = value;` and `'key' => value`
+  - ❌ Wrong: `$variable  = value;` and `'key'  => value`
+  - Never use alignment spacing for variables or array keys
 
 #### Dependency Management
 - Use Composer for all dependencies
@@ -201,6 +205,22 @@ ash-nazg/
 - Use WordPress Transients API with reasonable expiration times
 - Implement background processing for heavy operations (wp-cron)
 - Lazy-load admin assets only when needed
+
+#### Git Workflow
+- **CRITICAL: Commit After Changes** - Make a git commit after every set of file changes
+- Use descriptive commit messages that summarize the changes
+- Follow the commit message format:
+  ```
+  Short summary of changes (50 chars or less)
+
+  - Detailed bullet points of what changed
+  - Why the changes were made
+  - Any important notes
+
+  Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+  ```
+- Always include all changed files in commits (use `git add -A` when appropriate)
+- Commits should represent logical units of work
 
 ### Testing Strategy
 
