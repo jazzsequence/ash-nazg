@@ -16,22 +16,30 @@ This plugin follows a **Proof of Concept (PoC) approach**: implement API capabil
 
 ### Currently Implemented
 
+#### Core Features
 - **Environment Detection** - Auto-detect Pantheon environment (dev/test/live/multidev/local)
 - **Site Status Dashboard** - View Pantheon site details and environment information
 - **API Endpoints Testing** - Comprehensive display of available Pantheon API endpoints with status
-- **Site Addons Management** - Enable/disable Pantheon addons (Redis, Solr) directly from WordPress
-- **Workflows** - Trigger Pantheon workflows from WordPress admin (e.g., Object Cache Pro installation)
 - **Smart Caching** - 24-hour cache with "last checked" timestamps to minimize API calls
 - **Settings Management** - Configure machine tokens and plugin settings
 
-### Phase 2: Development Workflow (Planned)
+#### Development Workflow
+- **SFTP/Git Mode Toggle** - Switch between SFTP and Git mode with one click, includes automatic polling verification
+- **Environment State Management** - Persistent tracking of site state (connection mode, environment) in WordPress
+- **Automatic Mode Switching** - Automatically switches to SFTP mode for file operations, then switches back
+- **Debug Log Viewer** - Read, display, and clear WordPress debug.log files without SSH access
 
-- **SFTP/Git Mode Toggle** - Switch between SFTP and Git mode without leaving WordPress (enables plugin/theme installation)
+#### Site Management
+- **Site Addons Management** - Enable/disable Pantheon addons (Redis, Solr) directly from WordPress
+- **Workflows** - Trigger Pantheon workflows from WordPress admin (e.g., Object Cache Pro installation)
+
+### Phase 2: Development Workflow (In Progress)
+
 - **Upstream Updates** - Detect and apply upstream updates from WordPress admin
 - **Code Deployment** - Push code to test/live environments
 - **Multidev Management** - Create and manage multidev environments
 - **Backup Control** - Create, list, and manage backups
-- **Debug Log Viewer** - Read and display WordPress debug logs without SSH access
+- **Workflow Monitoring** - Monitor and poll status of long-running workflow operations
 
 ### Phase 3: Experimental (Evaluation)
 
@@ -123,7 +131,8 @@ This plugin uses [Pantheon Secrets](https://docs.pantheon.io/guides/secrets) to 
 
 After configuration, you'll find an **Ash Nazg** top-level menu in your WordPress admin with the following pages:
 
-- **Dashboard** - Environment status, site information, API endpoints testing with status indicators
+- **Dashboard** - Environment status, site information, connection mode toggle, API endpoints testing with status indicators
+- **Logs** - View and clear WordPress debug.log files (automatically switches to SFTP mode if needed)
 - **Addons** - Enable/disable Pantheon site addons (Redis, Apache Solr)
 - **Workflows** - Trigger Pantheon workflows (currently: Object Cache Pro installation)
 - **Settings** - Machine token configuration and plugin settings
@@ -218,12 +227,18 @@ npm test
 - [~] Error/debug log viewer (files may not exist due to read-only filesystem)
 
 ### Phase 2: Development Workflow Features
-- [ ] SFTP/Git mode toggle
+- [x] SFTP/Git mode toggle with polling verification
+- [x] Environment state management and persistence
+- [x] Automatic mode switching for file operations
+- [x] Debug log viewer with fetch/clear functionality
+- [x] JavaScript organization (separate files with proper enqueuing)
+- [x] CSS organization standards (utility classes, no inline styles)
+- [x] Comprehensive testing suite (API, state management, AJAX handlers)
 - [ ] Upstream update detection and application
 - [ ] Code deployment (push to test/live)
 - [ ] Multidev creation
 - [ ] Backup management (create, list, restore if safe)
-- [ ] Workflow status monitoring with polling
+- [ ] Workflow status monitoring with polling for long-running operations
 - [ ] Additional workflow types beyond scaffold_extensions
 
 ### Phase 3: Experimental/Advanced
@@ -314,7 +329,18 @@ Named after Tolkien's One Ring inscription: "Ash nazg durbatulûk, ash nazg gimb
 
 ## Changelog
 
-### 0.1.1 - In Development
+### 0.2.0 - In Development (Phase 2 Complete)
+- **SFTP/Git Mode Toggle**: Switch connection modes with one click, includes automatic polling verification
+- **Environment State Management**: Persistent tracking of site state in WordPress options
+- **Automatic Mode Switching**: Automatically switches to SFTP mode for file operations, then reverts
+- **Debug Log Viewer**: View, fetch, and clear WordPress debug.log files without SSH access
+- **JavaScript Organization**: All JS in separate files with proper WordPress enqueuing and localization
+- **CSS Organization Standards**: Comprehensive utility classes system, eliminated all inline styles
+- **Comprehensive Testing**: Added test suites for API patterns, state management, and AJAX handlers
+- **Enhanced Dashboard**: Connection mode display and toggle integrated into dashboard page
+- **Auto-Sync**: State automatically synchronized after mode changes with verification
+
+### 0.1.1 - Released
 - **Site Addons Management**: Enable/disable Pantheon addons (Redis, Solr) from WordPress admin
 - **Workflows**: Trigger Pantheon workflows (Object Cache Pro installation via scaffold_extensions)
 - **Enhanced Caching**: 24-hour cache timeout with "last checked" timestamps on all data
