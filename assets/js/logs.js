@@ -10,11 +10,15 @@ jQuery(document).ready(function($) {
 	 */
 	$('#ash-nazg-fetch-logs').on('click', function() {
 		var $button = $(this);
+		var $clearButton = $('#ash-nazg-clear-logs');
 		var $loading = $('#ash-nazg-logs-loading');
+		var $loadingMessage = $('#ash-nazg-logs-loading-message');
 		var $container = $('#ash-nazg-logs-container');
 
-		// Disable button and show loading.
+		// Disable buttons and show loading.
 		$button.prop('disabled', true);
+		$clearButton.prop('disabled', true);
+		$loadingMessage.text(ashNazgLogs.i18n.fetchingLogs);
 		$loading.show();
 
 		$.ajax({
@@ -27,6 +31,7 @@ jQuery(document).ready(function($) {
 			success: function(response) {
 				$loading.hide();
 				$button.prop('disabled', false);
+				$clearButton.prop('disabled', false);
 
 				if (response.success) {
 					var logs = response.data.logs;
@@ -59,7 +64,62 @@ jQuery(document).ready(function($) {
 			error: function() {
 				$loading.hide();
 				$button.prop('disabled', false);
+				$clearButton.prop('disabled', false);
 				$('.wrap h1').after('<div class="notice notice-error is-dismissible"><p>' + ashNazgLogs.i18n.ajaxError + '</p></div>');
+			}
+		});
+	});
+
+	/**
+	 * Handle clear logs button click.
+	 */
+	$('#ash-nazg-clear-logs').on('click', function() {
+		var $button = $(this);
+		var $fetchButton = $('#ash-nazg-fetch-logs');
+		var $loading = $('#ash-nazg-logs-loading');
+		var $loadingMessage = $('#ash-nazg-logs-loading-message');
+		var $container = $('#ash-nazg-logs-container');
+
+		// Disable buttons and show loading.
+		$button.prop('disabled', true);
+		$fetchButton.prop('disabled', true);
+		$loadingMessage.text(ashNazgLogs.i18n.clearingLogs);
+		$loading.show();
+
+		$.ajax({
+			url: ashNazgLogs.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'ash_nazg_clear_logs',
+				nonce: ashNazgLogs.clearLogsNonce
+			},
+			success: function(response) {
+				$loading.hide();
+				$button.prop('disabled', false);
+				$fetchButton.prop('disabled', false);
+
+				if (response.success) {
+					var switchedMode = response.data.switched_mode;
+
+					// Clear the container.
+					$container.html('<p style="color: #666;"><em>' + ashNazgLogs.i18n.emptyLog + '</em></p>');
+
+					// Hide timestamp display.
+					$('#ash-nazg-logs-timestamp').hide();
+
+					// Show success message.
+					var message = switchedMode ? ashNazgLogs.i18n.clearSuccessSwitch : ashNazgLogs.i18n.clearSuccess;
+					$('.wrap h1').after('<div class="notice notice-success is-dismissible"><p>' + message + '</p></div>');
+				} else {
+					var errorMsg = response.data && response.data.message ? response.data.message : ashNazgLogs.i18n.clearError;
+					$('.wrap h1').after('<div class="notice notice-error is-dismissible"><p>' + errorMsg + '</p></div>');
+				}
+			},
+			error: function() {
+				$loading.hide();
+				$button.prop('disabled', false);
+				$fetchButton.prop('disabled', false);
+				$('.wrap h1').after('<div class="notice notice-error is-dismissible"><p>' + ashNazgLogs.i18n.clearAjaxError + '</p></div>');
 			}
 		});
 	});

@@ -51,10 +51,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php esc_html_e( 'Fetch Logs', 'ash-nazg' ); ?>
 			</button>
 
+			<button type="button" id="ash-nazg-clear-logs" class="button button-secondary" style="margin-left: 10px;">
+				<span class="dashicons dashicons-trash" style="margin-top: 3px;"></span>
+				<?php esc_html_e( 'Clear Log', 'ash-nazg' ); ?>
+			</button>
+
 			<div id="ash-nazg-logs-loading" style="display: none; margin-top: 20px;">
 				<p>
 					<span class="spinner is-active" style="float: none; margin: 0 10px 0 0;"></span>
-					<em><?php esc_html_e( 'Fetching logs... This may take a moment if we need to switch connection modes.', 'ash-nazg' ); ?></em>
+					<em id="ash-nazg-logs-loading-message"><?php esc_html_e( 'Fetching logs... This may take a moment if we need to switch connection modes.', 'ash-nazg' ); ?></em>
 				</p>
 			</div>
 

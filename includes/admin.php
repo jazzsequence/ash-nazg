@@ -20,6 +20,7 @@ function init() {
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_addon_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_workflow_form_submission' );
 	add_action( 'wp_ajax_ash_nazg_fetch_logs', __NAMESPACE__ . '\\ajax_fetch_logs' );
+	add_action( 'wp_ajax_ash_nazg_clear_logs', __NAMESPACE__ . '\\ajax_clear_logs' );
 	add_action( 'wp_ajax_ash_nazg_toggle_connection_mode', __NAMESPACE__ . '\\ajax_toggle_connection_mode' );
 }
 
@@ -159,14 +160,21 @@ function enqueue_assets( $hook ) {
 			array(
 				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 				'fetchLogsNonce' => wp_create_nonce( 'ash_nazg_fetch_logs' ),
+				'clearLogsNonce' => wp_create_nonce( 'ash_nazg_clear_logs' ),
 				'i18n'           => array(
-					'logContents'       => __( 'Log Contents', 'ash-nazg' ),
-					'emptyLog'          => __( 'Debug log is empty or does not exist yet.', 'ash-nazg' ),
-					'justNow'           => __( 'just now', 'ash-nazg' ),
-					'success'           => __( 'Logs fetched successfully.', 'ash-nazg' ),
-					'successWithSwitch' => __( 'Logs fetched successfully. Connection mode was temporarily switched to SFTP.', 'ash-nazg' ),
-					'fetchError'        => __( 'Failed to fetch logs.', 'ash-nazg' ),
-					'ajaxError'         => __( 'An error occurred while fetching logs.', 'ash-nazg' ),
+					'logContents'        => __( 'Log Contents', 'ash-nazg' ),
+					'emptyLog'           => __( 'Debug log is empty or does not exist yet.', 'ash-nazg' ),
+					'justNow'            => __( 'just now', 'ash-nazg' ),
+					'success'            => __( 'Logs fetched successfully.', 'ash-nazg' ),
+					'successWithSwitch'  => __( 'Logs fetched successfully. Connection mode was temporarily switched to SFTP.', 'ash-nazg' ),
+					'fetchError'         => __( 'Failed to fetch logs.', 'ash-nazg' ),
+					'ajaxError'          => __( 'An error occurred while fetching logs.', 'ash-nazg' ),
+					'clearSuccess'       => __( 'Debug log cleared successfully.', 'ash-nazg' ),
+					'clearSuccessSwitch' => __( 'Debug log cleared successfully. Connection mode was temporarily switched to SFTP.', 'ash-nazg' ),
+					'clearError'         => __( 'Failed to clear log.', 'ash-nazg' ),
+					'clearAjaxError'     => __( 'An error occurred while clearing the log.', 'ash-nazg' ),
+					'fetchingLogs'       => __( 'Fetching logs... This may take a moment if we need to switch connection modes.', 'ash-nazg' ),
+					'clearingLogs'       => __( 'Clearing log... This may take a moment if we need to switch connection modes.', 'ash-nazg' ),
 				),
 			)
 		);
@@ -619,6 +627,107 @@ function ajax_fetch_logs() {
 		array(
 			'logs' => $logs,
 			'timestamp' => time(),
+			'switched_mode' => $switched_mode,
+		)
+	);
+}
+
+/**
+ * Handle AJAX request to clear debug logs.
+ *
+ * @return void
+ */
+function ajax_clear_logs() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_clear_logs', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'ash-nazg' ) ) );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
+
+	if ( ! $site_id || ! $environment ) {
+		error_log( 'Ash-Nazg: AJAX clear logs - Not running on Pantheon' );
+		wp_send_json_error( array( 'message' => __( 'Not running on Pantheon.', 'ash-nazg' ) ) );
+	}
+
+	error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Site: %s, Env: %s', $site_id, $environment ) );
+
+	// Get current connection mode from state.
+	$original_mode = API\get_connection_mode();
+	if ( ! $original_mode ) {
+		// Sync state if not known.
+		error_log( 'Ash-Nazg: AJAX clear logs - Syncing environment state' );
+		API\sync_environment_state( $site_id, $environment );
+		$original_mode = API\get_connection_mode();
+	}
+
+	error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Original mode: %s', $original_mode ) );
+
+	$switched_mode = false;
+
+	// If in Git mode, switch to SFTP temporarily.
+	if ( 'git' === $original_mode ) {
+		error_log( 'Ash-Nazg: AJAX clear logs - Switching to SFTP mode' );
+		$result = API\update_connection_mode( $site_id, $environment, 'sftp' );
+		if ( is_wp_error( $result ) ) {
+			error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Failed to switch to SFTP: %s', $result->get_error_message() ) );
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+		}
+		$switched_mode = true;
+		// Give the mode switch a moment to take effect.
+		sleep( 2 );
+	}
+
+	// Delete debug.log file.
+	$log_path = WP_CONTENT_DIR . '/debug.log';
+
+	error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Attempting to delete log at: %s', $log_path ) );
+
+	if ( file_exists( $log_path ) ) {
+		if ( unlink( $log_path ) ) {
+			error_log( 'Ash-Nazg: AJAX clear logs - Log file deleted successfully' );
+		} else {
+			error_log( 'Ash-Nazg: AJAX clear logs - Failed to delete log file' );
+			// Switch back before error.
+			if ( $switched_mode ) {
+				API\update_connection_mode( $site_id, $environment, 'git' );
+			}
+			wp_send_json_error( array( 'message' => __( 'Failed to delete log file. Check file permissions.', 'ash-nazg' ) ) );
+		}
+	} else {
+		error_log( 'Ash-Nazg: AJAX clear logs - Log file does not exist' );
+	}
+
+	// Verify the log file was deleted.
+	sleep( 1 ); // Give filesystem a moment.
+	if ( file_exists( $log_path ) ) {
+		error_log( 'Ash-Nazg: AJAX clear logs - Log file still exists after deletion attempt' );
+		// Switch back before error.
+		if ( $switched_mode ) {
+			API\update_connection_mode( $site_id, $environment, 'git' );
+		}
+		wp_send_json_error( array( 'message' => __( 'Log file was not deleted. Please try again.', 'ash-nazg' ) ) );
+	}
+
+	// Switch back to original mode if we changed it.
+	if ( $switched_mode ) {
+		error_log( 'Ash-Nazg: AJAX clear logs - Switching back to Git mode' );
+		API\update_connection_mode( $site_id, $environment, 'git' );
+	}
+
+	// Clear transient cache.
+	delete_transient( 'ash_nazg_debug_logs' );
+	delete_transient( 'ash_nazg_debug_logs_timestamp' );
+
+	error_log( 'Ash-Nazg: AJAX clear logs - Log cleared and verified successfully' );
+
+	wp_send_json_success(
+		array(
+			'message'       => __( 'Debug log cleared successfully.', 'ash-nazg' ),
 			'switched_mode' => $switched_mode,
 		)
 	);
