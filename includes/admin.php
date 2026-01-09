@@ -186,26 +186,31 @@ function render_addons_page() {
 	if ( isset( $_POST['ash_nazg_addons_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ash_nazg_addons_nonce'] ) ), 'ash_nazg_update_addons' ) ) {
 		$site_id = API\get_pantheon_site_id();
 
-		if ( $site_id && isset( $_POST['addons'] ) && is_array( $_POST['addons'] ) ) {
+		if ( $site_id && isset( $_POST['submit'] ) ) {
 			$updated_count = 0;
 			$errors = array();
 
-			// Process each addon.
-			foreach ( $_POST['addons'] as $addon_id => $state ) {
-				$addon_id = sanitize_text_field( $addon_id );
-				$enabled = ( 'on' === $state );
+			// Get list of all known addons.
+			$all_addons = API\get_site_addons( $site_id );
+			if ( ! is_wp_error( $all_addons ) ) {
+				// Process each addon (both checked and unchecked).
+				foreach ( $all_addons as $addon ) {
+					$addon_id = $addon['id'];
+					// Checkbox checked = enabled, checkbox unchecked = disabled.
+					$enabled = isset( $_POST['addons'][ $addon_id ] ) && 'on' === $_POST['addons'][ $addon_id ];
 
-				$result = API\update_site_addon( $site_id, $addon_id, $enabled );
+					$result = API\update_site_addon( $site_id, $addon_id, $enabled );
 
-				if ( is_wp_error( $result ) ) {
-					$errors[] = sprintf(
-						/* translators: 1: addon ID, 2: error message */
-						__( 'Failed to update %1$s: %2$s', 'ash-nazg' ),
-						$addon_id,
-						$result->get_error_message()
-					);
-				} else {
-					$updated_count++;
+					if ( is_wp_error( $result ) ) {
+						$errors[] = sprintf(
+							/* translators: 1: addon ID, 2: error message */
+							__( 'Failed to update %1$s: %2$s', 'ash-nazg' ),
+							$addon_id,
+							$result->get_error_message()
+						);
+					} else {
+						$updated_count++;
+					}
 				}
 			}
 

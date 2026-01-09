@@ -597,8 +597,8 @@ function update_site_addon( $site_id, $addon_id, $enabled ) {
 		return $result;
 	}
 
-	// Log the addon state change.
-	error_log( sprintf( 'Ash-Nazg: Addon %s %s for site %s', $addon_id, $enabled ? 'enabled' : 'disabled', $site_id ) );
+	// Log the addon state change and API response.
+	error_log( sprintf( 'Ash-Nazg: Addon %s %s for site %s - API Response: %s', $addon_id, $enabled ? 'enabled' : 'disabled', $site_id, wp_json_encode( $result ) ) );
 
 	// Store the new addon state in options.
 	$stored_states = get_option( 'ash_nazg_addon_states', array() );
