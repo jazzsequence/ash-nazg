@@ -192,8 +192,15 @@ function api_request( $endpoint, $method = 'GET', $body = array() ) {
 		'timeout' => 30,
 	);
 
-	if ( ! empty( $body ) && in_array( $method, array( 'POST', 'PUT', 'PATCH' ), true ) ) {
-		$args['body'] = wp_json_encode( $body );
+	// Add body for POST, PUT, PATCH, and DELETE.
+	// For PUT/DELETE, send empty object if no body provided (required for Content-Length header).
+	if ( in_array( $method, array( 'POST', 'PUT', 'PATCH', 'DELETE' ), true ) ) {
+		if ( ! empty( $body ) ) {
+			$args['body'] = wp_json_encode( $body );
+		} elseif ( in_array( $method, array( 'PUT', 'DELETE' ), true ) ) {
+			// Empty JSON object to ensure Content-Length header is set.
+			$args['body'] = '{}';
+		}
 	}
 
 	$response = wp_remote_request( $url, $args );
@@ -593,7 +600,8 @@ function update_site_addon( $site_id, $addon_id, $enabled ) {
 	$endpoint = sprintf( '/v0/sites/%s/addons/%s', $site_id, $addon_id );
 	$method = $enabled ? 'PUT' : 'DELETE';
 
-	$result = api_request( $endpoint, $method );
+	// Send empty body to ensure Content-Length header is set (avoid 411 errors).
+	$result = api_request( $endpoint, $method, array() );
 
 	if ( is_wp_error( $result ) ) {
 		error_log( sprintf( 'Ash-Nazg: Failed to %s addon %s for site %s: %s', $enabled ? 'enable' : 'disable', $addon_id, $site_id, $result->get_error_message() ) );
