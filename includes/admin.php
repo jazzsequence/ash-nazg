@@ -19,6 +19,7 @@ function init() {
 	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\enqueue_assets' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_addon_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_workflow_form_submission' );
+	add_action( 'admin_init', __NAMESPACE__ . '\\handle_connection_mode_toggle' );
 }
 
 /**
@@ -122,6 +123,31 @@ function render_dashboard_page() {
 		if ( wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'ash_nazg_refresh_cache' ) ) {
 			API\clear_cache();
 			$refresh_message = __( 'API cache cleared. Data refreshed.', 'ash-nazg' );
+		}
+	}
+
+	// Handle connection mode toggle messages.
+	$mode_message = null;
+	$mode_error = null;
+
+	if ( isset( $_GET['mode_changed'] ) && isset( $_GET['new_mode'] ) ) {
+		$new_mode = sanitize_text_field( wp_unslash( $_GET['new_mode'] ) );
+		if ( 'sftp' === $new_mode ) {
+			$mode_message = __( 'Switched to SFTP mode. You can now install/update plugins and themes.', 'ash-nazg' );
+		} else {
+			$mode_message = __( 'Switched to Git mode. Changes must be committed via Git.', 'ash-nazg' );
+		}
+	}
+
+	if ( isset( $_GET['mode_error'] ) ) {
+		if ( 'invalid_mode' === $_GET['mode_error'] ) {
+			$mode_error = __( 'Invalid connection mode specified.', 'ash-nazg' );
+		} else {
+			$stored_error = get_transient( 'ash_nazg_mode_error' );
+			if ( $stored_error ) {
+				$mode_error = $stored_error;
+				delete_transient( 'ash_nazg_mode_error' );
+			}
 		}
 	}
 
@@ -387,6 +413,63 @@ function handle_workflow_form_submission() {
 			wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
 			exit;
 		}
+	}
+}
+
+/**
+ * Handle connection mode toggle form submission.
+ *
+ * Runs on admin_init to process form before any output.
+ *
+ * @return void
+ */
+function handle_connection_mode_toggle() {
+	// Only process on connection mode toggle submissions.
+	if ( ! isset( $_POST['ash_nazg_connection_mode_nonce'] ) ) {
+		return;
+	}
+
+	// Verify nonce.
+	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ash_nazg_connection_mode_nonce'] ) ), 'ash_nazg_toggle_connection_mode' ) ) {
+		return;
+	}
+
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
+
+	if ( $site_id && $environment && isset( $_POST['connection_mode'] ) ) {
+		$new_mode = sanitize_text_field( wp_unslash( $_POST['connection_mode'] ) );
+
+		// Validate mode.
+		if ( ! in_array( $new_mode, array( 'sftp', 'git' ), true ) ) {
+			$redirect_args = array(
+				'page' => 'ash-nazg',
+				'mode_error' => 'invalid_mode',
+			);
+			wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+			exit;
+		}
+
+		// Toggle connection mode.
+		$result = API\update_connection_mode( $site_id, $environment, $new_mode );
+
+		$redirect_args = array( 'page' => 'ash-nazg' );
+
+		if ( is_wp_error( $result ) ) {
+			$redirect_args['mode_error'] = '1';
+			set_transient( 'ash_nazg_mode_error', $result->get_error_message(), 30 );
+		} else {
+			$redirect_args['mode_changed'] = '1';
+			$redirect_args['new_mode'] = $new_mode;
+		}
+
+		wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+		exit;
 	}
 }
 

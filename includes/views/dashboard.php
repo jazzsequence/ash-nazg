@@ -77,6 +77,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</div>
 	<?php endif; ?>
 
+	<?php if ( $mode_message ) : ?>
+		<div class="notice notice-success is-dismissible">
+			<p><?php echo esc_html( $mode_message ); ?></p>
+		</div>
+	<?php endif; ?>
+
+	<?php if ( $mode_error ) : ?>
+		<div class="notice notice-error is-dismissible">
+			<p><?php echo esc_html( $mode_error ); ?></p>
+		</div>
+	<?php endif; ?>
+
 	<div class="ash-nazg-dashboard">
 		<?php if ( $is_pantheon ) : ?>
 			<div class="ash-nazg-card">
@@ -309,6 +321,57 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<?php endif; ?>
 					</tbody>
 				</table>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( null !== $environment_info ) : ?>
+			<div class="ash-nazg-card">
+				<h2><?php esc_html_e( 'Connection Mode', 'ash-nazg' ); ?></h2>
+				<p>
+					<?php esc_html_e( 'Switch between SFTP mode (for installing/updating plugins and themes) and Git mode (for code commits).', 'ash-nazg' ); ?>
+				</p>
+
+				<?php
+				$current_mode = isset( $environment_info['on_server_development'] ) && $environment_info['on_server_development'] ? 'sftp' : 'git';
+				$is_sftp = ( 'sftp' === $current_mode );
+				?>
+
+				<div style="margin: 15px 0;">
+					<p>
+						<strong><?php esc_html_e( 'Current Mode:', 'ash-nazg' ); ?></strong>
+						<?php if ( $is_sftp ) : ?>
+							<span class="ash-nazg-badge ash-nazg-badge-sftp">SFTP Mode</span>
+							<span style="color: #666;"><?php esc_html_e( '— Changes are made directly on the server', 'ash-nazg' ); ?></span>
+						<?php else : ?>
+							<span class="ash-nazg-badge ash-nazg-badge-git">Git Mode</span>
+							<span style="color: #666;"><?php esc_html_e( '— Changes must be committed via Git', 'ash-nazg' ); ?></span>
+						<?php endif; ?>
+					</p>
+				</div>
+
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=ash-nazg' ) ); ?>">
+					<?php wp_nonce_field( 'ash_nazg_toggle_connection_mode', 'ash_nazg_connection_mode_nonce' ); ?>
+
+					<?php if ( $is_sftp ) : ?>
+						<input type="hidden" name="connection_mode" value="git">
+						<button type="submit" class="button button-primary">
+							<span class="dashicons dashicons-media-code" style="margin-top: 3px;"></span>
+							<?php esc_html_e( 'Switch to Git Mode', 'ash-nazg' ); ?>
+						</button>
+						<p class="description">
+							<?php esc_html_e( 'Switching to Git mode will require you to commit changes via Git. Plugin and theme installations from the WordPress admin will be disabled.', 'ash-nazg' ); ?>
+						</p>
+					<?php else : ?>
+						<input type="hidden" name="connection_mode" value="sftp">
+						<button type="submit" class="button button-primary">
+							<span class="dashicons dashicons-admin-tools" style="margin-top: 3px;"></span>
+							<?php esc_html_e( 'Switch to SFTP Mode', 'ash-nazg' ); ?>
+						</button>
+						<p class="description">
+							<?php esc_html_e( 'Switching to SFTP mode allows you to install and update plugins/themes directly from the WordPress admin.', 'ash-nazg' ); ?>
+						</p>
+					<?php endif; ?>
+				</form>
 			</div>
 		<?php endif; ?>
 
