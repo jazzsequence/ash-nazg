@@ -491,7 +491,9 @@ function test_connection() {
 /**
  * Get site addons.
  *
- * Fetches list of available addons and their current state from the Pantheon API.
+ * Fetches available addons and their current state from the Pantheon API.
+ * Note: The Pantheon API does not have a list endpoint for addons.
+ * We query individual known addon endpoints.
  *
  * @param string $site_id Optional. Site UUID. If not provided, auto-detected.
  * @return array|\WP_Error Array of addon objects on success, WP_Error on failure.
@@ -515,13 +517,36 @@ function get_site_addons( $site_id = null ) {
 		return $cached;
 	}
 
-	// Fetch from API.
-	$endpoint = sprintf( '/v0/sites/%s/addons', $site_id );
-	$addons = api_request( $endpoint );
+	// Known Pantheon addons with their metadata.
+	$known_addons = array(
+		'redis' => array(
+			'id' => 'redis',
+			'name' => __( 'Redis', 'ash-nazg' ),
+			'description' => __( 'Object caching with Redis for improved performance', 'ash-nazg' ),
+		),
+		'solr' => array(
+			'id' => 'solr',
+			'name' => __( 'Apache Solr', 'ash-nazg' ),
+			'description' => __( 'Apache Solr search service for advanced search capabilities', 'ash-nazg' ),
+		),
+	);
 
-	if ( is_wp_error( $addons ) ) {
-		error_log( sprintf( 'Ash-Nazg: Failed to fetch site addons for %s: %s', $site_id, $addons->get_error_message() ) );
-		return $addons;
+	$addons = array();
+
+	// Query each addon endpoint individually.
+	foreach ( $known_addons as $addon_id => $addon_meta ) {
+		$endpoint = sprintf( '/v0/sites/%s/addons/%s', $site_id, $addon_id );
+		$result = api_request( $endpoint );
+
+		if ( is_wp_error( $result ) ) {
+			// Addon endpoint returned an error (likely not available for this site).
+			error_log( sprintf( 'Ash-Nazg: Addon %s not available for site %s: %s', $addon_id, $site_id, $result->get_error_message() ) );
+			continue;
+		}
+
+		// Merge API response with addon metadata.
+		$addon = array_merge( $addon_meta, $result );
+		$addons[] = $addon;
 	}
 
 	// Cache for 5 minutes.
