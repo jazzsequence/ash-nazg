@@ -185,7 +185,7 @@ function render_dashboard_page() {
 
 	if ( $is_pantheon && $site_id ) {
 		$site_info_cached_at = API\get_cache_timestamp( 'ash_nazg_site_info_' . $site_id );
-		$env_info_cached_at = API\get_cache_timestamp( 'ash_nazg_env_info_' . $site_id . '_' . $environment );
+		$env_info_cached_at = API\get_cache_timestamp( sprintf( 'ash_nazg_all_env_info_%s', $site_id ) );
 		$endpoints_cached_at = API\get_cache_timestamp( sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $environment ) );
 	}
 

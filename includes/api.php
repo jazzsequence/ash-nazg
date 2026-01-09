@@ -232,6 +232,44 @@ function api_request( $endpoint, $method = 'GET', $body = array() ) {
 }
 
 /**
+ * Get cached API endpoint data.
+ *
+ * Generic helper for GET requests with caching.
+ *
+ * @param string $endpoint API endpoint path (e.g., '/v0/sites/{site_id}').
+ * @param string $cache_key Transient cache key.
+ * @param int    $ttl       Cache time-to-live in seconds. Default DAY_IN_SECONDS.
+ * @return array|\WP_Error Endpoint data or WP_Error on failure.
+ */
+function get_cached_endpoint( $endpoint, $cache_key, $ttl = DAY_IN_SECONDS ) {
+	// Check cache first.
+	$cached = get_transient( $cache_key );
+	if ( false !== $cached ) {
+		// Handle both old and new cache formats.
+		if ( is_array( $cached ) && isset( $cached['data'] ) ) {
+			return $cached['data'];
+		}
+		return $cached;
+	}
+
+	// Fetch from API.
+	$data = api_request( $endpoint, 'GET' );
+
+	if ( is_wp_error( $data ) ) {
+		return $data;
+	}
+
+	// Cache with timestamp.
+	$cached_data = array(
+		'data' => $data,
+		'cached_at' => time(),
+	);
+	set_transient( $cache_key, $cached_data, $ttl );
+
+	return $data;
+}
+
+/**
  * Get site information.
  *
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
@@ -248,32 +286,10 @@ function get_site_info( $site_id = null ) {
 		}
 	}
 
-	// Check cache first.
+	$endpoint = '/v0/sites/' . $site_id;
 	$cache_key = 'ash_nazg_site_info_' . $site_id;
-	$cached    = get_transient( $cache_key );
-	if ( false !== $cached ) {
-		// Handle both old and new cache formats.
-		if ( is_array( $cached ) && isset( $cached['data'] ) ) {
-			return $cached['data'];
-		}
-		return $cached;
-	}
 
-	// Fetch from API.
-	$data = api_request( '/v0/sites/' . $site_id );
-
-	if ( is_wp_error( $data ) ) {
-		return $data;
-	}
-
-	// Cache for 24 hours with timestamp.
-	$cached_data = array(
-		'data' => $data,
-		'cached_at' => time(),
-	);
-	set_transient( $cache_key, $cached_data, DAY_IN_SECONDS );
-
-	return $data;
+	return get_cached_endpoint( $endpoint, $cache_key );
 }
 
 /**
@@ -304,19 +320,10 @@ function get_environment_info( $site_id = null, $env = null ) {
 		}
 	}
 
-	// Check cache first.
-	$cache_key = 'ash_nazg_env_info_' . $site_id . '_' . $env;
-	$cached    = get_transient( $cache_key );
-	if ( false !== $cached ) {
-		// Handle both old and new cache formats.
-		if ( is_array( $cached ) && isset( $cached['data'] ) ) {
-			return $cached['data'];
-		}
-		return $cached;
-	}
-
 	// Fetch all environments from API (there's no single-environment endpoint).
-	$environments = api_request( sprintf( '/v0/sites/%s/environments', $site_id ) );
+	$endpoint = sprintf( '/v0/sites/%s/environments', $site_id );
+	$cache_key_all = sprintf( 'ash_nazg_all_env_info_%s', $site_id );
+	$environments = get_cached_endpoint( $endpoint, $cache_key_all );
 
 	if ( is_wp_error( $environments ) ) {
 		return $environments;
@@ -334,16 +341,7 @@ function get_environment_info( $site_id = null, $env = null ) {
 		);
 	}
 
-	$data = $environments[ $env ];
-
-	// Cache for 24 hours with timestamp.
-	$cached_data = array(
-		'data' => $data,
-		'cached_at' => time(),
-	);
-	set_transient( $cache_key, $cached_data, DAY_IN_SECONDS );
-
-	return $data;
+	return $environments[ $env ];
 }
 
 /**
