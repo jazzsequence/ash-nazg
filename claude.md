@@ -378,19 +378,24 @@ ash-nazg/
 - **Parameters**: `site_id` - Site UUID
 - **Returns**: Array of available plan objects
 
-#### `GET /v0/sites/{site_id}/addons`
-- **Purpose**: List available addons and their current state
-- **Parameters**: `site_id` - Site UUID
-- **Returns**: Array of addon objects (id, name, enabled status)
+#### `GET /v0/sites/{site_id}/addons/{addon_id}`
+- **Purpose**: Get specific addon status
+- **Parameters**:
+  - `site_id` - Site UUID
+  - `addon_id` - Addon identifier ('redis', 'solr')
+- **Returns**: Addon object with enabled status
 - **Cache**: 5 minutes
+- **Note**: No list endpoint exists - must query individual addons
+- **Known addons**: redis, solr
 
 #### `PUT /v0/sites/{site_id}/addons/{addon_id}`
 - **Purpose**: Enable or disable a specific addon
 - **Parameters**:
   - `site_id` - Site UUID
-  - `addon_id` - Addon identifier (e.g., 'redis', 'solr')
+  - `addon_id` - Addon identifier ('redis', 'solr')
 - **Request Body**: `{ "enabled": true/false }`
 - **Note**: Clear both addon cache and endpoint status cache after successful update
+- **Implementation**: Define known addons list, query each individually
 
 ### Authorization
 
