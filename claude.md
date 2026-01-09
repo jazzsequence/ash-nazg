@@ -631,6 +631,25 @@ ash-nazg/
    - Cache is automatically invalidated on user-triggered actions (addons toggle, workflow trigger)
    - Use `get_cache_timestamp($cache_key)` helper to retrieve when data was cached
 
+8. **Per-Endpoint Cache Invalidation Rule**:
+   - **CRITICAL**: Whenever we make a change to an endpoint via the plugin (PUT, POST, DELETE):
+     1. Flush/clear the cache for that specific endpoint or category
+     2. Pull the latest status from the API to refresh the data
+     3. Mark the last update timestamp in the cache
+     4. Display the updated "Last Checked" time in the dashboard
+   - This ensures the dashboard always reflects the current state after user actions
+   - Example workflow:
+     ```php
+     // User toggles addon
+     update_site_addon( $site_id, 'redis', true );
+     // Clear both addon cache AND endpoints status cache
+     delete_transient( "ash_nazg_site_addons_{$site_id}" );
+     delete_transient( "ash_nazg_endpoints_status_{$site_id}_{$env}" );
+     // Next dashboard load will fetch fresh data with new timestamp
+     ```
+   - Future enhancement: Track per-endpoint timestamps instead of global timestamp
+   - For now, all endpoints share the same "Last Checked" time (cached together)
+
 **Non-API Data Sources:**
 - Debug logs: Read directly from `$WP_CONTENT_DIR/debug.log` (not via API)
 - Environment detection: Use `$_ENV['PANTHEON_ENVIRONMENT']`, `$_ENV['PANTHEON_SITE']`, etc.

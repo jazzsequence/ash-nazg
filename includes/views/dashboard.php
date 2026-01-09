@@ -117,12 +117,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<table class="widefat striped">
 					<tbody>
 						<?php
-						// Use get_api_field() for cleaner field access.
+						// Get all 14 site info fields.
+						$site_id = API\get_api_field( 'site', 'id' );
 						$site_name = API\get_api_field( 'site', 'name' );
 						$site_label = API\get_api_field( 'site', 'label' );
-						$site_framework = API\get_api_field( 'site', 'framework' );
 						$site_created = API\get_api_field( 'site', 'created' );
+						$site_framework = API\get_api_field( 'site', 'framework' );
+						$site_organization = API\get_api_field( 'site', 'organization' );
+						$site_plan_name = API\get_api_field( 'site', 'plan_name' );
+						$site_holder_type = API\get_api_field( 'site', 'holder_type' );
+						$site_holder_id = API\get_api_field( 'site', 'holder_id' );
+						$site_owner = API\get_api_field( 'site', 'owner' );
+						$site_frozen = API\get_api_field( 'site', 'frozen' );
+						$site_region = API\get_api_field( 'site', 'region' );
+						$site_max_multidevs = API\get_api_field( 'site', 'max_num_multidevs' );
+						$site_upstream = API\get_api_field( 'site', 'upstream' );
 						?>
+						<?php if ( $site_id ) : ?>
+							<tr>
+								<th><?php esc_html_e( 'Site ID', 'ash-nazg' ); ?></th>
+								<td><code><?php echo esc_html( $site_id ); ?></code></td>
+							</tr>
+						<?php endif; ?>
 						<?php if ( $site_name ) : ?>
 							<tr>
 								<th><?php esc_html_e( 'Site Name', 'ash-nazg' ); ?></th>
@@ -135,23 +151,53 @@ if ( ! defined( 'ABSPATH' ) ) {
 								<td><?php echo esc_html( $site_label ); ?></td>
 							</tr>
 						<?php endif; ?>
-						<?php if ( $site_framework ) : ?>
-							<tr>
-								<th><?php esc_html_e( 'Framework', 'ash-nazg' ); ?></th>
-								<td><?php echo esc_html( $site_framework ); ?></td>
-							</tr>
-						<?php endif; ?>
 						<?php if ( $site_created ) : ?>
 							<tr>
 								<th><?php esc_html_e( 'Created', 'ash-nazg' ); ?></th>
 								<td><?php echo esc_html( gmdate( 'Y-m-d H:i:s', $site_created ) ); ?></td>
 							</tr>
 						<?php endif; ?>
-						<?php if ( ! empty( $site_info['frozen'] ) ) : ?>
+						<?php if ( $site_framework ) : ?>
+							<tr>
+								<th><?php esc_html_e( 'Framework', 'ash-nazg' ); ?></th>
+								<td><?php echo esc_html( ucfirst( $site_framework ) ); ?></td>
+							</tr>
+						<?php endif; ?>
+						<?php if ( $site_organization ) : ?>
+							<tr>
+								<th><?php esc_html_e( 'Organization', 'ash-nazg' ); ?></th>
+								<td><code><?php echo esc_html( $site_organization ); ?></code></td>
+							</tr>
+						<?php endif; ?>
+						<?php if ( $site_plan_name ) : ?>
+							<tr>
+								<th><?php esc_html_e( 'Plan', 'ash-nazg' ); ?></th>
+								<td><?php echo esc_html( $site_plan_name ); ?></td>
+							</tr>
+						<?php endif; ?>
+						<?php if ( $site_holder_type ) : ?>
+							<tr>
+								<th><?php esc_html_e( 'Holder Type', 'ash-nazg' ); ?></th>
+								<td><?php echo esc_html( ucfirst( $site_holder_type ) ); ?></td>
+							</tr>
+						<?php endif; ?>
+						<?php if ( $site_holder_id ) : ?>
+							<tr>
+								<th><?php esc_html_e( 'Holder ID', 'ash-nazg' ); ?></th>
+								<td><code><?php echo esc_html( $site_holder_id ); ?></code></td>
+							</tr>
+						<?php endif; ?>
+						<?php if ( $site_owner ) : ?>
+							<tr>
+								<th><?php esc_html_e( 'Owner', 'ash-nazg' ); ?></th>
+								<td><code><?php echo esc_html( $site_owner ); ?></code></td>
+							</tr>
+						<?php endif; ?>
+						<?php if ( null !== $site_frozen ) : ?>
 							<tr>
 								<th><?php esc_html_e( 'Status', 'ash-nazg' ); ?></th>
 								<td>
-									<?php if ( $site_info['frozen'] ) : ?>
+									<?php if ( $site_frozen ) : ?>
 										<span class="ash-nazg-badge ash-nazg-badge-frozen">
 											<?php esc_html_e( 'Frozen', 'ash-nazg' ); ?>
 										</span>
@@ -159,6 +205,37 @@ if ( ! defined( 'ABSPATH' ) ) {
 										<span class="ash-nazg-badge ash-nazg-badge-active">
 											<?php esc_html_e( 'Active', 'ash-nazg' ); ?>
 										</span>
+									<?php endif; ?>
+								</td>
+							</tr>
+						<?php endif; ?>
+						<?php if ( $site_region ) : ?>
+							<tr>
+								<th><?php esc_html_e( 'Region', 'ash-nazg' ); ?></th>
+								<td><?php echo esc_html( strtoupper( $site_region ) ); ?></td>
+							</tr>
+						<?php endif; ?>
+						<?php if ( null !== $site_max_multidevs ) : ?>
+							<tr>
+								<th><?php esc_html_e( 'Max Multidevs', 'ash-nazg' ); ?></th>
+								<td><?php echo esc_html( $site_max_multidevs ); ?></td>
+							</tr>
+						<?php endif; ?>
+						<?php if ( $site_upstream ) : ?>
+							<tr>
+								<th><?php esc_html_e( 'Upstream', 'ash-nazg' ); ?></th>
+								<td>
+									<?php if ( is_array( $site_upstream ) ) : ?>
+										<?php if ( ! empty( $site_upstream['product_id'] ) ) : ?>
+											<code><?php echo esc_html( $site_upstream['product_id'] ); ?></code>
+										<?php elseif ( ! empty( $site_upstream['upstream_id'] ) ) : ?>
+											<code><?php echo esc_html( $site_upstream['upstream_id'] ); ?></code>
+										<?php endif; ?>
+										<?php if ( ! empty( $site_upstream['label'] ) ) : ?>
+											<br><small><?php echo esc_html( $site_upstream['label'] ); ?></small>
+										<?php endif; ?>
+									<?php else : ?>
+										<code><?php echo esc_html( $site_upstream ); ?></code>
 									<?php endif; ?>
 								</td>
 							</tr>
@@ -322,8 +399,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<thead>
 							<tr>
 								<th style="width: 35px;"></th>
-								<th style="width: 25%;"><?php esc_html_e( 'Endpoint', 'ash-nazg' ); ?></th>
-								<th style="width: 40%;"><?php esc_html_e( 'Path', 'ash-nazg' ); ?></th>
+								<th style="width: 20%;"><?php esc_html_e( 'Endpoint', 'ash-nazg' ); ?></th>
+								<th style="width: 30%;"><?php esc_html_e( 'Path', 'ash-nazg' ); ?></th>
+								<th style="width: 15%;"><?php esc_html_e( 'Last Checked', 'ash-nazg' ); ?></th>
 								<th><?php esc_html_e( 'Status / Data', 'ash-nazg' ); ?></th>
 							</tr>
 						</thead>
@@ -346,6 +424,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 										<?php endif; ?>
 									</td>
 									<td><code style="font-size: 11px;"><?php echo esc_html( $endpoint['path'] ); ?></code></td>
+									<td>
+										<?php if ( $endpoints_cached_at ) : ?>
+											<small style="color: #666;"><?php echo esc_html( human_time_diff( $endpoints_cached_at ) ); ?> ago</small>
+										<?php else : ?>
+											<small style="color: #999;">—</small>
+										<?php endif; ?>
+									</td>
 									<td>
 										<?php if ( 'success' === $endpoint['status'] && ! empty( $endpoint['data'] ) ) : ?>
 											<?php foreach ( $endpoint['data'] as $data_key => $data_value ) : ?>
