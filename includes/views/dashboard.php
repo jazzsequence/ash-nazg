@@ -5,6 +5,8 @@
  * @package Pantheon\AshNazg
  */
 
+use Pantheon\AshNazg\API;
+
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -116,10 +118,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<tbody>
 						<?php
 						// Use get_api_field() for cleaner field access.
-						$site_name = \Pantheon\AshNazg\API\get_api_field( 'site', 'name' );
-						$site_label = \Pantheon\AshNazg\API\get_api_field( 'site', 'label' );
-						$site_framework = \Pantheon\AshNazg\API\get_api_field( 'site', 'framework' );
-						$site_created = \Pantheon\AshNazg\API\get_api_field( 'site', 'created' );
+						$site_name = API\get_api_field( 'site', 'name' );
+						$site_label = API\get_api_field( 'site', 'label' );
+						$site_framework = API\get_api_field( 'site', 'framework' );
+						$site_created = API\get_api_field( 'site', 'created' );
 						?>
 						<?php if ( $site_name ) : ?>
 							<tr>
