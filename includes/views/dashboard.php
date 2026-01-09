@@ -197,7 +197,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php if ( null !== $site_info ) : ?>
 			<div class="ash-nazg-card">
 				<h2>
-					<?php esc_html_e( 'Site Information (from API)', 'ash-nazg' ); ?>
+					<?php esc_html_e( 'Site Information', 'ash-nazg' ); ?>
 					<?php if ( $site_info_cached_at ) : ?>
 						<span style="font-size: 12px; font-weight: normal; color: #757575;">
 							(Last checked: <?php echo esc_html( human_time_diff( $site_info_cached_at ) ); ?> ago)
