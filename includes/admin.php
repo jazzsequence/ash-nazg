@@ -29,12 +29,12 @@ function init() {
 function add_admin_menu() {
 	// Main dashboard page.
 	add_menu_page(
-		__( 'Pantheon', 'ash-nazg' ),
-		__( 'Pantheon', 'ash-nazg' ),
+		__( 'Pantheon Dashboard', 'ash-nazg' ),
+		__( 'Ash Nazg', 'ash-nazg' ),
 		'manage_options',
 		'ash-nazg',
 		__NAMESPACE__ . '\\render_dashboard_page',
-		'dashicons-cloud',
+		'dashicons-marker',
 		80
 	);
 
@@ -401,7 +401,7 @@ function render_workflows_page() {
 
 	if ( isset( $_GET['error'] ) ) {
 		if ( 'invalid_env' === $_GET['error'] ) {
-			$error = __( 'This workflow can only be triggered on dev or multidev environments.', 'ash-nazg' );
+			$error = __( 'This workflow can only be triggered on dev or local development environments.', 'ash-nazg' );
 		} else {
 			$stored_error = get_transient( 'ash_nazg_workflow_error' );
 			if ( $stored_error ) {

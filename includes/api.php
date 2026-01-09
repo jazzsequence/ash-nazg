@@ -659,7 +659,7 @@ function get_available_workflows() {
 				'job_name' => 'install_ocp',
 				'with_db' => true,
 			),
-			'allowed_envs' => array( 'dev' ),
+			'allowed_envs' => array( 'dev', 'lando' ),
 		),
 	);
 }
@@ -675,18 +675,22 @@ function get_available_workflows() {
  */
 function trigger_workflow( $site_id, $env, $workflow_type, $params ) {
 	// Validate environment.
-	if ( ! in_array( $env, array( 'dev' ), true ) ) {
+	$allowed_envs = array( 'dev', 'lando' );
+	if ( ! in_array( $env, $allowed_envs, true ) ) {
 		return new \WP_Error(
 			'invalid_environment',
 			sprintf(
 				/* translators: %s: environment name */
-				__( 'Workflows can only be triggered on dev environments. Current environment: %s', 'ash-nazg' ),
+				__( 'Workflows can only be triggered on dev or local environments. Current environment: %s', 'ash-nazg' ),
 				$env
 			)
 		);
 	}
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/workflows', $site_id, $env );
+	// Map local environments to dev for API queries.
+	$api_env = in_array( $env, array( 'lando', 'local', 'localhost', 'ddev' ), true ) ? 'dev' : $env;
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/workflows', $site_id, $api_env );
 	$body = array(
 		'type' => $workflow_type,
 		'params' => $params,
@@ -695,11 +699,11 @@ function trigger_workflow( $site_id, $env, $workflow_type, $params ) {
 	$result = api_request( $endpoint, 'POST', $body );
 
 	if ( is_wp_error( $result ) ) {
-		error_log( sprintf( 'Ash-Nazg: Failed to trigger workflow %s on %s/%s - Error: %s', $workflow_type, $site_id, $env, $result->get_error_message() ) );
+		error_log( sprintf( 'Ash-Nazg: Failed to trigger workflow %s on %s/%s (API env: %s) - Error: %s', $workflow_type, $site_id, $env, $api_env, $result->get_error_message() ) );
 		return $result;
 	}
 
-	error_log( sprintf( 'Ash-Nazg: Triggered workflow %s on %s/%s - Response: %s', $workflow_type, $site_id, $env, wp_json_encode( $result ) ) );
+	error_log( sprintf( 'Ash-Nazg: Triggered workflow %s on %s/%s (API env: %s) - Response: %s', $workflow_type, $site_id, $env, $api_env, wp_json_encode( $result ) ) );
 
 	return $result;
 }
