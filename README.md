@@ -14,12 +14,15 @@ The name comes from the inscription on the One Ring in J.R.R. Tolkien's works. J
 
 This plugin follows a **Proof of Concept (PoC) approach**: implement API capabilities broadly, test what works, then restrict features that grant too much power or prove impractical.
 
-### Phase 1: Foundation & Status (In Development)
+### Currently Implemented
 
-- **Environment Detection** - Auto-detect Pantheon environment (dev/test/live/multidev)
-- **Site Status** - View Pantheon site details and environment information
-- **Launch Check Display** - Show Pantheon launch check status information
-- **Debug Log Viewer** - Read and display WordPress debug logs without SSH access
+- **Environment Detection** - Auto-detect Pantheon environment (dev/test/live/multidev/local)
+- **Site Status Dashboard** - View Pantheon site details and environment information
+- **API Endpoints Testing** - Comprehensive display of available Pantheon API endpoints with status
+- **Site Addons Management** - Enable/disable Pantheon addons (Redis, Solr) directly from WordPress
+- **Workflows** - Trigger Pantheon workflows from WordPress admin (e.g., Object Cache Pro installation)
+- **Smart Caching** - 24-hour cache with "last checked" timestamps to minimize API calls
+- **Settings Management** - Configure machine tokens and plugin settings
 
 ### Phase 2: Development Workflow (Planned)
 
@@ -28,7 +31,7 @@ This plugin follows a **Proof of Concept (PoC) approach**: implement API capabil
 - **Code Deployment** - Push code to test/live environments
 - **Multidev Management** - Create and manage multidev environments
 - **Backup Control** - Create, list, and manage backups
-- **Workflow Monitoring** - Track long-running Pantheon operations with status polling
+- **Debug Log Viewer** - Read and display WordPress debug logs without SSH access
 
 ### Phase 3: Experimental (Evaluation)
 
@@ -118,12 +121,14 @@ This plugin uses [Pantheon Secrets](https://docs.pantheon.io/guides/secrets) to 
 
 ## Usage
 
-After configuration, you'll find a **Pantheon** top-level menu in your WordPress admin with the following features (based on implementation phase):
+After configuration, you'll find an **Ash Nazg** top-level menu in your WordPress admin with the following pages:
 
-- **Dashboard/Overview** - Environment status, launch check information, debug log viewer
-- **Development** - SFTP/Git mode toggle, upstream updates, code deployment (Phase 2)
-- **Backups** - Backup management (Phase 2, if implemented)
-- **Settings** - Plugin configuration and token setup helper
+- **Dashboard** - Environment status, site information, API endpoints testing with status indicators
+- **Addons** - Enable/disable Pantheon site addons (Redis, Apache Solr)
+- **Workflows** - Trigger Pantheon workflows (currently: Object Cache Pro installation)
+- **Settings** - Machine token configuration and plugin settings
+
+Each page displays "Last checked" timestamps showing when cached data was last fetched from the Pantheon API. Use the "Refresh Data" button to manually clear caches and fetch fresh data.
 
 ## Development
 
@@ -205,6 +210,10 @@ npm test
 - [x] Settings page with machine token setup
 - [x] Environment status display via API
 - [x] API connection testing interface
+- [x] Comprehensive API endpoints testing and status display
+- [x] Site addons management (Redis, Solr)
+- [x] Workflows integration (trigger scaffold_extensions workflows)
+- [x] Smart caching with timestamps (24-hour cache)
 - [ ] Launch check status information
 - [ ] Error/debug log viewer
 
@@ -215,6 +224,7 @@ npm test
 - [ ] Multidev creation
 - [ ] Backup management (create, list, restore if safe)
 - [ ] Workflow status monitoring with polling
+- [ ] Additional workflow types beyond scaffold_extensions
 
 ### Phase 3: Experimental/Advanced
 - [ ] Domain management for multisite (PoC)
@@ -304,12 +314,21 @@ Named after Tolkien's One Ring inscription: "Ash nazg durbatulûk, ash nazg gimb
 
 ## Changelog
 
-### 0.1.0 - In Development
+### 0.1.1 - In Development
+- **Site Addons Management**: Enable/disable Pantheon addons (Redis, Solr) from WordPress admin
+- **Workflows**: Trigger Pantheon workflows (Object Cache Pro installation via scaffold_extensions)
+- **Enhanced Caching**: 24-hour cache timeout with "last checked" timestamps on all data
+- **API Endpoints Testing**: Comprehensive display of 26+ Pantheon API endpoints organized by category
+- **Environment Mapping**: Local development environments (lando, local) automatically map to dev for API queries
+- **Cache Timestamps**: Display when cached data was last fetched with human-readable time diffs
+- **Auto Cache Clearing**: Caches automatically cleared when triggering workflows or toggling addons
+
+### 0.1.0 - Initial Release
 - Initial plugin framework and structure
 - Pantheon API client with authentication (machine token → session token exchange)
 - Settings page with machine token configuration
 - Dashboard page displaying:
-  - Pantheon environment detection
+  - Pantheon environment detection (dev/test/live/multidev/local)
   - Site information from API
   - Current environment details from API
   - SFTP/Git mode indicator

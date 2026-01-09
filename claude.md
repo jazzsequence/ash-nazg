@@ -42,34 +42,46 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 
 **Approach:** Implement all possible capabilities via the Pantheon API, then remove features that grant WordPress admins too much power. Start permissive, then restrict based on security review.
 
-**Planned Features:**
+**Implemented Features:**
 
 1. **Environment Information & Status**
-   - Detect current Pantheon environment (dev/test/live/multidev)
-   - Display environment status and metrics
-   - Show launch check status information
-   - **Not via API:** Display error/debug logs by reading `$WP_CONTENT_DIR/debug.log` directly
+   - ✅ Detect current Pantheon environment (dev/test/live/multidev/local)
+   - ✅ Display environment status and metrics
+   - ✅ Comprehensive API endpoints testing with status indicators
+   - ✅ Local environment mapping (lando/local/localhost/ddev → dev for API queries)
+   - ⏳ Show launch check status information (planned)
+   - ⏳ Display error/debug logs by reading `$WP_CONTENT_DIR/debug.log` (planned)
 
-2. **Development Workflow**
-   - Toggle between SFTP mode and Git mode (enables plugin/theme installation without leaving WP admin)
-   - Detect available upstream updates
-   - Apply upstream updates from WP admin
-   - Push code to test/live environments
-   - Create multidev environments
+2. **Site Addons Management**
+   - ✅ Enable/disable Redis addon via API (PUT to enable, DELETE to disable)
+   - ✅ Enable/disable Apache Solr addon via API
+   - ✅ Local state tracking in WordPress options (API doesn't provide GET endpoint)
+   - ✅ Toggle switches with save button interface
+   - ✅ Auto-cache clearing on addon changes
 
-3. **Domain Management** (Experimental/PoC)
-   - Hook into WordPress multisite subdomain creation
-   - Automatically add new subdomains to Pantheon via API
-   - Test feasibility for initial PoC (may hide/remove later based on results)
+3. **Workflows Integration**
+   - ✅ Trigger `scaffold_extensions` workflow type
+   - ✅ Object Cache Pro installation workflow (`install_ocp` job)
+   - ✅ Environment validation (workflows only on dev/multidev/lando)
+   - ✅ Workflow status retrieval after triggering
+   - ⏳ Additional workflow types beyond scaffold_extensions (to be discovered)
+   - ⏳ Workflow monitoring/polling for long-running operations (planned)
 
-4. **Backup Operations**
-   - Backup creation and management
-   - Backup scheduling
-   - Restore operations (if safe to expose)
+4. **Development Workflow** (Planned)
+   - ⏳ Toggle between SFTP mode and Git mode
+   - ⏳ Detect available upstream updates
+   - ⏳ Apply upstream updates from WP admin
+   - ⏳ Push code to test/live environments
+   - ⏳ Create multidev environments
 
-5. **Workflow Monitoring**
-   - Track long-running operations
-   - Status polling for deployments, backups, etc.
+5. **Domain Management** (Experimental/PoC)
+   - ⏳ Hook into WordPress multisite subdomain creation
+   - ⏳ Automatically add new subdomains to Pantheon via API
+
+6. **Backup Operations** (Planned)
+   - ⏳ Backup creation and management
+   - ⏳ Backup scheduling
+   - ⏳ Restore operations (if safe to expose)
 
 **Explicitly Excluded:**
 - Cache management (handled by Pantheon Advanced Page Cache and Pantheon mu-plugin)
@@ -84,13 +96,16 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 **File:** `includes/admin.php` (namespace: `Pantheon\AshNazg\Admin`)
 
 **Menu Structure:**
-- Top-level menu: "Pantheon"
-- Potential submenu pages (to be finalized based on implementation):
-  - Dashboard/Overview - environment status, launch check, error logs
+- Top-level menu: "Ash Nazg" (slug: ash-nazg)
+- Implemented submenu pages:
+  - Dashboard - environment status, site/environment info, comprehensive API endpoints testing with status
+  - Addons - enable/disable Pantheon site addons (Redis, Solr)
+  - Workflows - trigger Pantheon workflows (scaffold_extensions for Object Cache Pro installation)
+  - Settings - machine token configuration
+- Planned submenu pages:
   - Development - SFTP/Git toggle, upstream updates, code deployment
-  - Backups - backup management (if implemented)
-  - Multisite Domains - domain management (if experimental feature proves viable)
-  - Settings - token setup helper, plugin configuration
+  - Backups - backup management
+  - Multisite Domains - domain management (experimental, if viable)
 
 **UI Implementation:**
 - Traditional WordPress admin HTML/CSS (no React)
@@ -576,12 +591,16 @@ ash-nazg/
 
 5. **Caching Strategy**:
    - Session tokens: 1 hour (`ash_nazg_session_token`)
-   - Site info: 5 minutes (`ash_nazg_site_info_{site_id}`)
-   - Environment info: 2 minutes (`ash_nazg_env_info_{site_id}_{env}`)
-   - Endpoints status: 10 minutes (`ash_nazg_endpoints_status_{site_id}_{env}`)
-   - Addon data: 5 minutes (`ash_nazg_site_addons_{site_id}`)
-   - Use WordPress Transients API with appropriate TTLs
+   - Site info: 24 hours (`ash_nazg_site_info_{site_id}`)
+   - Environment info: 24 hours (`ash_nazg_env_info_{site_id}_{env}`)
+   - Endpoints status: 24 hours (`ash_nazg_endpoints_status_{site_id}_{env}`)
+   - Addon data: 24 hours (`ash_nazg_site_addons_{site_id}`)
+   - All cached data (except session tokens) includes a `cached_at` timestamp
+   - Use WordPress Transients API with DAY_IN_SECONDS for data caches
    - Respects Redis object caching if enabled
+   - Cache format: `{ data: [...], cached_at: timestamp }` (new format)
+   - Backward compatible: handles old format (raw data without timestamp)
+   - Display "Last checked: X ago" in admin UI using `human_time_diff()`
 
 6. **Error Handling**:
    - All API functions return data on success, `WP_Error` on failure
@@ -593,7 +612,9 @@ ash-nazg/
 7. **Cache Invalidation**:
    - Clear relevant caches after mutations (create, update, delete)
    - Example: After updating addon, clear both addon cache and endpoint status cache
-   - Provide manual cache refresh option in admin interface
+   - Provide manual cache refresh option in admin interface ("Refresh Data" button)
+   - Cache is automatically invalidated on user-triggered actions (addons toggle, workflow trigger)
+   - Use `get_cache_timestamp($cache_key)` helper to retrieve when data was cached
 
 **Non-API Data Sources:**
 - Debug logs: Read directly from `$WP_CONTENT_DIR/debug.log` (not via API)
