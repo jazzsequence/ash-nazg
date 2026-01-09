@@ -20,6 +20,7 @@ function init() {
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_addon_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_workflow_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_connection_mode_toggle' );
+	add_action( 'wp_ajax_ash_nazg_fetch_logs', __NAMESPACE__ . '\\ajax_fetch_logs' );
 }
 
 /**
@@ -59,6 +60,16 @@ function add_admin_menu() {
 		__NAMESPACE__ . '\\render_workflows_page'
 	);
 
+	// Logs page.
+	add_submenu_page(
+		'ash-nazg',
+		__( 'Debug Logs', 'ash-nazg' ),
+		__( 'Logs', 'ash-nazg' ),
+		'manage_options',
+		'ash-nazg-logs',
+		__NAMESPACE__ . '\\render_logs_page'
+	);
+
 	// Settings page.
 	add_submenu_page(
 		'ash-nazg',
@@ -82,6 +93,7 @@ function enqueue_assets( $hook ) {
 		'toplevel_page_ash-nazg',
 		'ash-nazg_page_ash-nazg-addons',
 		'ash-nazg_page_ash-nazg-workflows',
+		'ash-nazg_page_ash-nazg-logs',
 		'ash-nazg_page_ash-nazg-settings',
 	);
 
@@ -525,3 +537,116 @@ function render_workflows_page() {
 
 	require ASH_NAZG_PLUGIN_DIR . 'includes/views/workflows.php';
 }
+
+/**
+ * AJAX handler to fetch debug logs.
+ *
+ * Fetches debug.log, switching to SFTP mode if necessary.
+ *
+ * @return void
+ */
+function ajax_fetch_logs() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_fetch_logs', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'ash-nazg' ) ) );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
+
+	if ( ! $site_id || ! $environment ) {
+		wp_send_json_error( array( 'message' => __( 'Not running on Pantheon.', 'ash-nazg' ) ) );
+	}
+
+	// Get current connection mode from state.
+	$original_mode = API\get_connection_mode();
+	if ( ! $original_mode ) {
+		// Sync state if not known.
+		API\sync_environment_state( $site_id, $environment );
+		$original_mode = API\get_connection_mode();
+	}
+
+	$switched_mode = false;
+
+	// If in Git mode, switch to SFTP temporarily.
+	if ( 'git' === $original_mode ) {
+		$result = API\update_connection_mode( $site_id, $environment, 'sftp' );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+		}
+		$switched_mode = true;
+		// Give the mode switch a moment to take effect.
+		sleep( 2 );
+	}
+
+	// Read debug.log file.
+	$log_path = WP_CONTENT_DIR . '/debug.log';
+	$logs = '';
+
+	if ( file_exists( $log_path ) && is_readable( $log_path ) ) {
+		$logs = file_get_contents( $log_path );
+	}
+
+	// Switch back to original mode if we changed it.
+	if ( $switched_mode ) {
+		API\update_connection_mode( $site_id, $environment, 'git' );
+	}
+
+	// Clear old transient and store new logs.
+	delete_transient( 'ash_nazg_debug_logs' );
+	delete_transient( 'ash_nazg_debug_logs_timestamp' );
+
+	// Store for 1 year.
+	set_transient( 'ash_nazg_debug_logs', $logs, YEAR_IN_SECONDS );
+	set_transient( 'ash_nazg_debug_logs_timestamp', time(), YEAR_IN_SECONDS );
+
+	wp_send_json_success(
+		array(
+			'logs' => $logs,
+			'timestamp' => time(),
+			'switched_mode' => $switched_mode,
+		)
+	);
+}
+
+/**
+ * Render logs page.
+ *
+ * @return void
+ */
+function render_logs_page() {
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$message = null;
+	$error = null;
+
+	// Handle redirect messages.
+	if ( isset( $_GET['logs_fetched'] ) ) {
+		$message = __( 'Debug logs fetched successfully.', 'ash-nazg' );
+	}
+
+	if ( isset( $_GET['logs_error'] ) ) {
+		$stored_error = get_transient( 'ash_nazg_logs_error' );
+		if ( $stored_error ) {
+			$error = $stored_error;
+			delete_transient( 'ash_nazg_logs_error' );
+		}
+	}
+
+	// Get current environment info.
+	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
+
+	// Get cached logs.
+	$logs = get_transient( 'ash_nazg_debug_logs' );
+	$logs_fetched_at = get_transient( 'ash_nazg_debug_logs_timestamp' );
+
+	require ASH_NAZG_PLUGIN_DIR . 'includes/views/logs.php';
+}
+
