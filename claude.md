@@ -238,6 +238,21 @@ ash-nazg/
 - Fallback prefix for global scope: `ash_nazg_`
 - Use proper WordPress i18n functions for all user-facing strings
 - Text domain: `ash-nazg`
+- **CRITICAL: Namespace Usage Rule** - Always use `use` statements for namespaces
+  - At the top of each file, import namespaces with `use` statements
+  - Then reference functions using the short namespace alias
+  - ✅ Correct:
+    ```php
+    use Pantheon\AshNazg\API;
+
+    $data = API\get_site_info();
+    ```
+  - ❌ Wrong:
+    ```php
+    $data = \Pantheon\AshNazg\API\get_site_info();
+    ```
+  - Never use fully qualified namespace paths in function calls
+  - Import namespaces at the file level for cleaner, more readable code
 - **CRITICAL: Spacing Rule** - Only ONE space after variable names and array keys
   - ✅ Correct: `$variable = value;` and `'key' => value`
   - ❌ Wrong: `$variable  = value;` and `'key'  => value`
