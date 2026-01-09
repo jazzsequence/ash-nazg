@@ -17,6 +17,7 @@ use Pantheon\AshNazg\API;
 function init() {
 	add_action( 'admin_menu', __NAMESPACE__ . '\\add_admin_menu' );
 	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\enqueue_assets' );
+	add_action( 'admin_init', __NAMESPACE__ . '\\handle_addon_form_submission' );
 }
 
 /**
@@ -169,6 +170,81 @@ function render_dashboard_page() {
 }
 
 /**
+ * Handle addon form submission.
+ *
+ * Runs on admin_init to process form before any output.
+ *
+ * @return void
+ */
+function handle_addon_form_submission() {
+	// Only process on addon page submissions.
+	if ( ! isset( $_POST['ash_nazg_addons_nonce'] ) ) {
+		return;
+	}
+
+	// Verify nonce.
+	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ash_nazg_addons_nonce'] ) ), 'ash_nazg_update_addons' ) ) {
+		return;
+	}
+
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$site_id = API\get_pantheon_site_id();
+
+	if ( $site_id && isset( $_POST['submit'] ) ) {
+		$updated_count = 0;
+		$errors = array();
+
+		// Get list of all known addons with their current state.
+		$all_addons = API\get_site_addons( $site_id );
+		if ( ! is_wp_error( $all_addons ) ) {
+			// Process each addon - only update if state has changed.
+			foreach ( $all_addons as $addon ) {
+				$addon_id = $addon['id'];
+				$old_state = isset( $addon['enabled'] ) ? (bool) $addon['enabled'] : false;
+				// Checkbox checked = enabled, checkbox unchecked = disabled.
+				$new_state = isset( $_POST['addons'][ $addon_id ] ) && 'on' === $_POST['addons'][ $addon_id ];
+
+				// Only send API request if state has changed.
+				if ( $old_state !== $new_state ) {
+					$result = API\update_site_addon( $site_id, $addon_id, $new_state );
+
+					if ( is_wp_error( $result ) ) {
+						$errors[] = sprintf(
+							/* translators: 1: addon ID, 2: error message */
+							__( 'Failed to update %1$s: %2$s', 'ash-nazg' ),
+							$addon_id,
+							$result->get_error_message()
+						);
+					} else {
+						$updated_count++;
+					}
+				}
+			}
+		}
+
+		// Set success/error messages and redirect to avoid form resubmission.
+		$redirect_args = array( 'page' => 'ash-nazg-addons' );
+
+		if ( $updated_count > 0 ) {
+			$redirect_args['updated'] = $updated_count;
+		}
+
+		if ( ! empty( $errors ) ) {
+			$redirect_args['error'] = '1';
+			// Store errors in transient for display after redirect.
+			set_transient( 'ash_nazg_addon_errors', $errors, 30 );
+		}
+
+		wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+		exit;
+	}
+}
+
+/**
  * Render addons page.
  *
  * @return void
@@ -181,60 +257,6 @@ function render_addons_page() {
 
 	$message = null;
 	$error = null;
-
-	// Handle form submission.
-	if ( isset( $_POST['ash_nazg_addons_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ash_nazg_addons_nonce'] ) ), 'ash_nazg_update_addons' ) ) {
-		$site_id = API\get_pantheon_site_id();
-
-		if ( $site_id && isset( $_POST['submit'] ) ) {
-			$updated_count = 0;
-			$errors = array();
-
-			// Get list of all known addons with their current state.
-			$all_addons = API\get_site_addons( $site_id );
-			if ( ! is_wp_error( $all_addons ) ) {
-				// Process each addon - only update if state has changed.
-				foreach ( $all_addons as $addon ) {
-					$addon_id = $addon['id'];
-					$old_state = isset( $addon['enabled'] ) ? (bool) $addon['enabled'] : false;
-					// Checkbox checked = enabled, checkbox unchecked = disabled.
-					$new_state = isset( $_POST['addons'][ $addon_id ] ) && 'on' === $_POST['addons'][ $addon_id ];
-
-					// Only send API request if state has changed.
-					if ( $old_state !== $new_state ) {
-						$result = API\update_site_addon( $site_id, $addon_id, $new_state );
-
-						if ( is_wp_error( $result ) ) {
-							$errors[] = sprintf(
-								/* translators: 1: addon ID, 2: error message */
-								__( 'Failed to update %1$s: %2$s', 'ash-nazg' ),
-								$addon_id,
-								$result->get_error_message()
-							);
-						} else {
-							$updated_count++;
-						}
-					}
-				}
-			}
-
-			// Set success/error messages and redirect to avoid form resubmission.
-			$redirect_args = array( 'page' => 'ash-nazg-addons' );
-
-			if ( $updated_count > 0 ) {
-				$redirect_args['updated'] = $updated_count;
-			}
-
-			if ( ! empty( $errors ) ) {
-				$redirect_args['error'] = '1';
-				// Store errors in transient for display after redirect.
-				set_transient( 'ash_nazg_addon_errors', $errors, 30 );
-			}
-
-			wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
-			exit;
-		}
-	}
 
 	// Handle redirect messages.
 	if ( isset( $_GET['updated'] ) ) {
