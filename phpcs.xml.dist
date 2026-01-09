@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<ruleset name="Ash-Nazg Pantheon Plugin">
+	<description>Pantheon WordPress Coding Standards for Ash-Nazg plugin</description>
+
+	<!-- Check all PHP files in directory tree by default. -->
+	<arg name="extensions" value="php"/>
+	<file>.</file>
+
+	<!-- Show progress and sniff codes in all reports -->
+	<arg value="ps"/>
+
+	<!-- Use Pantheon-WP coding standard -->
+	<rule ref="Pantheon-WP"/>
+	<rule ref="PHPCompatibility"/>
+
+	<!-- Minimum PHP and WP versions -->
+	<config name="testVersion" value="8.0-"/>
+	<config name="minimum_supported_wp_version" value="6.0"/>
+
+	<!-- Exclude patterns -->
+	<exclude-pattern>*/bin/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/tests/*</exclude-pattern>
+</ruleset>

@@ -79,6 +79,15 @@ function render_dashboard_page() {
 		return;
 	}
 
+	// Handle cache refresh request.
+	$refresh_message = null;
+	if ( isset( $_GET['refresh_cache'] ) && isset( $_GET['_wpnonce'] ) ) {
+		if ( wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'ash_nazg_refresh_cache' ) ) {
+			API\clear_cache();
+			$refresh_message = __( 'API cache cleared. Data refreshed.', 'ash-nazg' );
+		}
+	}
+
 	// Get Pantheon environment info.
 	$is_pantheon = API\is_pantheon();
 	$site_id     = API\get_pantheon_site_id();
@@ -88,6 +97,8 @@ function render_dashboard_page() {
 	$site_info        = null;
 	$environment_info = null;
 	$api_error        = null;
+	$env_info_notice  = null;
+	$endpoints_status = array();
 
 	if ( $is_pantheon ) {
 		$site_info = API\get_site_info();
@@ -98,10 +109,30 @@ function render_dashboard_page() {
 
 		$environment_info = API\get_environment_info();
 		if ( is_wp_error( $environment_info ) ) {
-			if ( null === $api_error ) {
-				$api_error = $environment_info;
+			// "environment_not_found" is expected for local environments like "lando".
+			if ( 'environment_not_found' === $environment_info->get_error_code() ) {
+				$env_info_notice  = $environment_info;
+				$environment_info = null;
+			} else {
+				// Other errors are real API problems.
+				if ( null === $api_error ) {
+					$api_error = $environment_info;
+				}
+				$environment_info = null;
 			}
-			$environment_info = null;
+		}
+
+		// Get endpoints status if we can connect to the API.
+		// We fetch endpoints even if the environment doesn't exist on Pantheon (local dev).
+		if ( null === $api_error ) {
+			$endpoints_data = API\get_endpoints_status( $site_id, $environment );
+			// Handle both old and new cache formats during transition.
+			if ( isset( $endpoints_data['all'] ) ) {
+				$endpoints_status = $endpoints_data['all'];
+			} else {
+				// Old cache format - data is the categories directly.
+				$endpoints_status = $endpoints_data;
+			}
 		}
 	}
 

@@ -212,6 +212,108 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</div>
 		<?php endif; ?>
 
+		<?php if ( ! empty( $endpoints_status ) ) : ?>
+			<div class="ash-nazg-card" style="grid-column: 1 / -1;">
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+					<h2 style="margin: 0;"><?php esc_html_e( 'Available API Endpoints', 'ash-nazg' ); ?></h2>
+					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&refresh_cache=1' ), 'ash_nazg_refresh_cache' ) ); ?>" class="button button-secondary">
+						<span class="dashicons dashicons-update" style="margin-top: 3px;"></span>
+						<?php esc_html_e( 'Refresh Data', 'ash-nazg' ); ?>
+					</a>
+				</div>
+				<p><?php esc_html_e( 'Status of Pantheon API endpoints accessible from this plugin.', 'ash-nazg' ); ?></p>
+
+				<?php
+				$total_endpoints = 0;
+				$successful = 0;
+				$unavailable = 0;
+				$errors = 0;
+				foreach ( $endpoints_status as $category => $endpoints ) {
+					foreach ( $endpoints as $endpoint ) {
+						$total_endpoints++;
+						if ( 'success' === $endpoint['status'] ) {
+							$successful++;
+						} elseif ( 'unavailable' === $endpoint['status'] ) {
+							$unavailable++;
+						} else {
+							$errors++;
+						}
+					}
+				}
+				?>
+				<p style="margin: 10px 0;">
+					<strong><?php esc_html_e( 'Summary:', 'ash-nazg' ); ?></strong>
+					<span style="color: #46b450;">✓ <?php echo esc_html( $successful ); ?> <?php esc_html_e( 'working', 'ash-nazg' ); ?></span>
+					<?php if ( $unavailable > 0 ) : ?>
+						<span style="margin-left: 10px; color: #dba617;">⊘ <?php echo esc_html( $unavailable ); ?> <?php esc_html_e( 'unavailable', 'ash-nazg' ); ?></span>
+					<?php endif; ?>
+					<?php if ( $errors > 0 ) : ?>
+						<span style="margin-left: 10px; color: #dc3232;">✗ <?php echo esc_html( $errors ); ?> <?php esc_html_e( 'errors', 'ash-nazg' ); ?></span>
+					<?php endif; ?>
+					<span style="margin-left: 10px; color: #666;">
+						(<?php echo esc_html( $total_endpoints ); ?> <?php esc_html_e( 'total endpoints', 'ash-nazg' ); ?>)
+					</span>
+				</p>
+
+				<?php foreach ( $endpoints_status as $category => $endpoints ) : ?>
+					<h3 style="margin-top: 20px; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #dcdcde; padding-bottom: 5px;">
+						<?php echo esc_html( $category ); ?>
+						<span style="color: #666; font-weight: normal; font-size: 13px;">
+							(<?php echo count( $endpoints ); ?> <?php echo _n( 'endpoint', 'endpoints', count( $endpoints ), 'ash-nazg' ); ?>)
+						</span>
+					</h3>
+					<table class="widefat striped" style="margin-bottom: 20px;">
+						<thead>
+							<tr>
+								<th style="width: 35px;"></th>
+								<th style="width: 25%;"><?php esc_html_e( 'Endpoint', 'ash-nazg' ); ?></th>
+								<th style="width: 40%;"><?php esc_html_e( 'Path', 'ash-nazg' ); ?></th>
+								<th><?php esc_html_e( 'Status / Data', 'ash-nazg' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $endpoints as $endpoint ) : ?>
+								<tr>
+									<td style="text-align: center;">
+										<?php if ( 'success' === $endpoint['status'] ) : ?>
+											<span class="dashicons dashicons-yes-alt" style="color: #46b450;" title="<?php esc_attr_e( 'Available', 'ash-nazg' ); ?>"></span>
+										<?php elseif ( 'unavailable' === $endpoint['status'] ) : ?>
+											<span class="dashicons dashicons-minus" style="color: #dba617;" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Unavailable', 'ash-nazg' ) ); ?>"></span>
+										<?php else : ?>
+											<span class="dashicons dashicons-dismiss" style="color: #dc3232;" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Error', 'ash-nazg' ) ); ?>"></span>
+										<?php endif; ?>
+									</td>
+									<td>
+										<strong><?php echo esc_html( $endpoint['name'] ); ?></strong>
+										<?php if ( ! empty( $endpoint['description'] ) ) : ?>
+											<br><small style="color: #666;"><?php echo esc_html( $endpoint['description'] ); ?></small>
+										<?php endif; ?>
+									</td>
+									<td><code style="font-size: 11px;"><?php echo esc_html( $endpoint['path'] ); ?></code></td>
+									<td>
+										<?php if ( 'success' === $endpoint['status'] && ! empty( $endpoint['data'] ) ) : ?>
+											<?php foreach ( $endpoint['data'] as $data_key => $data_value ) : ?>
+												<?php if ( is_scalar( $data_value ) ) : ?>
+													<div style="font-size: 12px;">
+														<strong><?php echo esc_html( ucfirst( $data_key ) ); ?>:</strong>
+														<?php echo esc_html( $data_value ); ?>
+													</div>
+												<?php endif; ?>
+											<?php endforeach; ?>
+										<?php elseif ( 'success' !== $endpoint['status'] && ! empty( $endpoint['error'] ) ) : ?>
+											<small style="color: #dc3232;"><?php echo esc_html( $endpoint['error'] ); ?></small>
+										<?php else : ?>
+											<small style="color: #999;">—</small>
+										<?php endif; ?>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php endforeach; ?>
+			</div>
+		<?php endif; ?>
+
 		<?php if ( null === $site_info && null === $environment_info && null === $api_error ) : ?>
 			<div class="ash-nazg-card">
 				<h2><?php esc_html_e( 'Getting Started', 'ash-nazg' ); ?></h2>

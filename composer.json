@@ -22,10 +22,10 @@
       "@lint:phpcs"
     ],
     "lint:php": "find . -name '*.php' -not -path './vendor/*' -not -path './.git/*' -exec php -l {} \\;",
-    "lint:phpcs": "phpcs --standard=Pantheon-WP .",
+    "lint:phpcs": "./vendor/bin/phpcs",
     "phpcs": "@lint:phpcs",
-    "phpcbf": "phpcbf --standard=Pantheon-WP .",
-    "phpunit": "phpunit --do-not-cache-result",
+    "phpcbf": "./vendor/bin/phpcbf",
+    "phpunit": "./vendor/bin/phpunit --do-not-cache-result",
     "test": "@phpunit",
     "test:install": "bin/install-local-tests.sh --no-db",
     "test:install:withdb": "bin/install-local-tests.sh",

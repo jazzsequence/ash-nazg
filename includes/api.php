@@ -42,6 +42,7 @@ function get_api_token() {
 			'body'    => wp_json_encode(
 				array(
 					'machine_token' => $machine_token,
+					'client'        => 'ash-nazg',
 				)
 			),
 			'timeout' => 15,
@@ -79,6 +80,30 @@ function get_api_token() {
 		return new \WP_Error(
 			'api_unavailable',
 			__( 'Pantheon API is experiencing issues (502 Bad Gateway). Please try again later.', 'ash-nazg' )
+		);
+	}
+
+	// Handle Bad Request (malformed request).
+	if ( 400 === $status_code ) {
+		$data          = json_decode( $body, true );
+		$error_details = '';
+		if ( ! empty( $data['errors'] ) && is_array( $data['errors'] ) ) {
+			$error_messages = array_map(
+				function ( $error ) {
+					return isset( $error['message'] ) ? $error['message'] : '';
+				},
+				$data['errors']
+			);
+			$error_details = ' (' . implode( ', ', array_filter( $error_messages ) ) . ')';
+		}
+		error_log( 'Ash-Nazg: Bad request to API (400): ' . $body );
+		return new \WP_Error(
+			'bad_request',
+			sprintf(
+				/* translators: %s: error details from API */
+				__( 'Invalid request to Pantheon API%s. This may be a plugin bug - please report it.', 'ash-nazg' ),
+				$error_details
+			)
 		);
 	}
 
@@ -146,7 +171,7 @@ function get_machine_token() {
 /**
  * Make authenticated API request.
  *
- * @param string $endpoint API endpoint path (e.g., '/v1/sites/abc123').
+ * @param string $endpoint API endpoint path (e.g., '/v0/sites/abc123').
  * @param string $method   HTTP method (GET, POST, PUT, DELETE).
  * @param array  $body     Optional request body.
  * @return array|\WP_Error Response data or WP_Error on failure.
@@ -224,7 +249,7 @@ function get_site_info( $site_id = null ) {
 	}
 
 	// Fetch from API.
-	$data = api_request( '/v1/sites/' . $site_id );
+	$data = api_request( '/v0/sites/' . $site_id );
 
 	if ( is_wp_error( $data ) ) {
 		return $data;
@@ -271,12 +296,26 @@ function get_environment_info( $site_id = null, $env = null ) {
 		return $cached;
 	}
 
-	// Fetch from API.
-	$data = api_request( sprintf( '/v1/sites/%s/environments/%s', $site_id, $env ) );
+	// Fetch all environments from API (there's no single-environment endpoint).
+	$environments = api_request( sprintf( '/v0/sites/%s/environments', $site_id ) );
 
-	if ( is_wp_error( $data ) ) {
-		return $data;
+	if ( is_wp_error( $environments ) ) {
+		return $environments;
 	}
+
+	// Extract the specific environment from the map.
+	if ( ! isset( $environments[ $env ] ) ) {
+		return new \WP_Error(
+			'environment_not_found',
+			sprintf(
+				/* translators: %s: environment name */
+				__( 'Environment "%s" not found on Pantheon. This may be a local development environment.', 'ash-nazg' ),
+				$env
+			)
+		);
+	}
+
+	$data = $environments[ $env ];
 
 	// Cache for 2 minutes.
 	set_transient( $cache_key, $data, 2 * MINUTE_IN_SECONDS );
@@ -320,6 +359,7 @@ function is_pantheon() {
  */
 function clear_cache() {
 	delete_transient( 'ash_nazg_session_token' );
+	delete_transient( 'ash_nazg_user_id' );
 
 	// Clear site-specific caches if we can detect site ID.
 	$site_id = get_pantheon_site_id();
@@ -329,8 +369,102 @@ function clear_cache() {
 		$env = get_pantheon_environment();
 		if ( $env ) {
 			delete_transient( 'ash_nazg_env_info_' . $site_id . '_' . $env );
+			delete_transient( sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $env ) );
 		}
 	}
+}
+
+/**
+ * Get user ID from current session.
+ *
+ * @return string|false User ID or false if not available.
+ */
+function get_user_id() {
+	$token = get_api_token();
+	if ( is_wp_error( $token ) ) {
+		return false;
+	}
+
+	// Try to get from cached session token response.
+	$cached_user_id = get_transient( 'ash_nazg_user_id' );
+	if ( false !== $cached_user_id ) {
+		return $cached_user_id;
+	}
+
+	// Get from fresh auth to extract user_id.
+	delete_transient( 'ash_nazg_session_token' );
+	$machine_token = get_machine_token();
+	if ( ! $machine_token ) {
+		return false;
+	}
+
+	$response = wp_remote_post(
+		'https://api.pantheon.io/v0/authorize/machine-token',
+		array(
+			'headers' => array( 'Content-Type' => 'application/json' ),
+			'body'    => wp_json_encode(
+				array(
+					'machine_token' => $machine_token,
+					'client'        => 'ash-nazg',
+				)
+			),
+			'timeout' => 15,
+		)
+	);
+
+	if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( ! empty( $body['user_id'] ) ) {
+			set_transient( 'ash_nazg_user_id', $body['user_id'], HOUR_IN_SECONDS );
+			return $body['user_id'];
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Get available API endpoints and their status.
+ *
+ * Tests all available Pantheon API endpoints and returns their status organized by category.
+ * Results are cached for 10 minutes to improve performance.
+ *
+ * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @param string $env     Optional. Environment name. Auto-detected if not provided.
+ * @param bool   $refresh Optional. Force refresh of cached data. Default false.
+ * @return array Array of endpoint categories with their endpoints and status.
+ */
+function get_endpoints_status( $site_id = null, $env = null, $refresh = false ) {
+	if ( null === $site_id ) {
+		$site_id = get_pantheon_site_id();
+	}
+
+	if ( null === $env ) {
+		$env = get_pantheon_environment();
+	}
+
+	// Create a unique cache key based on site and environment.
+	$cache_key = sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $env );
+
+	// Check cache first unless refresh is requested.
+	if ( ! $refresh ) {
+		$cached = get_transient( $cache_key );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+	}
+
+	$user_id = get_user_id();
+
+	// Load comprehensive endpoints testing.
+	require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
+
+	$endpoints = get_all_endpoints_status( $site_id, $env, $user_id );
+
+	// Cache for 10 minutes.
+	set_transient( $cache_key, $endpoints, 10 * MINUTE_IN_SECONDS );
+
+	return $endpoints;
 }
 
 /**
