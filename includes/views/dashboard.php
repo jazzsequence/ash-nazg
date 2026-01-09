@@ -212,7 +212,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</div>
 		<?php endif; ?>
 
-		<?php if ( ! empty( $endpoints_status ) ) : ?>
+		<?php if ( ! empty( $endpoints_site ) || ! empty( $endpoints_user ) || ! empty( $endpoints_all ) ) : ?>
+			<?php
+			// Determine active tab.
+			$active_tab = isset( $_GET['endpoints_tab'] ) ? sanitize_text_field( wp_unslash( $_GET['endpoints_tab'] ) ) : 'site';
+			?>
 			<div class="ash-nazg-card" style="grid-column: 1 / -1;">
 				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
 					<h2 style="margin: 0;"><?php esc_html_e( 'Available API Endpoints', 'ash-nazg' ); ?></h2>
@@ -221,7 +225,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<?php esc_html_e( 'Refresh Data', 'ash-nazg' ); ?>
 					</a>
 				</div>
-				<p><?php esc_html_e( 'Status of Pantheon API endpoints accessible from this plugin.', 'ash-nazg' ); ?></p>
+
+				<h2 class="nav-tab-wrapper">
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=site' ) ); ?>" class="nav-tab <?php echo 'site' === $active_tab ? 'nav-tab-active' : ''; ?>">
+						<?php esc_html_e( 'Site Endpoints', 'ash-nazg' ); ?>
+					</a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=user' ) ); ?>" class="nav-tab <?php echo 'user' === $active_tab ? 'nav-tab-active' : ''; ?>">
+						<?php esc_html_e( 'User Endpoints', 'ash-nazg' ); ?>
+					</a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=all' ) ); ?>" class="nav-tab <?php echo 'all' === $active_tab ? 'nav-tab-active' : ''; ?>">
+						<?php esc_html_e( 'All Endpoints', 'ash-nazg' ); ?>
+					</a>
+				</h2>
+
+				<?php if ( 'site' === $active_tab ) : ?>
+					<p><?php esc_html_e( 'Endpoints for managing this specific Pantheon site.', 'ash-nazg' ); ?></p>
+					<?php $endpoints_status = $endpoints_site; ?>
+				<?php elseif ( 'user' === $active_tab ) : ?>
+					<p><?php esc_html_e( 'Endpoints for the current user (authenticated via machine token).', 'ash-nazg' ); ?></p>
+					<?php $endpoints_status = $endpoints_user; ?>
+				<?php else : ?>
+					<p><?php esc_html_e( 'All available Pantheon API endpoints accessible from this plugin.', 'ash-nazg' ); ?></p>
+					<?php $endpoints_status = $endpoints_all; ?>
+				<?php endif; ?>
 
 				<?php
 				$total_endpoints = 0;

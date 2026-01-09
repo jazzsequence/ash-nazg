@@ -128,10 +128,15 @@ function render_dashboard_page() {
 			$endpoints_data = API\get_endpoints_status( $site_id, $environment );
 			// Handle both old and new cache formats during transition.
 			if ( isset( $endpoints_data['all'] ) ) {
-				$endpoints_status = $endpoints_data['all'];
+				// New format with separate groups.
+				$endpoints_site = $endpoints_data['site'];
+				$endpoints_user = $endpoints_data['user'];
+				$endpoints_all = $endpoints_data['all'];
 			} else {
 				// Old cache format - data is the categories directly.
-				$endpoints_status = $endpoints_data;
+				$endpoints_site = $endpoints_data;
+				$endpoints_user = array();
+				$endpoints_all = $endpoints_data;
 			}
 		}
 	}
