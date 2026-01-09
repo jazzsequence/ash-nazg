@@ -487,3 +487,120 @@ function test_connection() {
 
 	return true;
 }
+
+/**
+ * Get site addons.
+ *
+ * Fetches list of available addons and their current state from the Pantheon API.
+ *
+ * @param string $site_id Optional. Site UUID. If not provided, auto-detected.
+ * @return array|\WP_Error Array of addon objects on success, WP_Error on failure.
+ */
+function get_site_addons( $site_id = null ) {
+	if ( ! $site_id ) {
+		$site_id = get_pantheon_site_id();
+	}
+
+	if ( ! $site_id ) {
+		return new \WP_Error(
+			'missing_site_id',
+			__( 'Site ID could not be determined.', 'ash-nazg' )
+		);
+	}
+
+	// Check cache first.
+	$cache_key = sprintf( 'ash_nazg_site_addons_%s', $site_id );
+	$cached = get_transient( $cache_key );
+	if ( false !== $cached ) {
+		return $cached;
+	}
+
+	// Fetch from API.
+	$endpoint = sprintf( '/v0/sites/%s/addons', $site_id );
+	$addons = api_request( $endpoint );
+
+	if ( is_wp_error( $addons ) ) {
+		error_log( sprintf( 'Ash-Nazg: Failed to fetch site addons for %s: %s', $site_id, $addons->get_error_message() ) );
+		return $addons;
+	}
+
+	// Cache for 5 minutes.
+	set_transient( $cache_key, $addons, 5 * MINUTE_IN_SECONDS );
+
+	return $addons;
+}
+
+/**
+ * Update site addon.
+ *
+ * Enable or disable a specific site addon via the Pantheon API.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $addon_id Addon identifier (e.g., 'redis', 'solr').
+ * @param bool   $enabled Whether to enable or disable the addon.
+ * @return true|\WP_Error True on success, WP_Error on failure.
+ */
+function update_site_addon( $site_id, $addon_id, $enabled ) {
+	if ( ! $site_id ) {
+		return new \WP_Error(
+			'missing_site_id',
+			__( 'Site ID is required.', 'ash-nazg' )
+		);
+	}
+
+	if ( ! $addon_id ) {
+		return new \WP_Error(
+			'missing_addon_id',
+			__( 'Addon ID is required.', 'ash-nazg' )
+		);
+	}
+
+	// Make API request to update addon.
+	$endpoint = sprintf( '/v0/sites/%s/addons/%s', $site_id, $addon_id );
+	$body = array( 'enabled' => (bool) $enabled );
+
+	$result = api_request( $endpoint, 'PUT', $body );
+
+	if ( is_wp_error( $result ) ) {
+		error_log( sprintf( 'Ash-Nazg: Failed to update addon %s for site %s: %s', $addon_id, $site_id, $result->get_error_message() ) );
+		return $result;
+	}
+
+	// Log the addon state change.
+	error_log( sprintf( 'Ash-Nazg: Addon %s %s for site %s', $addon_id, $enabled ? 'enabled' : 'disabled', $site_id ) );
+
+	// Clear addon cache.
+	clear_addons_cache( $site_id );
+
+	// Clear endpoint status cache to reflect the updated addon state.
+	$env = get_pantheon_environment();
+	clear_addon_endpoint_cache( $site_id, $env );
+
+	return true;
+}
+
+/**
+ * Clear site addons cache.
+ *
+ * @param string $site_id Site UUID.
+ * @return void
+ */
+function clear_addons_cache( $site_id ) {
+	$cache_key = sprintf( 'ash_nazg_site_addons_%s', $site_id );
+	delete_transient( $cache_key );
+}
+
+/**
+ * Clear addon endpoint cache.
+ *
+ * Clears the endpoint status cache that includes the addons endpoint,
+ * ensuring the dashboard reflects current addon state.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $env Environment name.
+ * @return void
+ */
+function clear_addon_endpoint_cache( $site_id, $env ) {
+	$cache_key = sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $env );
+	delete_transient( $cache_key );
+}
