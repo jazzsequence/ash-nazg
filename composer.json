@@ -25,7 +25,7 @@
     "lint:phpcs": "./vendor/bin/phpcs -s",
     "phpcs": "@lint:phpcs",
     "phpcbf": "./vendor/bin/phpcbf -s",
-		"phpunit": "phpunit --do-not-cache-result",
+		"phpunit": "bin/phpunit-test.sh",
 		"test": "@phpunit",
 		"test:install": "bin/install-local-tests.sh --skip-db=true",
 		"test:install:withdb": "bin/install-local-tests.sh",
