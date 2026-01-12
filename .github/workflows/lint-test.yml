@@ -25,14 +25,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Reset MariaDB root password to empty
-        run: |
-          until mysqladmin ping -h127.0.0.1 -uroot -proot --silent; do
-            sleep 1
-          done
-          mysql -h127.0.0.1 -uroot -proot -e "ALTER USER 'root'@'localhost' IDENTIFIED BY ''; ALTER USER 'root'@'%' IDENTIFIED BY ''; FLUSH PRIVILEGES;"
-          mysqladmin ping -h127.0.0.1 -uroot --silent
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
