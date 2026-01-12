@@ -148,6 +148,15 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 - Secure API token storage (encryption at rest)
 - Never expose API tokens in JavaScript or HTML
 
+**Nonce Verification - CRITICAL RULE:**
+- **NEVER** assume PHPCS nonce warnings are false positives
+- **NEVER** use `// phpcs:ignore WordPress.Security.NonceVerification` for nonce warnings
+- **ALWAYS** implement proper nonce verification for any `$_GET` or `$_POST` access
+- For redirect messages: Use transients only, NOT GET parameters (check transient existence instead of GET params)
+- For UI state (like tabs): Add nonces to links with `wp_nonce_url()` and verify with `wp_verify_nonce()`
+- Example: `wp_nonce_url( admin_url( 'admin.php?page=foo&tab=bar' ), 'my_nonce_action' )`
+- Verify: `if ( isset( $_GET['tab'], $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'my_nonce_action' ) )`
+
 ##### Secrets Management - CRITICAL SECURITY REQUIREMENTS
 
 **NEVER commit the following to git:**
