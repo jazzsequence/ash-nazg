@@ -49,5 +49,8 @@ jobs:
           chmod +x bin/*.sh
           bin/install-local-tests.sh
 
-      - name: Run checks
-        run: composer check
+      - name: Run PHPCS
+        run: composer phpcs
+      
+      - name: Run PHPUnit tests
+        run: composer test
