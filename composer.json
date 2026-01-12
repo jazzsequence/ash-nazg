@@ -25,9 +25,20 @@
     "lint:phpcs": "./vendor/bin/phpcs -s",
     "phpcs": "@lint:phpcs",
     "phpcbf": "./vendor/bin/phpcbf -s",
-		"phpunit": "bin/phpunit-test.sh",
+    "phpunit:single": [
+      "echo 🏃‍♂️ Running PHPUnit on Single Site...",
+      "./vendor/bin/phpunit --ansi"
+    ],
+    "phpunit:ms": [
+      "echo 🏃‍♂️ Running PHPUnit on Multisite...",
+      "WP_MULTISITE=1 ./vendor/bin/phpunit --ansi"
+    ],
+    "phpunit": [
+      "@phpunit:single",
+      "@phpunit:ms"
+    ],
 		"test": "@phpunit",
-		"test:install": "bin/install-local-tests.sh --skip-db=true",
+		"test:install": "bin/install-local-tests.sh --skip-db",
 		"test:install:withdb": "bin/install-local-tests.sh",
     "check": [
       "@lint",
