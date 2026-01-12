@@ -47,10 +47,7 @@ jobs:
       - name: Setup WPUnit Helpers
         run: |
           chmod +x bin/*.sh
-          composer test:install:withdb -- --dbpass=root
+          composer test:install:withdb
 
-      - name: PHPCS
-        run: composer phpcs
-
-      - name: WPUnit
-        run: composer test
+      - name: Run checks
+        run: composer check
