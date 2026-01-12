@@ -12,9 +12,6 @@
     "phpunit/phpunit": "^9.6"
   },
   "autoload": {
-    "files": [
-      "ash-nazg.php"
-    ]
   },
   "scripts": {
     "lint": [
@@ -26,16 +23,13 @@
     "phpcs": "@lint:phpcs",
     "phpcbf": "./vendor/bin/phpcbf -s",
     "phpunit:single": [
-      "echo 🏃‍♂️ Running PHPUnit on Single Site...",
-      "./vendor/bin/phpunit --ansi"
+      "./vendor/bin/phpunit"
     ],
     "phpunit:ms": [
-      "echo 🏃‍♂️ Running PHPUnit on Multisite...",
-      "WP_MULTISITE=1 ./vendor/bin/phpunit --ansi"
+      "WP_MULTISITE=1 ./vendor/bin/phpunit"
     ],
     "phpunit": [
-      "@phpunit:single",
-      "@phpunit:ms"
+      "./bin/test.sh"
     ],
 		"test": "@phpunit",
 		"test:install": "bin/install-local-tests.sh --skip-db",
