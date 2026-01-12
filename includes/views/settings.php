@@ -114,7 +114,7 @@ use Pantheon\AshNazg\API;
 							);
 							?>
 						</p>
-						<?php var_dump(API\get_site_info(), $_ENV['PANTHEON_ENVIRONMENT']); ?>
+						<?php var_dump(API\get_site_info(), $_ENV); ?>
 						<code>terminus secret:set ash_nazg_machine_token YOUR_TOKEN --scope=site</code>
 						<p class="description">
 							<?php
