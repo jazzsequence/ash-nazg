@@ -957,6 +957,19 @@ This runs PHPUnit with the configuration in `phpunit.xml.dist`.
 - Pantheon Design System (PDS Core) for UI components
 - Pantheon Secrets API for credential storage
 
+### Terminus CLI Usage
+
+**IMPORTANT: Terminus commands can be run from ANY directory** - you do NOT need to cd into a site project directory.
+
+- Terminus connects to Pantheon API remotely
+- Site-specific commands use the site name/ID as a parameter (e.g., `terminus site:info cxr-ash-nazg`)
+- Environment-specific commands use `site.env` format (e.g., `terminus env:info cxr-ash-nazg.dev`)
+- Common commands for development:
+  - `terminus site:info <site>` - Get site information
+  - `terminus env:info <site>.<env>` - Get environment information
+  - `terminus secret:set <site> <key> <value>` - Set Pantheon secret
+  - `terminus auth:whoami` - Check current authenticated user
+
 ### API Exploration Strategy
 - Review full Pantheon API documentation at https://api.pantheon.io/docs
 - Implement capabilities broadly based on what the API offers

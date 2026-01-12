@@ -1084,3 +1084,118 @@ function get_workflow_status( $workflow_id ) {
 
 	return $result;
 }
+
+/**
+ * Get git commit history for an environment.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $env Environment name.
+ * @return array|WP_Error Array of commit objects or WP_Error on failure.
+ */
+function get_environment_commits( $site_id, $env ) {
+	$cache_key = sprintf( 'ash_nazg_commits_%s_%s', $site_id, $env );
+	$cached = get_transient( $cache_key );
+
+	if ( false !== $cached ) {
+		return $cached['data'];
+	}
+
+	/* Map local environment names to dev for API queries. */
+	$api_env = map_local_env_to_dev( $env );
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/commits', $site_id, $api_env );
+	$result = api_request( $endpoint, 'GET' );
+
+	if ( is_wp_error( $result ) ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to get commits for %s/%s: %s', $site_id, $env, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+		return $result;
+	}
+
+	/* Cache for 1 hour. */
+	set_transient(
+		$cache_key,
+		[
+			'data' => $result,
+			'cached_at' => time(),
+		],
+		HOUR_IN_SECONDS
+	);
+
+	return $result;
+}
+
+/**
+ * Get available upstream update commits.
+ *
+ * @param string $site_id Site UUID.
+ * @return array|WP_Error Array of upstream commit objects or WP_Error on failure.
+ */
+function get_upstream_updates( $site_id ) {
+	$cache_key = sprintf( 'ash_nazg_upstream_updates_%s', $site_id );
+	$cached = get_transient( $cache_key );
+
+	if ( false !== $cached ) {
+		return $cached['data'];
+	}
+
+	$endpoint = sprintf( '/v0/sites/%s/code-upstream-updates', $site_id );
+	$result = api_request( $endpoint, 'GET' );
+
+	if ( is_wp_error( $result ) ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to get upstream updates for %s: %s', $site_id, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+		return $result;
+	}
+
+	/* Cache for 1 hour. */
+	set_transient(
+		$cache_key,
+		[
+			'data' => $result,
+			'cached_at' => time(),
+		],
+		HOUR_IN_SECONDS
+	);
+
+	return $result;
+}
+
+/**
+ * Get git branches and commits (code tips).
+ *
+ * @param string $site_id Site UUID.
+ * @return array|WP_Error Array of git branch references or WP_Error on failure.
+ */
+function get_code_tips( $site_id ) {
+	$cache_key = sprintf( 'ash_nazg_code_tips_%s', $site_id );
+	$cached = get_transient( $cache_key );
+
+	if ( false !== $cached ) {
+		return $cached['data'];
+	}
+
+	$endpoint = sprintf( '/v0/sites/%s/code-tips', $site_id );
+	$result = api_request( $endpoint, 'GET' );
+
+	if ( is_wp_error( $result ) ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to get code tips for %s: %s', $site_id, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+		return $result;
+	}
+
+	/* Cache for 1 hour. */
+	set_transient(
+		$cache_key,
+		[
+			'data' => $result,
+			'cached_at' => time(),
+		],
+		HOUR_IN_SECONDS
+	);
+
+	return $result;
+}
