@@ -30,11 +30,7 @@ jobs:
           until mysqladmin ping -h127.0.0.1 -uroot -proot --silent; do
             sleep 1
           done
-          mysql -h127.0.0.1 -uroot -proot <<'SQL'
-            ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
-            ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '';
-            FLUSH PRIVILEGES;
-          SQL
+          mysql -h127.0.0.1 -uroot -proot -e "ALTER USER 'root'@'localhost' IDENTIFIED BY ''; ALTER USER 'root'@'%' IDENTIFIED BY ''; FLUSH PRIVILEGES;"
           mysqladmin ping -h127.0.0.1 -uroot --silent
 
       - name: Setup PHP
