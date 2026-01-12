@@ -46,5 +46,8 @@ jobs:
           chmod +x bin/*.sh
           composer test:install:withdb -- --dbpass=root
 
-      - name: Run composer check
-        run: composer check
+      - name: PHPCS
+        run: composer phpcs
+
+      - name: WPUnit
+        run: composer test
