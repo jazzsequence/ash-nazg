@@ -32,6 +32,9 @@ jobs:
           coverage: none
           extensions: mysqli
 
+      - name: Setup WP-CLI
+        uses: godaddy-wordpress/setup-wp-cli@1
+
       - name: Validate composer.json
         run: composer validate --strict
 
