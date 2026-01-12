@@ -47,7 +47,7 @@ jobs:
       - name: Setup WPUnit Helpers
         run: |
           chmod +x bin/*.sh
-          bin/install-local-tests.sh
+          bin/install-local-tests.sh --dbpass=root
 
       - name: Run PHPCS
         run: composer phpcs
