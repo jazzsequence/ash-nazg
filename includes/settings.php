@@ -68,11 +68,11 @@ function render_settings_page() {
 		$test_result = API\test_connection();
 	}
 
-	$machine_token  = get_option( 'ash_nazg_machine_token', '' );
-	$is_pantheon    = API\is_pantheon();
+	$is_pantheon = API\is_pantheon();
 	$has_secret_api = function_exists( 'pantheon_get_secret' );
-	$site_id        = API\get_pantheon_site_id();
-	$environment    = API\get_pantheon_environment();
+	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
+	$machine_token = API\get_machine_token();
 
 	require ASH_NAZG_PLUGIN_DIR . 'includes/views/settings.php';
 }
