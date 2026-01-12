@@ -370,12 +370,27 @@
 	font-family: 'Courier New', Courier, monospace;
 }
 
+/* Force table to respect column widths */
+.ash-nazg-card .widefat {
+	table-layout: fixed;
+	width: 100%;
+}
+
 .ash-nazg-table-mb {
 	margin-bottom: 20px;
 }
 
 .ash-nazg-th-icon {
-	width: 35px;
+	width: 30px !important;
+	max-width: 30px !important;
+	min-width: 30px !important;
+	padding: 8px 4px !important;
+	text-align: center !important;
+	overflow: hidden !important;
+}
+
+.ash-nazg-th-icon .dashicons {
+	margin: 0 !important;
 }
 
 .ash-nazg-th-20 {

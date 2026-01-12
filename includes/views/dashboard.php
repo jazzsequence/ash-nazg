@@ -365,7 +365,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				$active_tab = sanitize_text_field( wp_unslash( $_GET['endpoints_tab'] ) );
 			}
 			?>
-			<div class="ash-nazg-card ash-nazg-card-full">
+			<div id="endpoints" class="ash-nazg-card ash-nazg-card-full">
 				<div class="ash-nazg-flex-between ash-nazg-mb-10">
 					<h2 class="ash-nazg-m-0">
 						<?php esc_html_e( 'Available API Endpoints', 'ash-nazg' ); ?>
@@ -382,13 +382,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</div>
 
 				<h2 class="nav-tab-wrapper">
-					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=site' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'site' === $active_tab ? 'nav-tab-active' : ''; ?>">
+					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=site#endpoints' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'site' === $active_tab ? 'nav-tab-active' : ''; ?>">
 						<?php esc_html_e( 'Site Endpoints', 'ash-nazg' ); ?>
 					</a>
-					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=user' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'user' === $active_tab ? 'nav-tab-active' : ''; ?>">
+					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=user#endpoints' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'user' === $active_tab ? 'nav-tab-active' : ''; ?>">
 						<?php esc_html_e( 'User Endpoints', 'ash-nazg' ); ?>
 					</a>
-					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=all' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'all' === $active_tab ? 'nav-tab-active' : ''; ?>">
+					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=all#endpoints' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'all' === $active_tab ? 'nav-tab-active' : ''; ?>">
 						<?php esc_html_e( 'All Endpoints', 'ash-nazg' ); ?>
 					</a>
 				</h2>
@@ -456,7 +456,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<tbody>
 							<?php foreach ( $endpoints as $endpoint ) : ?>
 								<tr>
-									<td class="ash-nazg-text-center">
+									<td class="ash-nazg-th-icon">
 										<?php if ( 'success' === $endpoint['status'] ) : ?>
 											<span class="dashicons dashicons-yes-alt ash-nazg-icon-success" title="<?php esc_attr_e( 'Available', 'ash-nazg' ); ?>"></span>
 										<?php elseif ( 'unavailable' === $endpoint['status'] ) : ?>
