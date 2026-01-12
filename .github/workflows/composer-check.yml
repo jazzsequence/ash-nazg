@@ -27,6 +27,9 @@ jobs:
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
+      
+      - name: Setup WPUnit Helpers
+        run: composer test:install:withdb
 
       - name: Run composer check
         run: composer check
