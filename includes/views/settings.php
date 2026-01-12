@@ -94,47 +94,56 @@ use Pantheon\AshNazg\API;
 		</table>
 	</div>
 
-	<form method="post" action="">
-		<?php wp_nonce_field( 'ash_nazg_settings', 'ash_nazg_settings_nonce' ); ?>
-
+	<?php if ( ! empty( $machine_token ) ) : ?>
 		<table class="form-table">
 			<tr>
 				<th scope="row">
-					<label for="ash_nazg_machine_token">
-						<?php esc_html_e( 'Machine Token', 'ash-nazg' ); ?>
-					</label>
+					<?php esc_html_e( 'Machine Token', 'ash-nazg' ); ?>
 				</th>
 				<td>
-					<?php if ( ! empty( $machine_token ) ) : ?>
-						<p>
-							<span class="dashicons dashicons-yes-alt ash-nazg-icon-success"></span>
-							<?php esc_html_e( 'A machine token is currently set.', 'ash-nazg' ); ?>
-						</p>
-					<?php elseif ( $has_secret_api ) : ?>
-						<p class="description">
-							<?php
-							esc_html_e(
-								'It is recommended that you store your machine token in Pantheon Secrets. To update it, use the Pantheon CLI:',
-								'ash-nazg'
-							);
-							?>
-						</p>
-						<code>terminus secret:set <?php echo isset( $_ENV['PANTHEON_SITE_NAME'] ) ? esc_attr( sanitize_text_field( wp_unslash( $_ENV['PANTHEON_SITE_NAME'] ) ) ) : '<site>'; ?> ash_nazg_machine_token YOUR_TOKEN --scope=user,web</code>
-					<?php else : ?>
-						<p class="description">
-							<?php
-							esc_html_e(
-								'You can also enter a token below which is stored in the WordPress database.',
-								'ash-nazg'
-							);
-							?>
-						</p>
+					<p>
+						<span class="dashicons dashicons-yes-alt ash-nazg-icon-success"></span>
+						<?php esc_html_e( 'A machine token is currently set.', 'ash-nazg' ); ?>
+					</p>
+				</td>
+			</tr>
+		</table>
+	<?php else : ?>
+		<form method="post" action="">
+			<?php wp_nonce_field( 'ash_nazg_settings', 'ash_nazg_settings_nonce' ); ?>
+
+			<table class="form-table">
+				<tr>
+					<th scope="row">
+						<label for="ash_nazg_machine_token">
+							<?php esc_html_e( 'Machine Token', 'ash-nazg' ); ?>
+						</label>
+					</th>
+					<td>
+						<?php if ( $has_secret_api ) : ?>
+							<p class="description">
+								<?php
+								esc_html_e(
+									'It is recommended that you store your machine token in Pantheon Secrets. To update it, use the Pantheon CLI:',
+									'ash-nazg'
+								);
+								?>
+							</p>
+							<code>terminus secret:set <?php echo isset( $_ENV['PANTHEON_SITE_NAME'] ) ? esc_attr( sanitize_text_field( wp_unslash( $_ENV['PANTHEON_SITE_NAME'] ) ) ) : '<site>'; ?> ash_nazg_machine_token YOUR_TOKEN --scope=user,web</code>
+							<p class="description">
+								<?php esc_html_e( 'Alternatively, you can enter a token below which is stored in the WordPress database.', 'ash-nazg' ); ?>
+							</p>
+						<?php else : ?>
+							<p class="description">
+								<?php esc_html_e( 'Enter your Pantheon machine token below. It will be stored in the WordPress database.', 'ash-nazg' ); ?>
+							</p>
+						<?php endif; ?>
 
 						<input
 							type="password"
 							id="ash_nazg_machine_token"
 							name="ash_nazg_machine_token"
-							value="<?php echo esc_attr( $machine_token ); ?>"
+							value=""
 							class="regular-text"
 							placeholder="<?php esc_attr_e( 'Enter Pantheon machine token', 'ash-nazg' ); ?>"
 						/>
@@ -150,15 +159,15 @@ use Pantheon\AshNazg\API;
 							);
 							?>
 						</p>
-					<?php endif; ?>
-				</td>
-			</tr>
-		</table>
+					</td>
+				</tr>
+			</table>
 
-		<p class="submit">
-			<?php submit_button( __( 'Save Settings', 'ash-nazg' ), 'primary', 'submit', false ); ?>
-		</p>
-	</form>
+			<p class="submit">
+				<?php submit_button( __( 'Save Settings', 'ash-nazg' ), 'primary', 'submit', false ); ?>
+			</p>
+		</form>
+	<?php endif; ?>
 
 	<hr>
 
