@@ -25,4 +25,3 @@ Thumbs.db
 # Testing
 /tests/tmp/
 /tests/data/
-phpunit.xml
