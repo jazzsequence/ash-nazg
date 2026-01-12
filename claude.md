@@ -55,14 +55,21 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
    - ✅ Automatic mode switching for file operations (switches to SFTP when needed)
    - ⏳ Show launch check status information (planned)
 
-2. **Site Addons Management**
+2. **Site Information Management**
+   - ✅ Inline editing of site label via dashboard
+   - ✅ Real-time updates using AJAX with nonce verification
+   - ✅ Pencil icon edit link with keyboard support (Enter to save, Escape to cancel)
+   - ✅ API endpoint: PUT /v0/sites/{site_id}/label
+   - ✅ Automatic cache invalidation after label update
+
+3. **Site Addons Management**
    - ✅ Enable/disable Redis addon via API (PUT to enable, DELETE to disable)
    - ✅ Enable/disable Apache Solr addon via API
    - ✅ Local state tracking in WordPress options (API doesn't provide GET endpoint)
    - ✅ Toggle switches with save button interface
    - ✅ Auto-cache clearing on addon changes
 
-3. **Workflows Integration**
+4. **Workflows Integration**
    - ✅ Trigger `scaffold_extensions` workflow type
    - ✅ Object Cache Pro installation workflow (`install_ocp` job)
    - ✅ Environment validation (workflows only on dev/multidev/lando)
@@ -70,7 +77,7 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
    - ⏳ Additional workflow types beyond scaffold_extensions (to be discovered)
    - ⏳ Workflow monitoring/polling for long-running operations (planned)
 
-4. **Development Workflow**
+5. **Development Workflow**
    - ✅ Toggle between SFTP mode and Git mode with AJAX interface
    - ✅ Polling verification to ensure mode changes complete before updating UI
    - ✅ Automatic state synchronization after mode changes
@@ -80,11 +87,11 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
    - ⏳ Push code to test/live environments (planned)
    - ⏳ Create multidev environments (planned)
 
-5. **Domain Management** (Experimental/PoC)
+6. **Domain Management** (Experimental/PoC)
    - ⏳ Hook into WordPress multisite subdomain creation
    - ⏳ Automatically add new subdomains to Pantheon via API
 
-6. **Backup Operations** (Planned)
+7. **Backup Operations** (Planned)
    - ⏳ Backup creation and management
    - ⏳ Backup scheduling
    - ⏳ Restore operations (if safe to expose)
@@ -646,6 +653,14 @@ This runs PHPUnit with the configuration in `phpunit.xml.dist`.
 - **Parameters**: `site_id` - Site UUID
 - **Cache**: 5 minutes
 - **Returns**: Site name, framework, created date, organization info
+
+#### `PUT /v0/sites/{site_id}/label`
+- **Purpose**: Update site label
+- **Method**: PUT
+- **Parameters**: `site_id` - Site UUID
+- **Request Body**: `{ "label": "New Site Label" }`
+- **Returns**: Updated site data
+- **Cache**: Clears site info cache after update
 
 #### `GET /v0/sites/{site_id}/environments`
 - **Purpose**: List all environments (dev, test, live, multidevs)
