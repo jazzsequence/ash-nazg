@@ -16,8 +16,7 @@ jobs:
       mariadb:
         image: mariadb:latest
         env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: wordpress_test
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: yes
         ports:
           - 3306:3306
         options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=10s --health-timeout=5s --health-retries=3
@@ -48,7 +47,7 @@ jobs:
       - name: Setup WPUnit Helpers
         run: |
           chmod +x bin/*.sh
-          composer test:install
+          bin/install-local-tests.sh
 
       - name: Run checks
         run: composer check
