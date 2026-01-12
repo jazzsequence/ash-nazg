@@ -105,7 +105,12 @@ use Pantheon\AshNazg\API;
 					</label>
 				</th>
 				<td>
-					<?php if ( $has_secret_api ) : ?>
+					<?php if ( ! empty( $machine_token ) ) : ?>
+						<p>
+							<span class="dashicons dashicons-yes-alt ash-nazg-icon-success"></span>
+							<?php esc_html_e( 'A machine token is currently set.', 'ash-nazg' ); ?>
+						</p>
+					<?php elseif ( $has_secret_api ) : ?>
 						<p class="description">
 							<?php
 							esc_html_e(
@@ -115,6 +120,7 @@ use Pantheon\AshNazg\API;
 							?>
 						</p>
 						<code>terminus secret:set <?php echo isset( $_ENV['PANTHEON_SITE_NAME'] ) ? esc_attr( $_ENV['PANTHEON_SITE_NAME'] ) : '<site>'; ?> ash_nazg_machine_token YOUR_TOKEN --scope=user,web</code>
+					<?php else : ?>
 						<p class="description">
 							<?php
 							esc_html_e(
@@ -123,28 +129,28 @@ use Pantheon\AshNazg\API;
 							);
 							?>
 						</p>
+
+						<input
+							type="password"
+							id="ash_nazg_machine_token"
+							name="ash_nazg_machine_token"
+							value="<?php echo esc_attr( $machine_token ); ?>"
+							class="regular-text"
+							placeholder="<?php esc_attr_e( 'Enter Pantheon machine token', 'ash-nazg' ); ?>"
+						/>
+
+						<p class="description">
+							<?php
+							printf(
+								/* translators: %s: URL to Pantheon dashboard */
+								esc_html__( 'Generate a machine token in your %s.', 'ash-nazg' ),
+								'<a href="https://dashboard.pantheon.io/users/#account/tokens" target="_blank">' .
+								esc_html__( 'Pantheon account settings', 'ash-nazg' ) .
+								'</a>'
+							);
+							?>
+						</p>
 					<?php endif; ?>
-
-					<input
-						type="password"
-						id="ash_nazg_machine_token"
-						name="ash_nazg_machine_token"
-						value="<?php echo esc_attr( $machine_token ); ?>"
-						class="regular-text"
-						placeholder="<?php esc_attr_e( 'Enter Pantheon machine token', 'ash-nazg' ); ?>"
-					/>
-
-					<p class="description">
-						<?php
-						printf(
-							/* translators: %s: URL to Pantheon dashboard */
-							esc_html__( 'Generate a machine token in your %s.', 'ash-nazg' ),
-							'<a href="https://dashboard.pantheon.io/users/#account/tokens" target="_blank">' .
-							esc_html__( 'Pantheon account settings', 'ash-nazg' ) .
-							'</a>'
-						);
-						?>
-					</p>
 				</td>
 			</tr>
 		</table>
