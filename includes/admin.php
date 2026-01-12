@@ -91,13 +91,13 @@ function add_admin_menu() {
  */
 function enqueue_assets( $hook ) {
 	// Only load on our admin pages.
-	$ash_nazg_pages = array(
+	$ash_nazg_pages = [
 		'toplevel_page_ash-nazg',
 		'ash-nazg_page_ash-nazg-addons',
 		'ash-nazg_page_ash-nazg-workflows',
 		'ash-nazg_page_ash-nazg-logs',
 		'ash-nazg_page_ash-nazg-settings',
-	);
+	];
 
 	$is_ash_nazg_page = false;
 	foreach ( $ash_nazg_pages as $page ) {
@@ -115,7 +115,7 @@ function enqueue_assets( $hook ) {
 	wp_enqueue_style(
 		'ash-nazg-admin',
 		ASH_NAZG_PLUGIN_URL . 'assets/css/admin.css',
-		array(),
+		[],
 		ASH_NAZG_VERSION
 	);
 
@@ -124,7 +124,7 @@ function enqueue_assets( $hook ) {
 		wp_enqueue_script(
 			'ash-nazg-dashboard',
 			ASH_NAZG_PLUGIN_URL . 'assets/js/dashboard.js',
-			array( 'jquery' ),
+			[ 'jquery' ],
 			ASH_NAZG_VERSION,
 			true
 		);
@@ -133,17 +133,17 @@ function enqueue_assets( $hook ) {
 		wp_localize_script(
 			'ash-nazg-dashboard',
 			'ashNazgDashboard',
-			array(
+			[
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'toggleModeNonce' => wp_create_nonce( 'ash_nazg_toggle_connection_mode' ),
 				'updateLabelNonce' => wp_create_nonce( 'ash_nazg_update_site_label' ),
-				'i18n' => array(
+				'i18n' => [
 					'toggleError' => __( 'Failed to switch connection mode.', 'ash-nazg' ),
 					'ajaxError' => __( 'An error occurred while switching connection mode.', 'ash-nazg' ),
 					'updateLabelError' => __( 'Failed to update site label.', 'ash-nazg' ),
 					'emptyLabelError' => __( 'Site label cannot be empty.', 'ash-nazg' ),
-				),
-			)
+				],
+			]
 		);
 	}
 
@@ -152,7 +152,7 @@ function enqueue_assets( $hook ) {
 		wp_enqueue_script(
 			'ash-nazg-logs',
 			ASH_NAZG_PLUGIN_URL . 'assets/js/logs.js',
-			array( 'jquery' ),
+			[ 'jquery' ],
 			ASH_NAZG_VERSION,
 			true
 		);
@@ -161,11 +161,11 @@ function enqueue_assets( $hook ) {
 		wp_localize_script(
 			'ash-nazg-logs',
 			'ashNazgLogs',
-			array(
+			[
 				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 				'fetchLogsNonce' => wp_create_nonce( 'ash_nazg_fetch_logs' ),
 				'clearLogsNonce' => wp_create_nonce( 'ash_nazg_clear_logs' ),
-				'i18n'           => array(
+				'i18n'           => [
 					'logContents'        => __( 'Log Contents', 'ash-nazg' ),
 					'emptyLog'           => __( 'Debug log is empty or does not exist yet.', 'ash-nazg' ),
 					'justNow'            => __( 'just now', 'ash-nazg' ),
@@ -179,8 +179,8 @@ function enqueue_assets( $hook ) {
 					'clearAjaxError'     => __( 'An error occurred while clearing the log.', 'ash-nazg' ),
 					'fetchingLogs'       => __( 'Fetching logs... This may take a moment if we need to switch connection modes.', 'ash-nazg' ),
 					'clearingLogs'       => __( 'Clearing log... This may take a moment if we need to switch connection modes.', 'ash-nazg' ),
-				),
-			)
+				],
+			]
 		);
 	}
 }
@@ -240,7 +240,7 @@ function render_dashboard_page() {
 	$environment_info = null;
 	$api_error        = null;
 	$env_info_notice  = null;
-	$endpoints_status = array();
+	$endpoints_status = [];
 
 	if ( $is_pantheon ) {
 		$site_info = API\get_site_info();
@@ -282,7 +282,7 @@ function render_dashboard_page() {
 			} else {
 				// Old cache format - data is the categories directly.
 				$endpoints_site = $endpoints_data;
-				$endpoints_user = array();
+				$endpoints_user = [];
 				$endpoints_all = $endpoints_data;
 			}
 		}
@@ -329,7 +329,7 @@ function handle_addon_form_submission() {
 
 	if ( $site_id && isset( $_POST['submit'] ) ) {
 		$updated_count = 0;
-		$errors = array();
+		$errors = [];
 
 		// Get list of all known addons with their current state.
 		$all_addons = API\get_site_addons( $site_id );
@@ -353,14 +353,14 @@ function handle_addon_form_submission() {
 							$result->get_error_message()
 						);
 					} else {
-						$updated_count++;
+						++$updated_count;
 					}
 				}
 			}
 		}
 
 		// Set success/error messages and redirect to avoid form resubmission.
-		$redirect_args = array( 'page' => 'ash-nazg-addons' );
+		$redirect_args = [ 'page' => 'ash-nazg-addons' ];
 
 		if ( $updated_count > 0 ) {
 			$redirect_args['updated'] = $updated_count;
@@ -411,14 +411,14 @@ function render_addons_page() {
 
 	// Get current addon states.
 	$site_id = API\get_pantheon_site_id();
-	$addons = array();
+	$addons = [];
 	$api_error = null;
 
 	if ( $site_id ) {
 		$addons = API\get_site_addons( $site_id );
 		if ( is_wp_error( $addons ) ) {
 			$api_error = $addons;
-			$addons = array();
+			$addons = [];
 		}
 	}
 
@@ -460,10 +460,10 @@ function handle_workflow_form_submission() {
 
 			// Check if environment is allowed.
 			if ( ! in_array( $environment, $workflow['allowed_envs'], true ) ) {
-				$redirect_args = array(
+				$redirect_args = [
 					'page' => 'ash-nazg-workflows',
 					'error' => 'invalid_env',
-				);
+				];
 				wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
 				exit;
 			}
@@ -476,7 +476,7 @@ function handle_workflow_form_submission() {
 				$workflow['params']
 			);
 
-			$redirect_args = array( 'page' => 'ash-nazg-workflows' );
+			$redirect_args = [ 'page' => 'ash-nazg-workflows' ];
 
 			if ( is_wp_error( $result ) ) {
 				$redirect_args['error'] = '1';
@@ -561,7 +561,7 @@ function ajax_fetch_logs() {
 
 	// Check capabilities.
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'ash-nazg' ) ) );
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
 	}
 
 	$site_id = API\get_pantheon_site_id();
@@ -569,7 +569,7 @@ function ajax_fetch_logs() {
 
 	if ( ! $site_id || ! $environment ) {
 		error_log( 'Ash-Nazg: AJAX fetch logs - Not running on Pantheon' );
-		wp_send_json_error( array( 'message' => __( 'Not running on Pantheon.', 'ash-nazg' ) ) );
+		wp_send_json_error( [ 'message' => __( 'Not running on Pantheon.', 'ash-nazg' ) ] );
 	}
 
 	error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Site: %s, Env: %s', $site_id, $environment ) );
@@ -593,7 +593,7 @@ function ajax_fetch_logs() {
 		$result = API\update_connection_mode( $site_id, $environment, 'sftp' );
 		if ( is_wp_error( $result ) ) {
 			error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Failed to switch to SFTP: %s', $result->get_error_message() ) );
-			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 		}
 		$switched_mode = true;
 		// Give the mode switch a moment to take effect.
@@ -628,11 +628,11 @@ function ajax_fetch_logs() {
 	set_transient( 'ash_nazg_debug_logs_timestamp', time(), YEAR_IN_SECONDS );
 
 	wp_send_json_success(
-		array(
+		[
 			'logs' => $logs,
 			'timestamp' => time(),
 			'switched_mode' => $switched_mode,
-		)
+		]
 	);
 }
 
@@ -647,7 +647,7 @@ function ajax_clear_logs() {
 
 	// Check capabilities.
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'ash-nazg' ) ) );
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
 	}
 
 	$site_id = API\get_pantheon_site_id();
@@ -655,7 +655,7 @@ function ajax_clear_logs() {
 
 	if ( ! $site_id || ! $environment ) {
 		error_log( 'Ash-Nazg: AJAX clear logs - Not running on Pantheon' );
-		wp_send_json_error( array( 'message' => __( 'Not running on Pantheon.', 'ash-nazg' ) ) );
+		wp_send_json_error( [ 'message' => __( 'Not running on Pantheon.', 'ash-nazg' ) ] );
 	}
 
 	error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Site: %s, Env: %s', $site_id, $environment ) );
@@ -679,7 +679,7 @@ function ajax_clear_logs() {
 		$result = API\update_connection_mode( $site_id, $environment, 'sftp' );
 		if ( is_wp_error( $result ) ) {
 			error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Failed to switch to SFTP: %s', $result->get_error_message() ) );
-			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 		}
 		$switched_mode = true;
 		// Give the mode switch a moment to take effect.
@@ -700,7 +700,7 @@ function ajax_clear_logs() {
 			if ( $switched_mode ) {
 				API\update_connection_mode( $site_id, $environment, 'git' );
 			}
-			wp_send_json_error( array( 'message' => __( 'Failed to delete log file. Check file permissions.', 'ash-nazg' ) ) );
+			wp_send_json_error( [ 'message' => __( 'Failed to delete log file. Check file permissions.', 'ash-nazg' ) ] );
 		}
 	} else {
 		error_log( 'Ash-Nazg: AJAX clear logs - Log file does not exist' );
@@ -714,7 +714,7 @@ function ajax_clear_logs() {
 		if ( $switched_mode ) {
 			API\update_connection_mode( $site_id, $environment, 'git' );
 		}
-		wp_send_json_error( array( 'message' => __( 'Log file was not deleted. Please try again.', 'ash-nazg' ) ) );
+		wp_send_json_error( [ 'message' => __( 'Log file was not deleted. Please try again.', 'ash-nazg' ) ] );
 	}
 
 	// Switch back to original mode if we changed it.
@@ -730,10 +730,10 @@ function ajax_clear_logs() {
 	error_log( 'Ash-Nazg: AJAX clear logs - Log cleared and verified successfully' );
 
 	wp_send_json_success(
-		array(
+		[
 			'message'       => __( 'Debug log cleared successfully.', 'ash-nazg' ),
 			'switched_mode' => $switched_mode,
-		)
+		]
 	);
 }
 
@@ -748,28 +748,28 @@ function ajax_toggle_connection_mode() {
 
 	// Check capabilities.
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'ash-nazg' ) ) );
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
 	}
 
 	$site_id = API\get_pantheon_site_id();
 	$environment = API\get_pantheon_environment();
 
 	if ( ! $site_id || ! $environment ) {
-		wp_send_json_error( array( 'message' => __( 'Not running on Pantheon.', 'ash-nazg' ) ) );
+		wp_send_json_error( [ 'message' => __( 'Not running on Pantheon.', 'ash-nazg' ) ] );
 	}
 
 	// Get the requested mode.
 	$new_mode = isset( $_POST['mode'] ) ? sanitize_text_field( wp_unslash( $_POST['mode'] ) ) : '';
 
-	if ( ! in_array( $new_mode, array( 'sftp', 'git' ), true ) ) {
-		wp_send_json_error( array( 'message' => __( 'Invalid connection mode.', 'ash-nazg' ) ) );
+	if ( ! in_array( $new_mode, [ 'sftp', 'git' ], true ) ) {
+		wp_send_json_error( [ 'message' => __( 'Invalid connection mode.', 'ash-nazg' ) ] );
 	}
 
 	// Update the connection mode.
 	$result = API\update_connection_mode( $site_id, $environment, $new_mode );
 
 	if ( is_wp_error( $result ) ) {
-		wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 	}
 
 	// Wait and verify the mode has actually changed.
@@ -796,30 +796,30 @@ function ajax_toggle_connection_mode() {
 
 	if ( ! $verified ) {
 		wp_send_json_error(
-			array(
+			[
 				'message' => __( 'Mode change initiated but could not verify completion. Please refresh the page.', 'ash-nazg' ),
-			)
+			]
 		);
 	}
 
 	// Update stored state now that the mode has been verified.
 	API\update_environment_state(
-		array(
+		[
 			'connection_mode' => $new_mode,
-		)
+		]
 	);
 
 	error_log( sprintf( 'Ash-Nazg: Connection mode verified and state updated to %s on %s/%s', $new_mode, $site_id, $environment ) );
 
 	wp_send_json_success(
-		array(
+		[
 			'mode' => $new_mode,
 			'message' => sprintf(
 				/* translators: %s: connection mode (SFTP or Git) */
 				__( 'Successfully switched to %s mode.', 'ash-nazg' ),
 				strtoupper( $new_mode )
 			),
-		)
+		]
 	);
 }
 
@@ -834,34 +834,34 @@ function ajax_update_site_label() {
 
 	// Check capabilities.
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'ash-nazg' ) ) );
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
 	}
 
 	$site_id = API\get_pantheon_site_id();
 
 	if ( ! $site_id ) {
-		wp_send_json_error( array( 'message' => __( 'Site ID not found.', 'ash-nazg' ) ) );
+		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
 	}
 
 	// Get the new label.
 	$new_label = isset( $_POST['label'] ) ? sanitize_text_field( wp_unslash( $_POST['label'] ) ) : '';
 
 	if ( empty( $new_label ) ) {
-		wp_send_json_error( array( 'message' => __( 'Site label cannot be empty.', 'ash-nazg' ) ) );
+		wp_send_json_error( [ 'message' => __( 'Site label cannot be empty.', 'ash-nazg' ) ] );
 	}
 
 	// Update the site label.
 	$result = API\update_site_label( $site_id, $new_label );
 
 	if ( is_wp_error( $result ) ) {
-		wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 	}
 
 	wp_send_json_success(
-		array(
+		[
 			'message' => __( 'Site label updated successfully.', 'ash-nazg' ),
 			'label' => $new_label,
-		)
+		]
 	);
 }
 
@@ -902,4 +902,3 @@ function render_logs_page() {
 
 	require ASH_NAZG_PLUGIN_DIR . 'includes/views/logs.php';
 }
-

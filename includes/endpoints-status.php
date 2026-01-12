@@ -17,14 +17,14 @@ namespace Pantheon\AshNazg\API;
  * @return array Endpoint status data.
  */
 function mark_endpoint_unavailable( $path, $name, $description = '', $reason = '' ) {
-	return array(
+	return [
 		'name' => $name,
 		'path' => $path,
 		'description' => $description,
 		'status' => 'unavailable',
 		'data' => null,
 		'error' => $reason ?: __( 'Not available for this site', 'ash-nazg' ),
-	);
+	];
 }
 
 /**
@@ -36,14 +36,14 @@ function mark_endpoint_unavailable( $path, $name, $description = '', $reason = '
  * @return array Endpoint status data.
  */
 function test_endpoint( $path, $name, $description = '' ) {
-	$endpoint = array(
+	$endpoint = [
 		'name'        => $name,
 		'path'        => $path,
 		'description' => $description,
 		'status'      => 'unknown',
 		'data'        => null,
 		'error'       => null,
-	);
+	];
 
 	$result = api_request( $path );
 
@@ -65,7 +65,7 @@ function test_endpoint( $path, $name, $description = '' ) {
 		$endpoint['status'] = 'success';
 		// Store count if result is an array.
 		if ( is_array( $result ) ) {
-			$endpoint['data'] = array( 'count' => count( $result ) );
+			$endpoint['data'] = [ 'count' => count( $result ) ];
 		}
 	}
 
@@ -83,7 +83,7 @@ function test_endpoint( $path, $name, $description = '' ) {
 function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null ) {
 	// Map local environment names to their Pantheon equivalents.
 	// Local environments like 'lando' should query 'dev' environment from Pantheon.
-	$local_env_names = array( 'lando', 'local', 'localhost', 'ddev' );
+	$local_env_names = [ 'lando', 'local', 'localhost', 'ddev' ];
 	$api_env = $env;
 	if ( $env && in_array( strtolower( $env ), $local_env_names, true ) ) {
 		$api_env = 'dev';
@@ -98,11 +98,11 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 		}
 	}
 
-	$site_endpoints = array();
-	$user_endpoints = array();
+	$site_endpoints = [];
+	$user_endpoints = [];
 
 	// Sites & Basic Info.
-	$site_endpoints['Sites'] = array();
+	$site_endpoints['Sites'] = [];
 
 	if ( $site_id ) {
 		$site_endpoints['Sites'][] = test_endpoint(
@@ -143,7 +143,7 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	}
 
 	// Authorization & Access.
-	$site_endpoints['Authorization'] = array();
+	$site_endpoints['Authorization'] = [];
 
 	if ( $site_id ) {
 		$site_endpoints['Authorization'][] = test_endpoint(
@@ -154,7 +154,7 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	}
 
 	// Code & Git.
-	$site_endpoints['Code'] = array();
+	$site_endpoints['Code'] = [];
 
 	if ( $site_id ) {
 		$site_endpoints['Code'][] = test_endpoint(
@@ -201,7 +201,7 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	}
 
 	// Backups.
-	$site_endpoints['Backups'] = array();
+	$site_endpoints['Backups'] = [];
 
 	if ( $site_id && $api_env ) {
 		$site_endpoints['Backups'][] = test_endpoint(
@@ -218,7 +218,7 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	}
 
 	// Domains.
-	$site_endpoints['Domains'] = array();
+	$site_endpoints['Domains'] = [];
 
 	if ( $site_id && $api_env ) {
 		$site_endpoints['Domains'][] = test_endpoint(
@@ -235,7 +235,7 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	}
 
 	// Environment Settings.
-	$site_endpoints['Settings'] = array();
+	$site_endpoints['Settings'] = [];
 
 	if ( $site_id && $api_env ) {
 		$site_endpoints['Settings'][] = test_endpoint(
@@ -252,7 +252,7 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	}
 
 	// Metrics.
-	$site_endpoints['Metrics'] = array();
+	$site_endpoints['Metrics'] = [];
 
 	if ( $site_id && $api_env ) {
 		$site_endpoints['Metrics'][] = test_endpoint(
@@ -263,7 +263,7 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	}
 
 	// Workflows.
-	$site_endpoints['Workflows'] = array();
+	$site_endpoints['Workflows'] = [];
 
 	if ( $site_id ) {
 		$site_endpoints['Workflows'][] = test_endpoint(
@@ -274,7 +274,7 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	}
 
 	// User Info.
-	$user_endpoints['User'] = array();
+	$user_endpoints['User'] = [];
 
 	if ( $user_id ) {
 		$user_endpoints['User'][] = test_endpoint(
@@ -326,9 +326,9 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	// Merge all endpoints for "All Endpoints" tab.
 	$all_endpoints = array_merge( $site_endpoints, $user_endpoints );
 
-	return array(
+	return [
 		'site' => $site_endpoints,
 		'user' => $user_endpoints,
 		'all' => $all_endpoints,
-	);
+	];
 }

@@ -66,7 +66,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				$workflow_id = isset( $workflow['id'] ) ? $workflow['id'] : '';
 				$workflow_name = isset( $workflow['name'] ) ? $workflow['name'] : $workflow_id;
 				$workflow_description = isset( $workflow['description'] ) ? $workflow['description'] : '';
-				$allowed_envs = isset( $workflow['allowed_envs'] ) ? $workflow['allowed_envs'] : array( 'dev' );
+				$allowed_envs = isset( $workflow['allowed_envs'] ) ? $workflow['allowed_envs'] : [ 'dev' ];
 				$is_env_allowed = in_array( $environment, $allowed_envs, true );
 				?>
 				<div class="workflow-card <?php echo ! $is_env_allowed ? 'workflow-disabled' : ''; ?>">

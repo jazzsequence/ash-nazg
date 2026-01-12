@@ -35,18 +35,18 @@ function get_api_token() {
 	// Exchange machine token for session token.
 	$response = wp_remote_post(
 		'https://api.pantheon.io/v0/authorize/machine-token',
-		array(
-			'headers' => array(
+		[
+			'headers' => [
 				'Content-Type' => 'application/json',
-			),
+			],
 			'body'    => wp_json_encode(
-				array(
+				[
 					'machine_token' => $machine_token,
 					'client'        => 'ash-nazg',
-				)
+				]
 			),
 			'timeout' => 15,
-		)
+		]
 	);
 
 	if ( is_wp_error( $response ) ) {
@@ -176,28 +176,28 @@ function get_machine_token() {
  * @param array  $body     Optional request body.
  * @return array|\WP_Error Response data or WP_Error on failure.
  */
-function api_request( $endpoint, $method = 'GET', $body = array() ) {
+function api_request( $endpoint, $method = 'GET', $body = [] ) {
 	$session_token = get_api_token();
 	if ( is_wp_error( $session_token ) ) {
 		return $session_token;
 	}
 
 	$url  = 'https://api.pantheon.io' . $endpoint;
-	$args = array(
+	$args = [
 		'method'  => $method,
-		'headers' => array(
+		'headers' => [
 			'Authorization' => 'Bearer ' . $session_token,
 			'Content-Type'  => 'application/json',
-		),
+		],
 		'timeout' => 30,
-	);
+	];
 
 	// Add body for POST, PUT, PATCH, and DELETE.
 	// For PUT/DELETE, send empty object if no body provided (required for Content-Length header).
-	if ( in_array( $method, array( 'POST', 'PUT', 'PATCH', 'DELETE' ), true ) ) {
+	if ( in_array( $method, [ 'POST', 'PUT', 'PATCH', 'DELETE' ], true ) ) {
 		if ( ! empty( $body ) ) {
 			$args['body'] = wp_json_encode( $body );
-		} elseif ( in_array( $method, array( 'PUT', 'DELETE' ), true ) ) {
+		} elseif ( in_array( $method, [ 'PUT', 'DELETE' ], true ) ) {
 			// Empty JSON object to ensure Content-Length header is set.
 			$args['body'] = '{}';
 		}
@@ -260,10 +260,10 @@ function get_cached_endpoint( $endpoint, $cache_key, $ttl = DAY_IN_SECONDS ) {
 	}
 
 	// Cache with timestamp.
-	$cached_data = array(
+	$cached_data = [
 		'data' => $data,
 		'cached_at' => time(),
-	);
+	];
 	set_transient( $cache_key, $cached_data, $ttl );
 
 	return $data;
@@ -362,9 +362,9 @@ function update_site_label( $site_id, $label ) {
 	}
 
 	$endpoint = sprintf( '/v0/sites/%s/label', $site_id );
-	$body = array(
+	$body = [
 		'label' => $label,
-	);
+	];
 
 	$result = api_request( $endpoint, 'PUT', $body );
 
@@ -410,7 +410,7 @@ function get_environment_info( $site_id = null, $env = null ) {
 	}
 
 	// Map local environments to dev for API queries.
-	$api_env = in_array( $env, array( 'lando', 'local', 'localhost', 'ddev' ), true ) ? 'dev' : $env;
+	$api_env = in_array( $env, [ 'lando', 'local', 'localhost', 'ddev' ], true ) ? 'dev' : $env;
 
 	// Fetch all environments from API (there's no single-environment endpoint).
 	$endpoint = sprintf( '/v0/sites/%s/environments', $site_id );
@@ -513,16 +513,16 @@ function get_user_id() {
 
 	$response = wp_remote_post(
 		'https://api.pantheon.io/v0/authorize/machine-token',
-		array(
-			'headers' => array( 'Content-Type' => 'application/json' ),
+		[
+			'headers' => [ 'Content-Type' => 'application/json' ],
 			'body'    => wp_json_encode(
-				array(
+				[
 					'machine_token' => $machine_token,
 					'client'        => 'ash-nazg',
-				)
+				]
 			),
 			'timeout' => 15,
-		)
+		]
 	);
 
 	if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
@@ -579,10 +579,10 @@ function get_endpoints_status( $site_id = null, $env = null, $refresh = false ) 
 	$endpoints = get_all_endpoints_status( $site_id, $env, $user_id );
 
 	// Cache for 24 hours with timestamp.
-	$cached_data = array(
+	$cached_data = [
 		'data' => $endpoints,
 		'cached_at' => time(),
-	);
+	];
 	set_transient( $cache_key, $cached_data, DAY_IN_SECONDS );
 
 	return $endpoints;
@@ -644,14 +644,14 @@ function get_site_addons( $site_id = null ) {
 
 	// Get stored addon states from environment state.
 	$env_state = get_environment_state();
-	$stored_states = ( $env_state && isset( $env_state['addons'] ) ) ? $env_state['addons'] : array();
+	$stored_states = ( $env_state && isset( $env_state['addons'] ) ) ? $env_state['addons'] : [];
 
 	// Fallback: check old addon_states option for migration.
 	if ( empty( $stored_states ) ) {
-		$old_states = get_option( 'ash_nazg_addon_states', array() );
+		$old_states = get_option( 'ash_nazg_addon_states', [] );
 		if ( ! empty( $old_states ) ) {
 			// Migrate old addon states to new environment state.
-			update_environment_state( array( 'addons' => $old_states ) );
+			update_environment_state( [ 'addons' => $old_states ] );
 			$stored_states = $old_states;
 			// Clean up old option.
 			delete_option( 'ash_nazg_addon_states' );
@@ -659,20 +659,20 @@ function get_site_addons( $site_id = null ) {
 	}
 
 	// Known Pantheon addons with their metadata.
-	$known_addons = array(
-		'redis' => array(
+	$known_addons = [
+		'redis' => [
 			'id' => 'redis',
 			'name' => __( 'Redis', 'ash-nazg' ),
 			'description' => __( 'Object caching with Redis for improved performance', 'ash-nazg' ),
-		),
-		'solr' => array(
+		],
+		'solr' => [
 			'id' => 'solr',
 			'name' => __( 'Apache Solr', 'ash-nazg' ),
 			'description' => __( 'Apache Solr search service for advanced search capabilities', 'ash-nazg' ),
-		),
-	);
+		],
+	];
 
-	$addons = array();
+	$addons = [];
 
 	// Build addon list with stored state information.
 	foreach ( $known_addons as $addon_id => $addon_meta ) {
@@ -685,10 +685,10 @@ function get_site_addons( $site_id = null ) {
 	}
 
 	// Cache for 24 hours with timestamp.
-	$cached_data = array(
+	$cached_data = [
 		'data' => $addons,
 		'cached_at' => time(),
-	);
+	];
 	set_transient( $cache_key, $cached_data, DAY_IN_SECONDS );
 
 	return $addons;
@@ -725,7 +725,7 @@ function update_site_addon( $site_id, $addon_id, $enabled ) {
 	$method = $enabled ? 'PUT' : 'DELETE';
 
 	// Send empty body to ensure Content-Length header is set (avoid 411 errors).
-	$result = api_request( $endpoint, $method, array() );
+	$result = api_request( $endpoint, $method, [] );
 
 	if ( is_wp_error( $result ) ) {
 		error_log( sprintf( 'Ash-Nazg: Failed to %s addon %s for site %s: %s', $enabled ? 'enable' : 'disable', $addon_id, $site_id, $result->get_error_message() ) );
@@ -737,9 +737,9 @@ function update_site_addon( $site_id, $addon_id, $enabled ) {
 
 	// Store the new addon state in environment state.
 	$env_state = get_environment_state();
-	$stored_states = ( $env_state && isset( $env_state['addons'] ) ) ? $env_state['addons'] : array();
+	$stored_states = ( $env_state && isset( $env_state['addons'] ) ) ? $env_state['addons'] : [];
 	$stored_states[ $addon_id ] = $enabled;
-	update_environment_state( array( 'addons' => $stored_states ) );
+	update_environment_state( [ 'addons' => $stored_states ] );
 
 	// Clear addon cache.
 	clear_addons_cache( $site_id );
@@ -814,7 +814,7 @@ function get_environment_state() {
 	}
 
 	// Get stored state.
-	$state = get_option( 'ash_nazg_environment_state', array() );
+	$state = get_option( 'ash_nazg_environment_state', [] );
 
 	// Return null if state doesn't exist for this site/env.
 	$state_key = "{$site_id}_{$env}";
@@ -840,17 +840,17 @@ function update_environment_state( $state_data ) {
 	}
 
 	$state_key = "{$site_id}_{$env}";
-	$all_states = get_option( 'ash_nazg_environment_state', array() );
+	$all_states = get_option( 'ash_nazg_environment_state', [] );
 
 	// Merge with existing state for this environment.
 	if ( ! isset( $all_states[ $state_key ] ) ) {
-		$all_states[ $state_key ] = array(
+		$all_states[ $state_key ] = [
 			'site_id' => $site_id,
 			'environment' => $env,
 			'connection_mode' => null,
-			'addons' => array(),
+			'addons' => [],
 			'last_synced' => null,
-		);
+		];
 	}
 
 	$all_states[ $state_key ] = array_merge( $all_states[ $state_key ], $state_data );
@@ -882,7 +882,7 @@ function sync_environment_state( $site_id = null, $env = null ) {
 	}
 
 	// Map local environments to dev for API queries.
-	$api_env = in_array( $env, array( 'lando', 'local', 'localhost', 'ddev' ), true ) ? 'dev' : $env;
+	$api_env = in_array( $env, [ 'lando', 'local', 'localhost', 'ddev' ], true ) ? 'dev' : $env;
 
 	// Get environment info from API.
 	$env_info = get_environment_info( $site_id, $api_env );
@@ -896,9 +896,9 @@ function sync_environment_state( $site_id = null, $env = null ) {
 	$connection_mode = isset( $env_info['on_server_development'] ) && $env_info['on_server_development'] ? 'sftp' : 'git';
 
 	// Update state.
-	$state_data = array(
+	$state_data = [
 		'connection_mode' => $connection_mode,
-	);
+	];
 
 	return update_environment_state( $state_data );
 }
@@ -927,7 +927,7 @@ function get_connection_mode() {
  * @return array|WP_Error Environment data or WP_Error on failure.
  */
 function update_connection_mode( $site_id, $env, $mode ) {
-	if ( ! in_array( $mode, array( 'sftp', 'git' ), true ) ) {
+	if ( ! in_array( $mode, [ 'sftp', 'git' ], true ) ) {
 		return new \WP_Error(
 			'invalid_mode',
 			__( 'Invalid connection mode. Must be "sftp" or "git".', 'ash-nazg' )
@@ -935,12 +935,12 @@ function update_connection_mode( $site_id, $env, $mode ) {
 	}
 
 	// Map local environments to dev for API queries.
-	$api_env = in_array( $env, array( 'lando', 'local', 'localhost', 'ddev' ), true ) ? 'dev' : $env;
+	$api_env = in_array( $env, [ 'lando', 'local', 'localhost', 'ddev' ], true ) ? 'dev' : $env;
 
 	$endpoint = sprintf( '/v0/sites/%s/environments/%s/connection-mode', $site_id, $api_env );
-	$body = array(
+	$body = [
 		'mode' => $mode,
-	);
+	];
 
 	$result = api_request( $endpoint, 'PUT', $body );
 
@@ -967,19 +967,19 @@ function update_connection_mode( $site_id, $env, $mode ) {
  * @return array Array of workflow definitions.
  */
 function get_available_workflows() {
-	return array(
-		'install_ocp' => array(
+	return [
+		'install_ocp' => [
 			'id' => 'install_ocp',
 			'name' => __( 'Install Object Cache Pro', 'ash-nazg' ),
 			'description' => __( 'Installs Object Cache Pro plugin with automated configuration.', 'ash-nazg' ),
 			'workflow_type' => 'scaffold_extensions',
-			'params' => array(
+			'params' => [
 				'job_name' => 'install_ocp',
 				'with_db' => true,
-			),
-			'allowed_envs' => array( 'dev', 'lando' ),
-		),
-	);
+			],
+			'allowed_envs' => [ 'dev', 'lando' ],
+		],
+	];
 }
 
 /**
@@ -993,7 +993,7 @@ function get_available_workflows() {
  */
 function trigger_workflow( $site_id, $env, $workflow_type, $params ) {
 	// Validate environment.
-	$allowed_envs = array( 'dev', 'lando' );
+	$allowed_envs = [ 'dev', 'lando' ];
 	if ( ! in_array( $env, $allowed_envs, true ) ) {
 		return new \WP_Error(
 			'invalid_environment',
@@ -1006,13 +1006,13 @@ function trigger_workflow( $site_id, $env, $workflow_type, $params ) {
 	}
 
 	// Map local environments to dev for API queries.
-	$api_env = in_array( $env, array( 'lando', 'local', 'localhost', 'ddev' ), true ) ? 'dev' : $env;
+	$api_env = in_array( $env, [ 'lando', 'local', 'localhost', 'ddev' ], true ) ? 'dev' : $env;
 
 	$endpoint = sprintf( '/v0/sites/%s/environments/%s/workflows', $site_id, $api_env );
-	$body = array(
+	$body = [
 		'type' => $workflow_type,
 		'params' => $params,
-	);
+	];
 
 	$result = api_request( $endpoint, 'POST', $body );
 

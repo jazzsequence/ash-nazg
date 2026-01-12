@@ -27,13 +27,13 @@ function register_settings() {
 	register_setting(
 		'ash_nazg_settings',
 		'ash_nazg_machine_token',
-		array(
+		[
 			'type'              => 'string',
 			'description'       => __( 'Pantheon machine token for API authentication', 'ash-nazg' ),
 			'sanitize_callback' => 'sanitize_text_field',
 			'show_in_rest'      => false,
 			'default'           => '',
-		)
+		]
 	);
 }
 

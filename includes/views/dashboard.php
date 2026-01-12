@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php if ( null !== $api_error ) : ?>
 		<?php
 		$error_code  = $api_error->get_error_code();
-		$notice_type = in_array( $error_code, array( 'api_unavailable', 'api_connection_failed' ), true ) ? 'warning' : 'error';
+		$notice_type = in_array( $error_code, [ 'api_unavailable', 'api_connection_failed' ], true ) ? 'warning' : 'error';
 		?>
 		<div class="notice notice-<?php echo esc_attr( $notice_type ); ?>">
 			<p>
@@ -405,13 +405,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 				$errors = 0;
 				foreach ( $endpoints_status as $category => $endpoints ) {
 					foreach ( $endpoints as $endpoint ) {
-						$total_endpoints++;
+						++$total_endpoints;
 						if ( 'success' === $endpoint['status'] ) {
-							$successful++;
+							++$successful;
 						} elseif ( 'unavailable' === $endpoint['status'] ) {
-							$unavailable++;
+							++$unavailable;
 						} else {
-							$errors++;
+							++$errors;
 						}
 					}
 				}
