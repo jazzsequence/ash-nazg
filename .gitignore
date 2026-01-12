@@ -25,3 +25,7 @@ Thumbs.db
 # Testing
 /tests/tmp/
 /tests/data/
+/bin/helpers.sh
+/bin/install-local-tests.sh
+/bin/install-wp-tests.sh
+/bin/phpunit-test.sh
