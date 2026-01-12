@@ -114,12 +114,11 @@ use Pantheon\AshNazg\API;
 							);
 							?>
 						</p>
-						<?php var_dump(API\get_site_info(), $_ENV); ?>
-						<code>terminus secret:set ash_nazg_machine_token YOUR_TOKEN --scope=site</code>
+						<code>terminus secret:set <?php echo isset( $_ENV['PANTHEON_SITE_NAME'] ) ? esc_attr( $_ENV['PANTHEON_SITE_NAME'] ) : '<site>'; ?> ash_nazg_machine_token YOUR_TOKEN --scope=user,web</code>
 						<p class="description">
 							<?php
 							esc_html_e(
-								'For development/testing only, you can also enter a token below:',
+								'You can also enter a token below which is stored in the WordPress database.',
 								'ash-nazg'
 							);
 							?>
