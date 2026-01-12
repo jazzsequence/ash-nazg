@@ -119,7 +119,7 @@ use Pantheon\AshNazg\API;
 							);
 							?>
 						</p>
-						<code>terminus secret:set <?php echo isset( $_ENV['PANTHEON_SITE_NAME'] ) ? esc_attr( $_ENV['PANTHEON_SITE_NAME'] ) : '<site>'; ?> ash_nazg_machine_token YOUR_TOKEN --scope=user,web</code>
+						<code>terminus secret:set <?php echo isset( $_ENV['PANTHEON_SITE_NAME'] ) ? esc_attr( sanitize_text_field( wp_unslash( $_ENV['PANTHEON_SITE_NAME'] ) ) ) : '<site>'; ?> ash_nazg_machine_token YOUR_TOKEN --scope=user,web</code>
 					<?php else : ?>
 						<p class="description">
 							<?php

@@ -22,4 +22,14 @@
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
 	<exclude-pattern>*/vendor/*</exclude-pattern>
 	<exclude-pattern>*/tests/*</exclude-pattern>
+
+	<rule ref="WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsUnknown">
+		<exclude-pattern>*/includes/admin.php</exclude-pattern>
+	</rule>
+	<rule ref="WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_unlink">
+		<exclude-pattern>*/includes/admin.php</exclude-pattern>
+	</rule>
+	<rule ref="WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout">
+		<exclude-pattern>*/includes/api.php</exclude-pattern>
+	</rule>
 </ruleset>

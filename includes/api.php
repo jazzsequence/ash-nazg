@@ -25,7 +25,9 @@ function get_api_token() {
 	// Get machine token from Pantheon Secrets or settings.
 	$machine_token = get_machine_token();
 	if ( ! $machine_token ) {
-		error_log( 'Ash-Nazg: No machine token available' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: No machine token available' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return new \WP_Error(
 			'no_token',
 			__( 'No machine token configured. Please add a token in Settings.', 'ash-nazg' )
@@ -51,7 +53,9 @@ function get_api_token() {
 
 	if ( is_wp_error( $response ) ) {
 		$error_message = $response->get_error_message();
-		error_log( 'Ash-Nazg: Failed to exchange machine token: ' . $error_message );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: Failed to exchange machine token: ' . $error_message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return new \WP_Error(
 			'api_connection_failed',
 			sprintf(
@@ -67,7 +71,9 @@ function get_api_token() {
 
 	// Handle 503 Service Unavailable.
 	if ( 503 === $status_code ) {
-		error_log( 'Ash-Nazg: Pantheon API is unavailable (503)' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: Pantheon API is unavailable (503)' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return new \WP_Error(
 			'api_unavailable',
 			__( 'Pantheon API is temporarily unavailable (503 Service Unavailable). This is usually a temporary issue. Please try again later.', 'ash-nazg' )
@@ -76,7 +82,9 @@ function get_api_token() {
 
 	// Handle 502 Bad Gateway.
 	if ( 502 === $status_code ) {
-		error_log( 'Ash-Nazg: Pantheon API bad gateway (502)' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: Pantheon API bad gateway (502)' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return new \WP_Error(
 			'api_unavailable',
 			__( 'Pantheon API is experiencing issues (502 Bad Gateway). Please try again later.', 'ash-nazg' )
@@ -96,7 +104,9 @@ function get_api_token() {
 			);
 			$error_details = ' (' . implode( ', ', array_filter( $error_messages ) ) . ')';
 		}
-		error_log( 'Ash-Nazg: Bad request to API (400): ' . $body );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: Bad request to API (400): ' . $body ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return new \WP_Error(
 			'bad_request',
 			sprintf(
@@ -109,7 +119,9 @@ function get_api_token() {
 
 	// Handle authentication errors.
 	if ( 401 === $status_code || 403 === $status_code ) {
-		error_log( 'Ash-Nazg: Invalid machine token (status ' . $status_code . ')' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: Invalid machine token (status ' . $status_code . ')' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return new \WP_Error(
 			'invalid_token',
 			__( 'Invalid machine token. Please check your token in Settings and ensure it is valid and not expired.', 'ash-nazg' )
@@ -118,8 +130,10 @@ function get_api_token() {
 
 	// Handle other non-200 responses.
 	if ( 200 !== $status_code ) {
-		error_log( 'Ash-Nazg: API authentication failed with status ' . $status_code );
-		error_log( 'Ash-Nazg: Response body: ' . substr( $body, 0, 200 ) );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: API authentication failed with status ' . $status_code ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Ash-Nazg: Response body: ' . substr( $body, 0, 200 ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return new \WP_Error(
 			'api_error',
 			sprintf(
@@ -132,7 +146,9 @@ function get_api_token() {
 
 	$data = json_decode( $body, true );
 	if ( empty( $data['session'] ) ) {
-		error_log( 'Ash-Nazg: No session token in API response' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: No session token in API response' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return new \WP_Error(
 			'invalid_response',
 			__( 'Invalid response from Pantheon API. No session token received.', 'ash-nazg' )
@@ -192,8 +208,11 @@ function api_request( $endpoint, $method = 'GET', $body = [] ) {
 		'timeout' => 30,
 	];
 
-	// Add body for POST, PUT, PATCH, and DELETE.
-	// For PUT/DELETE, send empty object if no body provided (required for Content-Length header).
+	/*
+	 * Add body for POST, PUT, PATCH, and DELETE.
+	 * For PUT/DELETE, send empty object if no body provided (required for
+	 * Content-Length header).
+	 */
 	if ( in_array( $method, [ 'POST', 'PUT', 'PATCH', 'DELETE' ], true ) ) {
 		if ( ! empty( $body ) ) {
 			$args['body'] = wp_json_encode( $body );
@@ -206,7 +225,9 @@ function api_request( $endpoint, $method = 'GET', $body = [] ) {
 	$response = wp_remote_request( $url, $args );
 
 	if ( is_wp_error( $response ) ) {
-		error_log( 'Ash-Nazg: API request failed: ' . $response->get_error_message() );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: API request failed: ' . $response->get_error_message() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return $response;
 	}
 
@@ -216,7 +237,9 @@ function api_request( $endpoint, $method = 'GET', $body = [] ) {
 
 	if ( $status_code < 200 || $status_code >= 300 ) {
 		$error_message = isset( $data['message'] ) ? $data['message'] : 'Unknown API error';
-		error_log( sprintf( 'Ash-Nazg: API error %d: %s', $status_code, $error_message ) );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: API error %d: %s', $status_code, $error_message ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return new \WP_Error(
 			'api_error',
 			sprintf(
@@ -276,10 +299,10 @@ function get_cached_endpoint( $endpoint, $cache_key, $ttl = DAY_IN_SECONDS ) {
  *
  * @param string $endpoint_type Endpoint type (e.g., 'site', 'environment', 'user').
  * @param string $field         Field name to retrieve from the response.
- * @param mixed  $default       Default value if field doesn't exist. Default null.
+ * @param mixed  $default_value Default value if field doesn't exist. Default null.
  * @return mixed Field value, default value, or WP_Error on API failure.
  */
-function get_api_field( $endpoint_type, $field, $default = null ) {
+function get_api_field( $endpoint_type, $field, $default_value = null ) {
 	$data = null;
 
 	// Map endpoint type to getter function.
@@ -313,7 +336,7 @@ function get_api_field( $endpoint_type, $field, $default = null ) {
 	}
 
 	// Return the field value or default.
-	return isset( $data[ $field ] ) ? $data[ $field ] : $default;
+	return isset( $data[ $field ] ) ? $data[ $field ] : $default_value;
 }
 
 /**
@@ -369,14 +392,18 @@ function update_site_label( $site_id, $label ) {
 	$result = api_request( $endpoint, 'PUT', $body );
 
 	if ( is_wp_error( $result ) ) {
-		error_log( sprintf( 'Ash-Nazg: Failed to update site label for %s: %s', $site_id, $result->get_error_message() ) );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to update site label for %s: %s', $site_id, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return $result;
 	}
 
 	// Clear site info cache to force refresh.
 	delete_transient( sprintf( 'ash_nazg_site_info_%s', $site_id ) );
 
-	error_log( sprintf( 'Ash-Nazg: Site label updated to "%s" for site %s', $label, $site_id ) );
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: Site label updated to "%s" for site %s', $label, $site_id ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
 
 	return $result;
 }
@@ -728,12 +755,15 @@ function update_site_addon( $site_id, $addon_id, $enabled ) {
 	$result = api_request( $endpoint, $method, [] );
 
 	if ( is_wp_error( $result ) ) {
-		error_log( sprintf( 'Ash-Nazg: Failed to %s addon %s for site %s: %s', $enabled ? 'enable' : 'disable', $addon_id, $site_id, $result->get_error_message() ) );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to %s addon %s for site %s: %s', $enabled ? 'enable' : 'disable', $addon_id, $site_id, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return $result;
 	}
 
-	// Log the addon state change and API response.
-	error_log( sprintf( 'Ash-Nazg: Addon %s %s for site %s - API Response: %s', $addon_id, $enabled ? 'enabled' : 'disabled', $site_id, wp_json_encode( $result ) ) );
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: Addon %s %s for site %s - API Response: %s', $addon_id, $enabled ? 'enabled' : 'disabled', $site_id, wp_json_encode( $result ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
 
 	// Store the new addon state in environment state.
 	$env_state = get_environment_state();
@@ -888,7 +918,9 @@ function sync_environment_state( $site_id = null, $env = null ) {
 	$env_info = get_environment_info( $site_id, $api_env );
 
 	if ( is_wp_error( $env_info ) ) {
-		error_log( sprintf( 'Ash-Nazg: Failed to sync environment state - %s', $env_info->get_error_message() ) );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to sync environment state - %s', $env_info->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return false;
 	}
 
@@ -945,16 +977,22 @@ function update_connection_mode( $site_id, $env, $mode ) {
 	$result = api_request( $endpoint, 'PUT', $body );
 
 	if ( is_wp_error( $result ) ) {
-		error_log( sprintf( 'Ash-Nazg: Failed to update connection mode to %s on %s/%s - Error: %s', $mode, $site_id, $env, $result->get_error_message() ) );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to update connection mode to %s on %s/%s - Error: %s', $mode, $site_id, $env, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return $result;
 	}
 
-	// Clear environment info cache to force refresh.
-	// Note: We do NOT update the state here. The state should only be updated
-	// after the mode change is verified, which is done by the caller.
+	/*
+	 * Clear environment info cache to force refresh.
+	 * Note: We do NOT update the state here. The state should only be updated
+	 * after the mode change is verified, which is done by the caller.
+	 */
 	delete_transient( sprintf( 'ash_nazg_all_env_info_%s', $site_id ) );
 
-	error_log( sprintf( 'Ash-Nazg: Connection mode change to %s initiated on %s/%s', $mode, $site_id, $env ) );
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: Connection mode change to %s initiated on %s/%s', $mode, $site_id, $env ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
 
 	return $result;
 }
@@ -1017,11 +1055,15 @@ function trigger_workflow( $site_id, $env, $workflow_type, $params ) {
 	$result = api_request( $endpoint, 'POST', $body );
 
 	if ( is_wp_error( $result ) ) {
-		error_log( sprintf( 'Ash-Nazg: Failed to trigger workflow %s on %s/%s (API env: %s) - Error: %s', $workflow_type, $site_id, $env, $api_env, $result->get_error_message() ) );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to trigger workflow %s on %s/%s (API env: %s) - Error: %s', $workflow_type, $site_id, $env, $api_env, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return $result;
 	}
 
-	error_log( sprintf( 'Ash-Nazg: Triggered workflow %s on %s/%s (API env: %s) - Response: %s', $workflow_type, $site_id, $env, $api_env, wp_json_encode( $result ) ) );
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: Triggered workflow %s on %s/%s (API env: %s) - Response: %s', $workflow_type, $site_id, $env, $api_env, wp_json_encode( $result ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
 
 	return $result;
 }

@@ -52,7 +52,9 @@ function test_endpoint( $path, $name, $description = '' ) {
 		$error_message = $result->get_error_message();
 
 		// Log the specific error for debugging.
-		error_log( sprintf( 'Ash-Nazg endpoint test [%s]: %s - %s', $path, $error_code, $error_message ) );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg endpoint test [%s]: %s - %s', $path, $error_code, $error_message ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 
 		if ( 'environment_not_found' === $error_code ) {
 			$endpoint['status'] = 'unavailable';
@@ -81,8 +83,11 @@ function test_endpoint( $path, $name, $description = '' ) {
  * @return array Organized endpoint groups: site, user, all.
  */
 function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null ) {
-	// Map local environment names to their Pantheon equivalents.
-	// Local environments like 'lando' should query 'dev' environment from Pantheon.
+	/*
+	 * Map local environment names to their Pantheon equivalents.
+	 * Local environments like 'lando' should query 'dev' environment from
+	 * Pantheon.
+	 */
 	$local_env_names = [ 'lando', 'local', 'localhost', 'ddev' ];
 	$api_env = $env;
 	if ( $env && in_array( strtolower( $env ), $local_env_names, true ) ) {

@@ -50,6 +50,5 @@ function bootstrap() {
 	Settings\init();
 }
 
-// Bootstrap the plugin immediately.
-// This ensures functions are available before admin_init fires.
+// Kick it off.
 bootstrap();

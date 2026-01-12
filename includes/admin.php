@@ -269,8 +269,11 @@ function render_dashboard_page() {
 			API\sync_environment_state( $site_id, $environment );
 		}
 
-		// Get endpoints status if we can connect to the API.
-		// We fetch endpoints even if the environment doesn't exist on Pantheon (local dev).
+		/*
+		 * Get endpoints status if we can connect to the API.
+		 * We fetch endpoints even if the environment doesn't exist on Pantheon
+		 * (local dev).
+		 */
 		if ( null === $api_error ) {
 			$endpoints_data = API\get_endpoints_status( $site_id, $environment );
 			// Handle both old and new cache formats during transition.
@@ -391,22 +394,21 @@ function render_addons_page() {
 	$message = null;
 	$error = null;
 
-	// Handle redirect messages.
-	if ( isset( $_GET['updated'] ) ) {
-		$updated_count = absint( $_GET['updated'] );
+	// Handle redirect messages from transients.
+	$updated_count = get_transient( 'ash_nazg_addons_updated' );
+	if ( false !== $updated_count ) {
 		$message = sprintf(
 			/* translators: %d: number of addons updated */
-			_n( '%d addon updated successfully.', '%d addons updated successfully.', $updated_count, 'ash-nazg' ),
-			$updated_count
+			_n( '%d addon updated successfully.', '%d addons updated successfully.', absint( $updated_count ), 'ash-nazg' ),
+			absint( $updated_count )
 		);
+		delete_transient( 'ash_nazg_addons_updated' );
 	}
 
-	if ( isset( $_GET['error'] ) ) {
-		$stored_errors = get_transient( 'ash_nazg_addon_errors' );
-		if ( $stored_errors ) {
-			$error = implode( '<br>', $stored_errors );
-			delete_transient( 'ash_nazg_addon_errors' );
-		}
+	$stored_errors = get_transient( 'ash_nazg_addon_errors' );
+	if ( $stored_errors ) {
+		$error = implode( '<br>', $stored_errors );
+		delete_transient( 'ash_nazg_addon_errors' );
 	}
 
 	// Get current addon states.
@@ -510,26 +512,18 @@ function render_workflows_page() {
 	$error = null;
 	$workflow_id = null;
 
-	// Handle redirect messages.
-	if ( isset( $_GET['triggered'] ) ) {
+	// Handle redirect messages from transients.
+	$stored_workflow_id = get_transient( 'ash_nazg_workflow_id' );
+	if ( $stored_workflow_id ) {
 		$message = __( 'Workflow triggered successfully.', 'ash-nazg' );
-		$stored_workflow_id = get_transient( 'ash_nazg_workflow_id' );
-		if ( $stored_workflow_id ) {
-			$workflow_id = $stored_workflow_id;
-			delete_transient( 'ash_nazg_workflow_id' );
-		}
+		$workflow_id = $stored_workflow_id;
+		delete_transient( 'ash_nazg_workflow_id' );
 	}
 
-	if ( isset( $_GET['error'] ) ) {
-		if ( 'invalid_env' === $_GET['error'] ) {
-			$error = __( 'This workflow can only be triggered on dev or local development environments.', 'ash-nazg' );
-		} else {
-			$stored_error = get_transient( 'ash_nazg_workflow_error' );
-			if ( $stored_error ) {
-				$error = $stored_error;
-				delete_transient( 'ash_nazg_workflow_error' );
-			}
-		}
+	$stored_error = get_transient( 'ash_nazg_workflow_error' );
+	if ( $stored_error ) {
+		$error = $stored_error;
+		delete_transient( 'ash_nazg_workflow_error' );
 	}
 
 	// Get available workflows.
@@ -568,31 +562,42 @@ function ajax_fetch_logs() {
 	$environment = API\get_pantheon_environment();
 
 	if ( ! $site_id || ! $environment ) {
-		error_log( 'Ash-Nazg: AJAX fetch logs - Not running on Pantheon' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: AJAX fetch logs - Not running on Pantheon' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		wp_send_json_error( [ 'message' => __( 'Not running on Pantheon.', 'ash-nazg' ) ] );
 	}
 
-	error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Site: %s, Env: %s', $site_id, $environment ) );
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Site: %s, Env: %s', $site_id, $environment ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
 
 	// Get current connection mode from state.
 	$original_mode = API\get_connection_mode();
 	if ( ! $original_mode ) {
-		// Sync state if not known.
-		error_log( 'Ash-Nazg: AJAX fetch logs - Syncing environment state' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: AJAX fetch logs - Syncing environment state' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		API\sync_environment_state( $site_id, $environment );
 		$original_mode = API\get_connection_mode();
 	}
 
-	error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Original mode: %s', $original_mode ) );
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Original mode: %s', $original_mode ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
 
 	$switched_mode = false;
 
 	// If in Git mode, switch to SFTP temporarily.
 	if ( 'git' === $original_mode ) {
-		error_log( 'Ash-Nazg: AJAX fetch logs - Switching to SFTP mode' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: AJAX fetch logs - Switching to SFTP mode' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		$result = API\update_connection_mode( $site_id, $environment, 'sftp' );
 		if ( is_wp_error( $result ) ) {
-			error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Failed to switch to SFTP: %s', $result->get_error_message() ) );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Failed to switch to SFTP: %s', $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 		}
 		$switched_mode = true;
@@ -604,18 +609,25 @@ function ajax_fetch_logs() {
 	$log_path = WP_CONTENT_DIR . '/debug.log';
 	$logs = '';
 
-	error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Looking for log at: %s', $log_path ) );
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Looking for log at: %s', $log_path ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
 
 	if ( file_exists( $log_path ) && is_readable( $log_path ) ) {
 		$logs = file_get_contents( $log_path );
-		error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Log file read, size: %d bytes', strlen( $logs ) ) );
-	} else {
-		error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Log file not found or not readable. Exists: %s, Readable: %s', file_exists( $log_path ) ? 'yes' : 'no', is_readable( $log_path ) ? 'yes' : 'no' ) );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Log file read, size: %d bytes', strlen( $logs ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+	} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: AJAX fetch logs - Log file not found or not readable. Exists: %s, Readable: %s', file_exists( $log_path ) ? 'yes' : 'no', is_readable( $log_path ) ? 'yes' : 'no' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+
 	}
 
 	// Switch back to original mode if we changed it.
 	if ( $switched_mode ) {
-		error_log( 'Ash-Nazg: AJAX fetch logs - Switching back to Git mode' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: AJAX fetch logs - Switching back to Git mode' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		API\update_connection_mode( $site_id, $environment, 'git' );
 	}
 
@@ -654,31 +666,42 @@ function ajax_clear_logs() {
 	$environment = API\get_pantheon_environment();
 
 	if ( ! $site_id || ! $environment ) {
-		error_log( 'Ash-Nazg: AJAX clear logs - Not running on Pantheon' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: AJAX clear logs - Not running on Pantheon' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		wp_send_json_error( [ 'message' => __( 'Not running on Pantheon.', 'ash-nazg' ) ] );
 	}
 
-	error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Site: %s, Env: %s', $site_id, $environment ) );
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Site: %s, Env: %s', $site_id, $environment ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
 
 	// Get current connection mode from state.
 	$original_mode = API\get_connection_mode();
 	if ( ! $original_mode ) {
-		// Sync state if not known.
-		error_log( 'Ash-Nazg: AJAX clear logs - Syncing environment state' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: AJAX clear logs - Syncing environment state' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		API\sync_environment_state( $site_id, $environment );
 		$original_mode = API\get_connection_mode();
 	}
 
-	error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Original mode: %s', $original_mode ) );
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Original mode: %s', $original_mode ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
 
 	$switched_mode = false;
 
 	// If in Git mode, switch to SFTP temporarily.
 	if ( 'git' === $original_mode ) {
-		error_log( 'Ash-Nazg: AJAX clear logs - Switching to SFTP mode' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: AJAX clear logs - Switching to SFTP mode' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		$result = API\update_connection_mode( $site_id, $environment, 'sftp' );
 		if ( is_wp_error( $result ) ) {
-			error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Failed to switch to SFTP: %s', $result->get_error_message() ) );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Failed to switch to SFTP: %s', $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 		}
 		$switched_mode = true;
@@ -689,27 +712,36 @@ function ajax_clear_logs() {
 	// Delete debug.log file.
 	$log_path = WP_CONTENT_DIR . '/debug.log';
 
-	error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Attempting to delete log at: %s', $log_path ) );
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: AJAX clear logs - Attempting to delete log at: %s', $log_path ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
 
 	if ( file_exists( $log_path ) ) {
 		if ( unlink( $log_path ) ) {
-			error_log( 'Ash-Nazg: AJAX clear logs - Log file deleted successfully' );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Ash-Nazg: AJAX clear logs - Log file deleted successfully' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 		} else {
-			error_log( 'Ash-Nazg: AJAX clear logs - Failed to delete log file' );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Ash-Nazg: AJAX clear logs - Failed to delete log file' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 			// Switch back before error.
 			if ( $switched_mode ) {
 				API\update_connection_mode( $site_id, $environment, 'git' );
 			}
 			wp_send_json_error( [ 'message' => __( 'Failed to delete log file. Check file permissions.', 'ash-nazg' ) ] );
 		}
-	} else {
-		error_log( 'Ash-Nazg: AJAX clear logs - Log file does not exist' );
+	} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: AJAX clear logs - Log file does not exist' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+
 	}
 
 	// Verify the log file was deleted.
 	sleep( 1 ); // Give filesystem a moment.
 	if ( file_exists( $log_path ) ) {
-		error_log( 'Ash-Nazg: AJAX clear logs - Log file still exists after deletion attempt' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: AJAX clear logs - Log file still exists after deletion attempt' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		// Switch back before error.
 		if ( $switched_mode ) {
 			API\update_connection_mode( $site_id, $environment, 'git' );
@@ -719,7 +751,9 @@ function ajax_clear_logs() {
 
 	// Switch back to original mode if we changed it.
 	if ( $switched_mode ) {
-		error_log( 'Ash-Nazg: AJAX clear logs - Switching back to Git mode' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Ash-Nazg: AJAX clear logs - Switching back to Git mode' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		API\update_connection_mode( $site_id, $environment, 'git' );
 	}
 
@@ -727,7 +761,9 @@ function ajax_clear_logs() {
 	set_transient( 'ash_nazg_debug_logs', '', YEAR_IN_SECONDS );
 	set_transient( 'ash_nazg_debug_logs_timestamp', time(), YEAR_IN_SECONDS );
 
-	error_log( 'Ash-Nazg: AJAX clear logs - Log cleared and verified successfully' );
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( 'Ash-Nazg: AJAX clear logs - Log cleared and verified successfully' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
 
 	wp_send_json_success(
 		[
@@ -772,8 +808,11 @@ function ajax_toggle_connection_mode() {
 		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 	}
 
-	// Wait and verify the mode has actually changed.
-	// The API returns success when the workflow is initiated, but we need to wait for completion.
+	/* 
+	 * Wait and verify the mode has actually changed.
+	 * The API returns success when the workflow is initiated, but we need to
+	 * wait for completion.
+	 */
 	$expected_on_server_dev = ( 'sftp' === $new_mode );
 	$max_attempts = 10; // 10 attempts * 2 seconds = 20 seconds max wait.
 	$verified = false;
@@ -809,7 +848,9 @@ function ajax_toggle_connection_mode() {
 		]
 	);
 
-	error_log( sprintf( 'Ash-Nazg: Connection mode verified and state updated to %s on %s/%s', $new_mode, $site_id, $environment ) );
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: Connection mode verified and state updated to %s on %s/%s', $new_mode, $site_id, $environment ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
 
 	wp_send_json_success(
 		[
@@ -879,17 +920,17 @@ function render_logs_page() {
 	$message = null;
 	$error = null;
 
-	// Handle redirect messages.
-	if ( isset( $_GET['logs_fetched'] ) ) {
+	// Handle redirect messages from transients.
+	$logs_fetched = get_transient( 'ash_nazg_logs_fetched' );
+	if ( $logs_fetched ) {
 		$message = __( 'Debug logs fetched successfully.', 'ash-nazg' );
+		delete_transient( 'ash_nazg_logs_fetched' );
 	}
 
-	if ( isset( $_GET['logs_error'] ) ) {
-		$stored_error = get_transient( 'ash_nazg_logs_error' );
-		if ( $stored_error ) {
-			$error = $stored_error;
-			delete_transient( 'ash_nazg_logs_error' );
-		}
+	$stored_error = get_transient( 'ash_nazg_logs_error' );
+	if ( $stored_error ) {
+		$error = $stored_error;
+		delete_transient( 'ash_nazg_logs_error' );
 	}
 
 	// Get current environment info.

@@ -356,8 +356,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 		<?php if ( ! empty( $endpoints_site ) || ! empty( $endpoints_user ) || ! empty( $endpoints_all ) ) : ?>
 			<?php
-			// Determine active tab.
-			$active_tab = isset( $_GET['endpoints_tab'] ) ? sanitize_text_field( wp_unslash( $_GET['endpoints_tab'] ) ) : 'site';
+			/*
+			 * Determine active tab.
+			 * Verify nonce if tab parameter is present.
+			 */
+			$active_tab = 'site';
+			if ( isset( $_GET['endpoints_tab'], $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'ash_nazg_tab' ) ) {
+				$active_tab = sanitize_text_field( wp_unslash( $_GET['endpoints_tab'] ) );
+			}
 			?>
 			<div class="ash-nazg-card ash-nazg-card-full">
 				<div class="ash-nazg-flex-between ash-nazg-mb-10">
@@ -376,13 +382,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</div>
 
 				<h2 class="nav-tab-wrapper">
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=site' ) ); ?>" class="nav-tab <?php echo 'site' === $active_tab ? 'nav-tab-active' : ''; ?>">
+					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=site' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'site' === $active_tab ? 'nav-tab-active' : ''; ?>">
 						<?php esc_html_e( 'Site Endpoints', 'ash-nazg' ); ?>
 					</a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=user' ) ); ?>" class="nav-tab <?php echo 'user' === $active_tab ? 'nav-tab-active' : ''; ?>">
+					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=user' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'user' === $active_tab ? 'nav-tab-active' : ''; ?>">
 						<?php esc_html_e( 'User Endpoints', 'ash-nazg' ); ?>
 					</a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=all' ) ); ?>" class="nav-tab <?php echo 'all' === $active_tab ? 'nav-tab-active' : ''; ?>">
+					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=all' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'all' === $active_tab ? 'nav-tab-active' : ''; ?>">
 						<?php esc_html_e( 'All Endpoints', 'ash-nazg' ); ?>
 					</a>
 				</h2>
@@ -402,7 +408,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				$total_endpoints = 0;
 				$successful = 0;
 				$unavailable = 0;
-				$errors = 0;
+				$endpoint_errors = 0;
 				foreach ( $endpoints_status as $category => $endpoints ) {
 					foreach ( $endpoints as $endpoint ) {
 						++$total_endpoints;
@@ -411,7 +417,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						} elseif ( 'unavailable' === $endpoint['status'] ) {
 							++$unavailable;
 						} else {
-							++$errors;
+							++$endpoint_errors;
 						}
 					}
 				}
@@ -422,8 +428,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<?php if ( $unavailable > 0 ) : ?>
 						<span class="ash-nazg-ml-10 ash-nazg-text-warning">⊘ <?php echo esc_html( $unavailable ); ?> <?php esc_html_e( 'unavailable', 'ash-nazg' ); ?></span>
 					<?php endif; ?>
-					<?php if ( $errors > 0 ) : ?>
-						<span class="ash-nazg-ml-10 ash-nazg-text-error">✗ <?php echo esc_html( $errors ); ?> <?php esc_html_e( 'errors', 'ash-nazg' ); ?></span>
+					<?php if ( $endpoint_errors > 0 ) : ?>
+						<span class="ash-nazg-ml-10 ash-nazg-text-error">✗ <?php echo esc_html( $endpoint_errors ); ?> <?php esc_html_e( 'errors', 'ash-nazg' ); ?></span>
 					<?php endif; ?>
 					<span class="ash-nazg-ml-10 ash-nazg-text-muted">
 						(<?php echo esc_html( $total_endpoints ); ?> <?php esc_html_e( 'total endpoints', 'ash-nazg' ); ?>)
@@ -434,7 +440,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<h3 class="ash-nazg-section-header">
 						<?php echo esc_html( $category ); ?>
 						<span class="ash-nazg-label-text">
-							(<?php echo count( $endpoints ); ?> <?php echo _n( 'endpoint', 'endpoints', count( $endpoints ), 'ash-nazg' ); ?>)
+							(<?php echo count( $endpoints ); ?> <?php echo esc_html( _n( 'endpoint', 'endpoints', count( $endpoints ), 'ash-nazg' ) ); ?>)
 						</span>
 					</h3>
 					<table class="widefat striped ash-nazg-table-mb">
