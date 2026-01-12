@@ -9,6 +9,8 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+use Pantheon\AshNazg\API;
 ?>
 
 <div class="wrap">
@@ -107,11 +109,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<p class="description">
 							<?php
 							esc_html_e(
-								'Machine token is stored in Pantheon Secrets. To update it, use the Pantheon CLI:',
+								'It is recommended that you store your machine token in Pantheon Secrets. To update it, use the Pantheon CLI:',
 								'ash-nazg'
 							);
 							?>
 						</p>
+						<?php var_dump(API\get_site_info()); ?>
 						<code>terminus secret:set ash_nazg_machine_token YOUR_TOKEN --scope=site</code>
 						<p class="description">
 							<?php
