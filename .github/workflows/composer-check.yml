@@ -12,6 +12,16 @@ jobs:
   composer-check:
     runs-on: ubuntu-latest
 
+    services:
+      mariadb:
+        image: mariadb:latest
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=10s --health-timeout=5s --health-retries=3
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,17 +31,18 @@ jobs:
         with:
           php-version: '8.4'
           coverage: none
+          extensions: mysqli
 
       - name: Validate composer.json
         run: composer validate --strict
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
-      
+
       - name: Setup WPUnit Helpers
         run: |
           chmod +x bin/*.sh
-          composer test:install:withdb
+          composer test:install:withdb -- --dbpass=root
 
       - name: Run composer check
         run: composer check
