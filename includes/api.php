@@ -340,6 +340,48 @@ function get_site_info( $site_id = null ) {
 }
 
 /**
+ * Update site label.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $label   New site label.
+ * @return array|\WP_Error Updated site data or WP_Error on failure.
+ */
+function update_site_label( $site_id, $label ) {
+	if ( ! $site_id ) {
+		return new \WP_Error(
+			'missing_site_id',
+			__( 'Site ID is required.', 'ash-nazg' )
+		);
+	}
+
+	if ( ! $label || '' === trim( $label ) ) {
+		return new \WP_Error(
+			'missing_label',
+			__( 'Site label cannot be empty.', 'ash-nazg' )
+		);
+	}
+
+	$endpoint = sprintf( '/v0/sites/%s/label', $site_id );
+	$body = array(
+		'label' => $label,
+	);
+
+	$result = api_request( $endpoint, 'PUT', $body );
+
+	if ( is_wp_error( $result ) ) {
+		error_log( sprintf( 'Ash-Nazg: Failed to update site label for %s: %s', $site_id, $result->get_error_message() ) );
+		return $result;
+	}
+
+	// Clear site info cache to force refresh.
+	delete_transient( sprintf( 'ash_nazg_site_info_%s', $site_id ) );
+
+	error_log( sprintf( 'Ash-Nazg: Site label updated to "%s" for site %s', $label, $site_id ) );
+
+	return $result;
+}
+
+/**
  * Get environment information.
  *
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.

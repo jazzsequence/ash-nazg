@@ -44,4 +44,97 @@ jQuery(document).ready(function($) {
 			}
 		});
 	});
+
+	/**
+	 * Handle site label inline editing.
+	 */
+	$('#ash-nazg-edit-site-label').on('click', function(e) {
+		e.preventDefault();
+		$('#ash-nazg-site-label-display').hide();
+		$('#ash-nazg-site-label-form').show();
+		$('#ash-nazg-site-label-input').focus();
+	});
+
+	$('#ash-nazg-cancel-site-label').on('click', function() {
+		$('#ash-nazg-site-label-form').hide();
+		$('#ash-nazg-site-label-display').show();
+		// Reset input to original value.
+		var originalLabel = $('#ash-nazg-site-label-display').text().trim();
+		$('#ash-nazg-site-label-input').val(originalLabel);
+	});
+
+	$('#ash-nazg-save-site-label').on('click', function() {
+		var $input = $('#ash-nazg-site-label-input');
+		var $saveButton = $(this);
+		var $cancelButton = $('#ash-nazg-cancel-site-label');
+		var $loading = $('#ash-nazg-site-label-loading');
+		var newLabel = $input.val().trim();
+
+		if (newLabel === '') {
+			$('.wrap h1').first().after('<div class="notice notice-error is-dismissible"><p>' + ashNazgDashboard.i18n.emptyLabelError + '</p></div>');
+			return;
+		}
+
+		// Disable buttons and show loading.
+		$input.prop('disabled', true);
+		$saveButton.prop('disabled', true);
+		$cancelButton.prop('disabled', true);
+		$loading.show();
+
+		$.ajax({
+			url: ashNazgDashboard.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'ash_nazg_update_site_label',
+				label: newLabel,
+				nonce: ashNazgDashboard.updateLabelNonce
+			},
+			success: function(response) {
+				$loading.hide();
+				if (response.success) {
+					// Update the displayed label.
+					$('#ash-nazg-site-label-display').html(response.data.label + ' <a href="#" id="ash-nazg-edit-site-label" class="ash-nazg-edit-link" title="Edit site label"><span class="dashicons dashicons-edit"></span></a>');
+					$('#ash-nazg-site-label-form').hide();
+					$('#ash-nazg-site-label-display').show();
+					$('.wrap h1').first().after('<div class="notice notice-success is-dismissible"><p>' + response.data.message + '</p></div>');
+					// Re-bind the edit link click handler.
+					$('#ash-nazg-edit-site-label').on('click', function(e) {
+						e.preventDefault();
+						$('#ash-nazg-site-label-display').hide();
+						$('#ash-nazg-site-label-form').show();
+						$('#ash-nazg-site-label-input').focus();
+					});
+				} else {
+					var errorMsg = response.data && response.data.message ? response.data.message : ashNazgDashboard.i18n.updateLabelError;
+					$('.wrap h1').first().after('<div class="notice notice-error is-dismissible"><p>' + errorMsg + '</p></div>');
+				}
+				// Re-enable buttons.
+				$input.prop('disabled', false);
+				$saveButton.prop('disabled', false);
+				$cancelButton.prop('disabled', false);
+			},
+			error: function() {
+				$loading.hide();
+				$input.prop('disabled', false);
+				$saveButton.prop('disabled', false);
+				$cancelButton.prop('disabled', false);
+				$('.wrap h1').first().after('<div class="notice notice-error is-dismissible"><p>' + ashNazgDashboard.i18n.updateLabelError + '</p></div>');
+			}
+		});
+	});
+
+	// Allow pressing Enter key to save label.
+	$('#ash-nazg-site-label-input').on('keypress', function(e) {
+		if (e.which === 13) {
+			e.preventDefault();
+			$('#ash-nazg-save-site-label').click();
+		}
+	});
+
+	// Allow pressing Escape key to cancel editing.
+	$('#ash-nazg-site-label-input').on('keyup', function(e) {
+		if (e.which === 27) {
+			$('#ash-nazg-cancel-site-label').click();
+		}
+	});
 });

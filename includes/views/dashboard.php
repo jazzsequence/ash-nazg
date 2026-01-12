@@ -238,7 +238,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<?php if ( $site_label ) : ?>
 							<tr>
 								<th><?php esc_html_e( 'Site Label', 'ash-nazg' ); ?></th>
-								<td><?php echo esc_html( $site_label ); ?></td>
+								<td>
+									<span id="ash-nazg-site-label-display">
+										<?php echo esc_html( $site_label ); ?>
+										<a href="#" id="ash-nazg-edit-site-label" class="ash-nazg-edit-link" title="<?php esc_attr_e( 'Edit site label', 'ash-nazg' ); ?>">
+											<span class="dashicons dashicons-edit"></span>
+										</a>
+									</span>
+									<span id="ash-nazg-site-label-form" class="ash-nazg-hidden">
+										<input type="text" id="ash-nazg-site-label-input" value="<?php echo esc_attr( $site_label ); ?>" class="regular-text" />
+										<button type="button" id="ash-nazg-save-site-label" class="button button-primary button-small">
+											<?php esc_html_e( 'Save', 'ash-nazg' ); ?>
+										</button>
+										<button type="button" id="ash-nazg-cancel-site-label" class="button button-secondary button-small">
+											<?php esc_html_e( 'Cancel', 'ash-nazg' ); ?>
+										</button>
+										<span id="ash-nazg-site-label-loading" class="ash-nazg-hidden">
+											<span class="spinner is-active"></span>
+										</span>
+									</span>
+								</td>
 							</tr>
 						<?php endif; ?>
 						<?php if ( $site_created ) : ?>

@@ -192,6 +192,25 @@
 	margin-bottom: 5px;
 }
 
+/* Inline Edit Link */
+.ash-nazg-edit-link {
+	text-decoration: none;
+	color: #757575;
+	margin-left: 8px;
+	font-size: 16px;
+	vertical-align: middle;
+}
+
+.ash-nazg-edit-link:hover {
+	color: #0073aa;
+}
+
+.ash-nazg-edit-link .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
 /* Workflow Cards */
 .workflows-container {
 	margin-top: 20px;

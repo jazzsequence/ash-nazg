@@ -22,6 +22,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_fetch_logs', __NAMESPACE__ . '\\ajax_fetch_logs' );
 	add_action( 'wp_ajax_ash_nazg_clear_logs', __NAMESPACE__ . '\\ajax_clear_logs' );
 	add_action( 'wp_ajax_ash_nazg_toggle_connection_mode', __NAMESPACE__ . '\\ajax_toggle_connection_mode' );
+	add_action( 'wp_ajax_ash_nazg_update_site_label', __NAMESPACE__ . '\\ajax_update_site_label' );
 }
 
 /**
@@ -133,11 +134,14 @@ function enqueue_assets( $hook ) {
 			'ash-nazg-dashboard',
 			'ashNazgDashboard',
 			array(
-				'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'toggleModeNonce' => wp_create_nonce( 'ash_nazg_toggle_connection_mode' ),
-				'i18n'            => array(
+				'updateLabelNonce' => wp_create_nonce( 'ash_nazg_update_site_label' ),
+				'i18n' => array(
 					'toggleError' => __( 'Failed to switch connection mode.', 'ash-nazg' ),
-					'ajaxError'   => __( 'An error occurred while switching connection mode.', 'ash-nazg' ),
+					'ajaxError' => __( 'An error occurred while switching connection mode.', 'ash-nazg' ),
+					'updateLabelError' => __( 'Failed to update site label.', 'ash-nazg' ),
+					'emptyLabelError' => __( 'Site label cannot be empty.', 'ash-nazg' ),
 				),
 			)
 		);
@@ -815,6 +819,48 @@ function ajax_toggle_connection_mode() {
 				__( 'Successfully switched to %s mode.', 'ash-nazg' ),
 				strtoupper( $new_mode )
 			),
+		)
+	);
+}
+
+/**
+ * AJAX handler for updating site label.
+ *
+ * @return void
+ */
+function ajax_update_site_label() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_update_site_label', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'ash-nazg' ) ) );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+
+	if ( ! $site_id ) {
+		wp_send_json_error( array( 'message' => __( 'Site ID not found.', 'ash-nazg' ) ) );
+	}
+
+	// Get the new label.
+	$new_label = isset( $_POST['label'] ) ? sanitize_text_field( wp_unslash( $_POST['label'] ) ) : '';
+
+	if ( empty( $new_label ) ) {
+		wp_send_json_error( array( 'message' => __( 'Site label cannot be empty.', 'ash-nazg' ) ) );
+	}
+
+	// Update the site label.
+	$result = API\update_site_label( $site_id, $new_label );
+
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+	}
+
+	wp_send_json_success(
+		array(
+			'message' => __( 'Site label updated successfully.', 'ash-nazg' ),
+			'label' => $new_label,
 		)
 	);
 }
