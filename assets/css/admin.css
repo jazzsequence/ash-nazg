@@ -370,20 +370,20 @@
 	font-family: 'Courier New', Courier, monospace;
 }
 
-.ash-nazg-hash-copyable {
+.ash-nazg-card .widefat td code.ash-nazg-hash-copyable {
 	cursor: pointer;
 	user-select: all;
 	border-bottom: 1px dotted transparent;
 	transition: all 0.2s ease;
 }
 
-.ash-nazg-hash-copyable:hover {
+.ash-nazg-card .widefat td code.ash-nazg-hash-copyable:hover {
 	border-bottom-color: #2271b1;
 	background: #e5f0f7;
 }
 
-.ash-nazg-hash-copyable.ash-nazg-hash-copied {
-	background: #00a32a;
+.ash-nazg-card .widefat td code.ash-nazg-hash-copyable.ash-nazg-hash-copied {
+	background: #00a32a !important;
 	color: #fff;
 	border-bottom-color: #00a32a;
 }
