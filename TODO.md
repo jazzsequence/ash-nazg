@@ -28,7 +28,7 @@
   - Consolidate cache operations with timestamps
 
 ### Testing
-- [ ] Investigate and fix failing PHPUnit tests
+- [x] Investigate and fix failing PHPUnit tests (all tests passing)
 - [ ] Add Playwright E2E tests (as mentioned in CLAUDE.md Phase 3)
 - [ ] Increase test coverage for git-related functions
 
@@ -39,13 +39,13 @@
 - [ ] Implement git reset functionality (restore to previous commit)
 - [ ] Add "Apply Upstream Updates" button
 - [ ] Add upstream update details (changelog, release notes)
-- [ ] Implement multidev environment creation
+- [x] Implement multidev environment creation (with AJAX progress bars)
 
 ### Additional Features (from CLAUDE.md Phase 2)
 - [ ] Upstream update detection and application
 - [ ] Code deployment (push to test/live)
 - [ ] Backup management (create, list, restore if safe)
-- [ ] Workflow status monitoring with polling
+- [x] Workflow status monitoring with polling (implemented for multidev and connection mode)
 
 ### Authentication & Security
 - [ ] User-scoped machine tokens (store in user meta with Pantheon secrets using user ID suffix)
