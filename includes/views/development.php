@@ -379,13 +379,27 @@ use Pantheon\AshNazg\Helpers;
 				<table class="widefat">
 					<thead>
 						<tr>
-							<th class="ash-nazg-th-15"><?php esc_html_e( 'Name', 'ash-nazg' ); ?></th>
-							<th class="ash-nazg-th-15"><?php esc_html_e( 'Mode', 'ash-nazg' ); ?></th>
+							<th class="ash-nazg-th-5"><?php esc_html_e( 'Name', 'ash-nazg' ); ?></th>
+							<th class="ash-nazg-th-5"><?php esc_html_e( 'Mode', 'ash-nazg' ); ?></th>
 							<th><?php esc_html_e( 'Actions', 'ash-nazg' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php foreach ( $multidevs as $multidev_id => $multidev_data ) : ?>
+							<?php
+							// Check if dev has different commits than this multidev.
+							$has_dev_changes = false;
+							if ( $dev_commits && ! is_wp_error( $dev_commits ) && is_array( $dev_commits ) && ! empty( $dev_commits ) ) {
+								$multidev_commits = API\get_environment_commits( $site_id, $multidev_id );
+								if ( $multidev_commits && ! is_wp_error( $multidev_commits ) && is_array( $multidev_commits ) && ! empty( $multidev_commits ) ) {
+									$dev_latest_hash = $dev_commits[0]['hash'] ?? $dev_commits[0]['id'] ?? null;
+									$multidev_latest_hash = $multidev_commits[0]['hash'] ?? $multidev_commits[0]['id'] ?? null;
+									if ( $dev_latest_hash && $multidev_latest_hash && $dev_latest_hash !== $multidev_latest_hash ) {
+										$has_dev_changes = true;
+									}
+								}
+							}
+							?>
 							<tr>
 								<td><strong><?php echo esc_html( $multidev_id ); ?></strong></td>
 								<td>
@@ -419,6 +433,12 @@ use Pantheon\AshNazg\Helpers;
 										<?php
 									}
 									?>
+
+									<?php if ( $has_dev_changes ) : ?>
+									<button type="button" class="button button-secondary ash-nazg-ml-10 ash-nazg-merge-from-dev-btn" data-multidev-name="<?php echo esc_attr( $multidev_id ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'ash_nazg_merge_dev_to_multidev' ) ); ?>">
+										<?php esc_html_e( 'Merge from Dev', 'ash-nazg' ); ?>
+									</button>
+									<?php endif; ?>
 
 									<form method="post" action="" class="ash-nazg-inline-block ash-nazg-ml-10" data-multidev-action="merge">
 										<?php wp_nonce_field( 'ash_nazg_multidev', 'ash_nazg_multidev_nonce' ); ?>

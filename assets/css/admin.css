@@ -423,6 +423,14 @@
 	width: 15%;
 }
 
+.ash-nazg-card .widefat th.ash-nazg-th-10 {
+	width: 10%;
+}
+
+.ash-nazg-card .widefat th.ash-nazg-th-5 {
+	width: 5%;
+}
+
 /* Gravatar Avatars */
 .ash-nazg-avatar {
 	width: 32px;

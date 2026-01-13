@@ -105,6 +105,75 @@
 	}
 
 	/**
+	 * Handle "Merge from Dev" button clicks (in multidev table).
+	 */
+	$(document).on('click', '.ash-nazg-merge-from-dev-btn', function(e) {
+		e.preventDefault();
+
+		const $button = $(this);
+		const multidevName = $button.data('multidev-name');
+		const nonce = $button.data('nonce');
+
+		// Confirm action.
+		if (!confirm(ashNazgMultidev.i18n.confirmMergeFromDev || 'Merge changes from dev into this multidev?')) {
+			return;
+		}
+
+		// Disable button.
+		$button.prop('disabled', true);
+
+		// Show progress modal.
+		const modal = showProgressModal(
+			ashNazgMultidev.i18n.mergingFromDev || 'Merging from Dev',
+			ashNazgMultidev.i18n.pleaseWait
+		);
+
+		// Submit via AJAX.
+		$.ajax({
+			url: ashNazgMultidev.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'ash_nazg_merge_dev_to_multidev',
+				nonce: nonce,
+				multidev_name: multidevName,
+				updatedb: false
+			},
+			success: function(response) {
+				if (response.success && response.data && response.data.workflow_id) {
+					// Poll workflow status.
+					pollWorkflowStatus(
+						response.data.site_id,
+						response.data.workflow_id,
+						function(progress, status) {
+							modal.updateProgress(progress, status);
+						},
+						function(status) {
+							modal.close();
+							$button.prop('disabled', false);
+
+							if (status.result === 'succeeded') {
+								// Reload page to show updated state.
+								window.location.reload();
+							} else {
+								alert(status.error || ashNazgMultidev.i18n.operationFailed);
+							}
+						}
+					);
+				} else {
+					modal.close();
+					$button.prop('disabled', false);
+					alert(response.data?.message || ashNazgMultidev.i18n.operationFailed);
+				}
+			},
+			error: function() {
+				modal.close();
+				$button.prop('disabled', false);
+				alert(ashNazgMultidev.i18n.ajaxError);
+			}
+		});
+	});
+
+	/**
 	 * Handle multidev form submission.
 	 */
 	$(document).on('submit', 'form[data-multidev-action]', function(e) {

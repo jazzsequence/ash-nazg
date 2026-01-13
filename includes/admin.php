@@ -225,6 +225,8 @@ function enqueue_assets( $hook ) {
 					'creatingMultidev' => __( 'Creating Multidev...', 'ash-nazg' ),
 					'deletingMultidev' => __( 'Deleting Multidev...', 'ash-nazg' ),
 					'mergingMultidev' => __( 'Merging Multidev...', 'ash-nazg' ),
+					'mergingFromDev' => __( 'Merging from Dev...', 'ash-nazg' ),
+					'confirmMergeFromDev' => __( 'Merge changes from dev into this multidev?', 'ash-nazg' ),
 					'pleaseWait' => __( 'Please wait while the operation completes.', 'ash-nazg' ),
 					'operationFailed' => __( 'Operation failed. Please try again.', 'ash-nazg' ),
 					'timeoutError' => __( 'Operation timed out. Please check the Pantheon dashboard.', 'ash-nazg' ),
@@ -1271,21 +1273,27 @@ function ajax_merge_dev_to_multidev() {
 	}
 
 	$site_id = API\get_pantheon_site_id();
-	$env = API\get_pantheon_environment();
 
-	if ( ! $site_id || ! $env ) {
-		wp_send_json_error( [ 'message' => __( 'Site ID or environment not found.', 'ash-nazg' ) ] );
+	if ( ! $site_id ) {
+		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
 	}
 
-	// Verify we're in a multidev environment.
-	if ( in_array( $env, [ 'dev', 'test', 'live' ], true ) ) {
+	// Get target multidev environment (from parameter or current environment).
+	$multidev_name = isset( $_POST['multidev_name'] ) ? sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) ) : API\get_pantheon_environment();
+
+	if ( ! $multidev_name ) {
+		wp_send_json_error( [ 'message' => __( 'Multidev environment not specified.', 'ash-nazg' ) ] );
+	}
+
+	// Verify target is a multidev environment.
+	if ( in_array( $multidev_name, [ 'dev', 'test', 'live' ], true ) ) {
 		wp_send_json_error( [ 'message' => __( 'This operation is only available for multidev environments.', 'ash-nazg' ) ] );
 	}
 
 	// Get optional updatedb parameter.
 	$updatedb = isset( $_POST['updatedb'] ) && 'true' === $_POST['updatedb'];
 
-	$result = API\merge_dev_to_multidev( $site_id, $env, $updatedb );
+	$result = API\merge_dev_to_multidev( $site_id, $multidev_name, $updatedb );
 
 	if ( is_wp_error( $result ) ) {
 		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
@@ -1522,11 +1530,13 @@ function render_development_page() {
 	$environments = null;
 	$diffstat = null;
 	$site_info = null;
+	$dev_commits = null;
 
 	if ( $site_id ) {
 		$site_info = API\get_site_info( $site_id );
 		$environment_info = API\get_environment_info( $site_id, $environment );
 		$commits = API\get_environment_commits( $site_id, $environment );
+		$dev_commits = API\get_environment_commits( $site_id, 'dev' );
 		$upstream_updates = API\get_upstream_updates( $site_id );
 		$environments = API\get_environments( $site_id );
 
