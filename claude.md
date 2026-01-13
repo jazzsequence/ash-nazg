@@ -522,6 +522,11 @@ ash-nazg/
 - Lazy-load admin assets only when needed
 
 #### Git Workflow
+- **CRITICAL: Run `composer check` Before EVERY Commit** - ALWAYS run `composer check` before committing code
+  - This runs PHPCS (coding standards) and PHPUnit (tests)
+  - Fix ALL errors and warnings before committing
+  - Never commit code that fails `composer check`
+  - This is non-negotiable - it prevents broken code from entering the repository
 - **CRITICAL: Commit After Changes** - Make a git commit after every set of file changes
 - Use descriptive commit messages that summarize the changes
 - Follow the commit message format:
