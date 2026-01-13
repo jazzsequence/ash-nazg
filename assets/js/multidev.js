@@ -26,9 +26,14 @@
 					if (response.success && response.data) {
 						const status = response.data;
 
+						// Calculate progress
+						let progress = 0;
+						if (status.step && status.operations && status.operations.length > 0) {
+							progress = Math.round((status.step / status.operations.length) * 100);
+						}
+
 						// Update progress if callback provided
-						if (progressCallback && status.step && status.operations && status.operations.length > 0) {
-							const progress = Math.round((status.step / status.operations.length) * 100);
+						if (progressCallback && progress > 0) {
 							progressCallback(progress, status.active_description || '');
 						}
 
@@ -40,7 +45,7 @@
 
 						// Continue polling if not complete
 						attempts++;
-						if (attempts < maxAttempts) {
+						if (attempts < maxAttempts || progress < 100) {
 							setTimeout(checkStatus, pollInterval);
 						} else {
 							completeCallback({
