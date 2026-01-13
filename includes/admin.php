@@ -1062,5 +1062,11 @@ function get_commits_per_page() {
 	$per_page = $per_page ? absint( $per_page ) : 50;
 
 	// Cap at 50 due to Pantheon API limitation (handles legacy stored values).
-	return min( $per_page, 50 );
+	if ( $per_page > 50 ) {
+		// Update the stored value to 50.
+		update_user_meta( $user_id, 'ash_nazg_commits_per_page', 50 );
+		return 50;
+	}
+
+	return $per_page;
 }
