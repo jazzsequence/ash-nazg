@@ -363,11 +363,18 @@ use Pantheon\AshNazg\API;
 									<?php
 									// Construct admin URL from environment data.
 									if ( $site_info && ! is_wp_error( $site_info ) && isset( $site_info['name'], $multidev_data['dns_zone'] ) ) {
+										// Check if using WordPress Composer Managed upstream (wp subdirectory).
+										$admin_path = '/wp-admin/';
+										if ( isset( $site_info['upstream']['id'] ) && 'wordpress-composer-managed' === $site_info['upstream']['id'] ) {
+											$admin_path = '/wp/wp-admin/';
+										}
+
 										$admin_url = sprintf(
-											'https://%s-%s.%s/wp-admin/',
+											'https://%s-%s.%s%s',
 											$multidev_id,
 											$site_info['name'],
-											$multidev_data['dns_zone']
+											$multidev_data['dns_zone'],
+											$admin_path
 										);
 										?>
 										<a href="<?php echo esc_url( $admin_url ); ?>" class="button button-primary" target="_blank" rel="noopener noreferrer">
