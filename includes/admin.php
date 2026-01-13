@@ -426,7 +426,10 @@ function handle_addon_form_submission() {
 		}
 
 		// Set success/error messages and redirect to avoid form resubmission.
-		$redirect_args = [ 'page' => 'ash-nazg-addons' ];
+		$redirect_args = [
+			'page' => 'ash-nazg-addons',
+			'_wpnonce' => wp_create_nonce( 'ash_nazg_redirect' ),
+		];
 
 		if ( $updated_count > 0 ) {
 			$redirect_args['updated'] = $updated_count;
@@ -541,7 +544,10 @@ function handle_workflow_form_submission() {
 				$workflow['params']
 			);
 
-			$redirect_args = [ 'page' => 'ash-nazg-workflows' ];
+			$redirect_args = [
+				'page' => 'ash-nazg-workflows',
+				'_wpnonce' => wp_create_nonce( 'ash_nazg_redirect' ),
+			];
 
 			if ( is_wp_error( $result ) ) {
 				$redirect_args['error'] = '1';
@@ -599,7 +605,8 @@ function handle_commit_form_submission() {
 	}
 
 	// Get and validate commit message.
-	if ( ! isset( $_POST['commit_message'] ) || empty( trim( $_POST['commit_message'] ) ) ) {
+	$commit_message = isset( $_POST['commit_message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['commit_message'] ) ) : '';
+	if ( empty( trim( $commit_message ) ) ) {
 		$redirect_args = [
 			'page' => 'ash-nazg-development',
 			'error' => 'empty_message',
@@ -608,12 +615,13 @@ function handle_commit_form_submission() {
 		exit;
 	}
 
-	$commit_message = sanitize_textarea_field( wp_unslash( $_POST['commit_message'] ) );
-
 	// Trigger commit workflow.
 	$result = API\commit_sftp_changes( $site_id, $environment, $commit_message );
 
-	$redirect_args = [ 'page' => 'ash-nazg-development' ];
+	$redirect_args = [
+		'page' => 'ash-nazg-development',
+		'_wpnonce' => wp_create_nonce( 'ash_nazg_redirect' ),
+	];
 
 	if ( is_wp_error( $result ) ) {
 		$redirect_args['error'] = '1';
@@ -660,7 +668,10 @@ function handle_multidev_form_submission() {
 
 	$site_id = API\get_pantheon_site_id();
 	$action = sanitize_text_field( wp_unslash( $_POST['multidev_action'] ) );
-	$redirect_args = [ 'page' => 'ash-nazg-development' ];
+	$redirect_args = [
+		'page' => 'ash-nazg-development',
+		'_wpnonce' => wp_create_nonce( 'ash_nazg_redirect' ),
+	];
 
 	if ( ! $site_id ) {
 		$redirect_args['error'] = 'missing_site_id';
@@ -671,13 +682,13 @@ function handle_multidev_form_submission() {
 	switch ( $action ) {
 		case 'create':
 			// Get and validate multidev name.
-			if ( ! isset( $_POST['multidev_name'] ) || empty( trim( $_POST['multidev_name'] ) ) ) {
+			$multidev_name = isset( $_POST['multidev_name'] ) ? sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) ) : '';
+			if ( empty( trim( $multidev_name ) ) ) {
 				$redirect_args['error'] = 'empty_multidev_name';
 				wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
 				exit;
 			}
 
-			$multidev_name = sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) );
 			$source_env = isset( $_POST['source_env'] ) ? sanitize_text_field( wp_unslash( $_POST['source_env'] ) ) : 'dev';
 
 			// Validate multidev name length (max 11 characters).
@@ -693,35 +704,32 @@ function handle_multidev_form_submission() {
 			if ( is_wp_error( $result ) ) {
 				$redirect_args['error'] = '1';
 				set_transient( 'ash_nazg_multidev_error', $result->get_error_message(), 30 );
-			} else {
-				// Check if we got a workflow ID back and poll it.
-				if ( isset( $result['id'] ) ) {
-					$workflow_status = API\poll_workflow( $site_id, $result['id'] );
-					if ( is_wp_error( $workflow_status ) ) {
-						$redirect_args['error'] = '1';
-						set_transient( 'ash_nazg_multidev_error', $workflow_status->get_error_message(), 30 );
-					} elseif ( isset( $workflow_status['result'] ) && 'failed' === $workflow_status['result'] ) {
-						$redirect_args['error'] = '1';
-						set_transient( 'ash_nazg_multidev_error', __( 'Multidev creation workflow failed.', 'ash-nazg' ), 30 );
-					} else {
-						$redirect_args['multidev_created'] = '1';
-					}
+			} elseif ( isset( $result['id'] ) ) {
+				// Workflow ID present - poll for completion.
+				$workflow_status = API\poll_workflow( $site_id, $result['id'] );
+				if ( is_wp_error( $workflow_status ) ) {
+					$redirect_args['error'] = '1';
+					set_transient( 'ash_nazg_multidev_error', $workflow_status->get_error_message(), 30 );
+				} elseif ( isset( $workflow_status['result'] ) && 'failed' === $workflow_status['result'] ) {
+					$redirect_args['error'] = '1';
+					set_transient( 'ash_nazg_multidev_error', __( 'Multidev creation workflow failed.', 'ash-nazg' ), 30 );
 				} else {
-					// No workflow ID, assume success (old API behavior).
 					$redirect_args['multidev_created'] = '1';
 				}
+			} else {
+				// No workflow ID, assume success (old API behavior).
+				$redirect_args['multidev_created'] = '1';
 			}
 			break;
 
 		case 'merge':
 			// Get and validate multidev name.
-			if ( ! isset( $_POST['multidev_name'] ) || empty( trim( $_POST['multidev_name'] ) ) ) {
+			$multidev_name = isset( $_POST['multidev_name'] ) ? sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) ) : '';
+			if ( empty( trim( $multidev_name ) ) ) {
 				$redirect_args['error'] = 'empty_multidev_name';
 				wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
 				exit;
 			}
-
-			$multidev_name = sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) );
 
 			$result = API\merge_multidev_to_dev( $site_id, $multidev_name );
 
@@ -735,36 +743,33 @@ function handle_multidev_form_submission() {
 
 		case 'delete':
 			// Get and validate multidev name.
-			if ( ! isset( $_POST['multidev_name'] ) || empty( trim( $_POST['multidev_name'] ) ) ) {
+			$multidev_name = isset( $_POST['multidev_name'] ) ? sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) ) : '';
+			if ( empty( trim( $multidev_name ) ) ) {
 				$redirect_args['error'] = 'empty_multidev_name';
 				wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
 				exit;
 			}
-
-			$multidev_name = sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) );
 
 			$result = API\delete_multidev( $site_id, $multidev_name );
 
 			if ( is_wp_error( $result ) ) {
 				$redirect_args['error'] = '1';
 				set_transient( 'ash_nazg_multidev_error', $result->get_error_message(), 30 );
-			} else {
-				// Check if we got a workflow ID back and poll it.
-				if ( isset( $result['id'] ) ) {
-					$workflow_status = API\poll_workflow( $site_id, $result['id'] );
-					if ( is_wp_error( $workflow_status ) ) {
-						$redirect_args['error'] = '1';
-						set_transient( 'ash_nazg_multidev_error', $workflow_status->get_error_message(), 30 );
-					} elseif ( isset( $workflow_status['result'] ) && 'failed' === $workflow_status['result'] ) {
-						$redirect_args['error'] = '1';
-						set_transient( 'ash_nazg_multidev_error', __( 'Multidev deletion workflow failed.', 'ash-nazg' ), 30 );
-					} else {
-						$redirect_args['multidev_deleted'] = '1';
-					}
+			} elseif ( isset( $result['id'] ) ) {
+				// Workflow ID present - poll for completion.
+				$workflow_status = API\poll_workflow( $site_id, $result['id'] );
+				if ( is_wp_error( $workflow_status ) ) {
+					$redirect_args['error'] = '1';
+					set_transient( 'ash_nazg_multidev_error', $workflow_status->get_error_message(), 30 );
+				} elseif ( isset( $workflow_status['result'] ) && 'failed' === $workflow_status['result'] ) {
+					$redirect_args['error'] = '1';
+					set_transient( 'ash_nazg_multidev_error', __( 'Multidev deletion workflow failed.', 'ash-nazg' ), 30 );
 				} else {
-					// No workflow ID, assume success (old API behavior).
 					$redirect_args['multidev_deleted'] = '1';
 				}
+			} else {
+				// No workflow ID, assume success (old API behavior).
+				$redirect_args['multidev_deleted'] = '1';
 			}
 			break;
 	}
@@ -780,6 +785,7 @@ function handle_multidev_form_submission() {
  */
 function handle_screen_options_submission() {
 	// Only process on screen options submissions.
+	// phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended -- Screen options use WordPress core nonce system.
 	if ( ! isset( $_POST['screen-options-apply'] ) ) {
 		return;
 	}
@@ -802,6 +808,7 @@ function handle_screen_options_submission() {
 		// Save to user meta.
 		update_user_meta( get_current_user_id(), 'ash_nazg_commits_per_page', $value );
 	}
+// phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended
 }
 
 /**
@@ -1335,6 +1342,11 @@ function render_development_page() {
 	$message = null;
 	$error = null;
 
+	// Verify nonce for redirect messages.
+	if ( isset( $_GET['_wpnonce'] ) ) {
+		wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'ash_nazg_redirect' );
+	}
+
 	// Check for commit success.
 	if ( isset( $_GET['committed'] ) && '1' === $_GET['committed'] ) {
 		$message = __( 'Changes committed successfully.', 'ash-nazg' );
@@ -1475,7 +1487,7 @@ function development_screen_options() {
 	}
 
 	// Add custom screen options with proper heading.
-	add_filter( 'screen_settings', function ( $settings, $args ) use ( $screen ) {
+	add_filter( 'screen_settings', function ( $settings, $args ) {
 		if ( 'ash-nazg_page_ash-nazg-development' !== $args->id ) {
 			return $settings;
 		}

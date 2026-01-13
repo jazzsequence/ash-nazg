@@ -177,32 +177,24 @@ class Test_AJAX_Handlers extends TestCase {
 
 		$admin_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/admin.php' );
 
-		// Should poll to verify mode change.
+		// Should return workflow ID for client-side polling.
 		$this->assertStringContainsString(
-			'$max_attempts',
+			'workflow_id',
 			$admin_file_contents,
-			'Should poll to verify mode change'
+			'Should return workflow_id in AJAX response'
 		);
 
-		// Should use sleep for polling delay.
-		$this->assertStringContainsString(
-			'sleep',
-			$admin_file_contents,
-			'Should wait between polling attempts'
-		);
-
-		// Should check on_server_development matches expected.
-		$this->assertStringContainsString(
+		// Should NOT do server-side polling (client polls instead).
+		$this->assertStringNotContainsString(
 			'$expected_on_server_dev',
 			$admin_file_contents,
-			'Should verify expected mode'
+			'Should not verify mode server-side (client polls workflow instead)'
 		);
 
-		// Should only update state after verification.
-		$this->assertStringContainsString(
-			'if ( ! $verified )',
-			$admin_file_contents,
-			'Should handle verification failure'
+		// AJAX handler should exist.
+		$this->assertTrue(
+			function_exists( 'Pantheon\AshNazg\Admin\ajax_toggle_connection_mode' ),
+			'ajax_toggle_connection_mode handler should exist'
 		);
 	}
 

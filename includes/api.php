@@ -346,11 +346,11 @@ function get_api_field( $endpoint_type, $field, $default_value = null ) {
  * Helper function to retrieve Pantheon environment variables.
  *
  * @param string $key     Environment variable key.
- * @param mixed  $default Default value if not found.
+ * @param mixed  $default_value Default value if not found.
  * @return mixed Environment variable value or default.
  */
-function get_env( $key, $default = null ) {
-	return isset( $_ENV[ $key ] ) ? $_ENV[ $key ] : $default;
+function get_env( $key, $default_value = null ) {
+	return isset( $_ENV[ $key ] ) ? sanitize_text_field( $_ENV[ $key ] ) : $default_value;
 }
 
 /**
