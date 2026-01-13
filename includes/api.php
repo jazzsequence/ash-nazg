@@ -1544,3 +1544,64 @@ function delete_multidev( $site_id, $multidev_name ) {
 
 	return $result;
 }
+
+/**
+ * Get workflow status.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $workflow_id Workflow ID.
+ * @return array|WP_Error Workflow status or WP_Error on failure.
+ */
+function get_workflow_status( $site_id, $workflow_id ) {
+	$endpoint = sprintf( '/v0/sites/%s/workflows/%s', $site_id, $workflow_id );
+	$result = api_request( $endpoint, 'GET' );
+
+	if ( is_wp_error( $result ) ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to get workflow status %s on %s - Error: %s', $workflow_id, $site_id, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+		return $result;
+	}
+
+	return $result;
+}
+
+/**
+ * Poll workflow until completion.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $workflow_id Workflow ID.
+ * @param int    $max_attempts Maximum number of polling attempts (default: 60).
+ * @param int    $sleep_seconds Seconds to wait between polls (default: 2).
+ * @return array|WP_Error Final workflow status or WP_Error on failure/timeout.
+ */
+function poll_workflow( $site_id, $workflow_id, $max_attempts = 60, $sleep_seconds = 2 ) {
+	$attempts = 0;
+
+	while ( $attempts < $max_attempts ) {
+		$status = get_workflow_status( $site_id, $workflow_id );
+
+		if ( is_wp_error( $status ) ) {
+			return $status;
+		}
+
+		// Check if workflow is complete.
+		if ( isset( $status['result'] ) && in_array( $status['result'], [ 'succeeded', 'failed' ], true ) ) {
+			return $status;
+		}
+
+		// Wait before next poll.
+		sleep( $sleep_seconds );
+		$attempts++;
+	}
+
+	// Timeout reached.
+	return new \WP_Error(
+		'workflow_timeout',
+		sprintf(
+			/* translators: %d: number of seconds */
+			__( 'Workflow did not complete within %d seconds.', 'ash-nazg' ),
+			$max_attempts * $sleep_seconds
+		)
+	);
+}

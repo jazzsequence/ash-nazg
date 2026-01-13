@@ -24,6 +24,7 @@ function init() {
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_screen_options_submission' );
 	add_action( 'wp_ajax_ash_nazg_fetch_logs', __NAMESPACE__ . '\\ajax_fetch_logs' );
 	add_action( 'wp_ajax_ash_nazg_clear_logs', __NAMESPACE__ . '\\ajax_clear_logs' );
+	add_action( 'wp_ajax_ash_nazg_get_workflow_status', __NAMESPACE__ . '\\ajax_get_workflow_status' );
 	add_action( 'wp_ajax_ash_nazg_toggle_connection_mode', __NAMESPACE__ . '\\ajax_toggle_connection_mode' );
 	add_action( 'wp_ajax_ash_nazg_update_site_label', __NAMESPACE__ . '\\ajax_update_site_label' );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
@@ -650,7 +651,22 @@ function handle_multidev_form_submission() {
 				$redirect_args['error'] = '1';
 				set_transient( 'ash_nazg_multidev_error', $result->get_error_message(), 30 );
 			} else {
-				$redirect_args['multidev_created'] = '1';
+				// Check if we got a workflow ID back and poll it.
+				if ( isset( $result['id'] ) ) {
+					$workflow_status = API\poll_workflow( $site_id, $result['id'] );
+					if ( is_wp_error( $workflow_status ) ) {
+						$redirect_args['error'] = '1';
+						set_transient( 'ash_nazg_multidev_error', $workflow_status->get_error_message(), 30 );
+					} elseif ( isset( $workflow_status['result'] ) && 'failed' === $workflow_status['result'] ) {
+						$redirect_args['error'] = '1';
+						set_transient( 'ash_nazg_multidev_error', __( 'Multidev creation workflow failed.', 'ash-nazg' ), 30 );
+					} else {
+						$redirect_args['multidev_created'] = '1';
+					}
+				} else {
+					// No workflow ID, assume success (old API behavior).
+					$redirect_args['multidev_created'] = '1';
+				}
 			}
 			break;
 
@@ -690,7 +706,22 @@ function handle_multidev_form_submission() {
 				$redirect_args['error'] = '1';
 				set_transient( 'ash_nazg_multidev_error', $result->get_error_message(), 30 );
 			} else {
-				$redirect_args['multidev_deleted'] = '1';
+				// Check if we got a workflow ID back and poll it.
+				if ( isset( $result['id'] ) ) {
+					$workflow_status = API\poll_workflow( $site_id, $result['id'] );
+					if ( is_wp_error( $workflow_status ) ) {
+						$redirect_args['error'] = '1';
+						set_transient( 'ash_nazg_multidev_error', $workflow_status->get_error_message(), 30 );
+					} elseif ( isset( $workflow_status['result'] ) && 'failed' === $workflow_status['result'] ) {
+						$redirect_args['error'] = '1';
+						set_transient( 'ash_nazg_multidev_error', __( 'Multidev deletion workflow failed.', 'ash-nazg' ), 30 );
+					} else {
+						$redirect_args['multidev_deleted'] = '1';
+					}
+				} else {
+					// No workflow ID, assume success (old API behavior).
+					$redirect_args['multidev_deleted'] = '1';
+				}
 			}
 			break;
 	}
@@ -1004,6 +1035,36 @@ function ajax_clear_logs() {
 			'switched_mode' => $switched_mode,
 		]
 	);
+}
+
+/**
+ * Handle AJAX request to get workflow status.
+ *
+ * @return void
+ */
+function ajax_get_workflow_status() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_workflow_status', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$site_id = isset( $_POST['site_id'] ) ? sanitize_text_field( wp_unslash( $_POST['site_id'] ) ) : '';
+	$workflow_id = isset( $_POST['workflow_id'] ) ? sanitize_text_field( wp_unslash( $_POST['workflow_id'] ) ) : '';
+
+	if ( ! $site_id || ! $workflow_id ) {
+		wp_send_json_error( [ 'message' => __( 'Missing site ID or workflow ID.', 'ash-nazg' ) ] );
+	}
+
+	$status = API\get_workflow_status( $site_id, $workflow_id );
+
+	if ( is_wp_error( $status ) ) {
+		wp_send_json_error( [ 'message' => $status->get_error_message() ] );
+	}
+
+	wp_send_json_success( $status );
 }
 
 /**
