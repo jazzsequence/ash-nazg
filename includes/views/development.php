@@ -124,11 +124,27 @@ use Pantheon\AshNazg\API;
 			<p><?php esc_html_e( 'You have uncommitted changes in SFTP mode. Commit them to save your work to the git repository.', 'ash-nazg' ); ?></p>
 
 			<h3><?php esc_html_e( 'Changed Files:', 'ash-nazg' ); ?></h3>
+			<?php
+			$file_list = array_keys( $diffstat );
+			$total_files = count( $file_list );
+			$shown_files = array_slice( $file_list, 0, 10 );
+			$hidden_files = array_slice( $file_list, 10 );
+			?>
 			<ul>
-				<?php foreach ( $diffstat as $file => $changes ) : ?>
+				<?php foreach ( $shown_files as $file ) : ?>
 					<li><code><?php echo esc_html( $file ); ?></code></li>
 				<?php endforeach; ?>
 			</ul>
+			<?php if ( ! empty( $hidden_files ) ) : ?>
+				<details>
+					<summary><strong><?php echo esc_html( sprintf( __( 'Show %d more files', 'ash-nazg' ), count( $hidden_files ) ) ); ?></strong></summary>
+					<ul>
+						<?php foreach ( $hidden_files as $file ) : ?>
+							<li><code><?php echo esc_html( $file ); ?></code></li>
+						<?php endforeach; ?>
+					</ul>
+				</details>
+			<?php endif; ?>
 
 			<form method="post" action="" class="ash-nazg-commit-form ash-nazg-mt-20">
 				<?php wp_nonce_field( 'ash_nazg_commit_changes', 'ash_nazg_commit_nonce' ); ?>
