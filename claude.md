@@ -755,6 +755,23 @@ This runs PHPUnit with the configuration in `phpunit.xml.dist`.
   - `env` - Environment name
 - **Returns**: Diffstat object showing file changes
 
+#### `POST /v0/sites/{site_id}/environments/{env}/code/commit`
+- **Purpose**: Commit SFTP changes to git repository
+- **Method**: POST
+- **Parameters**:
+  - `site_id` - Site UUID
+  - `env` - Environment name
+- **Request Body**:
+  ```json
+  {
+    "message": "Commit message",
+    "committer_name": "User Name",
+    "committer_email": "user@example.com"
+  }
+  ```
+- **Returns**: Commit response object
+- **Note**: Only works in SFTP mode when uncommitted changes exist
+
 #### `GET /v0/sites/{site_id}/environments/{env}/build/updates`
 - **Purpose**: Composer dependencies changes
 - **Parameters**:
