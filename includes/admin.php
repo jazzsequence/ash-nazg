@@ -1013,9 +1013,9 @@ function development_screen_options() {
 	}
 
 	add_screen_option(
-		'ash_nazg_commits_per_page',
+		'per_page',
 		[
-			'label' => __( 'Commits per page', 'ash-nazg' ),
+			'label' => __( 'Commits', 'ash-nazg' ),
 			'default' => 50,
 			'option' => 'ash_nazg_commits_per_page',
 		]
