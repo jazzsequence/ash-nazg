@@ -272,7 +272,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<?php if ( $site_framework ) : ?>
 							<tr>
 								<th><?php esc_html_e( 'Framework', 'ash-nazg' ); ?></th>
-								<td><?php echo esc_html( ucfirst( $site_framework ) ); ?></td>
+								<td><?php echo esc_html( $site_framework ); ?></td>
 							</tr>
 						<?php endif; ?>
 						<?php if ( $site_organization ) : ?>
@@ -344,7 +344,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 											<code><?php echo esc_html( $site_upstream['upstream_id'] ); ?></code>
 										<?php endif; ?>
 										<?php if ( ! empty( $site_upstream['label'] ) ) : ?>
-											<br><small><?php echo esc_html( $site_upstream['label'] ); ?></small>
+											<?php echo esc_html( $site_upstream['label'] ); ?>
 										<?php endif; ?>
 									<?php else : ?>
 										<code><?php echo esc_html( $site_upstream ); ?></code>
