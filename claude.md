@@ -797,6 +797,46 @@ This runs PHPUnit with the configuration in `phpunit.xml.dist`.
   - `env` - Environment name
 - **Returns**: Backup schedule configuration
 
+### Multidev Environments
+
+#### `POST /v0/sites/{site_id}/environments`
+- **Purpose**: Create a new multidev environment
+- **Method**: POST
+- **Parameters**:
+  - `site_id` - Site UUID
+- **Request Body**:
+  ```json
+  {
+    "environment_id": "multidev-name",
+    "source_environment": "dev"
+  }
+  ```
+- **Returns**: Environment creation response
+- **Note**: Multidev names must be lowercase, alphanumeric with hyphens
+
+#### `POST /v0/sites/{site_id}/environments/dev/merge`
+- **Purpose**: Merge a multidev environment into dev
+- **Method**: POST
+- **Parameters**:
+  - `site_id` - Site UUID
+- **Request Body**:
+  ```json
+  {
+    "source_environment": "multidev-name"
+  }
+  ```
+- **Returns**: Merge response
+- **Note**: Creates a merge commit in dev environment
+
+#### `DELETE /v0/sites/{site_id}/environments/{env}`
+- **Purpose**: Delete a multidev environment
+- **Method**: DELETE
+- **Parameters**:
+  - `site_id` - Site UUID
+  - `env` - Multidev environment name
+- **Returns**: Deletion response
+- **Note**: Cannot delete standard environments (dev, test, live)
+
 ### Domains
 
 #### `GET /v0/sites/{site_id}/environments/{env}/domains`

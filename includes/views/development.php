@@ -281,5 +281,100 @@ use Pantheon\AshNazg\API;
 			<?php endif; ?>
 		</div>
 
+		<!-- Multidev Management -->
+		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mt-20">
+			<h2><?php esc_html_e( 'Multidev Management', 'ash-nazg' ); ?></h2>
+
+			<!-- Create Multidev -->
+			<div class="ash-nazg-mb-20">
+				<h3><?php esc_html_e( 'Create New Multidev', 'ash-nazg' ); ?></h3>
+				<form method="post" action="">
+					<?php wp_nonce_field( 'ash_nazg_manage_multidev', 'ash_nazg_multidev_nonce' ); ?>
+					<input type="hidden" name="multidev_action" value="create" />
+
+					<label for="multidev_name">
+						<strong><?php esc_html_e( 'Multidev Name:', 'ash-nazg' ); ?></strong>
+					</label>
+					<input type="text" name="multidev_name" id="multidev_name" class="regular-text" required placeholder="<?php esc_attr_e( 'e.g., feature-branch', 'ash-nazg' ); ?>" />
+
+					<label for="source_env" class="ash-nazg-ml-10">
+						<strong><?php esc_html_e( 'Clone From:', 'ash-nazg' ); ?></strong>
+					</label>
+					<select name="source_env" id="source_env">
+						<option value="dev"><?php esc_html_e( 'Dev', 'ash-nazg' ); ?></option>
+						<?php if ( $environments && is_array( $environments ) ) : ?>
+							<?php foreach ( $environments as $env_id => $env_data ) : ?>
+								<?php if ( ! in_array( $env_id, [ 'dev', 'test', 'live' ], true ) ) : ?>
+									<option value="<?php echo esc_attr( $env_id ); ?>"><?php echo esc_html( ucfirst( $env_id ) ); ?></option>
+								<?php endif; ?>
+							<?php endforeach; ?>
+						<?php endif; ?>
+					</select>
+
+					<button type="submit" class="button button-primary ash-nazg-ml-10"><?php esc_html_e( 'Create Multidev', 'ash-nazg' ); ?></button>
+				</form>
+			</div>
+
+			<!-- Existing Multidevs -->
+			<?php
+			$multidevs = [];
+			if ( $environments && is_array( $environments ) ) {
+				foreach ( $environments as $env_id => $env_data ) {
+					if ( ! in_array( $env_id, [ 'dev', 'test', 'live' ], true ) ) {
+						$multidevs[ $env_id ] = $env_data;
+					}
+				}
+			}
+			?>
+
+			<?php if ( ! empty( $multidevs ) ) : ?>
+				<h3><?php esc_html_e( 'Existing Multidevs', 'ash-nazg' ); ?></h3>
+				<table class="widefat">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'Name', 'ash-nazg' ); ?></th>
+							<th><?php esc_html_e( 'Mode', 'ash-nazg' ); ?></th>
+							<th><?php esc_html_e( 'Actions', 'ash-nazg' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $multidevs as $multidev_id => $multidev_data ) : ?>
+							<tr>
+								<td><strong><?php echo esc_html( $multidev_id ); ?></strong></td>
+								<td>
+									<?php if ( isset( $multidev_data['on_server_development'] ) ) : ?>
+										<span class="ash-nazg-badge <?php echo $multidev_data['on_server_development'] ? 'ash-nazg-badge-sftp' : 'ash-nazg-badge-git'; ?>">
+											<?php echo $multidev_data['on_server_development'] ? esc_html__( 'SFTP', 'ash-nazg' ) : esc_html__( 'Git', 'ash-nazg' ); ?>
+										</span>
+									<?php endif; ?>
+								</td>
+								<td>
+									<form method="post" action="" class="ash-nazg-inline-block">
+										<?php wp_nonce_field( 'ash_nazg_manage_multidev', 'ash_nazg_multidev_nonce' ); ?>
+										<input type="hidden" name="multidev_action" value="merge" />
+										<input type="hidden" name="multidev_name" value="<?php echo esc_attr( $multidev_id ); ?>" />
+										<button type="submit" class="button button-secondary" onclick="return confirm('<?php esc_attr_e( 'Merge this multidev into dev?', 'ash-nazg' ); ?>');">
+											<?php esc_html_e( 'Merge to Dev', 'ash-nazg' ); ?>
+										</button>
+									</form>
+
+									<form method="post" action="" class="ash-nazg-inline-block ash-nazg-ml-10">
+										<?php wp_nonce_field( 'ash_nazg_manage_multidev', 'ash_nazg_multidev_nonce' ); ?>
+										<input type="hidden" name="multidev_action" value="delete" />
+										<input type="hidden" name="multidev_name" value="<?php echo esc_attr( $multidev_id ); ?>" />
+										<button type="submit" class="button" onclick="return confirm('<?php esc_attr_e( 'Delete this multidev? This action cannot be undone.', 'ash-nazg' ); ?>');">
+											<?php esc_html_e( 'Delete', 'ash-nazg' ); ?>
+										</button>
+									</form>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php else : ?>
+				<p><?php esc_html_e( 'No multidev environments found.', 'ash-nazg' ); ?></p>
+			<?php endif; ?>
+		</div>
+
 	<?php endif; ?>
 </div>

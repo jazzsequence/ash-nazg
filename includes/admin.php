@@ -20,6 +20,7 @@ function init() {
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_addon_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_workflow_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_commit_form_submission' );
+	add_action( 'admin_init', __NAMESPACE__ . '\\handle_multidev_form_submission' );
 	add_action( 'wp_ajax_ash_nazg_fetch_logs', __NAMESPACE__ . '\\ajax_fetch_logs' );
 	add_action( 'wp_ajax_ash_nazg_clear_logs', __NAMESPACE__ . '\\ajax_clear_logs' );
 	add_action( 'wp_ajax_ash_nazg_toggle_connection_mode', __NAMESPACE__ . '\\ajax_toggle_connection_mode' );
@@ -595,6 +596,109 @@ function handle_commit_form_submission() {
 }
 
 /**
+ * Handle multidev management form submission.
+ *
+ * @return void
+ */
+function handle_multidev_form_submission() {
+	// Only process on multidev form submissions.
+	if ( ! isset( $_POST['ash_nazg_multidev_nonce'] ) ) {
+		return;
+	}
+
+	// Verify nonce.
+	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ash_nazg_multidev_nonce'] ) ), 'ash_nazg_manage_multidev' ) ) {
+		return;
+	}
+
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	// Validate action.
+	if ( ! isset( $_POST['multidev_action'] ) ) {
+		return;
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$action = sanitize_text_field( wp_unslash( $_POST['multidev_action'] ) );
+	$redirect_args = [ 'page' => 'ash-nazg-development' ];
+
+	if ( ! $site_id ) {
+		$redirect_args['error'] = 'missing_site_id';
+		wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	switch ( $action ) {
+		case 'create':
+			// Get and validate multidev name.
+			if ( ! isset( $_POST['multidev_name'] ) || empty( trim( $_POST['multidev_name'] ) ) ) {
+				$redirect_args['error'] = 'empty_multidev_name';
+				wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+				exit;
+			}
+
+			$multidev_name = sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) );
+			$source_env = isset( $_POST['source_env'] ) ? sanitize_text_field( wp_unslash( $_POST['source_env'] ) ) : 'dev';
+
+			$result = API\create_multidev( $site_id, $multidev_name, $source_env );
+
+			if ( is_wp_error( $result ) ) {
+				$redirect_args['error'] = '1';
+				set_transient( 'ash_nazg_multidev_error', $result->get_error_message(), 30 );
+			} else {
+				$redirect_args['multidev_created'] = '1';
+			}
+			break;
+
+		case 'merge':
+			// Get and validate multidev name.
+			if ( ! isset( $_POST['multidev_name'] ) || empty( trim( $_POST['multidev_name'] ) ) ) {
+				$redirect_args['error'] = 'empty_multidev_name';
+				wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+				exit;
+			}
+
+			$multidev_name = sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) );
+
+			$result = API\merge_multidev_to_dev( $site_id, $multidev_name );
+
+			if ( is_wp_error( $result ) ) {
+				$redirect_args['error'] = '1';
+				set_transient( 'ash_nazg_multidev_error', $result->get_error_message(), 30 );
+			} else {
+				$redirect_args['multidev_merged'] = '1';
+			}
+			break;
+
+		case 'delete':
+			// Get and validate multidev name.
+			if ( ! isset( $_POST['multidev_name'] ) || empty( trim( $_POST['multidev_name'] ) ) ) {
+				$redirect_args['error'] = 'empty_multidev_name';
+				wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+				exit;
+			}
+
+			$multidev_name = sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) );
+
+			$result = API\delete_multidev( $site_id, $multidev_name );
+
+			if ( is_wp_error( $result ) ) {
+				$redirect_args['error'] = '1';
+				set_transient( 'ash_nazg_multidev_error', $result->get_error_message(), 30 );
+			} else {
+				$redirect_args['multidev_deleted'] = '1';
+			}
+			break;
+	}
+
+	wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+	exit;
+}
+
+/**
  * Render workflows page.
  *
  * @return void
@@ -1029,12 +1133,31 @@ function render_development_page() {
 		$message = __( 'Changes committed successfully.', 'ash-nazg' );
 	}
 
-	// Check for commit error.
+	// Check for multidev success.
+	if ( isset( $_GET['multidev_created'] ) && '1' === $_GET['multidev_created'] ) {
+		$message = __( 'Multidev environment created successfully.', 'ash-nazg' );
+	}
+	if ( isset( $_GET['multidev_merged'] ) && '1' === $_GET['multidev_merged'] ) {
+		$message = __( 'Multidev merged to dev successfully.', 'ash-nazg' );
+	}
+	if ( isset( $_GET['multidev_deleted'] ) && '1' === $_GET['multidev_deleted'] ) {
+		$message = __( 'Multidev environment deleted successfully.', 'ash-nazg' );
+	}
+
+	// Check for errors.
 	$stored_error = get_transient( 'ash_nazg_commit_error' );
 	if ( $stored_error ) {
 		$error = $stored_error;
 		delete_transient( 'ash_nazg_commit_error' );
-	} elseif ( isset( $_GET['error'] ) ) {
+	}
+
+	$stored_multidev_error = get_transient( 'ash_nazg_multidev_error' );
+	if ( $stored_multidev_error ) {
+		$error = $stored_multidev_error;
+		delete_transient( 'ash_nazg_multidev_error' );
+	}
+
+	if ( isset( $_GET['error'] ) ) {
 		switch ( $_GET['error'] ) {
 			case 'missing_params':
 				$error = __( 'Missing required parameters.', 'ash-nazg' );
@@ -1042,8 +1165,14 @@ function render_development_page() {
 			case 'empty_message':
 				$error = __( 'Commit message is required.', 'ash-nazg' );
 				break;
+			case 'empty_multidev_name':
+				$error = __( 'Multidev name is required.', 'ash-nazg' );
+				break;
+			case 'missing_site_id':
+				$error = __( 'Site ID is missing.', 'ash-nazg' );
+				break;
 			default:
-				$error = __( 'An error occurred while committing changes.', 'ash-nazg' );
+				$error = __( 'An error occurred.', 'ash-nazg' );
 		}
 	}
 

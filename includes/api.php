@@ -1438,3 +1438,106 @@ function get_environments( $site_id ) {
 
 	return $result;
 }
+
+/**
+ * Create a new multidev environment.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $env_name New environment name.
+ * @param string $source_env Source environment to clone from (default: dev).
+ * @return array|WP_Error Environment creation response or WP_Error on failure.
+ */
+function create_multidev( $site_id, $env_name, $source_env = 'dev' ) {
+	$endpoint = sprintf( '/v0/sites/%s/environments', $site_id );
+	$body = [
+		'environment_id' => $env_name,
+		'source_environment' => $source_env,
+	];
+
+	$result = api_request( $endpoint, 'POST', $body );
+
+	if ( is_wp_error( $result ) ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to create multidev %s on %s - Error: %s', $env_name, $site_id, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+		return $result;
+	}
+
+	// Clear environments cache after creating new environment.
+	delete_transient( sprintf( 'ash_nazg_environments_%s', $site_id ) );
+
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: Created multidev %s on %s - Response: %s', $env_name, $site_id, wp_json_encode( $result ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
+
+	return $result;
+}
+
+/**
+ * Merge a multidev environment into dev.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $multidev_name Multidev environment name to merge.
+ * @return array|WP_Error Merge response or WP_Error on failure.
+ */
+function merge_multidev_to_dev( $site_id, $multidev_name ) {
+	$endpoint = sprintf( '/v0/sites/%s/environments/dev/merge', $site_id );
+	$body = [
+		'source_environment' => $multidev_name,
+	];
+
+	$result = api_request( $endpoint, 'POST', $body );
+
+	if ( is_wp_error( $result ) ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to merge multidev %s to dev on %s - Error: %s', $multidev_name, $site_id, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+		return $result;
+	}
+
+	// Clear commits cache for dev environment.
+	delete_transient( sprintf( 'ash_nazg_env_commits_%s_dev', $site_id ) );
+
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: Merged multidev %s to dev on %s - Response: %s', $multidev_name, $site_id, wp_json_encode( $result ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
+
+	return $result;
+}
+
+/**
+ * Delete a multidev environment.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $multidev_name Multidev environment name to delete.
+ * @return array|WP_Error Deletion response or WP_Error on failure.
+ */
+function delete_multidev( $site_id, $multidev_name ) {
+	// Prevent deletion of standard environments.
+	if ( in_array( $multidev_name, [ 'dev', 'test', 'live' ], true ) ) {
+		return new \WP_Error(
+			'invalid_environment',
+			__( 'Cannot delete standard environments (dev, test, live).', 'ash-nazg' )
+		);
+	}
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s', $site_id, $multidev_name );
+
+	$result = api_request( $endpoint, 'DELETE' );
+
+	if ( is_wp_error( $result ) ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to delete multidev %s on %s - Error: %s', $multidev_name, $site_id, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+		return $result;
+	}
+
+	// Clear environments cache after deleting environment.
+	delete_transient( sprintf( 'ash_nazg_environments_%s', $site_id ) );
+
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Ash-Nazg: Deleted multidev %s on %s - Response: %s', $multidev_name, $site_id, wp_json_encode( $result ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
+
+	return $result;
+}
