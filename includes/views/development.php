@@ -207,7 +207,18 @@ use Pantheon\AshNazg\API;
 									</code>
 								</td>
 								<td>
-									<?php echo esc_html( $commit['author'] ?? $commit['committer_name'] ?? 'Unknown' ); ?>
+									<?php
+									$author_name = $commit['author'] ?? $commit['committer_name'] ?? 'Unknown';
+									$author_email = $commit['author_email'] ?? $commit['committer_email'] ?? '';
+
+									if ( $author_email ) {
+										$gravatar_url = 'https://www.gravatar.com/avatar/' . md5( strtolower( trim( $author_email ) ) ) . '?s=32&d=mp';
+										?>
+										<img src="<?php echo esc_url( $gravatar_url ); ?>" alt="<?php echo esc_attr( $author_name ); ?>" class="ash-nazg-avatar" />
+										<?php
+									}
+									echo esc_html( $author_name );
+									?>
 								</td>
 								<td>
 									<?php echo esc_html( $commit['message'] ?? $commit['commit_message'] ?? 'No message' ); ?>
@@ -237,8 +248,10 @@ use Pantheon\AshNazg\API;
 			<?php endif; ?>
 		</div>
 
-		<!-- Environments -->
-		<div class="ash-nazg-card ash-nazg-mt-20">
+		<!-- Grid container for side-by-side cards -->
+		<div class="ash-nazg-dashboard">
+			<!-- Environments -->
+			<div class="ash-nazg-card">
 			<h2><?php esc_html_e( 'Environments', 'ash-nazg' ); ?></h2>
 			<?php if ( is_wp_error( $environments ) ) : ?>
 				<div class="notice notice-error">
@@ -281,8 +294,8 @@ use Pantheon\AshNazg\API;
 			<?php endif; ?>
 		</div>
 
-		<!-- Multidev Management -->
-		<div class="ash-nazg-card ash-nazg-mt-20">
+			<!-- Multidev Management -->
+			<div class="ash-nazg-card">
 			<h2><?php esc_html_e( 'Multidev Management', 'ash-nazg' ); ?></h2>
 
 			<!-- Create Multidev -->
@@ -375,6 +388,7 @@ use Pantheon\AshNazg\API;
 				<p><?php esc_html_e( 'No multidev environments found.', 'ash-nazg' ); ?></p>
 			<?php endif; ?>
 		</div>
+		</div><!-- .ash-nazg-dashboard -->
 
 	<?php endif; ?>
 </div>

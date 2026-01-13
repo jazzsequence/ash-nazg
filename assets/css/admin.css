@@ -423,6 +423,15 @@
 	width: 15%;
 }
 
+/* Gravatar Avatars */
+.ash-nazg-avatar {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	vertical-align: middle;
+	margin-right: 8px;
+}
+
 /* ==========================================================================
    5. PAGE-SPECIFIC SECTIONS
    ========================================================================== */

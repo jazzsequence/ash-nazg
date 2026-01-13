@@ -1257,9 +1257,9 @@ function development_screen_options() {
 		return;
 	}
 
-	// Add custom screen options HTML instead of using built-in per_page.
+	// Add per-page screen option.
 	add_screen_option(
-		'ash_nazg_commits_per_page',
+		'per_page',
 		[
 			'label' => __( 'Commits', 'ash-nazg' ),
 			'default' => 50,
