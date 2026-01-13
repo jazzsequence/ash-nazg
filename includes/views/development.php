@@ -102,12 +102,15 @@ use Pantheon\AshNazg\API;
 					</p>
 				</div>
 			<?php elseif ( $upstream_updates && is_array( $upstream_updates ) && count( $upstream_updates ) > 0 ) : ?>
+				<?php $update_count = count( $upstream_updates ); ?>
 				<p>
 					<?php
-					printf(
-						/* translators: %d: number of upstream updates */
-						esc_html__( '%d upstream update(s) available:', 'ash-nazg' ),
-						count( $upstream_updates )
+					echo esc_html(
+						sprintf(
+							/* translators: %d: number of upstream updates */
+							_n( '%d upstream update available:', '%d upstream updates available:', $update_count, 'ash-nazg' ),
+							$update_count
+						)
 					);
 					?>
 				</p>
