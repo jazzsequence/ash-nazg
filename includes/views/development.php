@@ -238,7 +238,7 @@ use Pantheon\AshNazg\API;
 		</div>
 
 		<!-- Environments -->
-		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mt-20">
+		<div class="ash-nazg-card ash-nazg-mt-20">
 			<h2><?php esc_html_e( 'Environments', 'ash-nazg' ); ?></h2>
 			<?php if ( is_wp_error( $environments ) ) : ?>
 				<div class="notice notice-error">
@@ -282,7 +282,7 @@ use Pantheon\AshNazg\API;
 		</div>
 
 		<!-- Multidev Management -->
-		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mt-20">
+		<div class="ash-nazg-card ash-nazg-mt-20">
 			<h2><?php esc_html_e( 'Multidev Management', 'ash-nazg' ); ?></h2>
 
 			<!-- Create Multidev -->
