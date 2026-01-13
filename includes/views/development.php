@@ -305,26 +305,31 @@ use Pantheon\AshNazg\API;
 					<?php wp_nonce_field( 'ash_nazg_manage_multidev', 'ash_nazg_multidev_nonce' ); ?>
 					<input type="hidden" name="multidev_action" value="create" />
 
-					<label for="multidev_name">
-						<strong><?php esc_html_e( 'Multidev Name:', 'ash-nazg' ); ?></strong>
-					</label>
-					<input type="text" name="multidev_name" id="multidev_name" class="regular-text" required placeholder="<?php esc_attr_e( 'e.g., feature-branch', 'ash-nazg' ); ?>" />
+					<p>
+						<label for="multidev_name">
+							<strong><?php esc_html_e( 'Multidev Name:', 'ash-nazg' ); ?></strong>
+						</label><br />
+						<input type="text" name="multidev_name" id="multidev_name" class="regular-text" required placeholder="<?php esc_attr_e( 'e.g., feature-branch', 'ash-nazg' ); ?>" />
+					</p>
 
-					<label for="source_env" class="ash-nazg-ml-10">
-						<strong><?php esc_html_e( 'Clone From:', 'ash-nazg' ); ?></strong>
-					</label>
-					<select name="source_env" id="source_env">
-						<option value="dev"><?php esc_html_e( 'Dev', 'ash-nazg' ); ?></option>
-						<?php if ( $environments && is_array( $environments ) ) : ?>
-							<?php foreach ( $environments as $env_id => $env_data ) : ?>
-								<?php if ( ! in_array( $env_id, [ 'dev', 'test', 'live' ], true ) ) : ?>
-									<option value="<?php echo esc_attr( $env_id ); ?>"><?php echo esc_html( ucfirst( $env_id ) ); ?></option>
+					<div class="ash-nazg-flex-between">
+						<div>
+							<label for="source_env">
+								<strong><?php esc_html_e( 'Clone From:', 'ash-nazg' ); ?></strong>
+							</label>
+							<select name="source_env" id="source_env">
+								<option value="dev"><?php esc_html_e( 'Dev', 'ash-nazg' ); ?></option>
+								<?php if ( $environments && is_array( $environments ) ) : ?>
+									<?php foreach ( $environments as $env_id => $env_data ) : ?>
+										<?php if ( ! in_array( $env_id, [ 'dev', 'test', 'live' ], true ) ) : ?>
+											<option value="<?php echo esc_attr( $env_id ); ?>"><?php echo esc_html( ucfirst( $env_id ) ); ?></option>
+										<?php endif; ?>
+									<?php endforeach; ?>
 								<?php endif; ?>
-							<?php endforeach; ?>
-						<?php endif; ?>
-					</select>
-
-					<button type="submit" class="button button-primary ash-nazg-ml-10"><?php esc_html_e( 'Create Multidev', 'ash-nazg' ); ?></button>
+							</select>
+						</div>
+						<button type="submit" class="button button-primary"><?php esc_html_e( 'Create Multidev', 'ash-nazg' ); ?></button>
+					</div>
 				</form>
 			</div>
 
