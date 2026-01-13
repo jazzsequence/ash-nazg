@@ -37,11 +37,13 @@ use Pantheon\AshNazg\API;
 			<?php elseif ( $commits && is_array( $commits ) ) : ?>
 				<p>
 					<?php
+					$commits_to_display = 50;
+					$total_commits = count( $commits );
+					$displayed_count = min( $total_commits, $commits_to_display );
 					printf(
-						/* translators: 1: number of commits, 2: environment name */
-						esc_html__( 'Showing %1$d commits for %2$s environment:', 'ash-nazg' ),
-						count( $commits ),
-						'<code>' . esc_html( $environment ) . '</code>'
+						/* translators: %d: number of commits */
+						esc_html__( 'Showing the last %d commits:', 'ash-nazg' ),
+						$displayed_count
 					);
 					?>
 				</p>

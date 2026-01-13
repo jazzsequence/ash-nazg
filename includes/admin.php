@@ -23,6 +23,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_clear_logs', __NAMESPACE__ . '\\ajax_clear_logs' );
 	add_action( 'wp_ajax_ash_nazg_toggle_connection_mode', __NAMESPACE__ . '\\ajax_toggle_connection_mode' );
 	add_action( 'wp_ajax_ash_nazg_update_site_label', __NAMESPACE__ . '\\ajax_update_site_label' );
+	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
 }
 
 /**
@@ -105,6 +106,7 @@ function enqueue_assets( $hook ) {
 		'toplevel_page_ash-nazg',
 		'ash-nazg_page_ash-nazg-addons',
 		'ash-nazg_page_ash-nazg-workflows',
+		'ash-nazg_page_ash-nazg-development',
 		'ash-nazg_page_ash-nazg-logs',
 		'ash-nazg_page_ash-nazg-settings',
 	];
@@ -154,6 +156,17 @@ function enqueue_assets( $hook ) {
 					'emptyLabelError' => __( 'Site label cannot be empty.', 'ash-nazg' ),
 				],
 			]
+		);
+	}
+
+	// Enqueue development JavaScript on development page.
+	if ( 'ash-nazg_page_ash-nazg-development' === $hook ) {
+		wp_enqueue_script(
+			'ash-nazg-development',
+			ASH_NAZG_PLUGIN_URL . 'assets/js/development.js',
+			[ 'jquery' ],
+			ASH_NAZG_VERSION,
+			true
 		);
 	}
 
