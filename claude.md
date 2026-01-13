@@ -990,6 +990,75 @@ This runs PHPUnit with the configuration in `phpunit.xml.dist`.
 - [ ] File operations validate paths
 - [ ] Only operational features exposed (no admin/billing/user management)
 
+## CRITICAL RULES & LOCAL DEVELOPMENT
+
+### Pantheon API Documentation
+**CRITICAL: NEVER search the web for Pantheon API documentation.**
+
+- The ONLY source of Pantheon API documentation is: **api.pantheon.io/docs**
+- No other documentation exists online
+- We are creating the documentation through practice by building this plugin
+- Web searches for Pantheon API information are a waste of time
+- All API exploration should be done by testing endpoints directly
+
+### Local Development Workflow
+
+**Repository Structure:**
+- **GitHub Repository**: `~/git/ash-nazg/` - Primary development repository, push to GitHub
+- **Pantheon Local (Single Site)**: `~/pantheon-local-copies/cxr-ash-nazg/` - Local Lando environment for single site testing
+- **Pantheon Local (Multisite)**: `~/pantheon-local-copies/cxr-ash-nazg-ms/` - Local Lando environment for multisite testing
+
+**File Serving:**
+- **Lando**: Serves files directly from filesystem - git commits NOT required for files to be accessible
+- **Pantheon Remote**: Only serves files committed to git repository
+
+**When Testing Locally (Lando):**
+- Files are served from filesystem immediately
+- No need to commit to git for assets (JS/CSS/PHP) to load
+- Changes appear instantly when refreshing browser
+- MU-plugins in `wp-content/mu-plugins/` load automatically
+
+**When Testing on Pantheon Remote:**
+- Files must be committed to git repository
+- Pantheon only serves committed files (even in SFTP mode for certain files)
+- Push commits to Pantheon remote to see changes
+
+**Commit Strategy:**
+- Work in `~/git/ash-nazg/` for main development
+- Commit to GitHub repository for version control
+- Files automatically sync to test environments (scripts handle this)
+- Test locally in Lando environments:
+  - Single site: `~/pantheon-local-copies/cxr-ash-nazg/`
+  - Multisite: `~/pantheon-local-copies/cxr-ash-nazg-ms/`
+
+### URL Handling Rules
+
+**NEVER hardcode URLs** in any code:
+- ❌ Wrong: `$url = 'https://cxr-ash-nazg-ms.lndo.site';`
+- ❌ Wrong: `$url = 'https://ashnazg.chrisreynolds.io';`
+- ✅ Correct: Detect from `$_SERVER['HTTP_HOST']` and `$_SERVER['HTTPS']`
+- ✅ Correct: Use WordPress URL functions and filter the output
+
+**MU-Plugin for Local URL Override:**
+- Create separate mu-plugin files (e.g., `local-url-override.php`)
+- **NEVER edit `wp-content/mu-plugins/loader.php`**
+- Detect Lando environment with `$_ENV['LANDO']`
+- Use dynamic URL detection from request headers
+- Filter `site_url`, `home_url`, `plugins_url`, `content_url`
+
+### File Editing Restrictions
+
+**Files That Should NEVER Be Edited:**
+- `wp-content/mu-plugins/loader.php` - Pantheon system file
+- Any Pantheon mu-plugin files in `pantheon-mu-plugin/`
+- WordPress core files
+
+**When Adding MU-Plugin Functionality:**
+- Create a NEW file in `wp-content/mu-plugins/`
+- Use descriptive filename (e.g., `local-url-override.php`)
+- Add proper plugin headers
+- File will auto-load from mu-plugins directory
+
 ## Common Development Tasks
 
 ### Adding a New API Endpoint Integration
