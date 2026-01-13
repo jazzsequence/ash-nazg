@@ -1225,8 +1225,10 @@ function render_development_page() {
 	$upstream_updates = null;
 	$environments = null;
 	$diffstat = null;
+	$site_info = null;
 
 	if ( $site_id ) {
+		$site_info = API\get_site_info( $site_id );
 		$environment_info = API\get_environment_info( $site_id, $environment );
 		$commits = API\get_environment_commits( $site_id, $environment );
 		$upstream_updates = API\get_upstream_updates( $site_id );

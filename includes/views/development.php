@@ -360,7 +360,24 @@ use Pantheon\AshNazg\API;
 									<?php endif; ?>
 								</td>
 								<td>
-									<form method="post" action="" class="ash-nazg-inline-block">
+									<?php
+									// Construct admin URL from environment data.
+									if ( $site_info && ! is_wp_error( $site_info ) && isset( $site_info['name'], $multidev_data['dns_zone'] ) ) {
+										$admin_url = sprintf(
+											'https://%s-%s.%s/wp-admin/',
+											$multidev_id,
+											$site_info['name'],
+											$multidev_data['dns_zone']
+										);
+										?>
+										<a href="<?php echo esc_url( $admin_url ); ?>" class="button button-primary" target="_blank" rel="noopener noreferrer">
+											<?php esc_html_e( 'Visit Admin', 'ash-nazg' ); ?>
+										</a>
+										<?php
+									}
+									?>
+
+									<form method="post" action="" class="ash-nazg-inline-block ash-nazg-ml-10">
 										<?php wp_nonce_field( 'ash_nazg_manage_multidev', 'ash_nazg_multidev_nonce' ); ?>
 										<input type="hidden" name="multidev_action" value="merge" />
 										<input type="hidden" name="multidev_name" value="<?php echo esc_attr( $multidev_id ); ?>" />
