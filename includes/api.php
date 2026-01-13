@@ -1325,3 +1325,63 @@ function get_code_tips( $site_id ) {
 
 	return $result;
 }
+
+/**
+ * Get diffstat for uncommitted SFTP changes.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $env Environment name.
+ * @return array|WP_Error Diffstat data or WP_Error on failure.
+ */
+function get_diffstat( $site_id, $env ) {
+	$cache_key = sprintf( 'ash_nazg_diffstat_%s_%s', $site_id, $env );
+	$cached = get_transient( $cache_key );
+
+	if ( false !== $cached ) {
+		return $cached['data'];
+	}
+
+	/* Map local environment names to dev for API queries. */
+	$api_env = map_local_env_to_dev( $env );
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/diffstat', $site_id, $api_env );
+	$result = api_request( $endpoint, 'GET' );
+
+	if ( is_wp_error( $result ) ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to get diffstat for %s/%s: %s', $site_id, $env, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+		return $result;
+	}
+
+	/* Cache for 1 minute (changes frequently in SFTP mode). */
+	set_transient(
+		$cache_key,
+		[
+			'data' => $result,
+			'cached_at' => time(),
+		],
+		MINUTE_IN_SECONDS
+	);
+
+	return $result;
+}
+
+/**
+ * Commit SFTP changes.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $env Environment name.
+ * @param string $message Commit message.
+ * @return array|WP_Error Workflow response or WP_Error on failure.
+ */
+function commit_sftp_changes( $site_id, $env, $message ) {
+	// Trigger commit workflow.
+	$params = [
+		'message' => $message,
+		'committer_name' => wp_get_current_user()->display_name,
+		'committer_email' => wp_get_current_user()->user_email,
+	];
+
+	return trigger_workflow( $site_id, $env, 'commit_and_push_on_commit', $params );
+}

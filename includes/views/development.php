@@ -24,8 +24,89 @@ use Pantheon\AshNazg\API;
 		</div>
 	<?php else : ?>
 
-		<!-- Environment Commits -->
+		<!-- Upstream Updates -->
+		<?php
+		// Extract actual updates from update_log object.
+		$updates_list = [];
+		$update_count = 0;
+		$behind = 0;
+		if ( ! is_wp_error( $upstream_updates ) && $upstream_updates && is_array( $upstream_updates ) ) {
+			$updates_list = isset( $upstream_updates['update_log'] ) ? $upstream_updates['update_log'] : [];
+			$update_count = count( $updates_list );
+			$behind = isset( $upstream_updates['behind'] ) ? $upstream_updates['behind'] : 0;
+		}
+		?>
+		<?php if ( $update_count > 0 ) : ?>
 		<div class="ash-nazg-card ash-nazg-card-full">
+			<h2><?php esc_html_e( 'Upstream Updates', 'ash-nazg' ); ?></h2>
+			<p>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: %d: number of upstream updates */
+						_n( '%d upstream update available:', '%d upstream updates available:', $update_count, 'ash-nazg' ),
+						$update_count
+					)
+				);
+				if ( $behind > 0 ) {
+					echo ' ';
+					printf(
+						/* translators: %d: number of commits behind */
+						esc_html__( '(You are %d commit behind)', 'ash-nazg' ),
+						$behind
+					);
+				}
+				?>
+			</p>
+			<table class="widefat">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Hash', 'ash-nazg' ); ?></th>
+						<th><?php esc_html_e( 'Message', 'ash-nazg' ); ?></th>
+						<th><?php esc_html_e( 'Date', 'ash-nazg' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $updates_list as $update ) : ?>
+					<tr>
+						<td>
+							<?php
+							$full_hash = $update['hash'] ?? $update['id'] ?? 'unknown';
+							$short_hash = substr( $full_hash, 0, 8 );
+							?>
+							<code class="ash-nazg-hash-copyable" title="<?php echo esc_attr( sprintf( __( 'Click to copy: %s', 'ash-nazg' ), $full_hash ) ); ?>">
+								<?php echo esc_html( $short_hash ); ?>
+								<span class="dashicons dashicons-clipboard"></span>
+							</code>
+						</td>
+						<td>
+							<?php echo esc_html( $update['message'] ?? $update['commit_message'] ?? 'No message' ); ?>
+						</td>
+						<td>
+							<?php
+							$timestamp = $update['datetime'] ?? $update['timestamp'] ?? null;
+							if ( $timestamp ) {
+								echo esc_html( human_time_diff( is_numeric( $timestamp ) ? $timestamp : strtotime( $timestamp ), time() ) );
+								echo ' ' . esc_html__( 'ago', 'ash-nazg' );
+							} else {
+								esc_html_e( 'Unknown', 'ash-nazg' );
+							}
+							?>
+						</td>
+					</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+
+			<details class="ash-nazg-mt-20">
+				<summary><strong><?php esc_html_e( 'Raw API Response (Debug)', 'ash-nazg' ); ?></strong></summary>
+				<pre style="background: #f5f5f5; padding: 15px; overflow: auto; max-height: 400px;"><?php echo esc_html( wp_json_encode( $upstream_updates, JSON_PRETTY_PRINT ) ); ?></pre>
+			</details>
+		</div>
+		<?php endif; ?>
+
+		<!-- Environment Commits -->
+		<div class="ash-nazg-card ash-nazg-card-full<?php echo $update_count > 0 ? ' ash-nazg-mt-20' : ''; ?>">
 			<h2><?php esc_html_e( 'Recent Commits', 'ash-nazg' ); ?></h2>
 			<?php if ( is_wp_error( $commits ) ) : ?>
 				<div class="notice notice-error">
@@ -93,97 +174,6 @@ use Pantheon\AshNazg\API;
 				</details>
 			<?php else : ?>
 				<p><?php esc_html_e( 'No commits found.', 'ash-nazg' ); ?></p>
-			<?php endif; ?>
-		</div>
-
-		<!-- Upstream Updates -->
-		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mt-20">
-			<h2><?php esc_html_e( 'Upstream Updates', 'ash-nazg' ); ?></h2>
-			<?php if ( is_wp_error( $upstream_updates ) ) : ?>
-				<div class="notice notice-error">
-					<p>
-						<strong><?php esc_html_e( 'Error:', 'ash-nazg' ); ?></strong>
-						<?php echo esc_html( $upstream_updates->get_error_message() ); ?>
-					</p>
-				</div>
-			<?php elseif ( $upstream_updates && is_array( $upstream_updates ) ) : ?>
-				<?php
-				// Extract actual updates from update_log object.
-				$updates_list = isset( $upstream_updates['update_log'] ) ? $upstream_updates['update_log'] : [];
-				$update_count = count( $updates_list );
-				$behind = isset( $upstream_updates['behind'] ) ? $upstream_updates['behind'] : 0;
-				?>
-				<?php if ( $update_count > 0 ) : ?>
-					<p>
-						<?php
-						echo esc_html(
-							sprintf(
-								/* translators: %d: number of upstream updates */
-								_n( '%d upstream update available:', '%d upstream updates available:', $update_count, 'ash-nazg' ),
-								$update_count
-							)
-						);
-						if ( $behind > 0 ) {
-							echo ' ';
-							printf(
-								/* translators: %d: number of commits behind */
-								esc_html__( '(You are %d commit behind)', 'ash-nazg' ),
-								$behind
-							);
-						}
-						?>
-					</p>
-					<table class="widefat">
-						<thead>
-							<tr>
-								<th><?php esc_html_e( 'Hash', 'ash-nazg' ); ?></th>
-								<th><?php esc_html_e( 'Message', 'ash-nazg' ); ?></th>
-								<th><?php esc_html_e( 'Date', 'ash-nazg' ); ?></th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php foreach ( $updates_list as $update ) : ?>
-							<tr>
-								<td>
-									<?php
-									$full_hash = $update['hash'] ?? $update['id'] ?? 'unknown';
-									$short_hash = substr( $full_hash, 0, 8 );
-									?>
-									<code class="ash-nazg-hash-copyable" title="<?php echo esc_attr( $full_hash ); ?>"><?php echo esc_html( $short_hash ); ?></code>
-								</td>
-								<td>
-									<?php echo esc_html( $update['message'] ?? $update['commit_message'] ?? 'No message' ); ?>
-								</td>
-								<td>
-									<?php
-									$timestamp = $update['datetime'] ?? $update['timestamp'] ?? null;
-									if ( $timestamp ) {
-										echo esc_html( human_time_diff( is_numeric( $timestamp ) ? $timestamp : strtotime( $timestamp ), time() ) );
-										echo ' ' . esc_html__( 'ago', 'ash-nazg' );
-									} else {
-										esc_html_e( 'Unknown', 'ash-nazg' );
-									}
-									?>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-
-				<details class="ash-nazg-mt-20">
-					<summary><strong><?php esc_html_e( 'Raw API Response (Debug)', 'ash-nazg' ); ?></strong></summary>
-					<pre style="background: #f5f5f5; padding: 15px; overflow: auto; max-height: 400px;"><?php echo esc_html( wp_json_encode( $upstream_updates, JSON_PRETTY_PRINT ) ); ?></pre>
-				</details>
-				<?php else : ?>
-					<p><?php esc_html_e( 'No upstream updates available. Your site is up to date!', 'ash-nazg' ); ?></p>
-
-					<?php if ( $upstream_updates ) : ?>
-						<details class="ash-nazg-mt-20">
-							<summary><strong><?php esc_html_e( 'Raw API Response (Debug)', 'ash-nazg' ); ?></strong></summary>
-							<pre style="background: #f5f5f5; padding: 15px; overflow: auto; max-height: 400px;"><?php echo esc_html( wp_json_encode( $upstream_updates, JSON_PRETTY_PRINT ) ); ?></pre>
-						</details>
-					<?php endif; ?>
-				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 
