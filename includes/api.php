@@ -1451,7 +1451,7 @@ function get_environments( $site_id ) {
 function create_multidev( $site_id, $env_name, $source_env = 'dev' ) {
 	$endpoint = sprintf( '/v0/sites/%s/environments', $site_id );
 	$body = [
-		'environment_id' => $env_name,
+		'environment_name' => $env_name,
 		'source_environment' => $source_env,
 	];
 

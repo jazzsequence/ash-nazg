@@ -207,24 +207,7 @@ use Pantheon\AshNazg\API;
 									</code>
 								</td>
 								<td>
-									<?php
-									$author_name = $commit['author'] ?? $commit['committer_name'] ?? 'Unknown';
-									// Try different possible email field names from API
-									$author_email = $commit['author_email'] ?? $commit['committer_email'] ?? $commit['email'] ?? '';
-
-									// Debug: log available fields if WP_DEBUG is enabled
-									if ( defined( 'WP_DEBUG' ) && WP_DEBUG && empty( $author_email ) ) {
-										error_log( 'Ash-Nazg: Commit fields available: ' . wp_json_encode( array_keys( $commit ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-									}
-
-									if ( $author_email ) {
-										$gravatar_url = 'https://www.gravatar.com/avatar/' . md5( strtolower( trim( $author_email ) ) ) . '?s=32&d=mp';
-										?>
-										<img src="<?php echo esc_url( $gravatar_url ); ?>" alt="<?php echo esc_attr( $author_name ); ?>" class="ash-nazg-avatar" />
-										<?php
-									}
-									echo esc_html( $author_name );
-									?>
+									<?php echo esc_html( $commit['author'] ?? $commit['committer_name'] ?? 'Unknown' ); ?>
 								</td>
 								<td>
 									<?php echo esc_html( $commit['message'] ?? $commit['commit_message'] ?? 'No message' ); ?>
