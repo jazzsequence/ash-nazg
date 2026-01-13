@@ -49,12 +49,13 @@
   - Stored as `pantheon_get_secret("ash_nazg_machine_token_{user_id}")`
   - Allows better audit trails and token revocation per user
 
-### Easter Eggs
-- [ ] Create "Delete Site" page (easter egg/joke feature)
-  - Hidden admin page with ominous warning dialogs
-  - Multiple confirmation steps with scary messages
-  - Never actually deletes anything (just shows joke messages)
-  - Fun way to demonstrate what we explicitly don't allow
+### Destructive Operations
+- [ ] Create "Delete Site" page with big red button
+  - Hidden/easter egg admin page with ominous warnings
+  - Multiple confirmation dialogs with scary, explicit messages
+  - Big red button that actually deletes the site via API
+  - Clear warnings about permanent data loss
+  - Final confirmation requiring typing site name to proceed
 
 ## Future Enhancements
 - [ ] Domain management for multisite (experimental/PoC)
