@@ -157,11 +157,13 @@ function enqueue_assets( $hook ) {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'toggleModeNonce' => wp_create_nonce( 'ash_nazg_toggle_connection_mode' ),
 				'updateLabelNonce' => wp_create_nonce( 'ash_nazg_update_site_label' ),
+				'workflowStatusNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
 				'i18n' => [
 					'toggleError' => __( 'Failed to switch connection mode.', 'ash-nazg' ),
 					'ajaxError' => __( 'An error occurred while switching connection mode.', 'ash-nazg' ),
 					'updateLabelError' => __( 'Failed to update site label.', 'ash-nazg' ),
 					'emptyLabelError' => __( 'Site label cannot be empty.', 'ash-nazg' ),
+					'timeoutError' => __( 'Operation timed out. Please check the dashboard.', 'ash-nazg' ),
 				],
 			]
 		);
@@ -1257,58 +1259,13 @@ function ajax_toggle_connection_mode() {
 		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 	}
 
-	/* 
-	 * Wait and verify the mode has actually changed.
-	 * The API returns success when the workflow is initiated, but we need to
-	 * wait for completion.
-	 */
-	$expected_on_server_dev = ( 'sftp' === $new_mode );
-	$max_attempts = 10; // 10 attempts * 2 seconds = 20 seconds max wait.
-	$verified = false;
-
-	for ( $i = 0; $i < $max_attempts; $i++ ) {
-		// Wait 2 seconds before checking.
-		sleep( 2 );
-
-		// Clear cache and fetch fresh environment info.
-		delete_transient( sprintf( 'ash_nazg_all_env_info_%s', $site_id ) );
-		$env_info = API\get_environment_info( $site_id, $environment );
-
-		if ( ! is_wp_error( $env_info ) && isset( $env_info['on_server_development'] ) ) {
-			if ( $env_info['on_server_development'] === $expected_on_server_dev ) {
-				$verified = true;
-				break;
-			}
-		}
-	}
-
-	if ( ! $verified ) {
-		wp_send_json_error(
-			[
-				'message' => __( 'Mode change initiated but could not verify completion. Please refresh the page.', 'ash-nazg' ),
-			]
-		);
-	}
-
-	// Update stored state now that the mode has been verified.
-	API\update_environment_state(
-		[
-			'connection_mode' => $new_mode,
-		]
-	);
-
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( sprintf( 'Ash-Nazg: Connection mode verified and state updated to %s on %s/%s', $new_mode, $site_id, $environment ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-	}
-
+	// Return workflow ID for client-side polling.
+	// The JavaScript will poll the workflow status until completion.
 	wp_send_json_success(
 		[
+			'workflow_id' => $result['id'] ?? null,
+			'site_id' => $site_id,
 			'mode' => $new_mode,
-			'message' => sprintf(
-				/* translators: %s: connection mode (SFTP or Git) */
-				__( 'Successfully switched to %s mode.', 'ash-nazg' ),
-				strtoupper( $new_mode )
-			),
 		]
 	);
 }
@@ -1516,7 +1473,7 @@ function development_screen_options() {
 	}
 
 	// Add custom screen options with proper heading.
-	add_filter( 'screen_settings', function( $settings, $args ) use ( $screen ) {
+	add_filter( 'screen_settings', function ( $settings, $args ) use ( $screen ) {
 		if ( 'ash-nazg_page_ash-nazg-development' !== $args->id ) {
 			return $settings;
 		}

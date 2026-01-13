@@ -6,6 +6,63 @@
 
 jQuery(document).ready(function($) {
 	/**
+	 * Poll workflow status until completion.
+	 */
+	function pollWorkflowStatus(siteId, workflowId, completeCallback) {
+		const pollInterval = 2000; // 2 seconds
+		const maxAttempts = 60; // 2 minutes total
+		let attempts = 0;
+
+		function checkStatus() {
+			$.ajax({
+				url: ashNazgDashboard.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'ash_nazg_get_workflow_status',
+					nonce: ashNazgDashboard.workflowStatusNonce,
+					site_id: siteId,
+					workflow_id: workflowId
+				},
+				success: function(response) {
+					if (response.success && response.data) {
+						const status = response.data;
+
+						// Check if workflow is complete
+						if (status.result === 'succeeded' || status.result === 'failed') {
+							completeCallback(status);
+							return;
+						}
+
+						// Continue polling if not complete
+						attempts++;
+						if (attempts < maxAttempts) {
+							setTimeout(checkStatus, pollInterval);
+						} else {
+							completeCallback({
+								result: 'failed',
+								error: ashNazgDashboard.i18n.timeoutError || 'Operation timed out.'
+							});
+						}
+					} else {
+						completeCallback({
+							result: 'failed',
+							error: response.data?.message || 'Failed to get workflow status.'
+						});
+					}
+				},
+				error: function() {
+					completeCallback({
+						result: 'failed',
+						error: ashNazgDashboard.i18n.ajaxError || 'AJAX request failed.'
+					});
+				}
+			});
+		}
+
+		checkStatus();
+	}
+
+	/**
 	 * Handle connection mode toggle.
 	 */
 	$('#ash-nazg-toggle-mode').on('click', function() {
@@ -27,9 +84,23 @@ jQuery(document).ready(function($) {
 				nonce: ashNazgDashboard.toggleModeNonce
 			},
 			success: function(response) {
-				if (response.success) {
-					// Reload the page to show updated state.
-					location.reload();
+				if (response.success && response.data && response.data.workflow_id) {
+					// Poll workflow status until complete
+					pollWorkflowStatus(
+						response.data.site_id,
+						response.data.workflow_id,
+						function(status) {
+							if (status.result === 'succeeded') {
+								// Reload page to show updated state
+								location.reload();
+							} else {
+								$loading.hide();
+								$button.prop('disabled', false);
+								var errorMsg = status.error || ashNazgDashboard.i18n.toggleError;
+								$('.wrap h1').first().after('<div class="notice notice-error is-dismissible"><p>' + errorMsg + '</p></div>');
+							}
+						}
+					);
 				} else {
 					$loading.hide();
 					$button.prop('disabled', false);

@@ -1575,7 +1575,7 @@ function poll_workflow( $site_id, $workflow_id, $max_attempts = 60, $sleep_secon
 
 		// Wait before next poll.
 		sleep( $sleep_seconds );
-		$attempts++;
+		++$attempts;
 	}
 
 	// Timeout reached.
