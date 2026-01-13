@@ -1515,8 +1515,25 @@ function render_development_page() {
 	// Handle refresh environments request.
 	if ( isset( $_GET['refresh_environments'] ) && '1' === $_GET['refresh_environments'] ) {
 		if ( $site_id ) {
+			// Clear environments cache.
 			delete_transient( sprintf( 'ash_nazg_environments_%s', $site_id ) );
-			$message = __( 'Environments list refreshed.', 'ash-nazg' );
+
+			// Clear commits caches for standard environments.
+			delete_transient( sprintf( 'ash_nazg_commits_%s_dev', $site_id ) );
+			delete_transient( sprintf( 'ash_nazg_commits_%s_test', $site_id ) );
+			delete_transient( sprintf( 'ash_nazg_commits_%s_live', $site_id ) );
+
+			// Get all environments to clear multidev commits caches.
+			$environments = API\get_environments( $site_id );
+			if ( ! is_wp_error( $environments ) && is_array( $environments ) ) {
+				foreach ( $environments as $env_id => $env_data ) {
+					if ( ! in_array( $env_id, [ 'dev', 'test', 'live' ], true ) ) {
+						delete_transient( sprintf( 'ash_nazg_commits_%s_%s', $site_id, $env_id ) );
+					}
+				}
+			}
+
+			$message = __( 'Environments list and commits cache refreshed.', 'ash-nazg' );
 		}
 	}
 

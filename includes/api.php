@@ -1565,8 +1565,9 @@ function merge_dev_to_multidev( $site_id, $multidev_name, $updatedb = false ) {
 		return $result;
 	}
 
-	// Clear commits cache for the multidev environment.
-	delete_transient( sprintf( 'ash_nazg_env_commits_%s_%s', $site_id, $multidev_name ) );
+	// Clear commits cache for both dev and multidev (they're now in sync).
+	delete_transient( sprintf( 'ash_nazg_commits_%s_dev', $site_id ) );
+	delete_transient( sprintf( 'ash_nazg_commits_%s_%s', $site_id, $multidev_name ) );
 
 	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Merged dev to multidev %s on %s - Response: %s', $multidev_name, $site_id, wp_json_encode( $result ) ) );
 
