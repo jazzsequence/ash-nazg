@@ -355,9 +355,9 @@ use Pantheon\AshNazg\API;
 							<tr>
 								<td><strong><?php echo esc_html( $multidev_id ); ?></strong></td>
 								<td>
-									<?php if ( isset( $multidev_data['on_server_development'] ) ) : ?>
-										<span class="ash-nazg-badge <?php echo $multidev_data['on_server_development'] ? 'ash-nazg-badge-sftp' : 'ash-nazg-badge-git'; ?>">
-											<?php echo $multidev_data['on_server_development'] ? esc_html__( 'SFTP', 'ash-nazg' ) : esc_html__( 'Git', 'ash-nazg' ); ?>
+									<?php if ( isset( $multidev_data['connection_mode'] ) ) : ?>
+										<span class="ash-nazg-badge <?php echo 'sftp' === $multidev_data['connection_mode'] ? 'ash-nazg-badge-sftp' : 'ash-nazg-badge-git'; ?>">
+											<?php echo 'sftp' === $multidev_data['connection_mode'] ? esc_html__( 'SFTP', 'ash-nazg' ) : esc_html__( 'Git', 'ash-nazg' ); ?>
 										</span>
 									<?php endif; ?>
 								</td>
