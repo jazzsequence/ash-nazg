@@ -98,6 +98,72 @@
 				}
 			});
 		});
+
+		// Merge Dev to Multidev button
+		$('#ash-nazg-merge-dev-to-multidev').on('click', function(e) {
+			e.preventDefault();
+
+			var $button = $(this);
+			var nonce = $button.data('nonce');
+
+			// Confirm action
+			if (!confirm(ashNazgDevelopment.i18n.confirmMergeDevToMultidev)) {
+				return;
+			}
+
+			// Disable button
+			$button.prop('disabled', true);
+
+			// Show progress modal
+			var modal = showProgressModal(
+				ashNazgDevelopment.i18n.mergingDevToMultidev,
+				ashNazgDevelopment.i18n.pleaseWait
+			);
+
+			// Submit via AJAX
+			$.ajax({
+				url: ashNazgDevelopment.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'ash_nazg_merge_dev_to_multidev',
+					nonce: nonce,
+					updatedb: false
+				},
+				success: function(response) {
+					if (response.success && response.data && response.data.workflow_id) {
+						// Poll workflow status
+						pollWorkflowStatus(
+							response.data.site_id,
+							response.data.workflow_id,
+							function(progress, status) {
+								modal.updateProgress(progress, status);
+							},
+							function(status) {
+								modal.close();
+								$button.prop('disabled', false);
+
+								if (status.result === 'succeeded') {
+									alert(ashNazgDevelopment.i18n.devMergedToMultidev);
+									// Reload page to show updated state
+									window.location.reload();
+								} else {
+									alert(status.error || ashNazgDevelopment.i18n.operationFailed);
+								}
+							}
+						);
+					} else {
+						modal.close();
+						$button.prop('disabled', false);
+						alert(response.data?.message || ashNazgDevelopment.i18n.operationFailed);
+					}
+				},
+				error: function() {
+					modal.close();
+					$button.prop('disabled', false);
+					alert(ashNazgDevelopment.i18n.ajaxError);
+				}
+			});
+		});
 	});
 
 	/**

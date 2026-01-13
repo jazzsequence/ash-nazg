@@ -1545,6 +1545,35 @@ function merge_multidev_to_dev( $site_id, $multidev_name ) {
 }
 
 /**
+ * Merge dev environment into a multidev environment.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $multidev_name Multidev environment name to merge dev into.
+ * @param bool   $updatedb Whether to run update.php after merging (Drupal).
+ * @return array|WP_Error Workflow response or WP_Error on failure.
+ */
+function merge_dev_to_multidev( $site_id, $multidev_name, $updatedb = false ) {
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/merge-from-dev', $site_id, $multidev_name );
+	$body = [
+		'updatedb' => (bool) $updatedb,
+	];
+
+	$result = api_request( $endpoint, 'POST', $body );
+
+	if ( is_wp_error( $result ) ) {
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to merge dev to multidev %s on %s - Error: %s', $multidev_name, $site_id, $result->get_error_message() ) );
+		return $result;
+	}
+
+	// Clear commits cache for the multidev environment.
+	delete_transient( sprintf( 'ash_nazg_env_commits_%s_%s', $site_id, $multidev_name ) );
+
+	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Merged dev to multidev %s on %s - Response: %s', $multidev_name, $site_id, wp_json_encode( $result ) ) );
+
+	return $result;
+}
+
+/**
  * Delete a multidev environment.
  *
  * @param string $site_id Site UUID.

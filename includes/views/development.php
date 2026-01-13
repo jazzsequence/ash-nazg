@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use Pantheon\AshNazg\API;
+use Pantheon\AshNazg\Helpers;
 ?>
 
 <div class="wrap">
@@ -35,6 +36,32 @@ use Pantheon\AshNazg\API;
 			<p><?php esc_html_e( 'Not running on Pantheon. Git features are not available.', 'ash-nazg' ); ?></p>
 		</div>
 	<?php else : ?>
+
+		<!-- Merge Dev to Multidev (only shown in multidev environments) -->
+		<?php
+		$current_env = API\get_pantheon_environment();
+		$is_multidev = Helpers\is_multidev_environment( $current_env );
+		?>
+		<?php if ( $is_multidev ) : ?>
+		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
+			<h2><?php esc_html_e( 'Merge Dev Changes', 'ash-nazg' ); ?></h2>
+			<p>
+				<?php
+				printf(
+					/* translators: %s: current environment name */
+					esc_html__( 'Merge the latest changes from the dev environment into %s.', 'ash-nazg' ),
+					'<strong>' . esc_html( $current_env ) . '</strong>'
+				);
+				?>
+			</p>
+			<button type="button" class="button button-primary" id="ash-nazg-merge-dev-to-multidev" data-nonce="<?php echo esc_attr( wp_create_nonce( 'ash_nazg_merge_dev_to_multidev' ) ); ?>">
+				<?php esc_html_e( 'Merge Dev into This Environment', 'ash-nazg' ); ?>
+			</button>
+			<p class="description">
+				<?php esc_html_e( 'This will merge all changes from dev into your current multidev environment. This action cannot be undone.', 'ash-nazg' ); ?>
+			</p>
+		</div>
+		<?php endif; ?>
 
 		<!-- Upstream Updates -->
 		<?php

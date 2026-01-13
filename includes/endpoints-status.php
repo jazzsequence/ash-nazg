@@ -88,11 +88,7 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	 * Local environments like 'lando' should query 'dev' environment from
 	 * Pantheon.
 	 */
-	$local_env_names = [ 'lando', 'local', 'localhost', 'ddev' ];
-	$api_env = $env;
-	if ( $env && in_array( strtolower( $env ), $local_env_names, true ) ) {
-		$api_env = 'dev';
-	}
+	$api_env = map_local_env_to_dev( $env );
 
 	// Check if site uses integrated composer by checking environment settings.
 	$has_integrated_composer = false;

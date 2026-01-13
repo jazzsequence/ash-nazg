@@ -29,6 +29,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_create_multidev', __NAMESPACE__ . '\\ajax_create_multidev' );
 	add_action( 'wp_ajax_ash_nazg_delete_multidev', __NAMESPACE__ . '\\ajax_delete_multidev' );
 	add_action( 'wp_ajax_ash_nazg_merge_multidev', __NAMESPACE__ . '\\ajax_merge_multidev' );
+	add_action( 'wp_ajax_ash_nazg_merge_dev_to_multidev', __NAMESPACE__ . '\\ajax_merge_dev_to_multidev' );
 	add_action( 'wp_ajax_ash_nazg_update_site_label', __NAMESPACE__ . '\\ajax_update_site_label' );
 	add_action( 'wp_ajax_ash_nazg_apply_upstream_updates', __NAMESPACE__ . '\\ajax_apply_upstream_updates' );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
@@ -192,6 +193,9 @@ function enqueue_assets( $hook ) {
 					'applyingUpdates' => __( 'Applying Upstream Updates...', 'ash-nazg' ),
 					'pleaseWait' => __( 'Please wait while the updates are applied.', 'ash-nazg' ),
 					'updatesApplied' => __( 'Upstream updates applied successfully!', 'ash-nazg' ),
+					'confirmMergeDevToMultidev' => __( 'Are you sure you want to merge dev into this multidev environment? This action cannot be undone.', 'ash-nazg' ),
+					'mergingDevToMultidev' => __( 'Merging Dev into Multidev...', 'ash-nazg' ),
+					'devMergedToMultidev' => __( 'Dev successfully merged into this multidev environment!', 'ash-nazg' ),
 					'operationFailed' => __( 'Operation failed. Please try again.', 'ash-nazg' ),
 					'timeoutError' => __( 'Operation timed out. Please check the Pantheon dashboard.', 'ash-nazg' ),
 					'statusError' => __( 'Failed to get workflow status.', 'ash-nazg' ),
@@ -1238,6 +1242,50 @@ function ajax_merge_multidev() {
 	}
 
 	$result = API\merge_multidev_to_dev( $site_id, $multidev_name );
+
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+	}
+
+	// Return workflow ID for polling.
+	wp_send_json_success(
+		[
+			'workflow_id' => $result['id'] ?? null,
+			'site_id' => $site_id,
+		]
+	);
+}
+
+/**
+ * Handle AJAX request to merge dev into current multidev.
+ *
+ * @return void
+ */
+function ajax_merge_dev_to_multidev() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_merge_dev_to_multidev', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$env = API\get_pantheon_environment();
+
+	if ( ! $site_id || ! $env ) {
+		wp_send_json_error( [ 'message' => __( 'Site ID or environment not found.', 'ash-nazg' ) ] );
+	}
+
+	// Verify we're in a multidev environment.
+	if ( in_array( $env, [ 'dev', 'test', 'live' ], true ) ) {
+		wp_send_json_error( [ 'message' => __( 'This operation is only available for multidev environments.', 'ash-nazg' ) ] );
+	}
+
+	// Get optional updatedb parameter.
+	$updatedb = isset( $_POST['updatedb'] ) && 'true' === $_POST['updatedb'];
+
+	$result = API\merge_dev_to_multidev( $site_id, $env, $updatedb );
 
 	if ( is_wp_error( $result ) ) {
 		wp_send_json_error( [ 'message' => $result->get_error_message() ] );

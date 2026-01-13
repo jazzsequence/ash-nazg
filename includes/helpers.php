@@ -45,3 +45,52 @@ function verify_ajax_request( $nonce_action, $nonce_field = 'nonce', $capability
 		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
 	}
 }
+
+/**
+ * Check if current environment is a local development environment.
+ *
+ * @param string|null $env Optional environment name to check. If null, uses current environment.
+ * @return bool True if local environment (lando, local, localhost, ddev), false otherwise.
+ */
+function is_local_environment( $env = null ) {
+	if ( null === $env ) {
+		$env = \Pantheon\AshNazg\API\get_pantheon_environment();
+	}
+
+	if ( ! $env ) {
+		return false;
+	}
+
+	$local_envs = [ 'lando', 'local', 'localhost', 'ddev' ];
+	return in_array( strtolower( $env ), $local_envs, true );
+}
+
+/**
+ * Check if current environment is a multidev environment.
+ *
+ * @param string|null $env Optional environment name to check. If null, uses current environment.
+ * @return bool True if multidev (not dev/test/live and not local), false otherwise.
+ */
+function is_multidev_environment( $env = null ) {
+	if ( null === $env ) {
+		$env = \Pantheon\AshNazg\API\get_pantheon_environment();
+	}
+
+	if ( ! $env ) {
+		return false;
+	}
+
+	// Must be on Pantheon (not local).
+	if ( ! \Pantheon\AshNazg\API\is_pantheon() ) {
+		return false;
+	}
+
+	// Must not be a local environment.
+	if ( is_local_environment( $env ) ) {
+		return false;
+	}
+
+	// Must not be a standard environment.
+	$standard_envs = [ 'dev', 'test', 'live' ];
+	return ! in_array( $env, $standard_envs, true );
+}
