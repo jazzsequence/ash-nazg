@@ -21,6 +21,7 @@ function init() {
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_workflow_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_commit_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_multidev_form_submission' );
+	add_action( 'admin_init', __NAMESPACE__ . '\\handle_screen_options_submission' );
 	add_action( 'wp_ajax_ash_nazg_fetch_logs', __NAMESPACE__ . '\\ajax_fetch_logs' );
 	add_action( 'wp_ajax_ash_nazg_clear_logs', __NAMESPACE__ . '\\ajax_clear_logs' );
 	add_action( 'wp_ajax_ash_nazg_toggle_connection_mode', __NAMESPACE__ . '\\ajax_toggle_connection_mode' );
@@ -696,6 +697,37 @@ function handle_multidev_form_submission() {
 
 	wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
 	exit;
+}
+
+/**
+ * Handle screen options form submission.
+ *
+ * @return void
+ */
+function handle_screen_options_submission() {
+	// Only process on screen options submissions.
+	if ( ! isset( $_POST['screen-options-apply'] ) ) {
+		return;
+	}
+
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	// Verify we're on the development page.
+	if ( ! isset( $_GET['page'] ) || 'ash-nazg-development' !== $_GET['page'] ) {
+		return;
+	}
+
+	// Get and validate commits per page value.
+	if ( isset( $_POST['ash_nazg_commits_per_page'] ) ) {
+		$value = absint( $_POST['ash_nazg_commits_per_page'] );
+		// Cap at 50 due to Pantheon API limitation.
+		$value = min( $value, 50 );
+		// Save to user meta.
+		update_user_meta( get_current_user_id(), 'ash_nazg_commits_per_page', $value );
+	}
 }
 
 /**
