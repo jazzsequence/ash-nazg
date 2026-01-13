@@ -1208,6 +1208,14 @@ function render_development_page() {
 		}
 	}
 
+	// Handle refresh environments request.
+	if ( isset( $_GET['refresh_environments'] ) && '1' === $_GET['refresh_environments'] ) {
+		if ( $site_id ) {
+			delete_transient( sprintf( 'ash_nazg_environments_%s', $site_id ) );
+			$message = __( 'Environments list refreshed.', 'ash-nazg' );
+		}
+	}
+
 	// Get environment info to check connection mode.
 	$environment_info = null;
 	$connection_mode = null;

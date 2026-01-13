@@ -460,6 +460,12 @@
 	margin-top: 3px;
 }
 
+/* Buttons with dashicons */
+.button .dashicons {
+	vertical-align: middle;
+	margin-right: 4px;
+}
+
 /* Logs Page */
 #ash-nazg-logs-timestamp {
 	margin-bottom: 15px;
