@@ -65,7 +65,7 @@ use Pantheon\AshNazg\API;
 					printf(
 						/* translators: %d: number of commits behind */
 						esc_html__( '(You are %d commit behind)', 'ash-nazg' ),
-						$behind
+						absint( $behind )
 					);
 				}
 				?>
@@ -86,7 +86,7 @@ use Pantheon\AshNazg\API;
 							$full_hash = $update['hash'] ?? $update['id'] ?? 'unknown';
 							$short_hash = substr( $full_hash, 0, 8 );
 							?>
-							<code class="ash-nazg-hash-copyable" title="<?php echo esc_attr( sprintf( __( 'Click to copy: %s', 'ash-nazg' ), $full_hash ) ); ?>">
+							<?php /* translators: %s: full commit hash */ ?><code class="ash-nazg-hash-copyable" title="<?php echo esc_attr( sprintf( __( 'Click to copy: %s', 'ash-nazg' ), $full_hash ) ); ?>">
 								<?php echo esc_html( $short_hash ); ?>
 								<span class="dashicons dashicons-clipboard"></span>
 							</code>
@@ -126,7 +126,6 @@ use Pantheon\AshNazg\API;
 			<h3><?php esc_html_e( 'Changed Files:', 'ash-nazg' ); ?></h3>
 			<?php
 			$file_list = array_keys( $diffstat );
-			$total_files = count( $file_list );
 			$shown_files = array_slice( $file_list, 0, 10 );
 			$hidden_files = array_slice( $file_list, 10 );
 			?>
@@ -137,7 +136,7 @@ use Pantheon\AshNazg\API;
 			</ul>
 			<?php if ( ! empty( $hidden_files ) ) : ?>
 				<details>
-					<summary><strong><?php echo esc_html( sprintf( __( 'Show %d more files', 'ash-nazg' ), count( $hidden_files ) ) ); ?></strong></summary>
+					<summary><?php /* translators: %d: number of hidden files */ ?><strong><?php echo esc_html( sprintf( __( 'Show %d more files', 'ash-nazg' ), count( $hidden_files ) ) ); ?></strong></summary>
 					<ul>
 						<?php foreach ( $hidden_files as $file ) : ?>
 							<li><code><?php echo esc_html( $file ); ?></code></li>
@@ -180,7 +179,7 @@ use Pantheon\AshNazg\API;
 					printf(
 						/* translators: %d: number of commits */
 						esc_html__( 'Showing the last %d commits:', 'ash-nazg' ),
-						$displayed_count
+						absint( $displayed_count )
 					);
 					?>
 				</p>
@@ -201,7 +200,7 @@ use Pantheon\AshNazg\API;
 									$full_hash = $commit['hash'] ?? $commit['id'] ?? 'unknown';
 									$short_hash = substr( $full_hash, 0, 8 );
 									?>
-									<code class="ash-nazg-hash-copyable" title="<?php echo esc_attr( sprintf( __( 'Click to copy: %s', 'ash-nazg' ), $full_hash ) ); ?>">
+									<?php /* translators: %s: full commit hash */ ?><code class="ash-nazg-hash-copyable" title="<?php echo esc_attr( sprintf( __( 'Click to copy: %s', 'ash-nazg' ), $full_hash ) ); ?>">
 										<?php echo esc_html( $short_hash ); ?>
 										<span class="dashicons dashicons-clipboard"></span>
 									</code>

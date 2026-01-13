@@ -1259,8 +1259,10 @@ function ajax_toggle_connection_mode() {
 		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 	}
 
-	// Return workflow ID for client-side polling.
-	// The JavaScript will poll the workflow status until completion.
+	/*
+	 * Return workflow ID for client-side polling.
+	 * The JavaScript will poll the workflow status until completion.
+	 */
 	wp_send_json_success(
 		[
 			'workflow_id' => $result['id'] ?? null,
