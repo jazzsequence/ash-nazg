@@ -26,6 +26,9 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_clear_logs', __NAMESPACE__ . '\\ajax_clear_logs' );
 	add_action( 'wp_ajax_ash_nazg_get_workflow_status', __NAMESPACE__ . '\\ajax_get_workflow_status' );
 	add_action( 'wp_ajax_ash_nazg_toggle_connection_mode', __NAMESPACE__ . '\\ajax_toggle_connection_mode' );
+	add_action( 'wp_ajax_ash_nazg_create_multidev', __NAMESPACE__ . '\\ajax_create_multidev' );
+	add_action( 'wp_ajax_ash_nazg_delete_multidev', __NAMESPACE__ . '\\ajax_delete_multidev' );
+	add_action( 'wp_ajax_ash_nazg_merge_multidev', __NAMESPACE__ . '\\ajax_merge_multidev' );
 	add_action( 'wp_ajax_ash_nazg_update_site_label', __NAMESPACE__ . '\\ajax_update_site_label' );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
@@ -172,6 +175,36 @@ function enqueue_assets( $hook ) {
 			[ 'jquery' ],
 			ASH_NAZG_VERSION,
 			true
+		);
+
+		// Enqueue multidev management script.
+		wp_enqueue_script(
+			'ash-nazg-multidev',
+			ASH_NAZG_PLUGIN_URL . 'assets/js/multidev.js',
+			[ 'jquery' ],
+			ASH_NAZG_VERSION,
+			true
+		);
+
+		// Localize multidev script.
+		wp_localize_script(
+			'ash-nazg-multidev',
+			'ashNazgMultidev',
+			[
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'workflowStatusNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
+				'multidevNonce' => wp_create_nonce( 'ash_nazg_multidev' ),
+				'i18n' => [
+					'creatingMultidev' => __( 'Creating Multidev...', 'ash-nazg' ),
+					'deletingMultidev' => __( 'Deleting Multidev...', 'ash-nazg' ),
+					'mergingMultidev' => __( 'Merging Multidev...', 'ash-nazg' ),
+					'pleaseWait' => __( 'Please wait while the operation completes.', 'ash-nazg' ),
+					'operationFailed' => __( 'Operation failed. Please try again.', 'ash-nazg' ),
+					'timeoutError' => __( 'Operation timed out. Please check the Pantheon dashboard.', 'ash-nazg' ),
+					'statusError' => __( 'Failed to get workflow status.', 'ash-nazg' ),
+					'ajaxError' => __( 'AJAX request failed.', 'ash-nazg' ),
+				],
+			]
 		);
 	}
 
@@ -645,6 +678,14 @@ function handle_multidev_form_submission() {
 			$multidev_name = sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) );
 			$source_env = isset( $_POST['source_env'] ) ? sanitize_text_field( wp_unslash( $_POST['source_env'] ) ) : 'dev';
 
+			// Validate multidev name length (max 11 characters).
+			if ( strlen( $multidev_name ) > 11 ) {
+				$redirect_args['error'] = '1';
+				set_transient( 'ash_nazg_multidev_error', __( 'Multidev name cannot be longer than 11 characters.', 'ash-nazg' ), 30 );
+				wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+				exit;
+			}
+
 			$result = API\create_multidev( $site_id, $multidev_name, $source_env );
 
 			if ( is_wp_error( $result ) ) {
@@ -1065,6 +1106,120 @@ function ajax_get_workflow_status() {
 	}
 
 	wp_send_json_success( $status );
+}
+
+/**
+ * Handle AJAX request to create multidev.
+ *
+ * @return void
+ */
+function ajax_create_multidev() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_multidev', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$multidev_name = isset( $_POST['multidev_name'] ) ? sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) ) : '';
+	$source_env = isset( $_POST['source_env'] ) ? sanitize_text_field( wp_unslash( $_POST['source_env'] ) ) : 'dev';
+
+	if ( ! $site_id || ! $multidev_name ) {
+		wp_send_json_error( [ 'message' => __( 'Missing required parameters.', 'ash-nazg' ) ] );
+	}
+
+	// Validate multidev name length (max 11 characters).
+	if ( strlen( $multidev_name ) > 11 ) {
+		wp_send_json_error( [ 'message' => __( 'Multidev name cannot be longer than 11 characters.', 'ash-nazg' ) ] );
+	}
+
+	$result = API\create_multidev( $site_id, $multidev_name, $source_env );
+
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+	}
+
+	// Return workflow ID for polling.
+	wp_send_json_success(
+		[
+			'workflow_id' => $result['id'] ?? null,
+			'site_id' => $site_id,
+		]
+	);
+}
+
+/**
+ * Handle AJAX request to delete multidev.
+ *
+ * @return void
+ */
+function ajax_delete_multidev() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_multidev', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$multidev_name = isset( $_POST['multidev_name'] ) ? sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) ) : '';
+
+	if ( ! $site_id || ! $multidev_name ) {
+		wp_send_json_error( [ 'message' => __( 'Missing required parameters.', 'ash-nazg' ) ] );
+	}
+
+	$result = API\delete_multidev( $site_id, $multidev_name );
+
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+	}
+
+	// Return workflow ID for polling.
+	wp_send_json_success(
+		[
+			'workflow_id' => $result['id'] ?? null,
+			'site_id' => $site_id,
+		]
+	);
+}
+
+/**
+ * Handle AJAX request to merge multidev.
+ *
+ * @return void
+ */
+function ajax_merge_multidev() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_multidev', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$multidev_name = isset( $_POST['multidev_name'] ) ? sanitize_text_field( wp_unslash( $_POST['multidev_name'] ) ) : '';
+
+	if ( ! $site_id || ! $multidev_name ) {
+		wp_send_json_error( [ 'message' => __( 'Missing required parameters.', 'ash-nazg' ) ] );
+	}
+
+	$result = API\merge_multidev_to_dev( $site_id, $multidev_name );
+
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+	}
+
+	// Return workflow ID for polling.
+	wp_send_json_success(
+		[
+			'workflow_id' => $result['id'] ?? null,
+			'site_id' => $site_id,
+		]
+	);
 }
 
 /**

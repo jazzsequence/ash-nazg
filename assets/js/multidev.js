@@ -1,0 +1,175 @@
+/**
+ * Multidev management JavaScript.
+ */
+(function($) {
+	'use strict';
+
+	/**
+	 * Poll workflow status until completion.
+	 */
+	function pollWorkflowStatus(siteId, workflowId, progressCallback, completeCallback) {
+		const pollInterval = 2000; // 2 seconds
+		const maxAttempts = 60; // 2 minutes total
+		let attempts = 0;
+
+		function checkStatus() {
+			$.ajax({
+				url: ashNazgMultidev.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'ash_nazg_get_workflow_status',
+					nonce: ashNazgMultidev.workflowStatusNonce,
+					site_id: siteId,
+					workflow_id: workflowId
+				},
+				success: function(response) {
+					if (response.success && response.data) {
+						const status = response.data;
+
+						// Update progress if callback provided
+						if (progressCallback && status.step && status.number_of_tasks) {
+							const progress = Math.round((status.step / status.number_of_tasks) * 100);
+							progressCallback(progress, status.active_description || '');
+						}
+
+						// Check if workflow is complete
+						if (status.result === 'succeeded' || status.result === 'failed') {
+							completeCallback(status);
+							return;
+						}
+
+						// Continue polling if not complete
+						attempts++;
+						if (attempts < maxAttempts) {
+							setTimeout(checkStatus, pollInterval);
+						} else {
+							completeCallback({
+								result: 'failed',
+								error: ashNazgMultidev.i18n.timeoutError
+							});
+						}
+					} else {
+						completeCallback({
+							result: 'failed',
+							error: response.data?.message || ashNazgMultidev.i18n.statusError
+						});
+					}
+				},
+				error: function() {
+					completeCallback({
+						result: 'failed',
+						error: ashNazgMultidev.i18n.ajaxError
+					});
+				}
+			});
+		}
+
+		checkStatus();
+	}
+
+	/**
+	 * Show progress modal.
+	 */
+	function showProgressModal(title, message) {
+		const modal = $('<div class="ash-nazg-progress-modal"></div>');
+		const overlay = $('<div class="ash-nazg-progress-overlay"></div>');
+
+		const content = $('<div class="ash-nazg-progress-content"></div>');
+		content.append('<h2>' + title + '</h2>');
+		content.append('<p class="ash-nazg-progress-message">' + message + '</p>');
+		content.append('<div class="ash-nazg-progress-bar"><div class="ash-nazg-progress-fill"></div></div>');
+		content.append('<p class="ash-nazg-progress-percent">0%</p>');
+		content.append('<p class="ash-nazg-progress-status"></p>');
+
+		modal.append(content);
+		$('body').append(overlay).append(modal);
+
+		return {
+			updateProgress: function(percent, status) {
+				modal.find('.ash-nazg-progress-fill').css('width', percent + '%');
+				modal.find('.ash-nazg-progress-percent').text(percent + '%');
+				if (status) {
+					modal.find('.ash-nazg-progress-status').text(status);
+				}
+			},
+			close: function() {
+				modal.remove();
+				overlay.remove();
+			}
+		};
+	}
+
+	/**
+	 * Handle multidev form submission.
+	 */
+	$(document).on('submit', 'form[data-multidev-action]', function(e) {
+		e.preventDefault();
+
+		const $form = $(this);
+		const action = $form.data('multidev-action');
+		const $button = $form.find('button[type="submit"]');
+
+		// Get form data
+		const formData = {
+			action: 'ash_nazg_' + action + '_multidev',
+			nonce: $form.find('input[name="ash_nazg_multidev_nonce"]').val(),
+			multidev_name: $form.find('input[name="multidev_name"]').val(),
+			source_env: $form.find('select[name="source_env"]').val()
+		};
+
+		// Disable button
+		$button.prop('disabled', true);
+
+		// Show progress modal
+		let modalTitle = ashNazgMultidev.i18n.creatingMultidev;
+		let modalMessage = ashNazgMultidev.i18n.pleaseWait;
+
+		if (action === 'delete') {
+			modalTitle = ashNazgMultidev.i18n.deletingMultidev;
+		} else if (action === 'merge') {
+			modalTitle = ashNazgMultidev.i18n.mergingMultidev;
+		}
+
+		const modal = showProgressModal(modalTitle, modalMessage);
+
+		// Submit via AJAX
+		$.ajax({
+			url: ashNazgMultidev.ajaxUrl,
+			type: 'POST',
+			data: formData,
+			success: function(response) {
+				if (response.success && response.data && response.data.workflow_id) {
+					// Poll workflow status
+					pollWorkflowStatus(
+						response.data.site_id,
+						response.data.workflow_id,
+						function(progress, status) {
+							modal.updateProgress(progress, status);
+						},
+						function(status) {
+							modal.close();
+							$button.prop('disabled', false);
+
+							if (status.result === 'succeeded') {
+								// Reload page to show updated state
+								window.location.reload();
+							} else {
+								alert(status.error || ashNazgMultidev.i18n.operationFailed);
+							}
+						}
+					);
+				} else {
+					modal.close();
+					$button.prop('disabled', false);
+					alert(response.data?.message || ashNazgMultidev.i18n.operationFailed);
+				}
+			},
+			error: function() {
+				modal.close();
+				$button.prop('disabled', false);
+				alert(ashNazgMultidev.i18n.ajaxError);
+			}
+		});
+	});
+
+})(jQuery);

@@ -1198,14 +1198,18 @@ function trigger_workflow( $site_id, $env, $workflow_type, $params ) {
 /**
  * Get workflow status.
  *
+ * @param string $site_id Site UUID.
  * @param string $workflow_id Workflow UUID.
  * @return array|WP_Error Workflow data or WP_Error on failure.
  */
-function get_workflow_status( $workflow_id ) {
-	$endpoint = sprintf( '/v0/workflows/%s', $workflow_id );
+function get_workflow_status( $site_id, $workflow_id ) {
+	$endpoint = sprintf( '/v0/sites/%s/workflows/%s', $site_id, $workflow_id );
 	$result = api_request( $endpoint, 'GET' );
 
 	if ( is_wp_error( $result ) ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to get workflow status %s on %s - Error: %s', $workflow_id, $site_id, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 		return $result;
 	}
 
@@ -1540,27 +1544,6 @@ function delete_multidev( $site_id, $multidev_name ) {
 
 	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 		error_log( sprintf( 'Ash-Nazg: Deleted multidev %s on %s - Response: %s', $multidev_name, $site_id, wp_json_encode( $result ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-	}
-
-	return $result;
-}
-
-/**
- * Get workflow status.
- *
- * @param string $site_id Site UUID.
- * @param string $workflow_id Workflow ID.
- * @return array|WP_Error Workflow status or WP_Error on failure.
- */
-function get_workflow_status( $site_id, $workflow_id ) {
-	$endpoint = sprintf( '/v0/sites/%s/workflows/%s', $site_id, $workflow_id );
-	$result = api_request( $endpoint, 'GET' );
-
-	if ( is_wp_error( $result ) ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( sprintf( 'Ash-Nazg: Failed to get workflow status %s on %s - Error: %s', $workflow_id, $site_id, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-		}
-		return $result;
 	}
 
 	return $result;

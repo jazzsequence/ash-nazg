@@ -302,7 +302,8 @@ use Pantheon\AshNazg\API;
 						<label for="multidev_name">
 							<strong><?php esc_html_e( 'Multidev Name:', 'ash-nazg' ); ?></strong>
 						</label><br />
-						<input type="text" name="multidev_name" id="multidev_name" class="regular-text" required placeholder="<?php esc_attr_e( 'e.g., feature-branch', 'ash-nazg' ); ?>" />
+						<input type="text" name="multidev_name" id="multidev_name" class="regular-text" required maxlength="11" placeholder="<?php esc_attr_e( 'e.g., my-feature', 'ash-nazg' ); ?>" />
+					<p class="description"><?php esc_html_e( 'Maximum 11 characters. Lowercase letters, numbers, and hyphens only.', 'ash-nazg' ); ?></p>
 					</p>
 
 					<div class="ash-nazg-flex-between">
