@@ -112,10 +112,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 							</td>
 						</tr>
 						<?php
-						// Get connection mode from state or environment info.
-						$connection_mode = API\get_connection_mode();
-						if ( ! $connection_mode && $environment_info ) {
-							$connection_mode = isset( $environment_info['on_server_development'] ) && $environment_info['on_server_development'] ? 'sftp' : 'git';
+						// Get connection mode from fresh API data first (source of truth).
+						$connection_mode = null;
+						if ( $environment_info && isset( $environment_info['on_server_development'] ) ) {
+							$connection_mode = $environment_info['on_server_development'] ? 'sftp' : 'git';
+						} else {
+							// Fall back to stored state if API data unavailable.
+							$connection_mode = API\get_connection_mode();
 						}
 						?>
 					<?php if ( $connection_mode ) : ?>
