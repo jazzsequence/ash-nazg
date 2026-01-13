@@ -340,6 +340,82 @@ function get_api_field( $endpoint_type, $field, $default_value = null ) {
 }
 
 /**
+ * Get data from $_ENV if available.
+ *
+ * Helper function to retrieve Pantheon environment variables.
+ *
+ * @param string $key     Environment variable key.
+ * @param mixed  $default Default value if not found.
+ * @return mixed Environment variable value or default.
+ */
+function get_env( $key, $default = null ) {
+	return isset( $_ENV[ $key ] ) ? $_ENV[ $key ] : $default;
+}
+
+/**
+ * Get site information from $_ENV.
+ *
+ * Returns site data from environment variables when available.
+ * Useful to avoid API calls for data already in $_ENV.
+ *
+ * @return array|null Site data from $_ENV or null if not on Pantheon.
+ */
+function get_site_info_from_env() {
+	$site_id = get_env( 'PANTHEON_SITE' );
+	$site_name = get_env( 'PANTHEON_SITE_NAME' );
+
+	if ( ! $site_id ) {
+		return null;
+	}
+
+	return [
+		'id' => $site_id,
+		'name' => $site_name,
+		'framework' => get_env( 'FRAMEWORK', 'wordpress' ),
+		'php_version' => get_env( 'php_version' ),
+		'source' => 'env',
+	];
+}
+
+/**
+ * Get environment information from $_ENV.
+ *
+ * Returns environment data from environment variables when available.
+ * Useful to avoid API calls for data already in $_ENV.
+ *
+ * @return array|null Environment data from $_ENV or null if not on Pantheon.
+ */
+function get_environment_info_from_env() {
+	$env_name = get_env( 'PANTHEON_ENVIRONMENT' );
+
+	if ( ! $env_name ) {
+		return null;
+	}
+
+	$data = [
+		'id' => $env_name,
+		'environment' => $env_name,
+		'domain' => get_env( 'DRUSH_OPTIONS_URI' ),
+		'php_version' => get_env( 'php_version' ),
+		'source' => 'env',
+	];
+
+	// Add Redis info if available.
+	if ( get_env( 'CACHE_HOST' ) ) {
+		$data['has_redis'] = true;
+		$data['redis_host'] = get_env( 'CACHE_HOST' );
+		$data['redis_port'] = get_env( 'CACHE_PORT' );
+	}
+
+	// Add Solr info if available.
+	if ( get_env( 'PANTHEON_INDEX_HOST' ) ) {
+		$data['has_solr'] = true;
+	}
+
+	return $data;
+}
+
+/**
  * Get site information.
  *
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
@@ -356,6 +432,24 @@ function get_site_info( $site_id = null ) {
 		}
 	}
 
+	// Prefer $_ENV data if available (no API call needed).
+	$env_data = get_site_info_from_env();
+	if ( $env_data && $env_data['id'] === $site_id ) {
+		// We have $_ENV data, but still fetch API for additional fields.
+		$endpoint = '/v0/sites/' . $site_id;
+		$cache_key = 'ash_nazg_site_info_' . $site_id;
+		$api_data = get_cached_endpoint( $endpoint, $cache_key );
+
+		// Merge: prefer $_ENV for fields it has, add API-only fields.
+		if ( ! is_wp_error( $api_data ) ) {
+			return array_merge( $api_data, $env_data );
+		}
+
+		// API failed, return $_ENV data only.
+		return $env_data;
+	}
+
+	// No $_ENV data, use API only.
 	$endpoint = '/v0/sites/' . $site_id;
 	$cache_key = 'ash_nazg_site_info_' . $site_id;
 
@@ -439,17 +533,28 @@ function get_environment_info( $site_id = null, $env = null ) {
 	// Map local environments to dev for API queries.
 	$api_env = in_array( $env, [ 'lando', 'local', 'localhost', 'ddev' ], true ) ? 'dev' : $env;
 
+	// Try $_ENV data first if available.
+	$env_data = get_environment_info_from_env();
+
 	// Fetch all environments from API (there's no single-environment endpoint).
 	$endpoint = sprintf( '/v0/sites/%s/environments', $site_id );
 	$cache_key_all = sprintf( 'ash_nazg_all_env_info_%s', $site_id );
 	$environments = get_cached_endpoint( $endpoint, $cache_key_all );
 
 	if ( is_wp_error( $environments ) ) {
+		// API failed - return $_ENV data if available.
+		if ( $env_data ) {
+			return $env_data;
+		}
 		return $environments;
 	}
 
 	// Extract the specific environment from the map.
 	if ( ! isset( $environments[ $api_env ] ) ) {
+		// Environment not found in API - return $_ENV data if available.
+		if ( $env_data ) {
+			return $env_data;
+		}
 		return new \WP_Error(
 			'environment_not_found',
 			sprintf(
@@ -460,7 +565,14 @@ function get_environment_info( $site_id = null, $env = null ) {
 		);
 	}
 
-	return $environments[ $api_env ];
+	$api_data = $environments[ $api_env ];
+
+	// Merge: prefer $_ENV for fields it has, add API-only fields (like on_server_development).
+	if ( $env_data ) {
+		return array_merge( $api_data, $env_data );
+	}
+
+	return $api_data;
 }
 
 /**
