@@ -294,8 +294,8 @@ use Pantheon\AshNazg\API;
 			<!-- Create Multidev -->
 			<div class="ash-nazg-mb-20">
 				<h3><?php esc_html_e( 'Create New Multidev', 'ash-nazg' ); ?></h3>
-				<form method="post" action="">
-					<?php wp_nonce_field( 'ash_nazg_manage_multidev', 'ash_nazg_multidev_nonce' ); ?>
+				<form method="post" action="" data-multidev-action="create">
+					<?php wp_nonce_field( 'ash_nazg_multidev', 'ash_nazg_multidev_nonce' ); ?>
 					<input type="hidden" name="multidev_action" value="create" />
 
 					<p>
@@ -385,8 +385,8 @@ use Pantheon\AshNazg\API;
 									}
 									?>
 
-									<form method="post" action="" class="ash-nazg-inline-block ash-nazg-ml-10">
-										<?php wp_nonce_field( 'ash_nazg_manage_multidev', 'ash_nazg_multidev_nonce' ); ?>
+									<form method="post" action="" class="ash-nazg-inline-block ash-nazg-ml-10" data-multidev-action="merge">
+										<?php wp_nonce_field( 'ash_nazg_multidev', 'ash_nazg_multidev_nonce' ); ?>
 										<input type="hidden" name="multidev_action" value="merge" />
 										<input type="hidden" name="multidev_name" value="<?php echo esc_attr( $multidev_id ); ?>" />
 										<button type="submit" class="button button-secondary" onclick="return confirm('<?php esc_attr_e( 'Merge this multidev into dev?', 'ash-nazg' ); ?>');">
@@ -394,8 +394,8 @@ use Pantheon\AshNazg\API;
 										</button>
 									</form>
 
-									<form method="post" action="" class="ash-nazg-inline-block ash-nazg-ml-10">
-										<?php wp_nonce_field( 'ash_nazg_manage_multidev', 'ash_nazg_multidev_nonce' ); ?>
+									<form method="post" action="" class="ash-nazg-inline-block ash-nazg-ml-10" data-multidev-action="delete">
+										<?php wp_nonce_field( 'ash_nazg_multidev', 'ash_nazg_multidev_nonce' ); ?>
 										<input type="hidden" name="multidev_action" value="delete" />
 										<input type="hidden" name="multidev_name" value="<?php echo esc_attr( $multidev_id ); ?>" />
 										<button type="submit" class="button" onclick="return confirm('<?php esc_attr_e( 'Delete this multidev? This action cannot be undone.', 'ash-nazg' ); ?>');">

@@ -43,6 +43,19 @@
 - [ ] Backup management (create, list, restore if safe)
 - [ ] Workflow status monitoring with polling
 
+### Authentication & Security
+- [ ] User-scoped machine tokens (store in user meta with Pantheon secrets using user ID suffix)
+  - Instead of site-wide tokens, each user with manage_options can have their own token
+  - Stored as `pantheon_get_secret("ash_nazg_machine_token_{user_id}")`
+  - Allows better audit trails and token revocation per user
+
+### Easter Eggs
+- [ ] Create "Delete Site" page (easter egg/joke feature)
+  - Hidden admin page with ominous warning dialogs
+  - Multiple confirmation steps with scary messages
+  - Never actually deletes anything (just shows joke messages)
+  - Fun way to demonstrate what we explicitly don't allow
+
 ## Future Enhancements
 - [ ] Domain management for multisite (experimental/PoC)
 - [ ] Custom workflow triggers
