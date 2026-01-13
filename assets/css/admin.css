@@ -370,6 +370,11 @@
 	font-family: 'Courier New', Courier, monospace;
 }
 
+.ash-nazg-hash-copyable {
+	cursor: help;
+	user-select: all;
+}
+
 /* Force table to respect column widths */
 .ash-nazg-card .widefat {
 	table-layout: fixed;

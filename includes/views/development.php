@@ -58,7 +58,11 @@ use Pantheon\AshNazg\API;
 						<?php foreach ( array_slice( $commits, 0, 50 ) as $commit ) : ?>
 							<tr>
 								<td>
-									<code><?php echo esc_html( substr( $commit['hash'] ?? $commit['id'] ?? 'unknown', 0, 8 ) ); ?></code>
+									<?php
+									$full_hash = $commit['hash'] ?? $commit['id'] ?? 'unknown';
+									$short_hash = substr( $full_hash, 0, 8 );
+									?>
+									<code class="ash-nazg-hash-copyable" title="<?php echo esc_attr( $full_hash ); ?>"><?php echo esc_html( $short_hash ); ?></code>
 								</td>
 								<td>
 									<?php echo esc_html( $commit['author'] ?? $commit['committer_name'] ?? 'Unknown' ); ?>
@@ -140,7 +144,11 @@ use Pantheon\AshNazg\API;
 							<?php foreach ( $updates_list as $update ) : ?>
 							<tr>
 								<td>
-									<code><?php echo esc_html( substr( $update['hash'] ?? $update['id'] ?? 'unknown', 0, 8 ) ); ?></code>
+									<?php
+									$full_hash = $update['hash'] ?? $update['id'] ?? 'unknown';
+									$short_hash = substr( $full_hash, 0, 8 );
+									?>
+									<code class="ash-nazg-hash-copyable" title="<?php echo esc_attr( $full_hash ); ?>"><?php echo esc_html( $short_hash ); ?></code>
 								</td>
 								<td>
 									<?php echo esc_html( $update['message'] ?? $update['commit_message'] ?? 'No message' ); ?>
