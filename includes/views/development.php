@@ -110,6 +110,15 @@ use Pantheon\AshNazg\API;
 				</tbody>
 			</table>
 
+			<div class="ash-nazg-mt-20">
+				<button type="button" class="button button-primary" id="ash-nazg-apply-upstream-updates" data-nonce="<?php echo esc_attr( wp_create_nonce( 'ash_nazg_apply_upstream_updates' ) ); ?>">
+					<?php esc_html_e( 'Apply Upstream Updates', 'ash-nazg' ); ?>
+				</button>
+				<p class="description">
+					<?php esc_html_e( 'This will apply all available upstream updates to your environment. This action cannot be undone.', 'ash-nazg' ); ?>
+				</p>
+			</div>
+
 			<details class="ash-nazg-mt-20">
 				<summary><strong><?php esc_html_e( 'Raw API Response (Debug)', 'ash-nazg' ); ?></strong></summary>
 				<pre style="background: #f5f5f5; padding: 15px; overflow: auto; max-height: 400px;"><?php echo esc_html( wp_json_encode( $upstream_updates, JSON_PRETTY_PRINT ) ); ?></pre>
@@ -343,7 +352,7 @@ use Pantheon\AshNazg\API;
 				<table class="widefat">
 					<thead>
 						<tr>
-							<th class="ash-nazg-th-20"><?php esc_html_e( 'Name', 'ash-nazg' ); ?></th>
+							<th class="ash-nazg-th-15"><?php esc_html_e( 'Name', 'ash-nazg' ); ?></th>
 							<th class="ash-nazg-th-15"><?php esc_html_e( 'Mode', 'ash-nazg' ); ?></th>
 							<th><?php esc_html_e( 'Actions', 'ash-nazg' ); ?></th>
 						</tr>

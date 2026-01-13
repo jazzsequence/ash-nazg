@@ -30,6 +30,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_delete_multidev', __NAMESPACE__ . '\\ajax_delete_multidev' );
 	add_action( 'wp_ajax_ash_nazg_merge_multidev', __NAMESPACE__ . '\\ajax_merge_multidev' );
 	add_action( 'wp_ajax_ash_nazg_update_site_label', __NAMESPACE__ . '\\ajax_update_site_label' );
+	add_action( 'wp_ajax_ash_nazg_apply_upstream_updates', __NAMESPACE__ . '\\ajax_apply_upstream_updates' );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
 }
@@ -177,6 +178,26 @@ function enqueue_assets( $hook ) {
 			[ 'jquery' ],
 			ASH_NAZG_VERSION,
 			true
+		);
+
+		// Localize development script.
+		wp_localize_script(
+			'ash-nazg-development',
+			'ashNazgDevelopment',
+			[
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'workflowStatusNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
+				'i18n' => [
+					'confirmApplyUpdates' => __( 'Are you sure you want to apply upstream updates? This action cannot be undone.', 'ash-nazg' ),
+					'applyingUpdates' => __( 'Applying Upstream Updates...', 'ash-nazg' ),
+					'pleaseWait' => __( 'Please wait while the updates are applied.', 'ash-nazg' ),
+					'updatesApplied' => __( 'Upstream updates applied successfully!', 'ash-nazg' ),
+					'operationFailed' => __( 'Operation failed. Please try again.', 'ash-nazg' ),
+					'timeoutError' => __( 'Operation timed out. Please check the Pantheon dashboard.', 'ash-nazg' ),
+					'statusError' => __( 'Failed to get workflow status.', 'ash-nazg' ),
+					'ajaxError' => __( 'AJAX request failed.', 'ash-nazg' ),
+				],
+			]
 		);
 
 		// Enqueue multidev management script.
@@ -1317,6 +1338,46 @@ function ajax_update_site_label() {
 		[
 			'message' => __( 'Site label updated successfully.', 'ash-nazg' ),
 			'label' => $new_label,
+		]
+	);
+}
+
+/**
+ * Handle AJAX request to apply upstream updates.
+ *
+ * @return void
+ */
+function ajax_apply_upstream_updates() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_apply_upstream_updates', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$env = API\get_pantheon_environment();
+
+	if ( ! $site_id || ! $env ) {
+		wp_send_json_error( [ 'message' => __( 'Site ID or environment not found.', 'ash-nazg' ) ] );
+	}
+
+	// Get optional parameters.
+	$updatedb = isset( $_POST['updatedb'] ) && 'true' === $_POST['updatedb'];
+	$xoption = isset( $_POST['xoption'] ) && 'true' === $_POST['xoption'];
+
+	$result = API\apply_upstream_updates( $site_id, $env, $updatedb, $xoption );
+
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+	}
+
+	// Return workflow ID for polling.
+	wp_send_json_success(
+		[
+			'workflow_id' => $result['id'] ?? null,
+			'site_id' => $site_id,
 		]
 	);
 }

@@ -37,6 +37,7 @@ define( 'ASH_NAZG_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
  */
 function bootstrap() {
 	// Load core files.
+	require_once ASH_NAZG_PLUGIN_DIR . 'includes/helpers.php';
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/api.php';
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/settings.php';
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/admin.php';

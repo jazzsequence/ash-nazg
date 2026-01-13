@@ -1295,6 +1295,38 @@ function get_upstream_updates( $site_id ) {
 }
 
 /**
+ * Apply upstream updates to an environment.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $env Environment name.
+ * @param bool   $updatedb Whether to run update.php after applying (Drupal).
+ * @param bool   $xoption Whether to accept updates with merge conflicts (force theirs).
+ * @return array|WP_Error Workflow response on success, WP_Error on failure.
+ */
+function apply_upstream_updates( $site_id, $env, $updatedb = false, $xoption = false ) {
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/upstream/updates', $site_id, $env );
+
+	$body = [
+		'updatedb' => (bool) $updatedb,
+		'xoption' => (bool) $xoption,
+	];
+
+	$result = api_request( $endpoint, 'POST', $body );
+
+	if ( is_wp_error( $result ) ) {
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to apply upstream updates on %s.%s - Error: %s', $site_id, $env, $result->get_error_message() ) );
+		return $result;
+	}
+
+	/* Clear upstream updates cache after applying. */
+	delete_transient( sprintf( 'ash_nazg_upstream_updates_%s', $site_id ) );
+
+	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Applied upstream updates on %s.%s - Response: %s', $site_id, $env, wp_json_encode( $result ) ) );
+
+	return $result;
+}
+
+/**
  * Get git branches and commits (code tips).
  *
  * @param string $site_id Site UUID.
