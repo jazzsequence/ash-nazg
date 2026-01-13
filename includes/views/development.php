@@ -18,6 +18,18 @@ use Pantheon\AshNazg\API;
 
 	<p><?php esc_html_e( 'Git commits, upstream updates, and code management.', 'ash-nazg' ); ?></p>
 
+	<?php if ( $message ) : ?>
+		<div class="notice notice-success is-dismissible">
+			<p><strong><?php echo esc_html( $message ); ?></strong></p>
+		</div>
+	<?php endif; ?>
+
+	<?php if ( $error ) : ?>
+		<div class="notice notice-error is-dismissible">
+			<p><strong><?php esc_html_e( 'Error:', 'ash-nazg' ); ?></strong> <?php echo esc_html( $error ); ?></p>
+		</div>
+	<?php endif; ?>
+
 	<?php if ( ! $site_id ) : ?>
 		<div class="notice notice-warning">
 			<p><?php esc_html_e( 'Not running on Pantheon. Git features are not available.', 'ash-nazg' ); ?></p>

@@ -19,6 +19,7 @@ function init() {
 	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\enqueue_assets' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_addon_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_workflow_form_submission' );
+	add_action( 'admin_init', __NAMESPACE__ . '\\handle_commit_form_submission' );
 	add_action( 'wp_ajax_ash_nazg_fetch_logs', __NAMESPACE__ . '\\ajax_fetch_logs' );
 	add_action( 'wp_ajax_ash_nazg_clear_logs', __NAMESPACE__ . '\\ajax_clear_logs' );
 	add_action( 'wp_ajax_ash_nazg_toggle_connection_mode', __NAMESPACE__ . '\\ajax_toggle_connection_mode' );
@@ -522,6 +523,78 @@ function handle_workflow_form_submission() {
 }
 
 /**
+ * Handle SFTP commit form submission.
+ *
+ * @return void
+ */
+function handle_commit_form_submission() {
+	// Only process on commit form submissions.
+	if ( ! isset( $_POST['ash_nazg_commit_nonce'] ) ) {
+		return;
+	}
+
+	// Verify nonce.
+	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ash_nazg_commit_nonce'] ) ), 'ash_nazg_commit_changes' ) ) {
+		return;
+	}
+
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	// Validate action.
+	if ( ! isset( $_POST['ash_nazg_action'] ) || 'commit_changes' !== $_POST['ash_nazg_action'] ) {
+		return;
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
+
+	if ( ! $site_id || ! $environment ) {
+		$redirect_args = [
+			'page' => 'ash-nazg-development',
+			'error' => 'missing_params',
+		];
+		wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	// Get and validate commit message.
+	if ( ! isset( $_POST['commit_message'] ) || empty( trim( $_POST['commit_message'] ) ) ) {
+		$redirect_args = [
+			'page' => 'ash-nazg-development',
+			'error' => 'empty_message',
+		];
+		wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	$commit_message = sanitize_textarea_field( wp_unslash( $_POST['commit_message'] ) );
+
+	// Trigger commit workflow.
+	$result = API\commit_sftp_changes( $site_id, $environment, $commit_message );
+
+	$redirect_args = [ 'page' => 'ash-nazg-development' ];
+
+	if ( is_wp_error( $result ) ) {
+		$redirect_args['error'] = '1';
+		set_transient( 'ash_nazg_commit_error', $result->get_error_message(), 30 );
+	} else {
+		$redirect_args['committed'] = '1';
+
+		// Clear diffstat cache after successful commit.
+		delete_transient( sprintf( 'ash_nazg_diffstat_%s_%s', $site_id, $environment ) );
+
+		// Clear commits cache to refresh the list.
+		delete_transient( sprintf( 'ash_nazg_env_commits_%s_%s', $site_id, $environment ) );
+	}
+
+	wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+	exit;
+}
+
+/**
  * Render workflows page.
  *
  * @return void
@@ -946,6 +1019,33 @@ function render_development_page() {
 
 	// Get commits per page from screen options.
 	$commits_per_page = get_commits_per_page();
+
+	// Handle redirect messages from transients.
+	$message = null;
+	$error = null;
+
+	// Check for commit success.
+	if ( isset( $_GET['committed'] ) && '1' === $_GET['committed'] ) {
+		$message = __( 'Changes committed successfully.', 'ash-nazg' );
+	}
+
+	// Check for commit error.
+	$stored_error = get_transient( 'ash_nazg_commit_error' );
+	if ( $stored_error ) {
+		$error = $stored_error;
+		delete_transient( 'ash_nazg_commit_error' );
+	} elseif ( isset( $_GET['error'] ) ) {
+		switch ( $_GET['error'] ) {
+			case 'missing_params':
+				$error = __( 'Missing required parameters.', 'ash-nazg' );
+				break;
+			case 'empty_message':
+				$error = __( 'Commit message is required.', 'ash-nazg' );
+				break;
+			default:
+				$error = __( 'An error occurred while committing changes.', 'ash-nazg' );
+		}
+	}
 
 	// Get environment info to check connection mode.
 	$environment_info = null;
