@@ -1059,5 +1059,8 @@ function get_commits_per_page() {
 	$per_page = get_user_meta( $user_id, 'ash_nazg_commits_per_page', true );
 
 	// Default to 50 if not set.
-	return $per_page ? absint( $per_page ) : 50;
+	$per_page = $per_page ? absint( $per_page ) : 50;
+
+	// Cap at 50 due to Pantheon API limitation (handles legacy stored values).
+	return min( $per_page, 50 );
 }
