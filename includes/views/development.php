@@ -256,30 +256,28 @@ use Pantheon\AshNazg\API;
 					</p>
 				</div>
 			<?php elseif ( $environments && is_array( $environments ) ) : ?>
-				<p>
-					<?php
-					$env_count = count( $environments );
-					echo esc_html(
-						sprintf(
-							/* translators: %d: number of environments */
-							_n( '%d environment found:', '%d environments found:', $env_count, 'ash-nazg' ),
-							$env_count
-						)
-					);
-					?>
-				</p>
-				<ul>
-					<?php foreach ( $environments as $env_id => $env_data ) : ?>
-						<li>
-							<strong><?php echo esc_html( $env_id ); ?></strong>
-							<?php if ( isset( $env_data['on_server_development'] ) ) : ?>
-								<span class="ash-nazg-badge <?php echo $env_data['on_server_development'] ? 'ash-nazg-badge-sftp' : 'ash-nazg-badge-git'; ?>">
-									<?php echo $env_data['on_server_development'] ? esc_html__( 'SFTP', 'ash-nazg' ) : esc_html__( 'Git', 'ash-nazg' ); ?>
-								</span>
-							<?php endif; ?>
-						</li>
-					<?php endforeach; ?>
-				</ul>
+				<table class="widefat">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'Name', 'ash-nazg' ); ?></th>
+							<th><?php esc_html_e( 'Mode', 'ash-nazg' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $environments as $env_id => $env_data ) : ?>
+							<tr>
+								<td><strong><?php echo esc_html( $env_id ); ?></strong></td>
+								<td>
+									<?php if ( isset( $env_data['connection_mode'] ) ) : ?>
+										<span class="ash-nazg-badge <?php echo 'sftp' === $env_data['connection_mode'] ? 'ash-nazg-badge-sftp' : 'ash-nazg-badge-git'; ?>">
+											<?php echo 'sftp' === $env_data['connection_mode'] ? esc_html__( 'SFTP', 'ash-nazg' ) : esc_html__( 'Git', 'ash-nazg' ); ?>
+										</span>
+									<?php endif; ?>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
 				<details class="ash-nazg-mt-20">
 					<summary><strong><?php esc_html_e( 'Raw API Response (Debug)', 'ash-nazg' ); ?></strong></summary>
 					<pre style="background: #f5f5f5; padding: 15px; overflow: auto; max-height: 400px;"><?php echo esc_html( wp_json_encode( $environments, JSON_PRETTY_PRINT ) ); ?></pre>
