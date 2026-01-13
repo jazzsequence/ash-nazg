@@ -105,6 +105,35 @@ use Pantheon\AshNazg\API;
 		</div>
 		<?php endif; ?>
 
+		<!-- Uncommitted SFTP Changes -->
+		<?php if ( 'sftp' === $connection_mode && $diffstat && ! is_wp_error( $diffstat ) && ! empty( $diffstat ) ) : ?>
+		<div class="ash-nazg-card ash-nazg-card-full<?php echo $update_count > 0 ? ' ash-nazg-mt-20' : ''; ?>">
+			<h2><?php esc_html_e( 'Uncommitted Changes', 'ash-nazg' ); ?></h2>
+			<p><?php esc_html_e( 'You have uncommitted changes in SFTP mode. Commit them to save your work to the git repository.', 'ash-nazg' ); ?></p>
+
+			<h3><?php esc_html_e( 'Changed Files:', 'ash-nazg' ); ?></h3>
+			<ul>
+				<?php foreach ( $diffstat as $file => $changes ) : ?>
+					<li><code><?php echo esc_html( $file ); ?></code></li>
+				<?php endforeach; ?>
+			</ul>
+
+			<form method="post" action="" class="ash-nazg-commit-form ash-nazg-mt-20">
+				<?php wp_nonce_field( 'ash_nazg_commit_changes', 'ash_nazg_commit_nonce' ); ?>
+				<input type="hidden" name="ash_nazg_action" value="commit_changes" />
+
+				<label for="commit_message">
+					<strong><?php esc_html_e( 'Commit Message:', 'ash-nazg' ); ?></strong>
+				</label>
+				<textarea name="commit_message" id="commit_message" rows="3" class="large-text" required placeholder="<?php esc_attr_e( 'Describe your changes...', 'ash-nazg' ); ?>"></textarea>
+
+				<p class="submit">
+					<button type="submit" class="button button-primary"><?php esc_html_e( 'Commit Changes', 'ash-nazg' ); ?></button>
+				</p>
+			</form>
+		</div>
+		<?php endif; ?>
+
 		<!-- Environment Commits -->
 		<div class="ash-nazg-card ash-nazg-card-full<?php echo $update_count > 0 ? ' ash-nazg-mt-20' : ''; ?>">
 			<h2><?php esc_html_e( 'Recent Commits', 'ash-nazg' ); ?></h2>
@@ -144,7 +173,10 @@ use Pantheon\AshNazg\API;
 									$full_hash = $commit['hash'] ?? $commit['id'] ?? 'unknown';
 									$short_hash = substr( $full_hash, 0, 8 );
 									?>
-									<code class="ash-nazg-hash-copyable" title="<?php echo esc_attr( $full_hash ); ?>"><?php echo esc_html( $short_hash ); ?></code>
+									<code class="ash-nazg-hash-copyable" title="<?php echo esc_attr( sprintf( __( 'Click to copy: %s', 'ash-nazg' ), $full_hash ) ); ?>">
+										<?php echo esc_html( $short_hash ); ?>
+										<span class="dashicons dashicons-clipboard"></span>
+									</code>
 								</td>
 								<td>
 									<?php echo esc_html( $commit['author'] ?? $commit['committer_name'] ?? 'Unknown' ); ?>
@@ -177,32 +209,47 @@ use Pantheon\AshNazg\API;
 			<?php endif; ?>
 		</div>
 
-		<!-- Code Tips (Branches) -->
+		<!-- Environments -->
 		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mt-20">
-			<h2><?php esc_html_e( 'Git Branches', 'ash-nazg' ); ?></h2>
-			<?php if ( is_wp_error( $code_tips ) ) : ?>
+			<h2><?php esc_html_e( 'Environments', 'ash-nazg' ); ?></h2>
+			<?php if ( is_wp_error( $environments ) ) : ?>
 				<div class="notice notice-error">
 					<p>
 						<strong><?php esc_html_e( 'Error:', 'ash-nazg' ); ?></strong>
-						<?php echo esc_html( $code_tips->get_error_message() ); ?>
+						<?php echo esc_html( $environments->get_error_message() ); ?>
 					</p>
 				</div>
-			<?php elseif ( $code_tips && is_array( $code_tips ) ) : ?>
+			<?php elseif ( $environments && is_array( $environments ) ) : ?>
 				<p>
 					<?php
-					printf(
-						/* translators: %d: number of branches */
-						esc_html__( '%d branch(es) found:', 'ash-nazg' ),
-						count( $code_tips )
+					$env_count = count( $environments );
+					echo esc_html(
+						sprintf(
+							/* translators: %d: number of environments */
+							_n( '%d environment found:', '%d environments found:', $env_count, 'ash-nazg' ),
+							$env_count
+						)
 					);
 					?>
 				</p>
+				<ul>
+					<?php foreach ( $environments as $env_id => $env_data ) : ?>
+						<li>
+							<strong><?php echo esc_html( $env_id ); ?></strong>
+							<?php if ( isset( $env_data['on_server_development'] ) ) : ?>
+								<span class="ash-nazg-badge <?php echo $env_data['on_server_development'] ? 'ash-nazg-badge-sftp' : 'ash-nazg-badge-git'; ?>">
+									<?php echo $env_data['on_server_development'] ? esc_html__( 'SFTP', 'ash-nazg' ) : esc_html__( 'Git', 'ash-nazg' ); ?>
+								</span>
+							<?php endif; ?>
+						</li>
+					<?php endforeach; ?>
+				</ul>
 				<details class="ash-nazg-mt-20">
 					<summary><strong><?php esc_html_e( 'Raw API Response (Debug)', 'ash-nazg' ); ?></strong></summary>
-					<pre style="background: #f5f5f5; padding: 15px; overflow: auto; max-height: 400px;"><?php echo esc_html( wp_json_encode( $code_tips, JSON_PRETTY_PRINT ) ); ?></pre>
+					<pre style="background: #f5f5f5; padding: 15px; overflow: auto; max-height: 400px;"><?php echo esc_html( wp_json_encode( $environments, JSON_PRETTY_PRINT ) ); ?></pre>
 				</details>
 			<?php else : ?>
-				<p><?php esc_html_e( 'No branch data found.', 'ash-nazg' ); ?></p>
+				<p><?php esc_html_e( 'No environments found.', 'ash-nazg' ); ?></p>
 			<?php endif; ?>
 		</div>
 

@@ -1385,3 +1385,40 @@ function commit_sftp_changes( $site_id, $env, $message ) {
 
 	return trigger_workflow( $site_id, $env, 'commit_and_push_on_commit', $params );
 }
+
+/**
+ * Get all environments for a site.
+ *
+ * @param string $site_id Site UUID.
+ * @return array|WP_Error Environments data or WP_Error on failure.
+ */
+function get_environments( $site_id ) {
+	$cache_key = sprintf( 'ash_nazg_environments_%s', $site_id );
+	$cached = get_transient( $cache_key );
+
+	if ( false !== $cached ) {
+		return $cached['data'];
+	}
+
+	$endpoint = sprintf( '/v0/sites/%s/environments', $site_id );
+	$result = api_request( $endpoint, 'GET' );
+
+	if ( is_wp_error( $result ) ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Failed to get environments for %s: %s', $site_id, $result->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+		return $result;
+	}
+
+	/* Cache for 5 minutes. */
+	set_transient(
+		$cache_key,
+		[
+			'data' => $result,
+			'cached_at' => time(),
+		],
+		5 * MINUTE_IN_SECONDS
+	);
+
+	return $result;
+}

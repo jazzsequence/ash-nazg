@@ -947,15 +947,31 @@ function render_development_page() {
 	// Get commits per page from screen options.
 	$commits_per_page = get_commits_per_page();
 
+	// Get environment info to check connection mode.
+	$environment_info = null;
+	$connection_mode = null;
+
 	// Get git data from API.
 	$commits = null;
 	$upstream_updates = null;
-	$code_tips = null;
+	$environments = null;
+	$diffstat = null;
 
 	if ( $site_id ) {
+		$environment_info = API\get_environment_info( $site_id, $environment );
 		$commits = API\get_environment_commits( $site_id, $environment );
 		$upstream_updates = API\get_upstream_updates( $site_id );
-		$code_tips = API\get_code_tips( $site_id );
+		$environments = API\get_environments( $site_id );
+
+		// Get connection mode from environment info.
+		if ( $environment_info && isset( $environment_info['on_server_development'] ) ) {
+			$connection_mode = $environment_info['on_server_development'] ? 'sftp' : 'git';
+		}
+
+		// Get diffstat if in SFTP mode.
+		if ( 'sftp' === $connection_mode ) {
+			$diffstat = API\get_diffstat( $site_id, $environment );
+		}
 	}
 
 	// Include the view.
