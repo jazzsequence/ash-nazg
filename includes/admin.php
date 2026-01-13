@@ -1012,23 +1012,31 @@ function development_screen_options() {
 		return;
 	}
 
-	add_screen_option(
-		'per_page',
-		[
-			'label' => __( 'Commits', 'ash-nazg' ),
-			'default' => 50,
-			'option' => 'ash_nazg_commits_per_page',
-		]
-	);
+	// Add custom screen options HTML instead of using built-in per_page.
+	add_filter( 'screen_settings', function( $settings, $args ) {
+		if ( 'ash-nazg_page_ash-nazg-development' !== $args->id ) {
+			return $settings;
+		}
 
-	// Add help text explaining the 50-commit API limitation.
-	$screen->add_help_tab(
-		[
-			'id' => 'ash_nazg_commits_help',
-			'title' => __( 'Commits Display', 'ash-nazg' ),
-			'content' => '<p>' . __( 'The Pantheon API returns a maximum of 50 commits. You can adjust how many commits to display (up to 50) using the screen options above.', 'ash-nazg' ) . '</p>',
-		]
-	);
+		$user_id = get_current_user_id();
+		$per_page = get_user_meta( $user_id, 'ash_nazg_commits_per_page', true );
+		$per_page = $per_page ? absint( $per_page ) : 50;
+
+		ob_start();
+		?>
+		<fieldset class="screen-options">
+		<legend><?php esc_html_e( 'Commits Display', 'ash-nazg' ); ?></legend>
+		<label for="ash_nazg_commits_per_page">
+			<?php esc_html_e( 'Number of commits to show:', 'ash-nazg' ); ?>
+			<input type="number" step="1" min="1" max="50" name="ash_nazg_commits_per_page" id="ash_nazg_commits_per_page" value="<?php echo esc_attr( $per_page ); ?>" class="screen-per-page" />
+		</label>
+		<p class="ash-nazg-screen-options-note"><em><?php esc_html_e( 'Note: The Pantheon API returns a maximum of 50 commits.', 'ash-nazg' ); ?></em></p>
+		</fieldset>
+		<?php
+		$settings .= ob_get_clean();
+
+		return $settings;
+	}, 10, 2 );
 }
 
 /**
