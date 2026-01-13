@@ -8,6 +8,10 @@
 - [ ] Set up CSS compilation and minification
 - [ ] Add JavaScript bundling and minification
 - [ ] Configure watch mode for development
+- [ ] Integrate Pantheon Design System (pds-core) npm package
+  - Private npm package, reference local copy at ~/git/pds-core
+  - Import PDS components and styles into build pipeline
+  - Replace custom styles with PDS utilities where applicable
 
 ### Design Review & Refactoring
 - [ ] Overall design review with Pantheon Design System
