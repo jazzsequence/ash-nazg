@@ -62,6 +62,16 @@ function add_admin_menu() {
 		__NAMESPACE__ . '\\render_workflows_page'
 	);
 
+	// Development page.
+	add_submenu_page(
+		'ash-nazg',
+		__( 'Development', 'ash-nazg' ),
+		__( 'Development', 'ash-nazg' ),
+		'manage_options',
+		'ash-nazg-development',
+		__NAMESPACE__ . '\\render_development_page'
+	);
+
 	// Logs page.
 	add_submenu_page(
 		'ash-nazg',
@@ -904,6 +914,35 @@ function ajax_update_site_label() {
 			'label' => $new_label,
 		]
 	);
+}
+
+/**
+ * Render development page.
+ *
+ * @return void
+ */
+function render_development_page() {
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
+
+	// Get git data from API.
+	$commits = null;
+	$upstream_updates = null;
+	$code_tips = null;
+
+	if ( $site_id ) {
+		$commits = API\get_environment_commits( $site_id, $environment );
+		$upstream_updates = API\get_upstream_updates( $site_id );
+		$code_tips = API\get_code_tips( $site_id );
+	}
+
+	// Include the view.
+	require_once ASH_NAZG_PLUGIN_DIR . '/includes/views/development.php';
 }
 
 /**

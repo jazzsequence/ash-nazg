@@ -531,7 +531,7 @@ function get_environment_info( $site_id = null, $env = null ) {
 	}
 
 	// Map local environments to dev for API queries.
-	$api_env = in_array( $env, [ 'lando', 'local', 'localhost', 'ddev' ], true ) ? 'dev' : $env;
+	$api_env = map_local_env_to_dev( $env );
 
 	// Try $_ENV data first if available.
 	$env_data = get_environment_info_from_env();
@@ -602,6 +602,20 @@ function get_pantheon_environment() {
  */
 function is_pantheon() {
 	return false !== get_pantheon_site_id();
+}
+
+/**
+ * Map local environment names to dev for API queries.
+ *
+ * Local environment names (lando, local, localhost, ddev) should map to 'dev'
+ * when making API requests since the API doesn't have endpoints for local envs.
+ *
+ * @param string $env Environment name.
+ * @return string Mapped environment name ('dev' for local envs, original otherwise).
+ */
+function map_local_env_to_dev( $env ) {
+	$local_env_names = [ 'lando', 'local', 'localhost', 'ddev' ];
+	return in_array( strtolower( $env ), $local_env_names, true ) ? 'dev' : $env;
 }
 
 /**
@@ -1024,7 +1038,7 @@ function sync_environment_state( $site_id = null, $env = null ) {
 	}
 
 	// Map local environments to dev for API queries.
-	$api_env = in_array( $env, [ 'lando', 'local', 'localhost', 'ddev' ], true ) ? 'dev' : $env;
+	$api_env = map_local_env_to_dev( $env );
 
 	// Get environment info from API.
 	$env_info = get_environment_info( $site_id, $api_env );
@@ -1079,7 +1093,7 @@ function update_connection_mode( $site_id, $env, $mode ) {
 	}
 
 	// Map local environments to dev for API queries.
-	$api_env = in_array( $env, [ 'lando', 'local', 'localhost', 'ddev' ], true ) ? 'dev' : $env;
+	$api_env = map_local_env_to_dev( $env );
 
 	$endpoint = sprintf( '/v0/sites/%s/environments/%s/connection-mode', $site_id, $api_env );
 	$body = [
@@ -1156,7 +1170,7 @@ function trigger_workflow( $site_id, $env, $workflow_type, $params ) {
 	}
 
 	// Map local environments to dev for API queries.
-	$api_env = in_array( $env, [ 'lando', 'local', 'localhost', 'ddev' ], true ) ? 'dev' : $env;
+	$api_env = map_local_env_to_dev( $env );
 
 	$endpoint = sprintf( '/v0/sites/%s/environments/%s/workflows', $site_id, $api_env );
 	$body = [
