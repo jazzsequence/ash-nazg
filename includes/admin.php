@@ -1020,6 +1020,15 @@ function development_screen_options() {
 			'option' => 'ash_nazg_commits_per_page',
 		]
 	);
+
+	// Add help text explaining the 50-commit API limitation.
+	$screen->add_help_tab(
+		[
+			'id' => 'ash_nazg_commits_help',
+			'title' => __( 'Commits Display', 'ash-nazg' ),
+			'content' => '<p>' . __( 'The Pantheon API returns a maximum of 50 commits. You can adjust how many commits to display (up to 50) using the screen options above.', 'ash-nazg' ) . '</p>',
+		]
+	);
 }
 
 /**
@@ -1032,7 +1041,9 @@ function development_screen_options() {
  */
 function set_screen_option( $status, $option, $value ) {
 	if ( 'ash_nazg_commits_per_page' === $option ) {
-		return absint( $value );
+		// Cap at 50 due to Pantheon API limitation.
+		$value = absint( $value );
+		return min( $value, 50 );
 	}
 
 	return $status;
