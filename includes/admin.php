@@ -23,6 +23,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_clear_logs', __NAMESPACE__ . '\\ajax_clear_logs' );
 	add_action( 'wp_ajax_ash_nazg_toggle_connection_mode', __NAMESPACE__ . '\\ajax_toggle_connection_mode' );
 	add_action( 'wp_ajax_ash_nazg_update_site_label', __NAMESPACE__ . '\\ajax_update_site_label' );
+	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
 }
 
@@ -943,6 +944,9 @@ function render_development_page() {
 	$site_id = API\get_pantheon_site_id();
 	$environment = API\get_pantheon_environment();
 
+	// Get commits per page from screen options.
+	$commits_per_page = get_commits_per_page();
+
 	// Get git data from API.
 	$commits = null;
 	$upstream_updates = null;
@@ -994,4 +998,55 @@ function render_logs_page() {
 	$logs_fetched_at = get_transient( 'ash_nazg_debug_logs_timestamp' );
 
 	require ASH_NAZG_PLUGIN_DIR . 'includes/views/logs.php';
+}
+
+/**
+ * Register screen options for development page.
+ *
+ * @return void
+ */
+function development_screen_options() {
+	$screen = get_current_screen();
+
+	if ( ! is_object( $screen ) || 'ash-nazg_page_ash-nazg-development' !== $screen->id ) {
+		return;
+	}
+
+	add_screen_option(
+		'ash_nazg_commits_per_page',
+		[
+			'label' => __( 'Commits per page', 'ash-nazg' ),
+			'default' => 50,
+			'option' => 'ash_nazg_commits_per_page',
+		]
+	);
+}
+
+/**
+ * Save screen option value.
+ *
+ * @param mixed $status Screen option value. False by default.
+ * @param string $option Screen option name.
+ * @param mixed $value Screen option value.
+ * @return mixed
+ */
+function set_screen_option( $status, $option, $value ) {
+	if ( 'ash_nazg_commits_per_page' === $option ) {
+		return absint( $value );
+	}
+
+	return $status;
+}
+
+/**
+ * Get commits per page setting for current user.
+ *
+ * @return int Number of commits to display per page.
+ */
+function get_commits_per_page() {
+	$user_id = get_current_user_id();
+	$per_page = get_user_meta( $user_id, 'ash_nazg_commits_per_page', true );
+
+	// Default to 50 if not set.
+	return $per_page ? absint( $per_page ) : 50;
 }

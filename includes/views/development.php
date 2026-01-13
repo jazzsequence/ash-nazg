@@ -37,9 +37,8 @@ use Pantheon\AshNazg\API;
 			<?php elseif ( $commits && is_array( $commits ) ) : ?>
 				<p>
 					<?php
-					$commits_to_display = 50;
 					$total_commits = count( $commits );
-					$displayed_count = min( $total_commits, $commits_to_display );
+					$displayed_count = min( $total_commits, $commits_per_page );
 					printf(
 						/* translators: %d: number of commits */
 						esc_html__( 'Showing the last %d commits:', 'ash-nazg' ),
@@ -57,7 +56,7 @@ use Pantheon\AshNazg\API;
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ( array_slice( $commits, 0, 50 ) as $commit ) : ?>
+						<?php foreach ( array_slice( $commits, 0, $commits_per_page ) as $commit ) : ?>
 							<tr>
 								<td>
 									<?php
