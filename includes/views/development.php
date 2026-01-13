@@ -259,8 +259,8 @@ use Pantheon\AshNazg\API;
 				<table class="widefat">
 					<thead>
 						<tr>
-							<th><?php esc_html_e( 'Name', 'ash-nazg' ); ?></th>
-							<th><?php esc_html_e( 'Mode', 'ash-nazg' ); ?></th>
+							<th class="ash-nazg-th-30"><?php esc_html_e( 'Name', 'ash-nazg' ); ?></th>
+							<th class="ash-nazg-th-20"><?php esc_html_e( 'Mode', 'ash-nazg' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -343,8 +343,8 @@ use Pantheon\AshNazg\API;
 				<table class="widefat">
 					<thead>
 						<tr>
-							<th><?php esc_html_e( 'Name', 'ash-nazg' ); ?></th>
-							<th><?php esc_html_e( 'Mode', 'ash-nazg' ); ?></th>
+							<th class="ash-nazg-th-20"><?php esc_html_e( 'Name', 'ash-nazg' ); ?></th>
+							<th class="ash-nazg-th-15"><?php esc_html_e( 'Mode', 'ash-nazg' ); ?></th>
 							<th><?php esc_html_e( 'Actions', 'ash-nazg' ); ?></th>
 						</tr>
 					</thead>
