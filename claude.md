@@ -808,12 +808,12 @@ This runs PHPUnit with the configuration in `phpunit.xml.dist`.
   ```json
   {
     "environment_name": "multidev-name",
-    "source_environment": "dev"
+    "from_environment": "dev"
   }
   ```
 - **Returns**: Environment creation response
 - **Note**: Multidev names must be lowercase, alphanumeric with hyphens
-- **Note**: Parameter is `environment_name`, not `environment_id`
+- **Note**: Parameters are `environment_name` and `from_environment` (not `environment_id` or `source_environment`)
 
 #### `POST /v0/sites/{site_id}/environments/dev/merge`
 - **Purpose**: Merge a multidev environment into dev
