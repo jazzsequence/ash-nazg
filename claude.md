@@ -1062,6 +1062,41 @@ This runs PHPUnit with the configuration in `phpunit.xml.dist`.
 - Web searches for Pantheon API information are a waste of time
 - All API exploration should be done by testing endpoints directly
 
+**API Endpoint Verification Workflow:**
+
+Before using ANY Pantheon API endpoint, you MUST verify the endpoint structure and parameters using the swagger.json file:
+
+1. **Get endpoint definition:**
+   ```bash
+   curl -s "https://api.pantheon.io/docs/swagger.json" | jq '.paths["/v0/sites/{site_id}/endpoint"]'
+   ```
+
+2. **Get request body schema (for POST/PUT requests):**
+   ```bash
+   curl -s "https://api.pantheon.io/docs/swagger.json" | jq '.definitions.SchemaName'
+   ```
+   (The schema name is found in the endpoint definition under `parameters[].schema.$ref`)
+
+3. **Verify these details:**
+   - HTTP method (GET, POST, PUT, DELETE)
+   - Required vs optional parameters
+   - Parameter types (string, boolean, integer)
+   - Request body structure
+   - Expected response format
+
+4. **Never assume parameter names or structure** - always check the swagger.json first
+
+**Example:**
+```bash
+# Check multidev creation endpoint
+curl -s "https://api.pantheon.io/docs/swagger.json" | jq '.paths["/v0/sites/{site_id}/environments"].post'
+
+# Get the CreateMultidevRequest schema
+curl -s "https://api.pantheon.io/docs/swagger.json" | jq '.definitions.CreateMultidevRequest'
+```
+
+This workflow prevents errors from incorrect parameter names, missing required fields, or wrong data types.
+
 ### Local Development Workflow
 
 **Repository Structure:**
