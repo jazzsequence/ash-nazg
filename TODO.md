@@ -1,5 +1,19 @@
 # Ash-Nazg TODO List
 
+## Current Work-in-Progress
+
+### Git & Development Features
+- [ ] Add "Apply Upstream Updates" button to Development page
+  - API endpoint: POST /v0/sites/{site_id}/environments/{env}/code/upstream-updates
+  - Add form with confirmation dialog (upstream updates are destructive)
+  - Show success/error messages
+  - Clear upstream updates cache after applying
+- [ ] Code deployment workflow (deploy to test/live environments)
+  - API endpoint: POST /v0/sites/{site_id}/environments/{env}/deploys
+  - Deploy from dev → test or test → live
+  - Include workflow monitoring with progress bars
+  - Clear environment cache after deployment
+
 ## Phase 3: Build Pipeline & Design
 
 ### Build Pipeline
@@ -28,24 +42,17 @@
   - Consolidate cache operations with timestamps
 
 ### Testing
-- [x] Investigate and fix failing PHPUnit tests (all tests passing)
 - [ ] Add Playwright E2E tests (as mentioned in CLAUDE.md Phase 3)
 - [ ] Increase test coverage for git-related functions
 
-## Features
+## Planned Features
 
-### Git & Development
-- [ ] Investigate upstream updates count discrepancy (shows 3, should show 1)
-- [ ] Implement git reset functionality (restore to previous commit)
-- [ ] Add "Apply Upstream Updates" button
-- [ ] Add upstream update details (changelog, release notes)
-- [x] Implement multidev environment creation (with AJAX progress bars)
-
-### Additional Features (from CLAUDE.md Phase 2)
-- [ ] Upstream update detection and application
-- [ ] Code deployment (push to test/live)
-- [ ] Backup management (create, list, restore if safe)
-- [x] Workflow status monitoring with polling (implemented for multidev and connection mode)
+### Backup Management
+- [ ] Create Backups admin page
+- [ ] List available backups with API endpoint: GET /v0/sites/{site_id}/environments/{env}/backups/catalog
+- [ ] Create backup button with API endpoint: POST /v0/sites/{site_id}/environments/{env}/backups/create
+- [ ] Download backup links (if API provides download URLs)
+- [ ] Restore backup functionality (evaluate security implications)
 
 ### Authentication & Security
 - [ ] User-scoped machine tokens (store in user meta with Pantheon secrets using user ID suffix)
@@ -53,7 +60,7 @@
   - Stored as `pantheon_get_secret("ash_nazg_machine_token_{user_id}")`
   - Allows better audit trails and token revocation per user
 
-### Destructive Operations
+### Destructive Operations (Future/Experimental)
 - [ ] Create "Delete Site" page with big red button
   - Hidden/easter egg admin page with ominous warnings
   - Multiple confirmation dialogs with scary, explicit messages
@@ -72,3 +79,28 @@
 - [ ] Document build process and SASS usage
 - [ ] Add screenshots to README
 - [ ] Update CLAUDE.md with latest patterns and standards
+
+---
+
+## ✅ Completed Features
+
+### Phase 1 & 2 Complete
+- ✅ Plugin bootstrap and activation
+- ✅ Composer setup with dependencies
+- ✅ API client with authentication (session token exchange and caching)
+- ✅ Pantheon environment detection via $_ENV variables
+- ✅ Settings page with machine token configuration
+- ✅ Environment status display and comprehensive API endpoint testing
+- ✅ Debug log viewer with fetch/clear functionality
+- ✅ SFTP/Git mode toggle with polling verification
+- ✅ Environment state management with persistent storage
+- ✅ Site label inline editing
+- ✅ Site addons management (Redis, Solr)
+- ✅ Workflows integration (scaffold_extensions, Object Cache Pro installation)
+- ✅ Multidev environment creation with AJAX progress bars
+- ✅ Multidev merge and delete operations
+- ✅ Upstream update detection and display
+- ✅ Uncommitted changes display (diffstat in SFTP mode)
+- ✅ Commit SFTP changes form
+- ✅ Recent commits display
+- ✅ Workflow status monitoring with polling
