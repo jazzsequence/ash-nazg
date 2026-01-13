@@ -808,12 +808,15 @@ This runs PHPUnit with the configuration in `phpunit.xml.dist`.
   ```json
   {
     "environment_name": "multidev-name",
-    "from_environment": "dev"
+    "from_environment": "dev",
+    "clone_database": true,
+    "clone_files": true
   }
   ```
 - **Returns**: Environment creation response
 - **Note**: Multidev names must be lowercase, alphanumeric with hyphens
 - **Note**: Parameters are `environment_name` and `from_environment` (not `environment_id` or `source_environment`)
+- **Note**: `clone_database` and `clone_files` are optional booleans (default: false). Set to true to clone database and files from source environment.
 
 #### `POST /v0/sites/{site_id}/environments/dev/merge`
 - **Purpose**: Merge a multidev environment into dev

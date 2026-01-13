@@ -1453,6 +1453,8 @@ function create_multidev( $site_id, $env_name, $source_env = 'dev' ) {
 	$body = [
 		'environment_name' => $env_name,
 		'from_environment' => $source_env,
+		'clone_database' => true,
+		'clone_files' => true,
 	];
 
 	$result = api_request( $endpoint, 'POST', $body );
