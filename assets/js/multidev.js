@@ -27,8 +27,8 @@
 						const status = response.data;
 
 						// Update progress if callback provided
-						if (progressCallback && status.step && status.number_of_tasks) {
-							const progress = Math.round((status.step / status.number_of_tasks) * 100);
+						if (progressCallback && status.step && status.operations && status.operations.length > 0) {
+							const progress = Math.round((status.step / status.operations.length) * 100);
 							progressCallback(progress, status.active_description || '');
 						}
 
