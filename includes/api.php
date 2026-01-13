@@ -239,6 +239,7 @@ function api_request( $endpoint, $method = 'GET', $body = [] ) {
 		$error_message = isset( $data['message'] ) ? $data['message'] : 'Unknown API error';
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			error_log( sprintf( 'Ash-Nazg: API error %d: %s', $status_code, $error_message ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( sprintf( 'Ash-Nazg: Full API response body: %s', $body ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		}
 		return new \WP_Error(
 			'api_error',
