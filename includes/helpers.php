@@ -94,3 +94,32 @@ function is_multidev_environment( $env = null ) {
 	$standard_envs = [ 'dev', 'test', 'live' ];
 	return ! in_array( $env, $standard_envs, true );
 }
+
+/**
+ * Check if dev environment has different commits than target environment.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $target_env Target environment name to compare against dev.
+ * @return bool True if dev has different commits (changes to merge), false otherwise.
+ */
+function dev_has_changes_for_env( $site_id, $target_env ) {
+	$dev_commits = \Pantheon\AshNazg\API\get_environment_commits( $site_id, 'dev' );
+	$target_commits = \Pantheon\AshNazg\API\get_environment_commits( $site_id, $target_env );
+
+	if ( ! $dev_commits || is_wp_error( $dev_commits ) || ! is_array( $dev_commits ) || empty( $dev_commits ) ) {
+		return false;
+	}
+
+	if ( ! $target_commits || is_wp_error( $target_commits ) || ! is_array( $target_commits ) || empty( $target_commits ) ) {
+		return false;
+	}
+
+	$dev_latest_hash = $dev_commits[0]['hash'] ?? $dev_commits[0]['id'] ?? null;
+	$target_latest_hash = $target_commits[0]['hash'] ?? $target_commits[0]['id'] ?? null;
+
+	if ( ! $dev_latest_hash || ! $target_latest_hash ) {
+		return false;
+	}
+
+	return $dev_latest_hash !== $target_latest_hash;
+}

@@ -42,7 +42,11 @@ use Pantheon\AshNazg\Helpers;
 		$current_env = API\get_pantheon_environment();
 		$is_multidev = Helpers\is_multidev_environment( $current_env );
 		?>
-		<?php if ( $is_multidev ) : ?>
+		<?php
+		// Check if dev has different commits than this multidev.
+		$has_dev_changes = $is_multidev && Helpers\dev_has_changes_for_env( $site_id, $current_env );
+		?>
+		<?php if ( $is_multidev && $has_dev_changes ) : ?>
 		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
 			<h2><?php esc_html_e( 'Merge Dev Changes', 'ash-nazg' ); ?></h2>
 			<p>
@@ -388,17 +392,7 @@ use Pantheon\AshNazg\Helpers;
 						<?php foreach ( $multidevs as $multidev_id => $multidev_data ) : ?>
 							<?php
 							// Check if dev has different commits than this multidev.
-							$has_dev_changes = false;
-							if ( $dev_commits && ! is_wp_error( $dev_commits ) && is_array( $dev_commits ) && ! empty( $dev_commits ) ) {
-								$multidev_commits = API\get_environment_commits( $site_id, $multidev_id );
-								if ( $multidev_commits && ! is_wp_error( $multidev_commits ) && is_array( $multidev_commits ) && ! empty( $multidev_commits ) ) {
-									$dev_latest_hash = $dev_commits[0]['hash'] ?? $dev_commits[0]['id'] ?? null;
-									$multidev_latest_hash = $multidev_commits[0]['hash'] ?? $multidev_commits[0]['id'] ?? null;
-									if ( $dev_latest_hash && $multidev_latest_hash && $dev_latest_hash !== $multidev_latest_hash ) {
-										$has_dev_changes = true;
-									}
-								}
-							}
+							$has_dev_changes = Helpers\dev_has_changes_for_env( $site_id, $multidev_id );
 							?>
 							<tr>
 								<td><strong><?php echo esc_html( $multidev_id ); ?></strong></td>

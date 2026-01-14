@@ -77,9 +77,20 @@
 								$button.prop('disabled', false);
 
 								if (status.result === 'succeeded') {
-									alert(ashNazgDevelopment.i18n.updatesApplied);
-									// Reload page to show updated state
-									window.location.reload();
+									// Clear upstream updates cache before reloading
+									$.ajax({
+										url: ashNazgDevelopment.ajaxUrl,
+										type: 'POST',
+										data: {
+											action: 'ash_nazg_clear_upstream_cache',
+											nonce: ashNazgDevelopment.clearUpstreamCacheNonce
+										},
+										complete: function() {
+											// Reload page whether cache clear succeeded or not
+											alert(ashNazgDevelopment.i18n.updatesApplied);
+											window.location.reload();
+										}
+									});
 								} else {
 									alert(status.error || ashNazgDevelopment.i18n.operationFailed);
 								}

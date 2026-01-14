@@ -32,6 +32,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_merge_dev_to_multidev', __NAMESPACE__ . '\\ajax_merge_dev_to_multidev' );
 	add_action( 'wp_ajax_ash_nazg_update_site_label', __NAMESPACE__ . '\\ajax_update_site_label' );
 	add_action( 'wp_ajax_ash_nazg_apply_upstream_updates', __NAMESPACE__ . '\\ajax_apply_upstream_updates' );
+	add_action( 'wp_ajax_ash_nazg_clear_upstream_cache', __NAMESPACE__ . '\\ajax_clear_upstream_cache' );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
 }
@@ -188,6 +189,7 @@ function enqueue_assets( $hook ) {
 			[
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'workflowStatusNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
+				'clearUpstreamCacheNonce' => wp_create_nonce( 'ash_nazg_clear_upstream_cache' ),
 				'i18n' => [
 					'confirmApplyUpdates' => __( 'Are you sure you want to apply upstream updates? This action cannot be undone.', 'ash-nazg' ),
 					'applyingUpdates' => __( 'Applying Upstream Updates...', 'ash-nazg' ),
@@ -1436,6 +1438,33 @@ function ajax_apply_upstream_updates() {
 			'site_id' => $site_id,
 		]
 	);
+}
+
+/**
+ * AJAX handler to clear upstream updates cache.
+ *
+ * @return void
+ */
+function ajax_clear_upstream_cache() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_clear_upstream_cache', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+
+	if ( ! $site_id ) {
+		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
+	}
+
+	// Clear upstream updates cache.
+	$cache_key = sprintf( 'ash_nazg_upstream_updates_%s', $site_id );
+	delete_transient( $cache_key );
+
+	wp_send_json_success( [ 'message' => __( 'Cache cleared.', 'ash-nazg' ) ] );
 }
 
 /**
