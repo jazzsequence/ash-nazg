@@ -210,15 +210,15 @@ class Test_Git_API extends TestCase {
 	}
 
 	/**
-	 * Test that all git functions use HOUR_IN_SECONDS for cache expiration.
+	 * Test git function cache durations.
 	 */
 	public function test_git_functions_cache_duration() {
 		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
 
 		$this->assertMatchesRegularExpression(
-			'/function get_environment_commits.*set_transient.*HOUR_IN_SECONDS/s',
+			'/function get_environment_commits.*set_transient.*MINUTE_IN_SECONDS/s',
 			$file_contents,
-			'get_environment_commits should cache for 1 hour'
+			'get_environment_commits should cache for 5 minutes'
 		);
 
 		$this->assertMatchesRegularExpression(

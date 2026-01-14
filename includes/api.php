@@ -1216,14 +1216,14 @@ function get_environment_commits( $site_id, $env ) {
 		return $result;
 	}
 
-	/* Cache for 1 hour. */
+	/* Cache for 5 minutes to keep commit log fresh. */
 	set_transient(
 		$cache_key,
 		[
 			'data' => $result,
 			'cached_at' => time(),
 		],
-		HOUR_IN_SECONDS
+		5 * MINUTE_IN_SECONDS
 	);
 
 	return $result;
