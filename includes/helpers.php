@@ -152,9 +152,25 @@ function dev_has_changes_for_env( $site_id, $target_env ) {
 		}
 	}
 
-	// Only show merge if dev has changes AND target is cleanly behind (no unique commits).
-	// If target has commits dev doesn't have (target is ahead), don't show merge.
-	return $dev_unique > 0 && $target_unique === 0;
+	// Find the most recent dev commit that exists in target (accounts for merges).
+	// The position in dev's list tells us how many commits target is behind.
+	// - If shared commit is at dev[0-9]: target is < 10 behind = up-to-date enough
+	// - If shared commit is at dev[10+]: target is >= 10 behind = show merge button
+	if ( ! empty( $dev_commits ) && ! empty( $target_commits ) ) {
+		// Check dev commits from newest to oldest
+		foreach ( $dev_commits as $index => $commit ) {
+			$dev_hash = $commit['hash'] ?? $commit['id'] ?? null;
+			if ( $dev_hash && isset( $target_hashes[ $dev_hash ] ) ) {
+				// Found most recent shared commit at position $index in dev
+				// If it's within first 10 commits, target is reasonably up-to-date
+				return $index >= 10;
+			}
+		}
+		// No shared commits found in entire window = definitely behind
+		return true;
+	}
+
+	return false;
 }
 
 /**
