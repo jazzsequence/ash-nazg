@@ -1584,6 +1584,8 @@ function render_development_page() {
 		$commits = API\get_environment_commits( $site_id, $environment );
 		$dev_commits = API\get_environment_commits( $site_id, 'dev' );
 		$upstream_updates = API\get_upstream_updates( $site_id );
+		// Filter upstream updates to only show those not in current environment.
+		$upstream_updates = \Pantheon\AshNazg\Helpers\filter_upstream_updates_for_env( $upstream_updates, $site_id, $environment );
 		$environments = API\get_environments( $site_id );
 
 		// Get connection mode from environment info.

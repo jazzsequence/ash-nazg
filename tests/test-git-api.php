@@ -62,7 +62,7 @@ class Test_Git_API extends TestCase {
 		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
 
 		$this->assertStringContainsString(
-			'/v0/sites/%s/code-upstream-updates',
+			'/v0/sites/%s/upstream-updates',
 			$file_contents,
 			'get_upstream_updates should use correct API endpoint'
 		);

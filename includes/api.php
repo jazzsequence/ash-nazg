@@ -1287,7 +1287,7 @@ function get_upstream_updates( $site_id ) {
 		return $cached['data'];
 	}
 
-	$endpoint = sprintf( '/v0/sites/%s/code-upstream-updates', $site_id );
+	$endpoint = sprintf( '/v0/sites/%s/upstream-updates', $site_id );
 	$result = api_request( $endpoint, 'GET' );
 
 	if ( is_wp_error( $result ) ) {

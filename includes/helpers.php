@@ -123,3 +123,50 @@ function dev_has_changes_for_env( $site_id, $target_env ) {
 
 	return $dev_latest_hash !== $target_latest_hash;
 }
+
+/**
+ * Filter upstream updates to only include those not in current environment.
+ *
+ * @param array  $upstream_updates Site-wide upstream updates from API.
+ * @param string $site_id Site UUID.
+ * @param string $env Environment name.
+ * @return array Filtered upstream updates for current environment only.
+ */
+function filter_upstream_updates_for_env( $upstream_updates, $site_id, $env ) {
+	if ( ! $upstream_updates || is_wp_error( $upstream_updates ) || ! is_array( $upstream_updates ) ) {
+		return [];
+	}
+
+	// Get commits in current environment.
+	$env_commits = \Pantheon\AshNazg\API\get_environment_commits( $site_id, $env );
+	if ( ! $env_commits || is_wp_error( $env_commits ) || ! is_array( $env_commits ) ) {
+		// If we can't get env commits, return all upstream updates (safer).
+		return $upstream_updates;
+	}
+
+	// Build set of commit hashes in current environment.
+	$env_hashes = [];
+	foreach ( $env_commits as $commit ) {
+		$hash = $commit['hash'] ?? $commit['id'] ?? null;
+		if ( $hash ) {
+			$env_hashes[ $hash ] = true;
+		}
+	}
+
+	// Filter out upstream commits already in this environment.
+	$filtered_updates = $upstream_updates;
+	if ( isset( $upstream_updates['update_log'] ) && is_array( $upstream_updates['update_log'] ) ) {
+		$filtered_log = [];
+		foreach ( $upstream_updates['update_log'] as $update ) {
+			$hash = $update['hash'] ?? $update['commit'] ?? null;
+			// Only include if not already in environment.
+			if ( $hash && ! isset( $env_hashes[ $hash ] ) ) {
+				$filtered_log[] = $update;
+			}
+		}
+		$filtered_updates['update_log'] = $filtered_log;
+		$filtered_updates['behind'] = count( $filtered_log );
+	}
+
+	return $filtered_updates;
+}
