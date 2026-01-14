@@ -163,23 +163,23 @@ class Test_Git_API extends TestCase {
 	public function test_git_functions_error_logging() {
 		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
 
-		// Check each function has error logging.
+		// Check each function has error logging using debug_log helper.
 		$this->assertMatchesRegularExpression(
-			'/function get_environment_commits.*WP_DEBUG.*error_log.*Failed to get commits/s',
+			'/function get_environment_commits.*debug_log.*Failed to get commits/s',
 			$file_contents,
-			'get_environment_commits should log errors when WP_DEBUG is enabled'
+			'get_environment_commits should log errors using debug_log helper'
 		);
 
 		$this->assertMatchesRegularExpression(
-			'/function get_upstream_updates.*WP_DEBUG.*error_log.*Failed to get upstream updates/s',
+			'/function get_upstream_updates.*debug_log.*Failed to get upstream updates/s',
 			$file_contents,
-			'get_upstream_updates should log errors when WP_DEBUG is enabled'
+			'get_upstream_updates should log errors using debug_log helper'
 		);
 
 		$this->assertMatchesRegularExpression(
-			'/function get_code_tips.*WP_DEBUG.*error_log.*Failed to get code tips/s',
+			'/function get_code_tips.*debug_log.*Failed to get code tips/s',
 			$file_contents,
-			'get_code_tips should log errors when WP_DEBUG is enabled'
+			'get_code_tips should log errors using debug_log helper'
 		);
 	}
 

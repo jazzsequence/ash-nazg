@@ -23,10 +23,10 @@
     "phpcs": "@lint:phpcs",
     "phpcbf": "./vendor/bin/phpcbf -s",
     "phpunit:single": [
-      "./vendor/bin/phpunit --verbose"
+      "./vendor/bin/phpunit --testdox"
     ],
     "phpunit:ms": [
-      "WP_MULTISITE=1 ./vendor/bin/phpunit --verbose"
+      "WP_MULTISITE=1 ./vendor/bin/phpunit --testdox"
     ],
     "phpunit": [
       "./bin/test.sh"

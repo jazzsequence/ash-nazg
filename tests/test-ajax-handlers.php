@@ -253,18 +253,18 @@ class Test_AJAX_Handlers extends TestCase {
 
 		$admin_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/admin.php' );
 
-		// Should use error_log for debugging.
+		// Should use debug_log helper for debugging.
 		$this->assertGreaterThan(
 			5,
-			substr_count( $admin_file_contents, 'error_log' ),
+			substr_count( $admin_file_contents, 'debug_log' ),
 			'Should log operations for debugging'
 		);
 
 		// Should log AJAX operations.
 		$this->assertStringContainsString(
-			'Ash-Nazg: AJAX',
+			'AJAX',
 			$admin_file_contents,
-			'Should prefix AJAX logs with Ash-Nazg: AJAX'
+			'Should log AJAX operations'
 		);
 	}
 }

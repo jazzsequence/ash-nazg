@@ -1411,6 +1411,7 @@ function ajax_clear_upstream_cache() {
 	}
 
 	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
 
 	if ( ! $site_id ) {
 		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
@@ -1419,6 +1420,16 @@ function ajax_clear_upstream_cache() {
 	// Clear upstream updates cache.
 	$cache_key = sprintf( 'ash_nazg_upstream_updates_%s', $site_id );
 	delete_transient( $cache_key );
+
+	// Clear commits cache for current environment to ensure recent commits list refreshes.
+	if ( $environment ) {
+		$commits_cache_key = sprintf( 'ash_nazg_commits_%s_%s', $site_id, $environment );
+		delete_transient( $commits_cache_key );
+
+		// Also clear dev commits cache as it's used for merge section logic.
+		$dev_commits_cache_key = sprintf( 'ash_nazg_commits_%s_dev', $site_id );
+		delete_transient( $dev_commits_cache_key );
+	}
 
 	wp_send_json_success( [ 'message' => __( 'Cache cleared.', 'ash-nazg' ) ] );
 }

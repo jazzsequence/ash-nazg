@@ -96,11 +96,14 @@ function is_multidev_environment( $env = null ) {
 }
 
 /**
- * Check if dev environment has different commits than target environment.
+ * Check if dev environment has commits that target environment doesn't have.
+ *
+ * This checks if dev has changes that can be merged into the target environment.
+ * Returns false if target is ahead of dev or if they're in sync.
  *
  * @param string $site_id Site UUID.
  * @param string $target_env Target environment name to compare against dev.
- * @return bool True if dev has different commits (changes to merge), false otherwise.
+ * @return bool True if dev has commits not in target (changes to merge), false otherwise.
  */
 function dev_has_changes_for_env( $site_id, $target_env ) {
 	$dev_commits = \Pantheon\AshNazg\API\get_environment_commits( $site_id, 'dev' );
@@ -114,14 +117,26 @@ function dev_has_changes_for_env( $site_id, $target_env ) {
 		return false;
 	}
 
-	$dev_latest_hash = $dev_commits[0]['hash'] ?? $dev_commits[0]['id'] ?? null;
-	$target_latest_hash = $target_commits[0]['hash'] ?? $target_commits[0]['id'] ?? null;
-
-	if ( ! $dev_latest_hash || ! $target_latest_hash ) {
-		return false;
+	// Build set of all commit hashes in target environment.
+	$target_hashes = [];
+	foreach ( $target_commits as $commit ) {
+		$hash = $commit['hash'] ?? $commit['id'] ?? null;
+		if ( $hash ) {
+			$target_hashes[ $hash ] = true;
+		}
 	}
 
-	return $dev_latest_hash !== $target_latest_hash;
+	// Check if dev has any commits not in target environment.
+	foreach ( $dev_commits as $commit ) {
+		$hash = $commit['hash'] ?? $commit['id'] ?? null;
+		if ( $hash && ! isset( $target_hashes[ $hash ] ) ) {
+			// Dev has a commit that target doesn't have.
+			return true;
+		}
+	}
+
+	// All dev commits are in target - nothing to merge.
+	return false;
 }
 
 /**

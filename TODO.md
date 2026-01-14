@@ -38,15 +38,9 @@
 ## Code Quality
 
 ### Refactoring
-- [x] Create helper functions for repeated patterns
-  - ✅ `debug_log()` helper created (ready to replace ~46 instances)
-  - ✅ `verify_ajax_request()` helper created
-  - ✅ `is_local_environment()` helper created
-  - ✅ `is_multidev_environment()` helper created
-  - ✅ `dev_has_changes_for_env()` helper created
-- [ ] Replace remaining WP_DEBUG logging patterns with `debug_log()`
+- [ ] Replace ~60 WP_DEBUG logging patterns with `debug_log()` helper (currently only 4/60 replaced)
 - [ ] Create `ensure_site_id()` and `ensure_environment()` helpers
-- [ ] Consolidate cache operations with timestamps
+  - Pattern to replace: repeated `if ( ! $site_id ) { return WP_Error... }`
 
 ### Testing
 - [ ] Add Playwright E2E tests (as mentioned in CLAUDE.md Phase 3)
@@ -117,5 +111,13 @@
 - ✅ Auto-clear invalid session tokens on 401/403 errors
 - ✅ Manual session token clearing on Settings page
 - ✅ Upstream cache invalidation after applying updates
-- ✅ Helper functions for repeated patterns (debug_log, dev_has_changes_for_env, etc.)
+- ✅ Helper functions created for repeated patterns:
+  - `debug_log()` - WP_DEBUG logging wrapper
+  - `verify_ajax_request()` - AJAX nonce and capability verification
+  - `is_local_environment()` - Detect local dev environments
+  - `is_multidev_environment()` - Detect Pantheon multidev environments
+  - `dev_has_changes_for_env()` - Compare commits between dev and target env
+  - `filter_upstream_updates_for_env()` - Filter upstream updates per environment
+  - `get_cache_timestamp()` - Get cache timestamp for "Last checked" displays
 - ✅ Local URL override for Lando and Pantheon multidev environments (MU-plugin)
+- ✅ Per-environment upstream updates filtering (no longer shows updates already applied)
