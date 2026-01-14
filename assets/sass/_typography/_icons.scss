@@ -1,0 +1,26 @@
+/**
+ * Typography - Icons
+ * Icon colors and styling
+ */
+
+@use '../variables' as *;
+
+.ash-nazg-icon-success {
+	color: $color-success;
+}
+
+.ash-nazg-icon-error {
+	color: $color-error;
+}
+
+.ash-nazg-icon-warning {
+	color: $color-warning;
+}
+
+.ash-nazg-icon-locked {
+	color: $color-error;
+}
+
+.ash-nazg-icon-unlocked {
+	color: $color-success;
+}

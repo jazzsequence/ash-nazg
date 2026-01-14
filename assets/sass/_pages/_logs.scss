@@ -1,0 +1,49 @@
+/**
+ * Pages - Logs
+ * Debug log viewer styling
+ */
+
+@use '../variables' as *;
+
+#ash-nazg-logs-timestamp {
+	margin-bottom: $spacing-lg;
+}
+
+#ash-nazg-logs-loading {
+	display: none;
+	margin-top: $spacing-xl;
+
+	.spinner {
+		float: none;
+		margin: 0 $spacing-md 0 0;
+	}
+}
+
+#ash-nazg-logs-container {
+	margin-top: $spacing-xl;
+}
+
+.ash-nazg-log-contents {
+	background: $color-bg-muted;
+	border: 1px solid #ddd;
+	padding: $spacing-lg;
+	border-radius: $border-radius-md;
+	max-height: 600px;
+	overflow-y: auto;
+
+	pre {
+		margin: 0;
+		white-space: pre-wrap;
+		word-wrap: break-word;
+		font-family: monospace;
+		font-size: $font-size-small;
+	}
+}
+
+.ash-nazg-log-empty {
+	color: $color-text-muted;
+}
+
+.ash-nazg-clear-button {
+	margin-left: $spacing-md;
+}

@@ -1,0 +1,92 @@
+/**
+ * Variables
+ * Color palette and spacing values using PDS design tokens where available
+ * and WordPress admin colors where appropriate
+ */
+
+// PDS Colors - Status/Semantic (mapped to PDS tokens)
+$color-success: var(--pds-color-semantic-success-foreground);
+$color-error: var(--pds-color-semantic-critical-foreground);
+$color-warning: var(--pds-color-semantic-warning-foreground);
+
+// Colors - Text (use PDS neutral colors)
+$color-text-default: var(--pds-color-text-default);
+$color-text-muted: var(--pds-color-text-default-secondary);
+$color-text-light: #999; // Custom for light text
+$color-text-meta: var(--pds-color-neutral-400);
+$color-text-dark: var(--pds-color-foreground-default);
+
+// Colors - Borders (use PDS border tokens)
+$color-border: var(--pds-color-border-default);
+$color-border-light: var(--pds-color-neutral-300);
+$color-border-subtle: var(--pds-color-neutral-200);
+
+// Colors - Backgrounds (use PDS background tokens)
+$color-bg-white: var(--pds-color-background-default);
+$color-bg-light: var(--pds-color-background-default-secondary);
+$color-bg-muted: var(--pds-color-neutral-200);
+
+// Colors - Interactive (use PDS interactive tokens)
+$color-interactive-primary: var(--pds-color-button-primary-background-default);
+$color-interactive-primary-hover: var(--pds-color-button-primary-background-hover);
+$color-interactive-link: var(--pds-color-interactive-link-default);
+$color-interactive-link-hover: var(--pds-color-interactive-link-hover);
+
+// Colors - WordPress Admin compatibility
+$color-wp-blue: #2271b1;
+$color-wp-blue-dark: #135e96;
+$color-wp-link: #0073aa;
+
+// Colors - Environment Badges (GitHub-style, keep custom)
+$color-dev-bg: #f0f6fc;
+$color-dev-text: #0969da;
+$color-dev-border: #0969da;
+
+$color-test-bg: #fff8c5;
+$color-test-text: #9a6700;
+$color-test-border: #d4a72c;
+
+$color-live-bg: #dafbe1;
+$color-live-text: #1a7f37;
+$color-live-border: #1a7f37;
+
+$color-multidev-bg: #f3e8ff;
+$color-multidev-text: #8250df;
+$color-multidev-border: #8250df;
+
+$color-frozen-bg: #ffebe9;
+$color-frozen-text: #cf222e;
+$color-frozen-border: #cf222e;
+
+// Spacing (custom - PDS doesn't expose spacing tokens in CSS)
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 10px;
+$spacing-lg: 15px;
+$spacing-xl: 20px;
+
+// Font Sizes (custom - PDS doesn't expose font-size tokens directly in CSS)
+$font-size-tiny: 11px;
+$font-size-small: 12px;
+$font-size-normal: 13px;
+$font-size-medium: 16px;
+$font-size-large: 18px;
+$font-size-xlarge: 20px;
+
+// Border Radius (custom)
+$border-radius-sm: 3px;
+$border-radius-md: 4px;
+$border-radius-full: 50%;
+
+// Shadows (use PDS elevation tokens where possible)
+$shadow-light: var(--pds-elevation-raised);
+$shadow-medium: 0 1px 3px rgba(0, 0, 0, 0.2);
+$shadow-dark: var(--pds-elevation-overlay);
+
+// Transitions
+$transition-fast: 0.2s ease;
+$transition-normal: 0.3s ease;
+
+// Z-index
+$z-progress-overlay: 100000;
+$z-progress-modal: 100001;

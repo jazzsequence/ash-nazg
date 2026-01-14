@@ -1,0 +1,14 @@
+/**
+ * Tables - Avatars
+ * Gravatar avatar styling in tables
+ */
+
+@use '../variables' as *;
+
+.ash-nazg-avatar {
+	width: 32px;
+	height: 32px;
+	border-radius: $border-radius-full;
+	vertical-align: middle;
+	margin-right: $spacing-sm;
+}

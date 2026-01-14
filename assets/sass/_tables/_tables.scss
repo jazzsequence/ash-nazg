@@ -1,0 +1,103 @@
+/**
+ * Tables
+ * Table styling and column widths
+ */
+
+@use '../variables' as *;
+
+.ash-nazg-card table {
+	margin-bottom: 0;
+}
+
+.ash-nazg-card th {
+	width: 30%;
+	font-weight: 600;
+	padding: 12px 10px;
+}
+
+.ash-nazg-card td {
+	padding: 12px 10px;
+}
+
+.ash-nazg-card .widefat {
+	table-layout: fixed;
+	width: 100%;
+
+	thead th {
+		font-weight: 600;
+		background: $color-bg-light;
+	}
+
+	tbody tr:hover {
+		background: $color-bg-light;
+	}
+
+	td .dashicons {
+		font-size: 20px;
+		width: 20px;
+		height: 20px;
+	}
+
+	td code {
+		background: $color-bg-light;
+		padding: 2px 6px;
+		border-radius: $border-radius-sm;
+		font-family: 'Courier New', Courier, monospace;
+
+		&.ash-nazg-hash-copyable {
+			cursor: pointer;
+			user-select: all;
+			border-bottom: 1px dotted transparent;
+			transition: all $transition-fast;
+
+			&:hover {
+				border-bottom-color: $color-wp-blue;
+				background: #e5f0f7;
+			}
+
+			&.ash-nazg-hash-copied {
+				background: #00a32a !important;
+				color: #fff;
+				border-bottom-color: #00a32a;
+			}
+		}
+	}
+
+	// Column width utilities
+	th.ash-nazg-th-20 {
+		width: 20%;
+	}
+
+	th.ash-nazg-th-30 {
+		width: 30%;
+	}
+
+	th.ash-nazg-th-15 {
+		width: 15%;
+	}
+
+	th.ash-nazg-th-10 {
+		width: 10%;
+	}
+
+	th.ash-nazg-th-5 {
+		width: 5%;
+	}
+}
+
+.ash-nazg-table-mb {
+	margin-bottom: $spacing-xl;
+}
+
+.ash-nazg-th-icon {
+	width: 30px !important;
+	max-width: 30px !important;
+	min-width: 30px !important;
+	padding: 8px 4px !important;
+	text-align: center !important;
+	overflow: hidden !important;
+
+	.dashicons {
+		margin: 0 !important;
+	}
+}

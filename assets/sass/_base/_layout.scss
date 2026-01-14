@@ -1,0 +1,33 @@
+/**
+ * Base Layout
+ * Grid systems, card layouts, fundamental page structure
+ */
+
+@use '../variables' as *;
+
+.ash-nazg-dashboard {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+	gap: $spacing-xl;
+	margin-top: $spacing-xl;
+}
+
+.ash-nazg-card {
+	background: $color-bg-white;
+	border: 1px solid $color-border;
+	border-radius: $border-radius-md;
+	padding: $spacing-xl;
+	box-shadow: $shadow-light;
+}
+
+.ash-nazg-card-full {
+	grid-column: 1 / -1;
+}
+
+.ash-nazg-card h2 {
+	margin-top: 0;
+	margin-bottom: $spacing-lg;
+	padding-bottom: $spacing-md;
+	border-bottom: 1px solid $color-border-light;
+	font-size: $font-size-large;
+}

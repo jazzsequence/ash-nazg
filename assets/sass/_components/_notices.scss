@@ -1,0 +1,11 @@
+/**
+ * Components - Notices
+ * WordPress admin notices styling
+ */
+
+.notice.notice-success p:first-child strong,
+.notice.notice-error p:first-child strong,
+.notice.notice-warning p:first-child strong {
+	display: block;
+	margin-bottom: 5px;
+}

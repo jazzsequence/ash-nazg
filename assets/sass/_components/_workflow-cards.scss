@@ -1,0 +1,36 @@
+/**
+ * Components - Workflow Cards
+ * Workflow management card styling
+ */
+
+@use '../variables' as *;
+
+.workflows-container {
+	margin-top: $spacing-xl;
+}
+
+.workflow-card {
+	background: $color-bg-white;
+	border: 1px solid $color-border;
+	border-radius: $border-radius-md;
+	padding: $spacing-xl;
+	margin-bottom: $spacing-xl;
+	box-shadow: $shadow-light;
+
+	h3 {
+		margin-top: 0;
+		margin-bottom: $spacing-md;
+		font-size: $font-size-medium;
+	}
+
+	&.workflow-disabled {
+		background: $color-bg-light;
+		border-color: $color-border-light;
+		opacity: 0.7;
+	}
+
+	.submit {
+		margin-bottom: 0;
+		padding-top: $spacing-md;
+	}
+}

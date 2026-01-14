@@ -1,0 +1,24 @@
+/**
+ * Components - Edit Link
+ * Inline edit pencil icon styling
+ */
+
+@use '../variables' as *;
+
+.ash-nazg-edit-link {
+	text-decoration: none;
+	color: $color-text-meta;
+	margin-left: $spacing-sm;
+	font-size: $font-size-medium;
+	vertical-align: middle;
+
+	&:hover {
+		color: $color-wp-link;
+	}
+
+	.dashicons {
+		font-size: $font-size-medium;
+		width: 16px;
+		height: 16px;
+	}
+}

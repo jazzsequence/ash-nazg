@@ -1,0 +1,36 @@
+/**
+ * Pages - Dashboard
+ * Dashboard-specific styles including connection mode toggle
+ */
+
+@use '../variables' as *;
+
+/* Connection Mode Toggle */
+#ash-nazg-connection-mode-toggle {
+	display: inline-block;
+	margin-left: $spacing-md;
+
+	.dashicons {
+		margin-top: 3px;
+	}
+}
+
+#ash-nazg-mode-loading {
+	display: none;
+	margin-left: $spacing-md;
+
+	.spinner {
+		float: none;
+		margin: 0 $spacing-md 0 0;
+	}
+}
+
+.ash-nazg-card .dashicons-update {
+	margin-top: 3px;
+}
+
+/* Buttons with dashicons */
+.button .dashicons {
+	vertical-align: middle;
+	margin-right: $spacing-xs;
+}

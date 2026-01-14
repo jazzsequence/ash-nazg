@@ -1,0 +1,26 @@
+{
+  "name": "ash-nazg",
+  "version": "1.0.0",
+  "description": "WordPress plugin that integrates Pantheon Public API into the WordPress admin dashboard",
+  "scripts": {
+    "copy:pds": "mkdir -p assets/pds-design-tokens && cp ../pds-core/public/design-tokens/pds-design-tokens-light-mode.css assets/pds-design-tokens/",
+    "prebuild:css": "npm run copy:pds",
+    "build:css": "sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css --style=expanded",
+    "build:css:compressed": "sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css --style=compressed",
+    "watch:css": "npm run copy:pds && sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css --watch --style=expanded",
+    "build": "npm run build:css"
+  },
+  "keywords": [
+    "wordpress",
+    "pantheon",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "sass": "^1.83.4"
+  },
+  "dependencies": {
+    "@pantheon-systems/pds-design-tokens": "file:../pds-core/node_modules/@pantheon-systems/pds-design-tokens"
+  }
+}

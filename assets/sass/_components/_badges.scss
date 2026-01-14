@@ -1,0 +1,65 @@
+/**
+ * Components - Badges
+ * Environment and status badges
+ */
+
+@use '../variables' as *;
+
+.ash-nazg-badge {
+	display: inline-block;
+	padding: $spacing-xs $spacing-md;
+	border-radius: $border-radius-sm;
+	font-size: $font-size-small;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin-left: $spacing-sm;
+}
+
+.ash-nazg-badge-dev {
+	background: $color-dev-bg;
+	color: $color-dev-text;
+	border: 1px solid $color-dev-border;
+}
+
+.ash-nazg-badge-test {
+	background: $color-test-bg;
+	color: $color-test-text;
+	border: 1px solid $color-test-border;
+}
+
+.ash-nazg-badge-live {
+	background: $color-live-bg;
+	color: $color-live-text;
+	border: 1px solid $color-live-border;
+}
+
+.ash-nazg-badge-multidev {
+	background: $color-multidev-bg;
+	color: $color-multidev-text;
+	border: 1px solid $color-multidev-border;
+}
+
+.ash-nazg-badge-sftp {
+	background: $color-test-bg;
+	color: $color-test-text;
+	border: 1px solid $color-test-border;
+}
+
+.ash-nazg-badge-git {
+	background: $color-live-bg;
+	color: $color-live-text;
+	border: 1px solid $color-live-border;
+}
+
+.ash-nazg-badge-active {
+	background: $color-live-bg;
+	color: $color-live-text;
+	border: 1px solid $color-live-border;
+}
+
+.ash-nazg-badge-frozen {
+	background: $color-frozen-bg;
+	color: $color-frozen-text;
+	border: 1px solid $color-frozen-border;
+}

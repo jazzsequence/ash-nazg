@@ -1,0 +1,30 @@
+/**
+ * Utilities - Spacing
+ * Margin and padding utility classes
+ */
+
+@use '../variables' as *;
+
+.ash-nazg-m-0 {
+	margin: 0;
+}
+
+.ash-nazg-ml-10 {
+	margin-left: $spacing-md;
+}
+
+.ash-nazg-mt-20 {
+	margin-top: $spacing-xl;
+}
+
+.ash-nazg-mb-10 {
+	margin-bottom: $spacing-md;
+}
+
+.ash-nazg-mb-20 {
+	margin-bottom: $spacing-xl;
+}
+
+.ash-nazg-my-10 {
+	margin: $spacing-md 0;
+}

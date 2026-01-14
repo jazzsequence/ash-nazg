@@ -1,0 +1,59 @@
+/**
+ * Typography - Text
+ * Text styling, sizes, and colors
+ */
+
+@use '../variables' as *;
+
+.ash-nazg-section-header {
+	margin-top: $spacing-xl;
+	margin-bottom: $spacing-md;
+	font-size: $font-size-medium;
+	border-bottom: 1px solid $color-border-light;
+	padding-bottom: 5px;
+}
+
+.ash-nazg-meta-text {
+	font-size: $font-size-small;
+	font-weight: normal;
+	color: $color-text-meta;
+}
+
+.ash-nazg-small-text {
+	font-size: $font-size-small;
+}
+
+.ash-nazg-tiny-text {
+	font-size: $font-size-tiny;
+}
+
+.ash-nazg-label-text {
+	font-size: $font-size-normal;
+	font-weight: normal;
+	color: $color-text-muted;
+}
+
+/* Text Colors */
+.ash-nazg-text-success {
+	color: $color-success;
+}
+
+.ash-nazg-text-error {
+	color: $color-error;
+}
+
+.ash-nazg-text-warning {
+	color: $color-warning;
+}
+
+.ash-nazg-text-muted {
+	color: $color-text-muted;
+}
+
+.ash-nazg-text-light {
+	color: $color-text-light;
+}
+
+.ash-nazg-text-meta {
+	color: $color-text-meta;
+}
