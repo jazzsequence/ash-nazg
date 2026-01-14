@@ -235,6 +235,22 @@ function api_request( $endpoint, $method = 'GET', $body = [] ) {
 	$body        = wp_remote_retrieve_body( $response );
 	$data        = json_decode( $body, true );
 
+	// Handle authentication errors by clearing cached session token.
+	if ( 401 === $status_code || 403 === $status_code ) {
+		delete_transient( 'ash_nazg_session_token' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Ash-Nazg: Authentication failed (%d), cleared cached session token', $status_code ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+		return new \WP_Error(
+			'authentication_failed',
+			sprintf(
+				/* translators: %d: HTTP status code */
+				__( 'Authentication failed (%d). Session token has been cleared. Please try again.', 'ash-nazg' ),
+				$status_code
+			)
+		);
+	}
+
 	if ( $status_code < 200 || $status_code >= 300 ) {
 		$error_message = isset( $data['message'] ) ? $data['message'] : 'Unknown API error';
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -1304,7 +1320,10 @@ function get_upstream_updates( $site_id ) {
  * @return array|WP_Error Workflow response on success, WP_Error on failure.
  */
 function apply_upstream_updates( $site_id, $env, $updatedb = false, $xoption = false ) {
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/upstream/updates', $site_id, $env );
+	/* Map local environment names to dev for API queries. */
+	$api_env = map_local_env_to_dev( $env );
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/upstream/updates', $site_id, $api_env );
 
 	$body = [
 		'updatedb' => (bool) $updatedb,
