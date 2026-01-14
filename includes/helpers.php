@@ -117,7 +117,15 @@ function dev_has_changes_for_env( $site_id, $target_env ) {
 		return false;
 	}
 
-	// Build set of all commit hashes in target environment.
+	// Build set of all commit hashes in both environments.
+	$dev_hashes = [];
+	foreach ( $dev_commits as $commit ) {
+		$hash = $commit['hash'] ?? $commit['id'] ?? null;
+		if ( $hash ) {
+			$dev_hashes[ $hash ] = true;
+		}
+	}
+
 	$target_hashes = [];
 	foreach ( $target_commits as $commit ) {
 		$hash = $commit['hash'] ?? $commit['id'] ?? null;
@@ -127,16 +135,26 @@ function dev_has_changes_for_env( $site_id, $target_env ) {
 	}
 
 	// Check if dev has any commits not in target environment.
+	$dev_unique = 0;
 	foreach ( $dev_commits as $commit ) {
 		$hash = $commit['hash'] ?? $commit['id'] ?? null;
 		if ( $hash && ! isset( $target_hashes[ $hash ] ) ) {
-			// Dev has a commit that target doesn't have.
-			return true;
+			$dev_unique++;
 		}
 	}
 
-	// All dev commits are in target - nothing to merge.
-	return false;
+	// Check if target has any commits not in dev environment.
+	$target_unique = 0;
+	foreach ( $target_commits as $commit ) {
+		$hash = $commit['hash'] ?? $commit['id'] ?? null;
+		if ( $hash && ! isset( $dev_hashes[ $hash ] ) ) {
+			$target_unique++;
+		}
+	}
+
+	// Only show merge if dev has changes AND target is cleanly behind (no unique commits).
+	// If target has commits dev doesn't have (target is ahead), don't show merge.
+	return $dev_unique > 0 && $target_unique === 0;
 }
 
 /**
