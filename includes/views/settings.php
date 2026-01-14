@@ -178,4 +178,14 @@ use Pantheon\AshNazg\API;
 		<?php wp_nonce_field( 'test_connection', 'test_connection_nonce' ); ?>
 		<?php submit_button( __( 'Test Connection', 'ash-nazg' ), 'secondary', 'test_connection' ); ?>
 	</form>
+
+	<hr>
+
+	<h2><?php esc_html_e( 'Clear Session Token', 'ash-nazg' ); ?></h2>
+	<p><?php esc_html_e( 'Clear the cached session token. Use this if you are experiencing authentication issues or after API downtime. A new session token will be generated automatically on the next API request.', 'ash-nazg' ); ?></p>
+
+	<form method="post" action="">
+		<?php wp_nonce_field( 'clear_session', 'clear_session_nonce' ); ?>
+		<?php submit_button( __( 'Clear Session Token', 'ash-nazg' ), 'secondary', 'clear_session' ); ?>
+	</form>
 </div>

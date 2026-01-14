@@ -68,6 +68,12 @@ function render_settings_page() {
 		$test_result = API\test_connection();
 	}
 
+	// Handle clear session token.
+	if ( isset( $_POST['clear_session_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['clear_session_nonce'] ) ), 'clear_session' ) ) {
+		delete_transient( 'ash_nazg_session_token' );
+		$message = __( 'Session token cleared successfully. A new session token will be generated on the next API request.', 'ash-nazg' );
+	}
+
 	$is_pantheon = API\is_pantheon();
 	$has_secret_api = function_exists( 'pantheon_get_secret' );
 	$site_id = API\get_pantheon_site_id();
