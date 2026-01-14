@@ -2,31 +2,20 @@
 
 ## Current Work-in-Progress
 
-### Git & Development Features
-- [ ] Code deployment workflow (deploy to test/live environments)
-  - API endpoint: POST /v0/sites/{site_id}/environments/{env}/deploys
-  - Deploy from dev → test or test → live
-  - Include workflow monitoring with progress bars
-  - Clear environment cache after deployment
+### Testing & Verification
+- [ ] Test code deployment end-to-end on Pantheon dev environment
+- [ ] Verify workflow monitoring displays correctly during deployment
+- [ ] Verify cache clearing after deployment completes
 
 ## Phase 3: Build Pipeline & Design
-
-### Build Pipeline
-- [ ] Add build pipeline (webpack or similar)
-- [ ] Add SASS/SCSS support for stylesheets
-- [ ] Set up CSS compilation and minification
-- [ ] Add JavaScript bundling and minification
-- [ ] Configure watch mode for development
-- [ ] Integrate Pantheon Design System (pds-core) npm package
-  - Private npm package, reference local copy at ~/git/pds-core
-  - Import PDS components and styles into build pipeline
-  - Replace custom styles with PDS utilities where applicable
 
 ### Design Review & Refactoring
 - [ ] Overall design review with Pantheon Design System
 - [ ] Ensure consistent use of PDS components
 - [ ] Review and optimize responsive breakpoints
 - [ ] Accessibility audit (WCAG compliance)
+- [ ] Add JavaScript bundling and minification
+- [ ] Configure watch mode for development
 
 ## Code Quality
 
@@ -70,9 +59,9 @@
 
 ## Documentation
 - [ ] Update README with Phase 3 completion notes
-- [ ] Document build process and SASS usage
 - [ ] Add screenshots to README
 - [ ] Update CLAUDE.md with latest patterns and standards
+- [x] Document build process and SASS usage (npm scripts in package.json)
 
 ---
 
@@ -114,3 +103,19 @@
   - `get_cache_timestamp()` - Get cache timestamp for "Last checked" displays
 - ✅ Local URL override for Lando and Pantheon multidev environments (MU-plugin)
 - ✅ Per-environment upstream updates filtering (no longer shows updates already applied)
+- ✅ Code deployment workflow (deploy to test/live environments)
+  - Master control panel approach: both deploy buttons visible from any environment
+  - Side-by-side layout with panel-based interaction
+  - Change detection: buttons disabled when environments are in sync
+  - Deployment notes with larger textareas
+  - Optional "sync content from live" for test→live deployments
+  - Workflow monitoring with progress modals
+  - Cache clearing after successful deployment
+- ✅ Build Pipeline & Pantheon Design System Integration
+  - npm package.json with build scripts
+  - SASS/SCSS support with organized file structure
+  - CSS compilation from SASS sources
+  - Pantheon Design System (pds-core) integration
+    - Imports design tokens from local ~/git/pds-core copy
+    - Organized SASS structure: _base, _components, _pages, _utilities, _typography
+    - Build command: `npm run build` (compiles SASS → CSS)
