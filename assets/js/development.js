@@ -175,6 +175,189 @@
 				}
 			});
 		});
+
+		// Toggle Deploy to Test panel
+		$('#ash-nazg-deploy-to-test-toggle').on('click', function(e) {
+			e.preventDefault();
+			$('#ash-nazg-deploy-to-test-panel').slideToggle(200);
+		});
+
+		// Cancel Deploy to Test
+		$('#ash-nazg-deploy-to-test-cancel').on('click', function(e) {
+			e.preventDefault();
+			$('#ash-nazg-deploy-to-test-panel').slideUp(200);
+			$('#ash-nazg-deploy-note-test').val('');
+		});
+
+		// Deploy to Test button
+		$('#ash-nazg-deploy-to-test').on('click', function(e) {
+			e.preventDefault();
+
+			var $button = $(this);
+			var nonce = $button.data('nonce');
+			var target = $button.data('target');
+
+			// Get user's deployment note
+			var userNote = $('#ash-nazg-deploy-note-test').val().trim();
+
+			// Build full note with context
+			var siteUrl = window.location.origin;
+			var fullNote = userNote ? userNote + ' ' : '';
+			fullNote += '(Triggered by Ash Nazg at ' + siteUrl + ')';
+
+			// Confirm action
+			if (!confirm(ashNazgDevelopment.i18n.confirmDeployToTest)) {
+				return;
+			}
+
+			// Disable button
+			$button.prop('disabled', true);
+
+			// Show progress modal
+			var modal = showProgressModal(
+				ashNazgDevelopment.i18n.deployingToTest,
+				ashNazgDevelopment.i18n.pleaseWait
+			);
+
+			// Submit via AJAX
+			$.ajax({
+				url: ashNazgDevelopment.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'ash_nazg_deploy_code',
+					nonce: nonce,
+					target: target,
+					note: fullNote,
+					clear_cache: 'true'
+				},
+				success: function(response) {
+					if (response.success && response.data && response.data.workflow_id) {
+						// Poll workflow status
+						pollWorkflowStatus(
+							response.data.site_id,
+							response.data.workflow_id,
+							function(progress, status) {
+								modal.updateProgress(progress, status);
+							},
+							function(status) {
+								modal.close();
+								$button.prop('disabled', false);
+
+								if (status.result === 'succeeded') {
+									alert(ashNazgDevelopment.i18n.deploySucceeded);
+									window.location.reload();
+								} else {
+									alert(status.error || ashNazgDevelopment.i18n.operationFailed);
+								}
+							}
+						);
+					} else {
+						modal.close();
+						$button.prop('disabled', false);
+						alert(response.data?.message || ashNazgDevelopment.i18n.operationFailed);
+					}
+				},
+				error: function() {
+					modal.close();
+					$button.prop('disabled', false);
+					alert(ashNazgDevelopment.i18n.ajaxError);
+				}
+			});
+		});
+
+		// Toggle Deploy to Live panel
+		$('#ash-nazg-deploy-to-live-toggle').on('click', function(e) {
+			e.preventDefault();
+			$('#ash-nazg-deploy-to-live-panel').slideToggle(200);
+		});
+
+		// Cancel Deploy to Live
+		$('#ash-nazg-deploy-to-live-cancel').on('click', function(e) {
+			e.preventDefault();
+			$('#ash-nazg-deploy-to-live-panel').slideUp(200);
+			$('#ash-nazg-deploy-note-live').val('');
+			$('#ash-nazg-sync-content').prop('checked', false);
+		});
+
+		// Deploy to Live button
+		$('#ash-nazg-deploy-to-live').on('click', function(e) {
+			e.preventDefault();
+
+			var $button = $(this);
+			var nonce = $button.data('nonce');
+			var target = $button.data('target');
+
+			// Get user's deployment note
+			var userNote = $('#ash-nazg-deploy-note-live').val().trim();
+
+			// Build full note with context
+			var siteUrl = window.location.origin;
+			var fullNote = userNote ? userNote + ' ' : '';
+			fullNote += '(Triggered by Ash Nazg at ' + siteUrl + ')';
+
+			// Get sync_content checkbox value
+			var syncContent = $('#ash-nazg-sync-content').is(':checked');
+
+			// Confirm action (warn about live deployment)
+			if (!confirm(ashNazgDevelopment.i18n.confirmDeployToLive)) {
+				return;
+			}
+
+			// Disable button
+			$button.prop('disabled', true);
+
+			// Show progress modal
+			var modal = showProgressModal(
+				ashNazgDevelopment.i18n.deployingToLive,
+				ashNazgDevelopment.i18n.pleaseWait
+			);
+
+			// Submit via AJAX
+			$.ajax({
+				url: ashNazgDevelopment.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'ash_nazg_deploy_code',
+					nonce: nonce,
+					target: target,
+					note: fullNote,
+					clear_cache: 'true',
+					sync_content: syncContent ? 'true' : 'false'
+				},
+				success: function(response) {
+					if (response.success && response.data && response.data.workflow_id) {
+						// Poll workflow status
+						pollWorkflowStatus(
+							response.data.site_id,
+							response.data.workflow_id,
+							function(progress, status) {
+								modal.updateProgress(progress, status);
+							},
+							function(status) {
+								modal.close();
+								$button.prop('disabled', false);
+
+								if (status.result === 'succeeded') {
+									alert(ashNazgDevelopment.i18n.deploySucceeded);
+									window.location.reload();
+								} else {
+									alert(status.error || ashNazgDevelopment.i18n.operationFailed);
+								}
+							}
+						);
+					} else {
+						modal.close();
+						$button.prop('disabled', false);
+						alert(response.data?.message || ashNazgDevelopment.i18n.operationFailed);
+					}
+				},
+				error: function() {
+					modal.close();
+					$button.prop('disabled', false);
+					alert(ashNazgDevelopment.i18n.ajaxError);
+				}
+			});
+		});
 	});
 
 	/**

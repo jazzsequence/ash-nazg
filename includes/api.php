@@ -1302,6 +1302,61 @@ function apply_upstream_updates( $site_id, $env, $updatedb = false, $xoption = f
 }
 
 /**
+ * Deploy code to an environment.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $target_env Target environment (test or live).
+ * @param string $note Optional deployment note.
+ * @param bool   $clear_cache Whether to clear cache after deployment.
+ * @param bool   $sync_content Whether to sync content from live (test only).
+ * @param bool   $updatedb Whether to run database updates after deployment.
+ * @return array|WP_Error Workflow response or WP_Error on failure.
+ */
+function deploy_code( $site_id, $target_env, $note = '', $clear_cache = true, $sync_content = false, $updatedb = false ) {
+	/* Validate target environment. */
+	if ( ! in_array( $target_env, [ 'test', 'live' ], true ) ) {
+		return new \WP_Error(
+			'invalid_environment',
+			__( 'Can only deploy to test or live environments.', 'ash-nazg' )
+		);
+	}
+
+	/* Determine source environment. */
+	$source_env = ( 'test' === $target_env ) ? 'dev' : 'test';
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/deploy', $site_id, $target_env );
+
+	$body = [
+		'clear_cache' => $clear_cache,
+		'updatedb' => $updatedb,
+	];
+
+	if ( ! empty( $note ) ) {
+		$body['note'] = $note;
+	}
+
+	/* sync_content only applies to test → live. */
+	if ( 'live' === $target_env && $sync_content ) {
+		$body['sync_content'] = true;
+	}
+
+	$result = api_request( $endpoint, 'POST', $body );
+
+	if ( is_wp_error( $result ) ) {
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to deploy code to %s.%s - Error: %s', $site_id, $target_env, $result->get_error_message() ) );
+		return $result;
+	}
+
+	/* Clear commits cache for both source and target environments. */
+	delete_transient( sprintf( 'ash_nazg_commits_%s_%s', $site_id, $source_env ) );
+	delete_transient( sprintf( 'ash_nazg_commits_%s_%s', $site_id, $target_env ) );
+
+	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Deployed code to %s.%s - Response: %s', $site_id, $target_env, wp_json_encode( $result ) ) );
+
+	return $result;
+}
+
+/**
  * Get git branches and commits (code tips).
  *
  * @param string $site_id Site UUID.

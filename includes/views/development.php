@@ -157,6 +157,127 @@ use Pantheon\AshNazg\Helpers;
 		</div>
 		<?php endif; ?>
 
+		<!-- Code Deployment -->
+		<?php
+		// Check if dev has ANY changes for test (even 1 commit).
+		$dev_commits = API\get_environment_commits( $site_id, 'dev' );
+		$test_commits_for_deploy = API\get_environment_commits( $site_id, 'test' );
+		$dev_has_changes_for_test = false;
+
+		if ( is_array( $dev_commits ) && is_array( $test_commits_for_deploy ) && ! empty( $dev_commits ) ) {
+			// Check if dev's most recent commit exists in test.
+			$dev_latest = $dev_commits[0] ?? null;
+			if ( $dev_latest ) {
+				$dev_latest_hash = $dev_latest['hash'] ?? $dev_latest['id'] ?? null;
+				if ( $dev_latest_hash ) {
+					$found_in_test = false;
+					foreach ( $test_commits_for_deploy as $test_commit ) {
+						$test_hash = $test_commit['hash'] ?? $test_commit['id'] ?? null;
+						if ( $test_hash === $dev_latest_hash ) {
+							$found_in_test = true;
+							break;
+						}
+					}
+					$dev_has_changes_for_test = ! $found_in_test;
+				}
+			}
+		}
+
+		// Check if test has ANY changes for live (even 1 commit).
+		$test_commits = API\get_environment_commits( $site_id, 'test' );
+		$live_commits = API\get_environment_commits( $site_id, 'live' );
+		$test_has_changes_for_live = false;
+
+		if ( is_array( $test_commits ) && is_array( $live_commits ) && ! empty( $test_commits ) ) {
+			// Check if test's most recent commit exists in live.
+			$test_latest = $test_commits[0] ?? null;
+			if ( $test_latest ) {
+				$test_latest_hash = $test_latest['hash'] ?? $test_latest['id'] ?? null;
+				if ( $test_latest_hash ) {
+					$found_in_live = false;
+					foreach ( $live_commits as $live_commit ) {
+						$live_hash = $live_commit['hash'] ?? $live_commit['id'] ?? null;
+						if ( $live_hash === $test_latest_hash ) {
+							$found_in_live = true;
+							break;
+						}
+					}
+					$test_has_changes_for_live = ! $found_in_live;
+				}
+			}
+		}
+		?>
+		<div class="ash-nazg-card ash-nazg-card-full">
+			<h2><?php esc_html_e( 'Code Deployment', 'ash-nazg' ); ?></h2>
+			<p class="description"><?php esc_html_e( 'Deploy code between environments. Buttons are disabled if there are no changes to deploy.', 'ash-nazg' ); ?></p>
+
+			<div class="ash-nazg-deploy-container">
+				<!-- Deploy to Test -->
+				<div class="ash-nazg-deploy-column">
+					<h3><?php esc_html_e( 'Deploy to Test', 'ash-nazg' ); ?></h3>
+					<?php if ( ! $dev_has_changes_for_test ) : ?>
+						<p class="description ash-nazg-text-muted"><?php esc_html_e( 'Test environment is up-to-date with dev.', 'ash-nazg' ); ?></p>
+					<?php else : ?>
+						<p class="description"><?php esc_html_e( 'Deploy code from dev to test.', 'ash-nazg' ); ?></p>
+					<?php endif; ?>
+					<button id="ash-nazg-deploy-to-test-toggle" class="button button-primary" <?php echo ! $dev_has_changes_for_test ? 'disabled' : ''; ?>>
+						<?php esc_html_e( 'Deploy to Test', 'ash-nazg' ); ?>
+					</button>
+
+					<!-- Deploy panel (hidden by default) -->
+					<div id="ash-nazg-deploy-to-test-panel" class="ash-nazg-deploy-panel" style="display: none;">
+						<p>
+							<label for="ash-nazg-deploy-note-test">
+								<?php esc_html_e( 'Deployment Note (optional):', 'ash-nazg' ); ?>
+							</label>
+							<textarea id="ash-nazg-deploy-note-test" class="ash-nazg-deploy-note" rows="3" placeholder="<?php esc_attr_e( 'e.g., Deploy feature X for testing', 'ash-nazg' ); ?>"></textarea>
+						</p>
+						<button id="ash-nazg-deploy-to-test" class="button button-primary" data-target="test" data-nonce="<?php echo esc_attr( wp_create_nonce( 'ash_nazg_deploy_code' ) ); ?>">
+							<?php esc_html_e( 'Deploy Now', 'ash-nazg' ); ?>
+						</button>
+						<button id="ash-nazg-deploy-to-test-cancel" class="button">
+							<?php esc_html_e( 'Cancel', 'ash-nazg' ); ?>
+						</button>
+					</div>
+				</div>
+
+				<!-- Deploy to Live -->
+				<div class="ash-nazg-deploy-column">
+					<h3><?php esc_html_e( 'Deploy to Live', 'ash-nazg' ); ?></h3>
+					<?php if ( ! $test_has_changes_for_live ) : ?>
+						<p class="description ash-nazg-text-muted"><?php esc_html_e( 'Live environment is up-to-date with test.', 'ash-nazg' ); ?></p>
+					<?php else : ?>
+						<p class="description"><?php esc_html_e( 'Deploy code from test to live.', 'ash-nazg' ); ?></p>
+					<?php endif; ?>
+					<button id="ash-nazg-deploy-to-live-toggle" class="button button-primary" <?php echo ! $test_has_changes_for_live ? 'disabled' : ''; ?>>
+						<?php esc_html_e( 'Deploy to Live', 'ash-nazg' ); ?>
+					</button>
+
+					<!-- Deploy panel (hidden by default) -->
+					<div id="ash-nazg-deploy-to-live-panel" class="ash-nazg-deploy-panel" style="display: none;">
+						<p>
+							<label for="ash-nazg-deploy-note-live">
+								<?php esc_html_e( 'Deployment Note (optional):', 'ash-nazg' ); ?>
+							</label>
+							<textarea id="ash-nazg-deploy-note-live" class="ash-nazg-deploy-note" rows="3" placeholder="<?php esc_attr_e( 'e.g., Deploy to production', 'ash-nazg' ); ?>"></textarea>
+						</p>
+						<p>
+							<label>
+								<input type="checkbox" id="ash-nazg-sync-content" />
+								<?php esc_html_e( 'Sync content from live to test after deployment', 'ash-nazg' ); ?>
+							</label>
+						</p>
+						<button id="ash-nazg-deploy-to-live" class="button button-primary" data-target="live" data-nonce="<?php echo esc_attr( wp_create_nonce( 'ash_nazg_deploy_code' ) ); ?>">
+							<?php esc_html_e( 'Deploy Now', 'ash-nazg' ); ?>
+						</button>
+						<button id="ash-nazg-deploy-to-live-cancel" class="button">
+							<?php esc_html_e( 'Cancel', 'ash-nazg' ); ?>
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<!-- Uncommitted SFTP Changes -->
 		<?php if ( 'sftp' === $connection_mode && $diffstat && ! is_wp_error( $diffstat ) && ! empty( $diffstat ) ) : ?>
 		<div class="ash-nazg-card ash-nazg-card-full<?php echo $update_count > 0 ? ' ash-nazg-mt-20' : ''; ?>">
@@ -325,6 +446,7 @@ use Pantheon\AshNazg\Helpers;
 				<p><?php esc_html_e( 'No environments found.', 'ash-nazg' ); ?></p>
 			<?php endif; ?>
 		</div>
+
 
 			<!-- Multidev Management -->
 			<div class="ash-nazg-card">

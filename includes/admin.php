@@ -33,6 +33,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_update_site_label', __NAMESPACE__ . '\\ajax_update_site_label' );
 	add_action( 'wp_ajax_ash_nazg_apply_upstream_updates', __NAMESPACE__ . '\\ajax_apply_upstream_updates' );
 	add_action( 'wp_ajax_ash_nazg_clear_upstream_cache', __NAMESPACE__ . '\\ajax_clear_upstream_cache' );
+	add_action( 'wp_ajax_ash_nazg_deploy_code', __NAMESPACE__ . '\\ajax_deploy_code' );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
 }
@@ -190,6 +191,7 @@ function enqueue_assets( $hook ) {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'workflowStatusNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
 				'clearUpstreamCacheNonce' => wp_create_nonce( 'ash_nazg_clear_upstream_cache' ),
+				'deployCodeNonce' => wp_create_nonce( 'ash_nazg_deploy_code' ),
 				'i18n' => [
 					'confirmApplyUpdates' => __( 'Are you sure you want to apply upstream updates? This action cannot be undone.', 'ash-nazg' ),
 					'applyingUpdates' => __( 'Applying Upstream Updates...', 'ash-nazg' ),
@@ -198,6 +200,11 @@ function enqueue_assets( $hook ) {
 					'confirmMergeDevToMultidev' => __( 'Are you sure you want to merge dev into this multidev environment? This action cannot be undone.', 'ash-nazg' ),
 					'mergingDevToMultidev' => __( 'Merging Dev into Multidev...', 'ash-nazg' ),
 					'devMergedToMultidev' => __( 'Dev successfully merged into this multidev environment!', 'ash-nazg' ),
+					'confirmDeployToTest' => __( 'Are you sure you want to deploy code from dev to test? This will update the test environment.', 'ash-nazg' ),
+					'confirmDeployToLive' => __( 'Are you sure you want to deploy code from test to LIVE? This will update the production environment.', 'ash-nazg' ),
+					'deployingToTest' => __( 'Deploying to Test...', 'ash-nazg' ),
+					'deployingToLive' => __( 'Deploying to Live...', 'ash-nazg' ),
+					'deploySucceeded' => __( 'Code deployed successfully!', 'ash-nazg' ),
 					'operationFailed' => __( 'Operation failed. Please try again.', 'ash-nazg' ),
 					'timeoutError' => __( 'Operation timed out. Please check the Pantheon dashboard.', 'ash-nazg' ),
 					'statusError' => __( 'Failed to get workflow status.', 'ash-nazg' ),
@@ -1432,6 +1439,54 @@ function ajax_clear_upstream_cache() {
 	}
 
 	wp_send_json_success( [ 'message' => __( 'Cache cleared.', 'ash-nazg' ) ] );
+}
+
+/**
+ * AJAX handler to deploy code to an environment.
+ *
+ * @return void
+ */
+function ajax_deploy_code() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_deploy_code', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+
+	if ( ! $site_id ) {
+		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
+	}
+
+	// Get target environment from POST.
+	$target_env = isset( $_POST['target'] ) ? sanitize_text_field( wp_unslash( $_POST['target'] ) ) : '';
+
+	if ( empty( $target_env ) || ! in_array( $target_env, [ 'test', 'live' ], true ) ) {
+		wp_send_json_error( [ 'message' => __( 'Invalid target environment.', 'ash-nazg' ) ] );
+	}
+
+	// Get optional parameters.
+	$clear_cache = isset( $_POST['clear_cache'] ) && 'true' === $_POST['clear_cache'];
+	$sync_content = isset( $_POST['sync_content'] ) && 'true' === $_POST['sync_content'];
+	$updatedb = isset( $_POST['updatedb'] ) && 'true' === $_POST['updatedb'];
+	$note = isset( $_POST['note'] ) ? sanitize_text_field( wp_unslash( $_POST['note'] ) ) : '';
+
+	$result = API\deploy_code( $site_id, $target_env, $note, $clear_cache, $sync_content, $updatedb );
+
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+	}
+
+	// Return workflow ID for polling.
+	wp_send_json_success(
+		[
+			'workflow_id' => $result['id'] ?? null,
+			'site_id' => $site_id,
+		]
+	);
 }
 
 /**
