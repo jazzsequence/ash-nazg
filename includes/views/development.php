@@ -117,7 +117,7 @@ use Pantheon\AshNazg\Helpers;
 							$full_hash = $update['hash'] ?? $update['id'] ?? 'unknown';
 							$short_hash = substr( $full_hash, 0, 8 );
 							?>
-							<?php /* translators: %s: full commit hash */ ?><code class="ash-nazg-hash-copyable" title="<?php echo esc_attr( sprintf( __( 'Click to copy: %s', 'ash-nazg' ), $full_hash ) ); ?>">
+							<?php /* translators: %s: full commit hash */ ?><code class="ash-nazg-hash-copyable" data-hash="<?php echo esc_attr( $full_hash ); ?>" title="<?php echo esc_attr( sprintf( __( 'Click to copy: %s', 'ash-nazg' ), $full_hash ) ); ?>">
 								<?php echo esc_html( $short_hash ); ?>
 								<span class="dashicons dashicons-clipboard"></span>
 							</code>
@@ -240,7 +240,7 @@ use Pantheon\AshNazg\Helpers;
 									$full_hash = $commit['hash'] ?? $commit['id'] ?? 'unknown';
 									$short_hash = substr( $full_hash, 0, 8 );
 									?>
-									<?php /* translators: %s: full commit hash */ ?><code class="ash-nazg-hash-copyable" title="<?php echo esc_attr( sprintf( __( 'Click to copy: %s', 'ash-nazg' ), $full_hash ) ); ?>">
+									<?php /* translators: %s: full commit hash */ ?><code class="ash-nazg-hash-copyable" data-hash="<?php echo esc_attr( $full_hash ); ?>" title="<?php echo esc_attr( sprintf( __( 'Click to copy: %s', 'ash-nazg' ), $full_hash ) ); ?>">
 										<?php echo esc_html( $short_hash ); ?>
 										<span class="dashicons dashicons-clipboard"></span>
 									</code>

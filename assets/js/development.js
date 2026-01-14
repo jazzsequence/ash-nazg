@@ -8,8 +8,8 @@
 		// Click to copy commit hash
 		$('.ash-nazg-hash-copyable').on('click', function(e) {
 			e.preventDefault();
-			
-			var fullHash = $(this).attr('title');
+
+			var fullHash = $(this).data('hash');
 			var $code = $(this);
 			
 			// Copy to clipboard

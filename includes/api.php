@@ -622,11 +622,13 @@ function clear_cache() {
 	$site_id = get_pantheon_site_id();
 	if ( $site_id ) {
 		delete_transient( 'ash_nazg_site_info_' . $site_id );
+		delete_transient( 'ash_nazg_upstream_updates_' . $site_id );
 
 		$env = get_pantheon_environment();
 		if ( $env ) {
 			delete_transient( 'ash_nazg_env_info_' . $site_id . '_' . $env );
 			delete_transient( sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $env ) );
+			delete_transient( sprintf( 'ash_nazg_commits_%s_%s', $site_id, $env ) );
 		}
 	}
 }

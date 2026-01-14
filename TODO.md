@@ -2,13 +2,6 @@
 
 ## Current Work-in-Progress
 
-### Known Issues
-- [ ] MU-plugin URL override needs to be committed in multisite repo
-  - File: `wp-content/mu-plugins/local-url-override.php`
-  - Location: `~/pantheon-local-copies/cxr-ash-nazg-ms/`
-  - Fixes: Pantheon multidev environments now properly override `plugins_url()` to use current request domain
-  - Required for: Development.js and other assets to load correctly on multidev environments
-
 ### Git & Development Features
 - [ ] Code deployment workflow (deploy to test/live environments)
   - API endpoint: POST /v0/sites/{site_id}/environments/{env}/deploys
