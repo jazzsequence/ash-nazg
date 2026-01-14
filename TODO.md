@@ -2,12 +2,14 @@
 
 ## Current Work-in-Progress
 
+### Known Issues
+- [ ] MU-plugin URL override needs to be committed in multisite repo
+  - File: `wp-content/mu-plugins/local-url-override.php`
+  - Location: `~/pantheon-local-copies/cxr-ash-nazg-ms/`
+  - Fixes: Pantheon multidev environments now properly override `plugins_url()` to use current request domain
+  - Required for: Development.js and other assets to load correctly on multidev environments
+
 ### Git & Development Features
-- [ ] Add "Apply Upstream Updates" button to Development page
-  - API endpoint: POST /v0/sites/{site_id}/environments/{env}/code/upstream-updates
-  - Add form with confirmation dialog (upstream updates are destructive)
-  - Show success/error messages
-  - Clear upstream updates cache after applying
 - [ ] Code deployment workflow (deploy to test/live environments)
   - API endpoint: POST /v0/sites/{site_id}/environments/{env}/deploys
   - Deploy from dev → test or test → live
@@ -36,10 +38,15 @@
 ## Code Quality
 
 ### Refactoring
-- [ ] Replace repeated WP_DEBUG logging patterns with helper functions
-  - Create `log_debug()` helper (46 instances to replace)
-  - Create `ensure_site_id()` and `ensure_environment()` helpers
-  - Consolidate cache operations with timestamps
+- [x] Create helper functions for repeated patterns
+  - ✅ `debug_log()` helper created (ready to replace ~46 instances)
+  - ✅ `verify_ajax_request()` helper created
+  - ✅ `is_local_environment()` helper created
+  - ✅ `is_multidev_environment()` helper created
+  - ✅ `dev_has_changes_for_env()` helper created
+- [ ] Replace remaining WP_DEBUG logging patterns with `debug_log()`
+- [ ] Create `ensure_site_id()` and `ensure_environment()` helpers
+- [ ] Consolidate cache operations with timestamps
 
 ### Testing
 - [ ] Add Playwright E2E tests (as mentioned in CLAUDE.md Phase 3)
@@ -104,3 +111,11 @@
 - ✅ Commit SFTP changes form
 - ✅ Recent commits display
 - ✅ Workflow status monitoring with polling
+- ✅ Apply upstream updates button with workflow monitoring
+- ✅ Merge Dev into Multidev functionality with conditional display
+- ✅ Merge from Dev button in multidev management table
+- ✅ Auto-clear invalid session tokens on 401/403 errors
+- ✅ Manual session token clearing on Settings page
+- ✅ Upstream cache invalidation after applying updates
+- ✅ Helper functions for repeated patterns (debug_log, dev_has_changes_for_env, etc.)
+- ✅ Local URL override for Lando and Pantheon multidev environments (MU-plugin)
