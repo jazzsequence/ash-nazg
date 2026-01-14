@@ -52,9 +52,7 @@ function test_endpoint( $path, $name, $description = '' ) {
 		$error_message = $result->get_error_message();
 
 		// Log the specific error for debugging.
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( sprintf( 'Ash-Nazg endpoint test [%s]: %s - %s', $path, $error_code, $error_message ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-		}
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'endpoint test [%s]: %s - %s', $path, $error_code, $error_message ) );
 
 		if ( 'environment_not_found' === $error_code ) {
 			$endpoint['status'] = 'unavailable';
