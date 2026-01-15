@@ -385,6 +385,23 @@ function enqueue_assets( $hook ) {
 }
 
 /**
+ * Render Pantheon branded header.
+ *
+ * @param string $title Page title.
+ * @return void
+ */
+function render_pantheon_header( $title ) {
+	?>
+	<div class="ash-nazg-header">
+		<div class="ash-nazg-logo">
+			<img src="<?php echo esc_url( ASH_NAZG_PLUGIN_URL . 'assets/images/pantheon-logo-light-mode.png' ); ?>" alt="<?php esc_attr_e( 'Pantheon', 'ash-nazg' ); ?>">
+		</div>
+		<h1><?php echo esc_html( $title ); ?></h1>
+	</div>
+	<?php
+}
+
+/**
  * Render dashboard page.
  *
  * @return void

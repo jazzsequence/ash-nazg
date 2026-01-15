@@ -63,3 +63,15 @@
 	color: $color-frozen-text;
 	border: 1px solid $color-frozen-border;
 }
+
+.ash-nazg-badge-success {
+	background: var(--pds-color-badge-indicator-success-background, #218c5f);
+	color: var(--pds-color-badge-indicator-success-foreground, #ffffff);
+	border: 1px solid var(--pds-color-badge-indicator-success-background, #218c5f);
+}
+
+.ash-nazg-badge-error {
+	background: var(--pds-color-badge-indicator-critical-background, #ca3521);
+	color: var(--pds-color-badge-indicator-critical-foreground, #ffffff);
+	border: 1px solid var(--pds-color-badge-indicator-critical-background, #ca3521);
+}

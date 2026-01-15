@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 
 <div class="wrap">
-	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+	<?php \Pantheon\AshNazg\Admin\render_pantheon_header( get_admin_page_title() ); ?>
 
 	<?php if ( ! $is_pantheon ) : ?>
 		<div class="notice notice-warning">
@@ -68,13 +68,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</p>
 			<?php endif; ?>
 		</div>
-	<?php else : ?>
-		<div class="notice notice-success">
-			<p>
-				<strong><?php esc_html_e( 'API Connection Active', 'ash-nazg' ); ?></strong>
-			</p>
-			<p><?php esc_html_e( 'Successfully connected to Pantheon API.', 'ash-nazg' ); ?></p>
-		</div>
 	<?php endif; ?>
 
 	<?php if ( $mode_message ) : ?>
@@ -95,6 +88,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<h2><?php esc_html_e( 'Environment Information', 'ash-nazg' ); ?></h2>
 				<table class="widefat striped">
 					<tbody>
+						<tr>
+							<th><?php esc_html_e( 'API Status', 'ash-nazg' ); ?></th>
+							<td>
+								<?php if ( $site_info ) : ?>
+									<span class="ash-nazg-badge ash-nazg-badge-success">
+										<?php esc_html_e( 'Connected', 'ash-nazg' ); ?>
+									</span>
+									<span class="ash-nazg-text-muted ash-nazg-text-small">
+										<?php esc_html_e( 'Pantheon API connection active', 'ash-nazg' ); ?>
+									</span>
+								<?php else : ?>
+									<span class="ash-nazg-badge ash-nazg-badge-error">
+										<?php esc_html_e( 'Disconnected', 'ash-nazg' ); ?>
+									</span>
+								<?php endif; ?>
+							</td>
+						</tr>
 						<tr>
 							<th><?php esc_html_e( 'Site ID', 'ash-nazg' ); ?></th>
 							<td><code><?php echo esc_html( $site_id ); ?></code></td>

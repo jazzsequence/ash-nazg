@@ -5,6 +5,16 @@
 
 @use '../variables' as *;
 
+/* Apply PDS fonts to all admin pages */
+.wrap {
+	font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+	code,
+	pre {
+		font-family: 'Source Code Pro', 'Courier New', Courier, monospace;
+	}
+}
+
 .ash-nazg-section-header {
 	margin-top: $spacing-xl;
 	margin-bottom: $spacing-md;

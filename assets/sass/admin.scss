@@ -5,67 +5,42 @@
  * 1. Variables (SASS variables using PDS tokens)
  * 2. Base Layout
  * 3. Typography
- * 4. Components (Badges, Notices, Cards)
+ * 4. Components (Badges, Notices, Cards, Header)
  * 5. Tables
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Design Tokens (CSS Custom Properties loaded via @import url)
+ * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
  */
 
 /* ==========================================================================
-   1. VARIABLES
+   ALL @USE RULES MUST COME FIRST
    ========================================================================== */
 @use 'variables' as *;
-
-/* ==========================================================================
-   2. BASE LAYOUT
-   ========================================================================== */
 @use '_base/_layout';
-
-/* ==========================================================================
-   3. TYPOGRAPHY
-   ========================================================================== */
 @use '_typography/_text';
 @use '_typography/_icons';
-
-/* ==========================================================================
-   4. COMPONENTS
-   ========================================================================== */
+@use '_components/_header';
 @use '_components/_badges';
 @use '_components/_notices';
 @use '_components/_edit-link';
 @use '_components/_workflow-cards';
 @use '_components/_addon-toggles';
-
-/* ==========================================================================
-   5. TABLES
-   ========================================================================== */
 @use '_tables/_tables';
 @use '_tables/_avatars';
-
-/* ==========================================================================
-   6. PAGE-SPECIFIC SECTIONS
-   ========================================================================== */
 @use '_pages/_dashboard';
 @use '_pages/_logs';
 @use '_pages/_development';
 @use '_pages/_backups';
 @use '_pages/_progress-modal';
-
-/* ==========================================================================
-   7. UTILITY CLASSES
-   ========================================================================== */
 @use '_utilities/_display';
 @use '_utilities/_spacing';
 @use '_utilities/_alignment';
-
-/* ==========================================================================
-   8. RESPONSIVE STYLES
-   ========================================================================== */
 @use '_responsive/_mobile';
 
 /* ==========================================================================
-   9. PDS DESIGN TOKENS (loaded last to make CSS custom properties available)
+   IMPORTS (PDS FONTS, TOKENS, AND FOUNDATIONS)
    ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap');
 @import url('../pds-design-tokens/pds-design-tokens-light-mode.css');
+@import url('../pds/foundations/index.css');

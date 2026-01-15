@@ -12,6 +12,8 @@ composer.lock
 node_modules/
 package-lock.json
 assets/pds-design-tokens/
+assets/pds/
+assets/images/
 
 # Build artifacts
 *.css.map
