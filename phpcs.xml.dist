@@ -32,4 +32,10 @@
 	<rule ref="WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout">
 		<exclude-pattern>*/includes/api.php</exclude-pattern>
 	</rule>
+	<rule ref="Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed">
+		<exclude-pattern>*/includes/multisite.php</exclude-pattern>
+	</rule>
+	<rule ref="VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable">
+		<exclude-pattern>*/includes/multisite.php</exclude-pattern>
+	</rule>
 </ruleset>

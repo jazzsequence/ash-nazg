@@ -41,6 +41,7 @@ function bootstrap() {
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/api.php';
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/settings.php';
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/admin.php';
+	require_once ASH_NAZG_PLUGIN_DIR . 'includes/multisite.php';
 
 	// Initialize admin interface.
 	if ( is_admin() ) {
@@ -49,6 +50,9 @@ function bootstrap() {
 
 	// Initialize settings.
 	Settings\init();
+
+	// Initialize multisite integration.
+	Multisite\init();
 }
 
 // Kick it off.

@@ -1479,6 +1479,106 @@ function delete_site( $site_id = null ) {
 }
 
 /**
+ * Get domains for an environment.
+ *
+ * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @param string $env Optional. Environment name. Auto-detected if not provided.
+ * @return array|WP_Error Array of domains or WP_Error on failure.
+ */
+function get_domains( $site_id = null, $env = null ) {
+	$site_id = Helpers\ensure_site_id( $site_id );
+	if ( is_wp_error( $site_id ) ) {
+		return $site_id;
+	}
+
+	$env = Helpers\ensure_environment( $env );
+	if ( is_wp_error( $env ) ) {
+		return $env;
+	}
+
+	$api_env = map_local_env_to_dev( $env );
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/domains', $site_id, $api_env );
+	$result = api_request( $endpoint, 'GET' );
+
+	if ( is_wp_error( $result ) ) {
+		Helpers\debug_log( sprintf( 'Failed to get domains for %s/%s: %s', $site_id, $env, $result->get_error_message() ) );
+		return $result;
+	}
+
+	return $result;
+}
+
+/**
+ * Add a domain to an environment.
+ *
+ * @param string $domain Domain name to add (e.g., 'example.com').
+ * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @param string $env Optional. Environment name. Defaults to 'live'.
+ * @return array|WP_Error API response or WP_Error on failure.
+ */
+function add_domain( $domain, $site_id = null, $env = 'live' ) {
+	$site_id = Helpers\ensure_site_id( $site_id );
+	if ( is_wp_error( $site_id ) ) {
+		return $site_id;
+	}
+
+	if ( empty( $domain ) ) {
+		return new \WP_Error( 'invalid_domain', __( 'Domain name is required.', 'ash-nazg' ) );
+	}
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/domains', $site_id, $env );
+	$body = [ 'domain' => $domain ];
+
+	Helpers\debug_log( sprintf( 'Adding domain %s to %s/%s', $domain, $site_id, $env ) );
+
+	$result = api_request( $endpoint, 'POST', $body );
+
+	if ( is_wp_error( $result ) ) {
+		Helpers\debug_log( sprintf( 'Failed to add domain %s to %s/%s - Error: %s', $domain, $site_id, $env, $result->get_error_message() ) );
+		return $result;
+	}
+
+	Helpers\debug_log( sprintf( 'Domain %s successfully added to %s/%s', $domain, $site_id, $env ) );
+
+	return $result;
+}
+
+/**
+ * Delete a domain from an environment.
+ *
+ * @param string $domain Domain name to delete.
+ * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @param string $env Optional. Environment name. Defaults to 'live'.
+ * @return array|WP_Error API response or WP_Error on failure.
+ */
+function delete_domain( $domain, $site_id = null, $env = 'live' ) {
+	$site_id = Helpers\ensure_site_id( $site_id );
+	if ( is_wp_error( $site_id ) ) {
+		return $site_id;
+	}
+
+	if ( empty( $domain ) ) {
+		return new \WP_Error( 'invalid_domain', __( 'Domain name is required.', 'ash-nazg' ) );
+	}
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/domains/%s', $site_id, $env, $domain );
+
+	Helpers\debug_log( sprintf( 'Deleting domain %s from %s/%s', $domain, $site_id, $env ) );
+
+	$result = api_request( $endpoint, 'DELETE' );
+
+	if ( is_wp_error( $result ) ) {
+		Helpers\debug_log( sprintf( 'Failed to delete domain %s from %s/%s - Error: %s', $domain, $site_id, $env, $result->get_error_message() ) );
+		return $result;
+	}
+
+	Helpers\debug_log( sprintf( 'Domain %s successfully deleted from %s/%s', $domain, $site_id, $env ) );
+
+	return $result;
+}
+
+/**
  * Get git branches and commits (code tips).
  *
  * @param string $site_id Site UUID.
