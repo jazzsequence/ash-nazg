@@ -26,7 +26,11 @@
 
 			var typedText = $input.val();
 			if (typedText !== 'DELETE') {
-				alert('You must type DELETE to proceed.');
+				window.AshNazgModal.alert({
+					title: 'Validation Error',
+					message: 'You must type DELETE to proceed.',
+					type: 'warning'
+				});
 				return;
 			}
 
@@ -58,16 +62,30 @@
 				},
 				success: function(response) {
 					if (response.success) {
-						alert(ashNazgDeleteSite.i18n.deleted);
-						// Redirect to Pantheon sites dashboard
-						window.location.href = 'https://dashboard.pantheon.io/sites';
+						window.AshNazgModal.alert({
+							title: 'Site Deleted',
+							message: ashNazgDeleteSite.i18n.deleted,
+							type: 'info',
+							onClose: function() {
+								// Redirect to Pantheon sites dashboard
+								window.location.href = 'https://dashboard.pantheon.io/sites';
+							}
+						});
 					} else {
-						alert(response.data?.message || ashNazgDeleteSite.i18n.error);
+						window.AshNazgModal.alert({
+							title: 'Deletion Failed',
+							message: response.data?.message || ashNazgDeleteSite.i18n.error,
+							type: 'danger'
+						});
 						$button.prop('disabled', false).text('DELETE SITE');
 					}
 				},
 				error: function() {
-					alert(ashNazgDeleteSite.i18n.error);
+					window.AshNazgModal.alert({
+						title: 'Error',
+						message: ashNazgDeleteSite.i18n.error,
+						type: 'danger'
+					});
 					$button.prop('disabled', false).text('DELETE SITE');
 				}
 			});

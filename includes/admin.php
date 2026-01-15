@@ -214,6 +214,15 @@ function enqueue_assets( $hook ) {
 		ASH_NAZG_VERSION
 	);
 
+	// Enqueue modal utility script on all ash-nazg pages.
+	wp_enqueue_script(
+		'ash-nazg-modal',
+		ASH_NAZG_PLUGIN_URL . 'assets/js/modal.js',
+		[ 'jquery' ],
+		ASH_NAZG_VERSION,
+		true
+	);
+
 	// Enqueue dashboard JavaScript on main dashboard page.
 	if ( 'toplevel_page_ash-nazg' === $hook ) {
 		wp_enqueue_script(
@@ -1074,8 +1083,8 @@ function render_workflows_page() {
 
 	// Get workflow status if we have a workflow ID.
 	$workflow_status = null;
-	if ( $workflow_id ) {
-		$workflow_status = API\get_workflow_status( $workflow_id );
+	if ( $workflow_id && ! is_wp_error( $site_id ) ) {
+		$workflow_status = API\get_workflow_status( $site_id, $workflow_id );
 	}
 
 	require ASH_NAZG_PLUGIN_DIR . 'includes/views/workflows.php';

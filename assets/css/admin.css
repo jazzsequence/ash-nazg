@@ -614,6 +614,128 @@
    ALL @USE RULES MUST COME FIRST
    ========================================================================== */
 /**
+ * Components - Modal
+ * Reusable modal dialog for confirmations and alerts
+ */
+/* Modal Overlay */
+.ash-nazg-modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 100000;
+  align-items: center;
+  justify-content: center;
+}
+.ash-nazg-modal-overlay.active {
+  display: flex;
+}
+
+/* Modal Container */
+.ash-nazg-modal {
+  background: var(--pds-color-background-default);
+  border-radius: 4px;
+  box-shadow: var(--pds-elevation-overlay);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: ash-nazg-modal-fadein 0.2s ease;
+}
+
+@keyframes ash-nazg-modal-fadein {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+/* Modal Header */
+.ash-nazg-modal-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--pds-color-border-default);
+}
+.ash-nazg-modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--pds-color-foreground-default);
+}
+
+/* Modal Body */
+.ash-nazg-modal-body {
+  padding: 20px;
+}
+.ash-nazg-modal-body p {
+  margin: 0 0 15px 0;
+  color: var(--pds-color-text-default);
+}
+.ash-nazg-modal-body p:last-child {
+  margin-bottom: 0;
+}
+.ash-nazg-modal-body ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+.ash-nazg-modal-body ul li {
+  margin-bottom: 8px;
+}
+
+/* Modal Footer */
+.ash-nazg-modal-footer {
+  padding: 20px;
+  border-top: 1px solid var(--pds-color-border-default);
+  text-align: right;
+}
+.ash-nazg-modal-footer .button {
+  margin-left: 10px;
+}
+
+/* Modal Types */
+.ash-nazg-modal-danger .ash-nazg-modal-header {
+  background: #ffebe9;
+  border-bottom-color: #cf222e;
+}
+.ash-nazg-modal-danger .ash-nazg-modal-header h2 {
+  color: #cf222e;
+}
+
+.ash-nazg-modal-warning .ash-nazg-modal-header {
+  background: #fff8c5;
+  border-bottom-color: #9a6700;
+}
+.ash-nazg-modal-warning .ash-nazg-modal-header h2 {
+  color: #9a6700;
+}
+
+.ash-nazg-modal-info .ash-nazg-modal-header {
+  background: var(--pds-color-background-default-secondary);
+  border-bottom-color: var(--pds-color-border-default);
+}
+
+/**
+ * Admin styles for Ash-Nazg plugin.
+ *
+ * Structure:
+ * 1. Variables (SASS variables using PDS tokens)
+ * 2. Base Layout
+ * 3. Typography
+ * 4. Components (Badges, Notices, Cards, Header)
+ * 5. Tables
+ * 6. Page-specific Sections
+ * 7. Utility Classes
+ * 8. Responsive Styles
+ * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ */
+/* ==========================================================================
+   ALL @USE RULES MUST COME FIRST
+   ========================================================================== */
+/**
  * Tables
  * Table styling and column widths
  */

@@ -45,80 +45,125 @@
 
 			// Validation
 			if (!fromEnv || !toEnv) {
-				alert(ashNazgClone.i18n.selectBoth);
+				window.AshNazgModal.alert({
+					title: 'Validation Error',
+					message: ashNazgClone.i18n.selectBoth,
+					type: 'warning'
+				});
 				return;
 			}
 
 			if (fromEnv === toEnv) {
-				alert(ashNazgClone.i18n.sameEnvironment);
+				window.AshNazgModal.alert({
+					title: 'Validation Error',
+					message: ashNazgClone.i18n.sameEnvironment,
+					type: 'warning'
+				});
 				return;
 			}
 
 			if (!cloneDatabase && !cloneFiles) {
-				alert(ashNazgClone.i18n.selectOne);
+				window.AshNazgModal.alert({
+					title: 'Validation Error',
+					message: ashNazgClone.i18n.selectOne,
+					type: 'warning'
+				});
 				return;
 			}
 
 			// Confirmation
-			if (!confirm(ashNazgClone.i18n.confirmClone)) {
-				return;
-			}
-
-			var $submitButton = $('#ash-nazg-clone-submit');
-			$submitButton.prop('disabled', true);
-
-			// Show progress modal
-			var modal = showProgressModal(
-				ashNazgClone.i18n.cloningContent,
-				ashNazgClone.i18n.pleaseWait
-			);
-
-			// Submit via AJAX
-			$.ajax({
-				url: ashNazgClone.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'ash_nazg_clone_content',
-					nonce: ashNazgClone.cloneContentNonce,
-					from_env: fromEnv,
-					to_env: toEnv,
-					clone_database: cloneDatabase ? 'true' : 'false',
-					clone_files: cloneFiles ? 'true' : 'false'
-				},
-				success: function(response) {
-					if (response.success && response.data && response.data.workflow_ids) {
-						// Poll all workflow IDs
-						pollMultipleWorkflows(
-							response.data.site_id,
-							response.data.workflow_ids,
-							function(progress, status) {
-								modal.updateProgress(progress, status);
-							},
-							function(success, error) {
-								modal.close();
-								$submitButton.prop('disabled', false);
-
-								if (success) {
-									alert(ashNazgClone.i18n.cloneSuccess);
-									window.location.reload();
-								} else {
-									alert(error || ashNazgClone.i18n.operationFailed);
-								}
-							}
-						);
-					} else {
-						modal.close();
-						$submitButton.prop('disabled', false);
-						alert(response.data?.message || ashNazgClone.i18n.operationFailed);
-					}
-				},
-				error: function() {
-					modal.close();
-					$submitButton.prop('disabled', false);
-					alert(ashNazgClone.i18n.ajaxError);
+			window.AshNazgModal.confirm({
+				title: 'Confirm Clone',
+				message: ashNazgClone.i18n.confirmClone,
+				confirmText: 'Clone Content',
+				type: 'warning',
+				onConfirm: function() {
+					performClone();
 				}
 			});
 		});
+
+		function performClone() {
+			var $fromSelect = $('#clone-from-env');
+			var $toSelect = $('#clone-to-env');
+			var fromEnv = $fromSelect.val();
+			var toEnv = $toSelect.val();
+			var cloneDatabase = $('#clone-database').is(':checked');
+			var cloneFiles = $('#clone-files').is(':checked');
+
+		var $submitButton = $('#ash-nazg-clone-submit');
+		$submitButton.prop('disabled', true);
+
+		// Show progress modal
+		var modal = showProgressModal(
+			ashNazgClone.i18n.cloningContent,
+			ashNazgClone.i18n.pleaseWait
+		);
+
+		// Submit via AJAX
+		$.ajax({
+			url: ashNazgClone.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'ash_nazg_clone_content',
+				nonce: ashNazgClone.cloneContentNonce,
+				from_env: fromEnv,
+				to_env: toEnv,
+				clone_database: cloneDatabase ? 'true' : 'false',
+				clone_files: cloneFiles ? 'true' : 'false'
+			},
+			success: function(response) {
+				if (response.success && response.data && response.data.workflow_ids) {
+					// Poll all workflow IDs
+					pollMultipleWorkflows(
+						response.data.site_id,
+						response.data.workflow_ids,
+						function(progress, status) {
+							modal.updateProgress(progress, status);
+						},
+						function(success, error) {
+							modal.close();
+							$submitButton.prop('disabled', false);
+
+							if (success) {
+								window.AshNazgModal.alert({
+									title: 'Clone Successful',
+									message: ashNazgClone.i18n.cloneSuccess,
+									type: 'info',
+									onClose: function() {
+										window.location.reload();
+									}
+								});
+							} else {
+								window.AshNazgModal.alert({
+									title: 'Clone Failed',
+									message: error || ashNazgClone.i18n.operationFailed,
+									type: 'danger'
+								});
+							}
+						}
+					);
+				} else {
+					modal.close();
+					$submitButton.prop('disabled', false);
+					window.AshNazgModal.alert({
+						title: 'Operation Failed',
+						message: response.data?.message || ashNazgClone.i18n.operationFailed,
+						type: 'danger'
+					});
+				}
+			},
+			error: function() {
+				modal.close();
+				$submitButton.prop('disabled', false);
+				window.AshNazgModal.alert({
+					title: 'Error',
+					message: ashNazgClone.i18n.ajaxError,
+					type: 'danger'
+				});
+			}
+		});
+		}
 	});
 
 	/**
