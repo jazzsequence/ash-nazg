@@ -114,21 +114,31 @@
 		const multidevName = $button.data('multidev-name');
 		const nonce = $button.data('nonce');
 
-		// Confirm action.
-		if (!confirm(ashNazgMultidev.i18n.confirmMergeFromDev || 'Merge changes from dev into this multidev?')) {
-			return;
-		}
+		// Confirm action
+		window.AshNazgModal.confirm(
+			ashNazgMultidev.i18n.confirmMergeFromDev || 'Merge changes from dev into this multidev?',
+			function() {
+				// User confirmed - execute merge
+				executeMergeFromDev($button, multidevName, nonce);
+			},
+			'warning'
+		);
+	});
 
-		// Disable button.
+	/**
+	 * Execute merge from dev after confirmation.
+	 */
+	function executeMergeFromDev($button, multidevName, nonce) {
+		// Disable button
 		$button.prop('disabled', true);
 
-		// Show progress modal.
+		// Show progress modal
 		const modal = showProgressModal(
 			ashNazgMultidev.i18n.mergingFromDev || 'Merging from Dev',
 			ashNazgMultidev.i18n.pleaseWait
 		);
 
-		// Submit via AJAX.
+		// Submit via AJAX
 		$.ajax({
 			url: ashNazgMultidev.ajaxUrl,
 			type: 'POST',
@@ -140,7 +150,7 @@
 			},
 			success: function(response) {
 				if (response.success && response.data && response.data.workflow_id) {
-					// Poll workflow status.
+					// Poll workflow status
 					pollWorkflowStatus(
 						response.data.site_id,
 						response.data.workflow_id,
@@ -152,26 +162,38 @@
 							$button.prop('disabled', false);
 
 							if (status.result === 'succeeded') {
-								// Reload page to show updated state.
+								// Reload page to show updated state
 								window.location.reload();
 							} else {
-								alert(status.error || ashNazgMultidev.i18n.operationFailed);
+								window.AshNazgModal.alert(
+									status.error || ashNazgMultidev.i18n.operationFailed,
+									null,
+									'danger'
+								);
 							}
 						}
 					);
 				} else {
 					modal.close();
 					$button.prop('disabled', false);
-					alert(response.data?.message || ashNazgMultidev.i18n.operationFailed);
+					window.AshNazgModal.alert(
+						response.data?.message || ashNazgMultidev.i18n.operationFailed,
+						null,
+						'danger'
+					);
 				}
 			},
 			error: function() {
 				modal.close();
 				$button.prop('disabled', false);
-				alert(ashNazgMultidev.i18n.ajaxError);
+				window.AshNazgModal.alert(
+					ashNazgMultidev.i18n.ajaxError,
+					null,
+					'danger'
+				);
 			}
 		});
-	});
+	}
 
 	/**
 	 * Handle multidev form submission.
@@ -228,20 +250,32 @@
 								// Reload page to show updated state
 								window.location.reload();
 							} else {
-								alert(status.error || ashNazgMultidev.i18n.operationFailed);
+								window.AshNazgModal.alert(
+									status.error || ashNazgMultidev.i18n.operationFailed,
+									null,
+									'danger'
+								);
 							}
 						}
 					);
 				} else {
 					modal.close();
 					$button.prop('disabled', false);
-					alert(response.data?.message || ashNazgMultidev.i18n.operationFailed);
+					window.AshNazgModal.alert(
+						response.data?.message || ashNazgMultidev.i18n.operationFailed,
+						null,
+						'danger'
+					);
 				}
 			},
 			error: function() {
 				modal.close();
 				$button.prop('disabled', false);
-				alert(ashNazgMultidev.i18n.ajaxError);
+				window.AshNazgModal.alert(
+					ashNazgMultidev.i18n.ajaxError,
+					null,
+					'danger'
+				);
 			}
 		});
 	});

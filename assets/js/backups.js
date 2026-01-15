@@ -42,63 +42,14 @@
 			var environment = $form.find('#backup-environment').val();
 
 			// Confirm action
-			if (!confirm(ashNazgBackups.i18n.confirmCreate)) {
-				return;
-			}
-
-			// Disable button
-			$button.prop('disabled', true);
-
-			// Show progress modal
-			var modal = showProgressModal(
-				ashNazgBackups.i18n.creatingBackup,
-				ashNazgBackups.i18n.pleaseWait
+			window.AshNazgModal.confirm(
+				ashNazgBackups.i18n.confirmCreate,
+				function() {
+					// User confirmed - execute backup creation
+					executeBackupCreation($button, nonce, element, keepFor, environment);
+				},
+				'warning'
 			);
-
-			// Submit via AJAX
-			$.ajax({
-				url: ashNazgBackups.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'ash_nazg_create_backup',
-					nonce: nonce,
-					element: element,
-					keep_for: keepFor,
-					environment: environment
-				},
-				success: function(response) {
-					if (response.success && response.data && response.data.workflow_id) {
-						// Poll workflow status
-						pollWorkflowStatus(
-							response.data.site_id,
-							response.data.workflow_id,
-							function(progress, status) {
-								modal.updateProgress(progress, status);
-							},
-							function(status) {
-								modal.close();
-								$button.prop('disabled', false);
-
-								if (status.result === 'succeeded') {
-									alert(ashNazgBackups.i18n.backupCreated);
-									window.location.reload();
-								} else {
-									alert(status.error || ashNazgBackups.i18n.operationFailed);
-								}
-							}
-						);
-					} else {
-						modal.close();
-						$button.prop('disabled', false);
-						alert(response.data?.message || ashNazgBackups.i18n.operationFailed);
-					}
-				},
-				error: function() {
-					modal.close();
-					$button.prop('disabled', false);
-					alert(ashNazgBackups.i18n.ajaxError);
-				}
-			});
 		});
 
 		// Download Backup button
@@ -135,13 +86,21 @@
 						// Open download URL in new tab
 						window.open(response.data.url, '_blank');
 					} else {
-						alert(response.data?.message || ashNazgBackups.i18n.operationFailed);
+						window.AshNazgModal.alert(
+							response.data?.message || ashNazgBackups.i18n.operationFailed,
+							null,
+							'danger'
+						);
 					}
 				},
 				error: function() {
 					$button.prop('disabled', false);
 					$button.text(originalText);
-					alert(ashNazgBackups.i18n.ajaxError);
+					window.AshNazgModal.alert(
+						ashNazgBackups.i18n.ajaxError,
+						null,
+						'danger'
+					);
 				}
 			});
 		});
@@ -157,65 +116,168 @@
 			var nonce = $button.data('nonce');
 
 			// Confirm action with strong warning
-			if (!confirm(ashNazgBackups.i18n.confirmRestore)) {
-				return;
-			}
-
-			// Disable button
-			$button.prop('disabled', true);
-
-			// Show progress modal
-			var modal = showProgressModal(
-				ashNazgBackups.i18n.restoringBackup,
-				ashNazgBackups.i18n.pleaseWait
+			window.AshNazgModal.confirm(
+				ashNazgBackups.i18n.confirmRestore,
+				function() {
+					// User confirmed - execute backup restore
+					executeBackupRestore($button, nonce, backupId, element, environment);
+				},
+				'danger'
 			);
-
-			// Submit via AJAX
-			$.ajax({
-				url: ashNazgBackups.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'ash_nazg_restore_backup',
-					nonce: nonce,
-					backup_id: backupId,
-					element: element,
-					environment: environment
-				},
-				success: function(response) {
-					if (response.success && response.data && response.data.workflow_id) {
-						// Poll workflow status
-						pollWorkflowStatus(
-							response.data.site_id,
-							response.data.workflow_id,
-							function(progress, status) {
-								modal.updateProgress(progress, status);
-							},
-							function(status) {
-								modal.close();
-								$button.prop('disabled', false);
-
-								if (status.result === 'succeeded') {
-									alert(ashNazgBackups.i18n.backupRestored);
-									window.location.reload();
-								} else {
-									alert(status.error || ashNazgBackups.i18n.operationFailed);
-								}
-							}
-						);
-					} else {
-						modal.close();
-						$button.prop('disabled', false);
-						alert(response.data?.message || ashNazgBackups.i18n.operationFailed);
-					}
-				},
-				error: function() {
-					modal.close();
-					$button.prop('disabled', false);
-					alert(ashNazgBackups.i18n.ajaxError);
-				}
-			});
 		});
 	});
+
+	/**
+	 * Execute backup creation after confirmation.
+	 */
+	function executeBackupCreation($button, nonce, element, keepFor, environment) {
+		// Disable button
+		$button.prop('disabled', true);
+
+		// Show progress modal
+		var modal = showProgressModal(
+			ashNazgBackups.i18n.creatingBackup,
+			ashNazgBackups.i18n.pleaseWait
+		);
+
+		// Submit via AJAX
+		$.ajax({
+			url: ashNazgBackups.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'ash_nazg_create_backup',
+				nonce: nonce,
+				element: element,
+				keep_for: keepFor,
+				environment: environment
+			},
+			success: function(response) {
+				if (response.success && response.data && response.data.workflow_id) {
+					// Poll workflow status
+					pollWorkflowStatus(
+						response.data.site_id,
+						response.data.workflow_id,
+						function(progress, status) {
+							modal.updateProgress(progress, status);
+						},
+						function(status) {
+							modal.close();
+							$button.prop('disabled', false);
+
+							if (status.result === 'succeeded') {
+								window.AshNazgModal.alert(
+									ashNazgBackups.i18n.backupCreated,
+									function() {
+										window.location.reload();
+									},
+									'info'
+								);
+							} else {
+								window.AshNazgModal.alert(
+									status.error || ashNazgBackups.i18n.operationFailed,
+									null,
+									'danger'
+								);
+							}
+						}
+					);
+				} else {
+					modal.close();
+					$button.prop('disabled', false);
+					window.AshNazgModal.alert(
+						response.data?.message || ashNazgBackups.i18n.operationFailed,
+						null,
+						'danger'
+					);
+				}
+			},
+			error: function() {
+				modal.close();
+				$button.prop('disabled', false);
+				window.AshNazgModal.alert(
+					ashNazgBackups.i18n.ajaxError,
+					null,
+					'danger'
+				);
+			}
+		});
+	}
+
+	/**
+	 * Execute backup restore after confirmation.
+	 */
+	function executeBackupRestore($button, nonce, backupId, element, environment) {
+		// Disable button
+		$button.prop('disabled', true);
+
+		// Show progress modal
+		var modal = showProgressModal(
+			ashNazgBackups.i18n.restoringBackup,
+			ashNazgBackups.i18n.pleaseWait
+		);
+
+		// Submit via AJAX
+		$.ajax({
+			url: ashNazgBackups.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'ash_nazg_restore_backup',
+				nonce: nonce,
+				backup_id: backupId,
+				element: element,
+				environment: environment
+			},
+			success: function(response) {
+				if (response.success && response.data && response.data.workflow_id) {
+					// Poll workflow status
+					pollWorkflowStatus(
+						response.data.site_id,
+						response.data.workflow_id,
+						function(progress, status) {
+							modal.updateProgress(progress, status);
+						},
+						function(status) {
+							modal.close();
+							$button.prop('disabled', false);
+
+							if (status.result === 'succeeded') {
+								window.AshNazgModal.alert(
+									ashNazgBackups.i18n.backupRestored,
+									function() {
+										window.location.reload();
+									},
+									'info'
+								);
+							} else {
+								window.AshNazgModal.alert(
+									status.error || ashNazgBackups.i18n.operationFailed,
+									null,
+									'danger'
+								);
+							}
+						}
+					);
+				} else {
+					modal.close();
+					$button.prop('disabled', false);
+					window.AshNazgModal.alert(
+						response.data?.message || ashNazgBackups.i18n.operationFailed,
+						null,
+						'danger'
+					);
+				}
+			},
+			error: function() {
+				modal.close();
+				$button.prop('disabled', false);
+				window.AshNazgModal.alert(
+					ashNazgBackups.i18n.ajaxError,
+					null,
+					'danger'
+				);
+			}
+		});
+	}
 
 	/**
 	 * Poll workflow status until completion.

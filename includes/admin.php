@@ -1137,8 +1137,17 @@ function ajax_fetch_logs() {
 			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 		}
 		$switched_mode = true;
-		// Give the mode switch a moment to take effect.
-		sleep( 2 );
+
+		// Poll workflow to ensure mode switch completes.
+		if ( isset( $result['id'] ) ) {
+			\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX fetch logs - Polling workflow %s for mode switch completion', $result['id'] ) );
+			$workflow_status = API\poll_workflow( $site_id, $result['id'], 30, 2 );
+			if ( is_wp_error( $workflow_status ) ) {
+				\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX fetch logs - Workflow polling failed: %s', $workflow_status->get_error_message() ) );
+				wp_send_json_error( [ 'message' => __( 'Mode switch workflow did not complete in time.', 'ash-nazg' ) ] );
+			}
+			\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX fetch logs - Mode switch workflow completed with result: %s', $workflow_status['result'] ?? 'unknown' ) );
+		}
 	}
 
 	// Read debug.log file.
@@ -1222,8 +1231,17 @@ function ajax_clear_logs() {
 			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 		}
 		$switched_mode = true;
-		// Give the mode switch a moment to take effect.
-		sleep( 2 );
+
+		// Poll workflow to ensure mode switch completes.
+		if ( isset( $result['id'] ) ) {
+			\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX clear logs - Polling workflow %s for mode switch completion', $result['id'] ) );
+			$workflow_status = API\poll_workflow( $site_id, $result['id'], 30, 2 );
+			if ( is_wp_error( $workflow_status ) ) {
+				\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX clear logs - Workflow polling failed: %s', $workflow_status->get_error_message() ) );
+				wp_send_json_error( [ 'message' => __( 'Mode switch workflow did not complete in time.', 'ash-nazg' ) ] );
+			}
+			\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX clear logs - Mode switch workflow completed with result: %s', $workflow_status['result'] ?? 'unknown' ) );
+		}
 	}
 
 	// Delete debug.log file.

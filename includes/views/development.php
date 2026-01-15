@@ -79,7 +79,7 @@ use Pantheon\AshNazg\Helpers;
 			$behind = isset( $upstream_updates['behind'] ) ? $upstream_updates['behind'] : 0;
 		}
 		?>
-		<?php if ( $update_count > 0 ) : ?>
+		<?php if ( $update_count > 0 || $behind > 0 ) : ?>
 		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
 			<h2><?php esc_html_e( 'Upstream Updates', 'ash-nazg' ); ?></h2>
 			<p>

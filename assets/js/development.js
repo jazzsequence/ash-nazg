@@ -11,14 +11,14 @@
 
 			var fullHash = $(this).data('hash');
 			var $code = $(this);
-			
+
 			// Copy to clipboard
 			navigator.clipboard.writeText(fullHash).then(function() {
 				// Show success feedback
 				var originalText = $code.text();
 				$code.text('Copied!');
 				$code.addClass('ash-nazg-hash-copied');
-				
+
 				// Reset after 1.5 seconds
 				setTimeout(function() {
 					$code.text(originalText);
@@ -28,7 +28,7 @@
 				console.error('Failed to copy hash:', err);
 			});
 		});
-		
+
 		// Change cursor to pointer to indicate clickability
 		$('.ash-nazg-hash-copyable').css('cursor', 'pointer');
 
@@ -40,74 +40,14 @@
 			var nonce = $button.data('nonce');
 
 			// Confirm action
-			if (!confirm(ashNazgDevelopment.i18n.confirmApplyUpdates)) {
-				return;
-			}
-
-			// Disable button
-			$button.prop('disabled', true);
-
-			// Show progress modal
-			var modal = showProgressModal(
-				ashNazgDevelopment.i18n.applyingUpdates,
-				ashNazgDevelopment.i18n.pleaseWait
+			window.AshNazgModal.confirm(
+				ashNazgDevelopment.i18n.confirmApplyUpdates,
+				function() {
+					// User confirmed - execute upstream updates
+					executeApplyUpstreamUpdates($button, nonce);
+				},
+				'warning'
 			);
-
-			// Submit via AJAX
-			$.ajax({
-				url: ashNazgDevelopment.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'ash_nazg_apply_upstream_updates',
-					nonce: nonce,
-					updatedb: false,
-					xoption: false
-				},
-				success: function(response) {
-					if (response.success && response.data && response.data.workflow_id) {
-						// Poll workflow status
-						pollWorkflowStatus(
-							response.data.site_id,
-							response.data.workflow_id,
-							function(progress, status) {
-								modal.updateProgress(progress, status);
-							},
-							function(status) {
-								modal.close();
-								$button.prop('disabled', false);
-
-								if (status.result === 'succeeded') {
-									// Clear upstream updates cache before reloading
-									$.ajax({
-										url: ashNazgDevelopment.ajaxUrl,
-										type: 'POST',
-										data: {
-											action: 'ash_nazg_clear_upstream_cache',
-											nonce: ashNazgDevelopment.clearUpstreamCacheNonce
-										},
-										complete: function() {
-											// Reload page whether cache clear succeeded or not
-											alert(ashNazgDevelopment.i18n.updatesApplied);
-											window.location.reload();
-										}
-									});
-								} else {
-									alert(status.error || ashNazgDevelopment.i18n.operationFailed);
-								}
-							}
-						);
-					} else {
-						modal.close();
-						$button.prop('disabled', false);
-						alert(response.data?.message || ashNazgDevelopment.i18n.operationFailed);
-					}
-				},
-				error: function() {
-					modal.close();
-					$button.prop('disabled', false);
-					alert(ashNazgDevelopment.i18n.ajaxError);
-				}
-			});
 		});
 
 		// Merge Dev to Multidev button
@@ -118,62 +58,14 @@
 			var nonce = $button.data('nonce');
 
 			// Confirm action
-			if (!confirm(ashNazgDevelopment.i18n.confirmMergeDevToMultidev)) {
-				return;
-			}
-
-			// Disable button
-			$button.prop('disabled', true);
-
-			// Show progress modal
-			var modal = showProgressModal(
-				ashNazgDevelopment.i18n.mergingDevToMultidev,
-				ashNazgDevelopment.i18n.pleaseWait
+			window.AshNazgModal.confirm(
+				ashNazgDevelopment.i18n.confirmMergeDevToMultidev,
+				function() {
+					// User confirmed - execute merge
+					executeMergeDevToMultidev($button, nonce);
+				},
+				'warning'
 			);
-
-			// Submit via AJAX
-			$.ajax({
-				url: ashNazgDevelopment.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'ash_nazg_merge_dev_to_multidev',
-					nonce: nonce,
-					updatedb: false
-				},
-				success: function(response) {
-					if (response.success && response.data && response.data.workflow_id) {
-						// Poll workflow status
-						pollWorkflowStatus(
-							response.data.site_id,
-							response.data.workflow_id,
-							function(progress, status) {
-								modal.updateProgress(progress, status);
-							},
-							function(status) {
-								modal.close();
-								$button.prop('disabled', false);
-
-								if (status.result === 'succeeded') {
-									alert(ashNazgDevelopment.i18n.devMergedToMultidev);
-									// Reload page to show updated state
-									window.location.reload();
-								} else {
-									alert(status.error || ashNazgDevelopment.i18n.operationFailed);
-								}
-							}
-						);
-					} else {
-						modal.close();
-						$button.prop('disabled', false);
-						alert(response.data?.message || ashNazgDevelopment.i18n.operationFailed);
-					}
-				},
-				error: function() {
-					modal.close();
-					$button.prop('disabled', false);
-					alert(ashNazgDevelopment.i18n.ajaxError);
-				}
-			});
 		});
 
 		// Toggle Deploy to Test panel
@@ -206,63 +98,14 @@
 			fullNote += '(Triggered by Ash Nazg at ' + siteUrl + ')';
 
 			// Confirm action
-			if (!confirm(ashNazgDevelopment.i18n.confirmDeployToTest)) {
-				return;
-			}
-
-			// Disable button
-			$button.prop('disabled', true);
-
-			// Show progress modal
-			var modal = showProgressModal(
-				ashNazgDevelopment.i18n.deployingToTest,
-				ashNazgDevelopment.i18n.pleaseWait
+			window.AshNazgModal.confirm(
+				ashNazgDevelopment.i18n.confirmDeployToTest,
+				function() {
+					// User confirmed - execute deploy to test
+					executeDeployToTest($button, nonce, target, fullNote);
+				},
+				'warning'
 			);
-
-			// Submit via AJAX
-			$.ajax({
-				url: ashNazgDevelopment.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'ash_nazg_deploy_code',
-					nonce: nonce,
-					target: target,
-					note: fullNote,
-					clear_cache: 'true'
-				},
-				success: function(response) {
-					if (response.success && response.data && response.data.workflow_id) {
-						// Poll workflow status
-						pollWorkflowStatus(
-							response.data.site_id,
-							response.data.workflow_id,
-							function(progress, status) {
-								modal.updateProgress(progress, status);
-							},
-							function(status) {
-								modal.close();
-								$button.prop('disabled', false);
-
-								if (status.result === 'succeeded') {
-									alert(ashNazgDevelopment.i18n.deploySucceeded);
-									window.location.reload();
-								} else {
-									alert(status.error || ashNazgDevelopment.i18n.operationFailed);
-								}
-							}
-						);
-					} else {
-						modal.close();
-						$button.prop('disabled', false);
-						alert(response.data?.message || ashNazgDevelopment.i18n.operationFailed);
-					}
-				},
-				error: function() {
-					modal.close();
-					$button.prop('disabled', false);
-					alert(ashNazgDevelopment.i18n.ajaxError);
-				}
-			});
 		});
 
 		// Toggle Deploy to Live panel
@@ -299,66 +142,330 @@
 			var syncContent = $('#ash-nazg-sync-content').is(':checked');
 
 			// Confirm action (warn about live deployment)
-			if (!confirm(ashNazgDevelopment.i18n.confirmDeployToLive)) {
-				return;
-			}
-
-			// Disable button
-			$button.prop('disabled', true);
-
-			// Show progress modal
-			var modal = showProgressModal(
-				ashNazgDevelopment.i18n.deployingToLive,
-				ashNazgDevelopment.i18n.pleaseWait
+			window.AshNazgModal.confirm(
+				ashNazgDevelopment.i18n.confirmDeployToLive,
+				function() {
+					// User confirmed - execute deploy to live
+					executeDeployToLive($button, nonce, target, fullNote, syncContent);
+				},
+				'danger'
 			);
-
-			// Submit via AJAX
-			$.ajax({
-				url: ashNazgDevelopment.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'ash_nazg_deploy_code',
-					nonce: nonce,
-					target: target,
-					note: fullNote,
-					clear_cache: 'true',
-					sync_content: syncContent ? 'true' : 'false'
-				},
-				success: function(response) {
-					if (response.success && response.data && response.data.workflow_id) {
-						// Poll workflow status
-						pollWorkflowStatus(
-							response.data.site_id,
-							response.data.workflow_id,
-							function(progress, status) {
-								modal.updateProgress(progress, status);
-							},
-							function(status) {
-								modal.close();
-								$button.prop('disabled', false);
-
-								if (status.result === 'succeeded') {
-									alert(ashNazgDevelopment.i18n.deploySucceeded);
-									window.location.reload();
-								} else {
-									alert(status.error || ashNazgDevelopment.i18n.operationFailed);
-								}
-							}
-						);
-					} else {
-						modal.close();
-						$button.prop('disabled', false);
-						alert(response.data?.message || ashNazgDevelopment.i18n.operationFailed);
-					}
-				},
-				error: function() {
-					modal.close();
-					$button.prop('disabled', false);
-					alert(ashNazgDevelopment.i18n.ajaxError);
-				}
-			});
 		});
 	});
+
+	/**
+	 * Execute apply upstream updates after confirmation.
+	 */
+	function executeApplyUpstreamUpdates($button, nonce) {
+		// Disable button
+		$button.prop('disabled', true);
+
+		// Show progress modal
+		var modal = showProgressModal(
+			ashNazgDevelopment.i18n.applyingUpdates,
+			ashNazgDevelopment.i18n.pleaseWait
+		);
+
+		// Submit via AJAX
+		$.ajax({
+			url: ashNazgDevelopment.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'ash_nazg_apply_upstream_updates',
+				nonce: nonce,
+				updatedb: false,
+				xoption: false
+			},
+			success: function(response) {
+				if (response.success && response.data && response.data.workflow_id) {
+					// Poll workflow status
+					pollWorkflowStatus(
+						response.data.site_id,
+						response.data.workflow_id,
+						function(progress, status) {
+							modal.updateProgress(progress, status);
+						},
+						function(status) {
+							modal.close();
+							$button.prop('disabled', false);
+
+							if (status.result === 'succeeded') {
+								// Clear upstream updates cache before reloading
+								$.ajax({
+									url: ashNazgDevelopment.ajaxUrl,
+									type: 'POST',
+									data: {
+										action: 'ash_nazg_clear_upstream_cache',
+										nonce: ashNazgDevelopment.clearUpstreamCacheNonce
+									},
+									complete: function() {
+										// Reload page whether cache clear succeeded or not
+										window.AshNazgModal.alert(
+											ashNazgDevelopment.i18n.updatesApplied,
+											function() {
+												window.location.reload();
+											},
+											'info'
+										);
+									}
+								});
+							} else {
+								window.AshNazgModal.alert(
+									status.error || ashNazgDevelopment.i18n.operationFailed,
+									null,
+									'danger'
+								);
+							}
+						}
+					);
+				} else {
+					modal.close();
+					$button.prop('disabled', false);
+					window.AshNazgModal.alert(
+						response.data?.message || ashNazgDevelopment.i18n.operationFailed,
+						null,
+						'danger'
+					);
+				}
+			},
+			error: function() {
+				modal.close();
+				$button.prop('disabled', false);
+				window.AshNazgModal.alert(
+					ashNazgDevelopment.i18n.ajaxError,
+					null,
+					'danger'
+				);
+			}
+		});
+	}
+
+	/**
+	 * Execute merge dev to multidev after confirmation.
+	 */
+	function executeMergeDevToMultidev($button, nonce) {
+		// Disable button
+		$button.prop('disabled', true);
+
+		// Show progress modal
+		var modal = showProgressModal(
+			ashNazgDevelopment.i18n.mergingDevToMultidev,
+			ashNazgDevelopment.i18n.pleaseWait
+		);
+
+		// Submit via AJAX
+		$.ajax({
+			url: ashNazgDevelopment.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'ash_nazg_merge_dev_to_multidev',
+				nonce: nonce,
+				updatedb: false
+			},
+			success: function(response) {
+				if (response.success && response.data && response.data.workflow_id) {
+					// Poll workflow status
+					pollWorkflowStatus(
+						response.data.site_id,
+						response.data.workflow_id,
+						function(progress, status) {
+							modal.updateProgress(progress, status);
+						},
+						function(status) {
+							modal.close();
+							$button.prop('disabled', false);
+
+							if (status.result === 'succeeded') {
+								window.AshNazgModal.alert(
+									ashNazgDevelopment.i18n.devMergedToMultidev,
+									function() {
+										window.location.reload();
+									},
+									'info'
+								);
+							} else {
+								window.AshNazgModal.alert(
+									status.error || ashNazgDevelopment.i18n.operationFailed,
+									null,
+									'danger'
+								);
+							}
+						}
+					);
+				} else {
+					modal.close();
+					$button.prop('disabled', false);
+					window.AshNazgModal.alert(
+						response.data?.message || ashNazgDevelopment.i18n.operationFailed,
+						null,
+						'danger'
+					);
+				}
+			},
+			error: function() {
+				modal.close();
+				$button.prop('disabled', false);
+				window.AshNazgModal.alert(
+					ashNazgDevelopment.i18n.ajaxError,
+					null,
+					'danger'
+				);
+			}
+		});
+	}
+
+	/**
+	 * Execute deploy to test after confirmation.
+	 */
+	function executeDeployToTest($button, nonce, target, fullNote) {
+		// Disable button
+		$button.prop('disabled', true);
+
+		// Show progress modal
+		var modal = showProgressModal(
+			ashNazgDevelopment.i18n.deployingToTest,
+			ashNazgDevelopment.i18n.pleaseWait
+		);
+
+		// Submit via AJAX
+		$.ajax({
+			url: ashNazgDevelopment.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'ash_nazg_deploy_code',
+				nonce: nonce,
+				target: target,
+				note: fullNote,
+				clear_cache: 'true'
+			},
+			success: function(response) {
+				if (response.success && response.data && response.data.workflow_id) {
+					// Poll workflow status
+					pollWorkflowStatus(
+						response.data.site_id,
+						response.data.workflow_id,
+						function(progress, status) {
+							modal.updateProgress(progress, status);
+						},
+						function(status) {
+							modal.close();
+							$button.prop('disabled', false);
+
+							if (status.result === 'succeeded') {
+								window.AshNazgModal.alert(
+									ashNazgDevelopment.i18n.deploySucceeded,
+									function() {
+										window.location.reload();
+									},
+									'info'
+								);
+							} else {
+								window.AshNazgModal.alert(
+									status.error || ashNazgDevelopment.i18n.operationFailed,
+									null,
+									'danger'
+								);
+							}
+						}
+					);
+				} else {
+					modal.close();
+					$button.prop('disabled', false);
+					window.AshNazgModal.alert(
+						response.data?.message || ashNazgDevelopment.i18n.operationFailed,
+						null,
+						'danger'
+					);
+				}
+			},
+			error: function() {
+				modal.close();
+				$button.prop('disabled', false);
+				window.AshNazgModal.alert(
+					ashNazgDevelopment.i18n.ajaxError,
+					null,
+					'danger'
+				);
+			}
+		});
+	}
+
+	/**
+	 * Execute deploy to live after confirmation.
+	 */
+	function executeDeployToLive($button, nonce, target, fullNote, syncContent) {
+		// Disable button
+		$button.prop('disabled', true);
+
+		// Show progress modal
+		var modal = showProgressModal(
+			ashNazgDevelopment.i18n.deployingToLive,
+			ashNazgDevelopment.i18n.pleaseWait
+		);
+
+		// Submit via AJAX
+		$.ajax({
+			url: ashNazgDevelopment.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'ash_nazg_deploy_code',
+				nonce: nonce,
+				target: target,
+				note: fullNote,
+				clear_cache: 'true',
+				sync_content: syncContent ? 'true' : 'false'
+			},
+			success: function(response) {
+				if (response.success && response.data && response.data.workflow_id) {
+					// Poll workflow status
+					pollWorkflowStatus(
+						response.data.site_id,
+						response.data.workflow_id,
+						function(progress, status) {
+							modal.updateProgress(progress, status);
+						},
+						function(status) {
+							modal.close();
+							$button.prop('disabled', false);
+
+							if (status.result === 'succeeded') {
+								window.AshNazgModal.alert(
+									ashNazgDevelopment.i18n.deploySucceeded,
+									function() {
+										window.location.reload();
+									},
+									'info'
+								);
+							} else {
+								window.AshNazgModal.alert(
+									status.error || ashNazgDevelopment.i18n.operationFailed,
+									null,
+									'danger'
+								);
+							}
+						}
+					);
+				} else {
+					modal.close();
+					$button.prop('disabled', false);
+					window.AshNazgModal.alert(
+						response.data?.message || ashNazgDevelopment.i18n.operationFailed,
+						null,
+						'danger'
+					);
+				}
+			},
+			error: function() {
+				modal.close();
+				$button.prop('disabled', false);
+				window.AshNazgModal.alert(
+					ashNazgDevelopment.i18n.ajaxError,
+					null,
+					'danger'
+				);
+			}
+		});
+	}
 
 	/**
 	 * Poll workflow status until completion.
