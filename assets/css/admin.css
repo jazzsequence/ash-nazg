@@ -772,6 +772,69 @@
 }
 
 /**
+ * Backups Page Styles
+ */
+/* Backup form */
+.ash-nazg-backup-form .form-table {
+  margin-bottom: 0;
+}
+
+/* Backups list */
+.ash-nazg-backups-list {
+  margin-top: 20px;
+}
+
+/* Backup set container */
+.ash-nazg-backup-set {
+  border: 1px solid #dcdcde;
+  border-radius: 4px;
+  padding: 20px;
+  background: #fff;
+}
+.ash-nazg-backup-set:last-child {
+  margin-bottom: 0;
+}
+
+/* Backup set header */
+.ash-nazg-backup-set-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #dcdcde;
+}
+.ash-nazg-backup-set-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2327;
+}
+.ash-nazg-backup-set-header .ash-nazg-text-meta {
+  font-size: 13px;
+}
+
+/* Backup elements table */
+.ash-nazg-backup-elements-table {
+  margin-top: 0;
+}
+.ash-nazg-backup-elements-table th {
+  font-weight: 600;
+}
+.ash-nazg-backup-elements-table td {
+  vertical-align: middle;
+}
+.ash-nazg-backup-elements-table .ash-nazg-text-meta {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+}
+.ash-nazg-backup-elements-table .button-small {
+  margin-right: 5px;
+}
+
+/* Progress modal (already defined in _progress-modal.scss, but backup-specific overrides can go here if needed) */
+/**
  * Admin styles for Ash-Nazg plugin.
  *
  * Structure:

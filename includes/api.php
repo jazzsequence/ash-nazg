@@ -1658,3 +1658,254 @@ function poll_workflow( $site_id, $workflow_id, $max_attempts = 60, $sleep_secon
 		)
 	);
 }
+
+/**
+ * Get backups catalog for an environment.
+ *
+ * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @param string $env Optional. Environment name. Auto-detected if not provided.
+ * @return array|\WP_Error Backups catalog (map of backup_id => Backup) or WP_Error on failure.
+ */
+function get_backups( $site_id = null, $env = null ) {
+	if ( null === $site_id ) {
+		$site_id = get_pantheon_site_id();
+		if ( ! $site_id ) {
+			return new \WP_Error(
+				'no_site_id',
+				__( 'Unable to detect Pantheon site ID', 'ash-nazg' )
+			);
+		}
+	}
+
+	if ( null === $env ) {
+		$env = get_pantheon_environment();
+		if ( ! $env ) {
+			return new \WP_Error(
+				'no_environment',
+				__( 'Unable to detect Pantheon environment', 'ash-nazg' )
+			);
+		}
+	}
+
+	// Map local environments to dev for API queries.
+	$api_env = map_local_env_to_dev( $env );
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/backups/catalog', $site_id, $api_env );
+	$cache_key = sprintf( 'ash_nazg_backups_%s_%s', $site_id, $api_env );
+
+	// Cache for 5 minutes (backups don't change frequently).
+	$backups = get_cached_endpoint( $endpoint, $cache_key, 5 * MINUTE_IN_SECONDS );
+
+	if ( is_wp_error( $backups ) ) {
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get backups for %s.%s - Error: %s', $site_id, $api_env, $backups->get_error_message() ) );
+		return $backups;
+	}
+
+	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Retrieved %d backups for %s.%s', count( $backups ), $site_id, $api_env ) );
+
+	return $backups;
+}
+
+/**
+ * Create a new backup.
+ *
+ * @param string $element Backup element type: 'all', 'code', 'database', or 'files'.
+ * @param int    $keep_for Number of days to keep the backup (default: 365).
+ * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @param string $env Optional. Environment name. Auto-detected if not provided.
+ * @return array|\WP_Error Workflow response or WP_Error on failure.
+ */
+function create_backup( $element, $keep_for = 365, $site_id = null, $env = null ) {
+	if ( null === $site_id ) {
+		$site_id = get_pantheon_site_id();
+		if ( ! $site_id ) {
+			return new \WP_Error(
+				'no_site_id',
+				__( 'Unable to detect Pantheon site ID', 'ash-nazg' )
+			);
+		}
+	}
+
+	if ( null === $env ) {
+		$env = get_pantheon_environment();
+		if ( ! $env ) {
+			return new \WP_Error(
+				'no_environment',
+				__( 'Unable to detect Pantheon environment', 'ash-nazg' )
+			);
+		}
+	}
+
+	// Validate element type.
+	$valid_elements = [ 'all', 'code', 'database', 'files' ];
+	if ( ! in_array( $element, $valid_elements, true ) ) {
+		return new \WP_Error(
+			'invalid_element',
+			sprintf(
+				/* translators: %s: comma-separated list of valid element types */
+				__( 'Invalid backup element. Must be one of: %s', 'ash-nazg' ),
+				implode( ', ', $valid_elements )
+			)
+		);
+	}
+
+	// Validate keep_for (minimum 1 day).
+	$keep_for = max( 1, (int) $keep_for );
+
+	// Map local environments to dev for API queries.
+	$api_env = map_local_env_to_dev( $env );
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/backups', $site_id, $api_env );
+	$body = [
+		'element' => $element,
+		'keep_for' => $keep_for,
+	];
+
+	$result = api_request( $endpoint, 'POST', $body );
+
+	if ( is_wp_error( $result ) ) {
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to create %s backup for %s.%s - Error: %s', $element, $site_id, $api_env, $result->get_error_message() ) );
+		return $result;
+	}
+
+	// Clear backups cache after creating backup.
+	delete_transient( sprintf( 'ash_nazg_backups_%s_%s', $site_id, $api_env ) );
+
+	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Created %s backup for %s.%s - Workflow ID: %s', $element, $site_id, $api_env, $result['workflow_id'] ?? 'unknown' ) );
+
+	return $result;
+}
+
+/**
+ * Restore a backup.
+ *
+ * @param string $backup_id Backup ID (folder name from catalog).
+ * @param string $element Element to restore: 'code', 'database', or 'files'.
+ * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @param string $env Optional. Environment name. Auto-detected if not provided.
+ * @return array|\WP_Error Workflow response or WP_Error on failure.
+ */
+function restore_backup( $backup_id, $element, $site_id = null, $env = null ) {
+	if ( null === $site_id ) {
+		$site_id = get_pantheon_site_id();
+		if ( ! $site_id ) {
+			return new \WP_Error(
+				'no_site_id',
+				__( 'Unable to detect Pantheon site ID', 'ash-nazg' )
+			);
+		}
+	}
+
+	if ( null === $env ) {
+		$env = get_pantheon_environment();
+		if ( ! $env ) {
+			return new \WP_Error(
+				'no_environment',
+				__( 'Unable to detect Pantheon environment', 'ash-nazg' )
+			);
+		}
+	}
+
+	// Validate element type (note: 'all' is not valid for restore).
+	$valid_elements = [ 'code', 'database', 'files' ];
+	if ( ! in_array( $element, $valid_elements, true ) ) {
+		return new \WP_Error(
+			'invalid_element',
+			sprintf(
+				/* translators: %s: comma-separated list of valid element types */
+				__( 'Invalid restore element. Must be one of: %s', 'ash-nazg' ),
+				implode( ', ', $valid_elements )
+			)
+		);
+	}
+
+	// Map local environments to dev for API queries.
+	$api_env = map_local_env_to_dev( $env );
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/backups/%s/restore', $site_id, $api_env, $backup_id );
+	$body = [
+		'element' => $element,
+	];
+
+	$result = api_request( $endpoint, 'POST', $body );
+
+	if ( is_wp_error( $result ) ) {
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to restore %s from backup %s on %s.%s - Error: %s', $element, $backup_id, $site_id, $api_env, $result->get_error_message() ) );
+		return $result;
+	}
+
+	// Clear backups cache after restore.
+	delete_transient( sprintf( 'ash_nazg_backups_%s_%s', $site_id, $api_env ) );
+
+	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Restored %s from backup %s on %s.%s - Workflow ID: %s', $element, $backup_id, $site_id, $api_env, $result['workflow_id'] ?? 'unknown' ) );
+
+	return $result;
+}
+
+/**
+ * Get a signed download URL for a backup file.
+ *
+ * @param string $backup_id Backup ID (folder name from catalog).
+ * @param string $element Element to download: 'code', 'database', or 'files'.
+ * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @param string $env Optional. Environment name. Auto-detected if not provided.
+ * @return string|\WP_Error Download URL or WP_Error on failure.
+ */
+function get_backup_download_url( $backup_id, $element, $site_id = null, $env = null ) {
+	if ( null === $site_id ) {
+		$site_id = get_pantheon_site_id();
+		if ( ! $site_id ) {
+			return new \WP_Error(
+				'no_site_id',
+				__( 'Unable to detect Pantheon site ID', 'ash-nazg' )
+			);
+		}
+	}
+
+	if ( null === $env ) {
+		$env = get_pantheon_environment();
+		if ( ! $env ) {
+			return new \WP_Error(
+				'no_environment',
+				__( 'Unable to detect Pantheon environment', 'ash-nazg' )
+			);
+		}
+	}
+
+	// Validate element type.
+	$valid_elements = [ 'code', 'database', 'files' ];
+	if ( ! in_array( $element, $valid_elements, true ) ) {
+		return new \WP_Error(
+			'invalid_element',
+			sprintf(
+				/* translators: %s: comma-separated list of valid element types */
+				__( 'Invalid download element. Must be one of: %s', 'ash-nazg' ),
+				implode( ', ', $valid_elements )
+			)
+		);
+	}
+
+	// Map local environments to dev for API queries.
+	$api_env = map_local_env_to_dev( $env );
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/backups/%s/%s/download-url', $site_id, $api_env, $backup_id, $element );
+
+	$result = api_request( $endpoint, 'POST' );
+
+	if ( is_wp_error( $result ) ) {
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get download URL for %s backup %s on %s.%s - Error: %s', $element, $backup_id, $site_id, $api_env, $result->get_error_message() ) );
+		return $result;
+	}
+
+	if ( ! isset( $result['url'] ) ) {
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Download URL response missing url field for %s backup %s on %s.%s', $element, $backup_id, $site_id, $api_env ) );
+		return new \WP_Error(
+			'missing_url',
+			__( 'API response did not include download URL', 'ash-nazg' )
+		);
+	}
+
+	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Retrieved download URL for %s backup %s on %s.%s', $element, $backup_id, $site_id, $api_env ) );
+
+	return $result['url'];
+}

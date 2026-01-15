@@ -34,6 +34,9 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_apply_upstream_updates', __NAMESPACE__ . '\\ajax_apply_upstream_updates' );
 	add_action( 'wp_ajax_ash_nazg_clear_upstream_cache', __NAMESPACE__ . '\\ajax_clear_upstream_cache' );
 	add_action( 'wp_ajax_ash_nazg_deploy_code', __NAMESPACE__ . '\\ajax_deploy_code' );
+	add_action( 'wp_ajax_ash_nazg_create_backup', __NAMESPACE__ . '\\ajax_create_backup' );
+	add_action( 'wp_ajax_ash_nazg_download_backup', __NAMESPACE__ . '\\ajax_download_backup' );
+	add_action( 'wp_ajax_ash_nazg_restore_backup', __NAMESPACE__ . '\\ajax_restore_backup' );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
 }
@@ -85,6 +88,16 @@ function add_admin_menu() {
 		__NAMESPACE__ . '\\render_development_page'
 	);
 
+	// Backups page.
+	add_submenu_page(
+		'ash-nazg',
+		__( 'Backups', 'ash-nazg' ),
+		__( 'Backups', 'ash-nazg' ),
+		'manage_options',
+		'ash-nazg-backups',
+		__NAMESPACE__ . '\\render_backups_page'
+	);
+
 	// Logs page.
 	add_submenu_page(
 		'ash-nazg',
@@ -119,6 +132,7 @@ function enqueue_assets( $hook ) {
 		'ash-nazg_page_ash-nazg-addons',
 		'ash-nazg_page_ash-nazg-workflows',
 		'ash-nazg_page_ash-nazg-development',
+		'ash-nazg_page_ash-nazg-backups',
 		'ash-nazg_page_ash-nazg-logs',
 		'ash-nazg_page_ash-nazg-settings',
 	];
@@ -237,6 +251,44 @@ function enqueue_assets( $hook ) {
 					'mergingFromDev' => __( 'Merging from Dev...', 'ash-nazg' ),
 					'confirmMergeFromDev' => __( 'Merge changes from dev into this multidev?', 'ash-nazg' ),
 					'pleaseWait' => __( 'Please wait while the operation completes.', 'ash-nazg' ),
+					'operationFailed' => __( 'Operation failed. Please try again.', 'ash-nazg' ),
+					'timeoutError' => __( 'Operation timed out. Please check the Pantheon dashboard.', 'ash-nazg' ),
+					'statusError' => __( 'Failed to get workflow status.', 'ash-nazg' ),
+					'ajaxError' => __( 'AJAX request failed.', 'ash-nazg' ),
+				],
+			]
+		);
+	}
+
+	// Enqueue backups JavaScript on backups page.
+	if ( 'ash-nazg_page_ash-nazg-backups' === $hook ) {
+		wp_enqueue_script(
+			'ash-nazg-backups',
+			ASH_NAZG_PLUGIN_URL . 'assets/js/backups.js',
+			[ 'jquery' ],
+			ASH_NAZG_VERSION,
+			true
+		);
+
+		// Localize backups script.
+		wp_localize_script(
+			'ash-nazg-backups',
+			'ashNazgBackups',
+			[
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'createBackupNonce' => wp_create_nonce( 'ash_nazg_create_backup' ),
+				'downloadBackupNonce' => wp_create_nonce( 'ash_nazg_download_backup' ),
+				'restoreBackupNonce' => wp_create_nonce( 'ash_nazg_restore_backup' ),
+				'workflowStatusNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
+				'i18n' => [
+					'confirmCreate' => __( 'Are you sure you want to create a new backup?', 'ash-nazg' ),
+					'confirmRestore' => __( 'Are you sure you want to restore this backup? This will overwrite current data and cannot be undone.', 'ash-nazg' ),
+					'creatingBackup' => __( 'Creating Backup...', 'ash-nazg' ),
+					'restoringBackup' => __( 'Restoring Backup...', 'ash-nazg' ),
+					'pleaseWait' => __( 'Please wait while the operation completes.', 'ash-nazg' ),
+					'backupCreated' => __( 'Backup created successfully!', 'ash-nazg' ),
+					'backupRestored' => __( 'Backup restored successfully!', 'ash-nazg' ),
+					'downloadingBackup' => __( 'Generating download URL...', 'ash-nazg' ),
 					'operationFailed' => __( 'Operation failed. Please try again.', 'ash-nazg' ),
 					'timeoutError' => __( 'Operation timed out. Please check the Pantheon dashboard.', 'ash-nazg' ),
 					'statusError' => __( 'Failed to get workflow status.', 'ash-nazg' ),
@@ -1628,6 +1680,40 @@ function render_development_page() {
 }
 
 /**
+ * Render backups page.
+ *
+ * @return void
+ */
+function render_backups_page() {
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$message = null;
+	$error = null;
+
+	// Get environment info.
+	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
+
+	// Get backups list.
+	$backups = [];
+	$backups_error = null;
+	if ( $site_id && $environment ) {
+		$result = API\get_backups( $site_id, $environment );
+		if ( is_wp_error( $result ) ) {
+			$backups_error = $result->get_error_message();
+		} else {
+			$backups = $result;
+		}
+	}
+
+	// Include the view.
+	require_once ASH_NAZG_PLUGIN_DIR . '/includes/views/backups.php';
+}
+
+/**
  * Render logs page.
  *
  * @return void
@@ -1743,4 +1829,155 @@ function get_commits_per_page() {
 	}
 
 	return $per_page;
+}
+
+/**
+ * AJAX handler to create a backup.
+ *
+ * @return void
+ */
+function ajax_create_backup() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_create_backup', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
+
+	if ( ! $site_id ) {
+		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
+	}
+
+	if ( ! $environment ) {
+		wp_send_json_error( [ 'message' => __( 'Environment not found.', 'ash-nazg' ) ] );
+	}
+
+	// Get parameters.
+	$element = isset( $_POST['element'] ) ? sanitize_text_field( wp_unslash( $_POST['element'] ) ) : 'all';
+	$keep_for = isset( $_POST['keep_for'] ) ? absint( $_POST['keep_for'] ) : 365;
+
+	// Validate element.
+	$valid_elements = [ 'all', 'code', 'database', 'files' ];
+	if ( ! in_array( $element, $valid_elements, true ) ) {
+		wp_send_json_error( [ 'message' => __( 'Invalid backup element.', 'ash-nazg' ) ] );
+	}
+
+	// Create backup.
+	$result = API\create_backup( $element, $keep_for, $site_id, $environment );
+
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+	}
+
+	// Return workflow ID for polling.
+	wp_send_json_success(
+		[
+			'workflow_id' => $result['id'] ?? null,
+			'site_id' => $site_id,
+			'message' => __( 'Backup creation started.', 'ash-nazg' ),
+		]
+	);
+}
+
+/**
+ * AJAX handler to get download URL for a backup.
+ *
+ * @return void
+ */
+function ajax_download_backup() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_download_backup', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
+
+	if ( ! $site_id ) {
+		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
+	}
+
+	if ( ! $environment ) {
+		wp_send_json_error( [ 'message' => __( 'Environment not found.', 'ash-nazg' ) ] );
+	}
+
+	// Get parameters.
+	$backup_id = isset( $_POST['backup_id'] ) ? sanitize_text_field( wp_unslash( $_POST['backup_id'] ) ) : '';
+	$element = isset( $_POST['element'] ) ? sanitize_text_field( wp_unslash( $_POST['element'] ) ) : '';
+
+	if ( empty( $backup_id ) || empty( $element ) ) {
+		wp_send_json_error( [ 'message' => __( 'Missing backup ID or element.', 'ash-nazg' ) ] );
+	}
+
+	// Get download URL.
+	$download_url = API\get_backup_download_url( $backup_id, $element, $site_id, $environment );
+
+	if ( is_wp_error( $download_url ) ) {
+		wp_send_json_error( [ 'message' => $download_url->get_error_message() ] );
+	}
+
+	// Return download URL.
+	wp_send_json_success(
+		[
+			'url' => $download_url,
+			'message' => __( 'Download URL retrieved.', 'ash-nazg' ),
+		]
+	);
+}
+
+/**
+ * AJAX handler to restore a backup.
+ *
+ * @return void
+ */
+function ajax_restore_backup() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_restore_backup', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$environment = API\get_pantheon_environment();
+
+	if ( ! $site_id ) {
+		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
+	}
+
+	if ( ! $environment ) {
+		wp_send_json_error( [ 'message' => __( 'Environment not found.', 'ash-nazg' ) ] );
+	}
+
+	// Get parameters.
+	$backup_id = isset( $_POST['backup_id'] ) ? sanitize_text_field( wp_unslash( $_POST['backup_id'] ) ) : '';
+	$element = isset( $_POST['element'] ) ? sanitize_text_field( wp_unslash( $_POST['element'] ) ) : '';
+
+	if ( empty( $backup_id ) || empty( $element ) ) {
+		wp_send_json_error( [ 'message' => __( 'Missing backup ID or element.', 'ash-nazg' ) ] );
+	}
+
+	// Restore backup.
+	$result = API\restore_backup( $backup_id, $element, $site_id, $environment );
+
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+	}
+
+	// Return workflow ID for polling.
+	wp_send_json_success(
+		[
+			'workflow_id' => $result['id'] ?? null,
+			'site_id' => $site_id,
+			'message' => __( 'Backup restore started.', 'ash-nazg' ),
+		]
+	);
 }

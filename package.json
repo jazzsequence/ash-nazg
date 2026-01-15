@@ -8,6 +8,7 @@
     "build:css": "sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css --style=expanded",
     "build:css:compressed": "sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css --style=compressed",
     "watch:css": "npm run copy:pds && sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css --watch --style=expanded",
+    "watch": "npm run watch:css",
     "build": "npm run build:css"
   },
   "keywords": [
