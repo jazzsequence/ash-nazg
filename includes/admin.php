@@ -1693,19 +1693,30 @@ function render_backups_page() {
 	$message = null;
 	$error = null;
 
-	// Get environment info.
+	// Get site ID.
 	$site_id = API\get_pantheon_site_id();
-	$environment = API\get_pantheon_environment();
+	$current_env = API\get_pantheon_environment();
 
-	// Get backups list.
-	$backups = [];
-	$backups_error = null;
-	if ( $site_id && $environment ) {
-		$result = API\get_backups( $site_id, $environment );
-		if ( is_wp_error( $result ) ) {
-			$backups_error = $result->get_error_message();
-		} else {
-			$backups = $result;
+	// Get all environments.
+	$environments = [];
+	if ( $site_id ) {
+		$envs_result = API\get_environments( $site_id );
+		if ( ! is_wp_error( $envs_result ) ) {
+			$environments = $envs_result;
+		}
+	}
+
+	// Default to current environment (mapped to dev if local).
+	$selected_env = $current_env ? API\map_local_env_to_dev( $current_env ) : 'dev';
+
+	// Get backups from all environments.
+	$all_backups = [];
+	if ( $site_id && ! empty( $environments ) ) {
+		foreach ( $environments as $env_id => $env_data ) {
+			$result = API\get_backups( $site_id, $env_id );
+			if ( ! is_wp_error( $result ) && ! empty( $result ) ) {
+				$all_backups[ $env_id ] = $result;
+			}
 		}
 	}
 
@@ -1846,19 +1857,19 @@ function ajax_create_backup() {
 	}
 
 	$site_id = API\get_pantheon_site_id();
-	$environment = API\get_pantheon_environment();
 
 	if ( ! $site_id ) {
 		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
 	}
 
-	if ( ! $environment ) {
-		wp_send_json_error( [ 'message' => __( 'Environment not found.', 'ash-nazg' ) ] );
-	}
-
 	// Get parameters.
+	$environment = isset( $_POST['environment'] ) ? sanitize_text_field( wp_unslash( $_POST['environment'] ) ) : '';
 	$element = isset( $_POST['element'] ) ? sanitize_text_field( wp_unslash( $_POST['element'] ) ) : 'all';
 	$keep_for = isset( $_POST['keep_for'] ) ? absint( $_POST['keep_for'] ) : 365;
+
+	if ( empty( $environment ) ) {
+		wp_send_json_error( [ 'message' => __( 'Environment not specified.', 'ash-nazg' ) ] );
+	}
 
 	// Validate element.
 	$valid_elements = [ 'all', 'code', 'database', 'files' ];
@@ -1898,22 +1909,18 @@ function ajax_download_backup() {
 	}
 
 	$site_id = API\get_pantheon_site_id();
-	$environment = API\get_pantheon_environment();
 
 	if ( ! $site_id ) {
 		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
 	}
 
-	if ( ! $environment ) {
-		wp_send_json_error( [ 'message' => __( 'Environment not found.', 'ash-nazg' ) ] );
-	}
-
 	// Get parameters.
 	$backup_id = isset( $_POST['backup_id'] ) ? sanitize_text_field( wp_unslash( $_POST['backup_id'] ) ) : '';
 	$element = isset( $_POST['element'] ) ? sanitize_text_field( wp_unslash( $_POST['element'] ) ) : '';
+	$environment = isset( $_POST['environment'] ) ? sanitize_text_field( wp_unslash( $_POST['environment'] ) ) : '';
 
-	if ( empty( $backup_id ) || empty( $element ) ) {
-		wp_send_json_error( [ 'message' => __( 'Missing backup ID or element.', 'ash-nazg' ) ] );
+	if ( empty( $backup_id ) || empty( $element ) || empty( $environment ) ) {
+		wp_send_json_error( [ 'message' => __( 'Missing backup ID, element, or environment.', 'ash-nazg' ) ] );
 	}
 
 	// Get download URL.
@@ -1947,22 +1954,18 @@ function ajax_restore_backup() {
 	}
 
 	$site_id = API\get_pantheon_site_id();
-	$environment = API\get_pantheon_environment();
 
 	if ( ! $site_id ) {
 		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
 	}
 
-	if ( ! $environment ) {
-		wp_send_json_error( [ 'message' => __( 'Environment not found.', 'ash-nazg' ) ] );
-	}
-
 	// Get parameters.
 	$backup_id = isset( $_POST['backup_id'] ) ? sanitize_text_field( wp_unslash( $_POST['backup_id'] ) ) : '';
 	$element = isset( $_POST['element'] ) ? sanitize_text_field( wp_unslash( $_POST['element'] ) ) : '';
+	$environment = isset( $_POST['environment'] ) ? sanitize_text_field( wp_unslash( $_POST['environment'] ) ) : '';
 
-	if ( empty( $backup_id ) || empty( $element ) ) {
-		wp_send_json_error( [ 'message' => __( 'Missing backup ID or element.', 'ash-nazg' ) ] );
+	if ( empty( $backup_id ) || empty( $element ) || empty( $environment ) ) {
+		wp_send_json_error( [ 'message' => __( 'Missing backup ID, element, or environment.', 'ash-nazg' ) ] );
 	}
 
 	// Restore backup.

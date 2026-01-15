@@ -774,6 +774,25 @@
 /**
  * Backups Page Styles
  */
+/* Environment tabs */
+.ash-nazg-environment-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ash-nazg-env-tab {
+  display: inline-block;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.ash-nazg-env-tab:hover {
+  opacity: 0.8;
+}
+.ash-nazg-env-tab.ash-nazg-env-tab-active .ash-nazg-badge {
+  box-shadow: 0 0 0 2px #2271b1;
+}
+
 /* Backup form */
 .ash-nazg-backup-form .form-table {
   margin-bottom: 0;
@@ -795,7 +814,7 @@
   margin-bottom: 0;
 }
 
-/* Backup set header */
+/* Backup set header (collapsible) */
 .ash-nazg-backup-set-header {
   display: flex;
   justify-content: space-between;
@@ -813,10 +832,42 @@
 .ash-nazg-backup-set-header .ash-nazg-text-meta {
   font-size: 13px;
 }
+.ash-nazg-backup-set-header.ash-nazg-backup-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+.ash-nazg-backup-set-header.ash-nazg-backup-toggle:hover {
+  background-color: #f6f7f7;
+  margin-left: -10px;
+  margin-right: -10px;
+  margin-top: -10px;
+  padding: 10px;
+  padding-bottom: 15px;
+  border-radius: 4px 4px 0 0;
+}
+
+.ash-nazg-backup-set-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ash-nazg-backup-set-title h3 {
+  margin: 0;
+}
+
+.ash-nazg-backup-toggle-icon {
+  font-size: 12px;
+  color: #50575e;
+  transition: transform 0.2s;
+  display: inline-block;
+  width: 12px;
+}
 
 /* Backup elements table */
 .ash-nazg-backup-elements-table {
   margin-top: 0;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+  overflow: hidden;
 }
 .ash-nazg-backup-elements-table th {
   font-weight: 600;
@@ -831,6 +882,9 @@
 }
 .ash-nazg-backup-elements-table .button-small {
   margin-right: 5px;
+}
+.ash-nazg-backup-elements-table.ash-nazg-backup-table-collapsed {
+  display: none;
 }
 
 /* Progress modal (already defined in _progress-modal.scss, but backup-specific overrides can go here if needed) */

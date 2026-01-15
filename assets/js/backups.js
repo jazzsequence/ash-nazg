@@ -5,6 +5,31 @@
 	'use strict';
 
 	$(document).ready(function() {
+		// Toggle backup set visibility
+		$('.ash-nazg-backup-toggle').on('click keypress', function(e) {
+			// Allow both click and Enter key
+			if (e.type === 'keypress' && e.which !== 13) {
+				return;
+			}
+
+			e.preventDefault();
+
+			var $header = $(this);
+			var $set = $header.closest('.ash-nazg-backup-set');
+			var $table = $set.find('.ash-nazg-backup-elements-table');
+			var $icon = $header.find('.ash-nazg-backup-toggle-icon');
+
+			// Toggle table visibility
+			$table.toggleClass('ash-nazg-backup-table-collapsed');
+
+			// Update arrow icon
+			if ($table.hasClass('ash-nazg-backup-table-collapsed')) {
+				$icon.text('▶');
+			} else {
+				$icon.text('▼');
+			}
+		});
+
 		// Create Backup button
 		$('#ash-nazg-create-backup-btn').on('click', function(e) {
 			e.preventDefault();
@@ -14,6 +39,7 @@
 			var nonce = $button.data('nonce');
 			var element = $form.find('#backup-element').val();
 			var keepFor = $form.find('#backup-keep-for').val();
+			var environment = $form.find('#backup-environment').val();
 
 			// Confirm action
 			if (!confirm(ashNazgBackups.i18n.confirmCreate)) {
@@ -37,7 +63,8 @@
 					action: 'ash_nazg_create_backup',
 					nonce: nonce,
 					element: element,
-					keep_for: keepFor
+					keep_for: keepFor,
+					environment: environment
 				},
 				success: function(response) {
 					if (response.success && response.data && response.data.workflow_id) {
@@ -81,6 +108,7 @@
 			var $button = $(this);
 			var backupId = $button.data('backup-id');
 			var element = $button.data('element');
+			var environment = $button.data('environment');
 			var nonce = $button.data('nonce');
 
 			// Disable button and show loading state
@@ -96,7 +124,8 @@
 					action: 'ash_nazg_download_backup',
 					nonce: nonce,
 					backup_id: backupId,
-					element: element
+					element: element,
+					environment: environment
 				},
 				success: function(response) {
 					$button.prop('disabled', false);
@@ -124,6 +153,7 @@
 			var $button = $(this);
 			var backupId = $button.data('backup-id');
 			var element = $button.data('element');
+			var environment = $button.data('environment');
 			var nonce = $button.data('nonce');
 
 			// Confirm action with strong warning
@@ -148,7 +178,8 @@
 					action: 'ash_nazg_restore_backup',
 					nonce: nonce,
 					backup_id: backupId,
-					element: element
+					element: element,
+					environment: environment
 				},
 				success: function(response) {
 					if (response.success && response.data && response.data.workflow_id) {

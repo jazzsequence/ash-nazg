@@ -14,6 +14,32 @@
 	margin-top: 20px;
 }
 
+/* Environment header */
+.ash-nazg-backup-environment-header {
+	font-size: 18px;
+	font-weight: 600;
+	color: #1d2327;
+	margin-top: 30px;
+	margin-bottom: 15px;
+	padding-bottom: 10px;
+	border-bottom: 2px solid #2271b1;
+
+	&:first-child {
+		margin-top: 0;
+	}
+}
+
+/* Environment separator */
+.ash-nazg-backup-environment-separator {
+	height: 1px;
+	background: #dcdcde;
+	margin: 30px 0;
+
+	&:last-child {
+		display: none;
+	}
+}
+
 /* Backup set container */
 .ash-nazg-backup-set {
 	border: 1px solid #dcdcde;
@@ -26,7 +52,7 @@
 	}
 }
 
-/* Backup set header */
+/* Backup set header (collapsible) */
 .ash-nazg-backup-set-header {
 	display: flex;
 	justify-content: space-between;
@@ -45,11 +71,46 @@
 	.ash-nazg-text-meta {
 		font-size: 13px;
 	}
+
+	&.ash-nazg-backup-toggle {
+		cursor: pointer;
+		user-select: none;
+
+		&:hover {
+			background-color: #f6f7f7;
+			margin-left: -10px;
+			margin-right: -10px;
+			margin-top: -10px;
+			padding: 10px;
+			padding-bottom: 15px;
+			border-radius: 4px 4px 0 0;
+		}
+	}
+}
+
+.ash-nazg-backup-set-title {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+
+	h3 {
+		margin: 0;
+	}
+}
+
+.ash-nazg-backup-toggle-icon {
+	font-size: 12px;
+	color: #50575e;
+	transition: transform 0.2s;
+	display: inline-block;
+	width: 12px;
 }
 
 /* Backup elements table */
 .ash-nazg-backup-elements-table {
 	margin-top: 0;
+	transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+	overflow: hidden;
 
 	th {
 		font-weight: 600;
@@ -67,6 +128,10 @@
 
 	.button-small {
 		margin-right: 5px;
+	}
+
+	&.ash-nazg-backup-table-collapsed {
+		display: none;
 	}
 }
 
