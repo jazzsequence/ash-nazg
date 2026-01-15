@@ -1357,6 +1357,112 @@ function deploy_code( $site_id, $target_env, $note = '', $clear_cache = true, $s
 }
 
 /**
+ * Clone database from one environment to another.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $from_env Source environment to clone from.
+ * @param string $to_env Target environment to clone to.
+ * @param string $from_url Source URL for WordPress search-replace (optional).
+ * @param string $to_url Target URL for WordPress search-replace (optional).
+ * @param bool $clear_cache Whether to clear cache after cloning.
+ * @param bool $updatedb Whether to run database updates after cloning.
+ * @return array|WP_Error Workflow data on success, WP_Error on failure.
+ */
+function clone_database( $site_id, $from_env, $to_env, $from_url = '', $to_url = '', $clear_cache = true, $updatedb = false ) {
+	/* Validate environments. */
+	if ( empty( $from_env ) || empty( $to_env ) ) {
+		return new \WP_Error(
+			'invalid_environment',
+			__( 'Source and target environments are required.', 'ash-nazg' )
+		);
+	}
+
+	if ( $from_env === $to_env ) {
+		return new \WP_Error(
+			'same_environment',
+			__( 'Source and target environments must be different.', 'ash-nazg' )
+		);
+	}
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/database/clone', $site_id, $to_env );
+
+	$body = [
+		'from_environment' => $from_env,
+		'clear_cache' => $clear_cache,
+		'updatedb' => $updatedb,
+	];
+
+	/* Add URLs for WordPress search-replace if provided. */
+	if ( ! empty( $from_url ) && ! empty( $to_url ) ) {
+		$body['from_url'] = $from_url;
+		$body['to_url'] = $to_url;
+	}
+
+	$result = api_request( $endpoint, 'POST', $body );
+
+	if ( is_wp_error( $result ) ) {
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to clone database from %s.%s to %s.%s - Error: %s', $site_id, $from_env, $site_id, $to_env, $result->get_error_message() ) );
+		return $result;
+	}
+
+	/* Clear commits cache for both environments. */
+	delete_transient( sprintf( 'ash_nazg_commits_%s_%s', $site_id, $from_env ) );
+	delete_transient( sprintf( 'ash_nazg_commits_%s_%s', $site_id, $to_env ) );
+
+	/* Clear environment state cache. */
+	delete_transient( sprintf( 'ash_nazg_env_state_%s_%s', $site_id, $to_env ) );
+
+	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Cloned database from %s.%s to %s.%s - Response: %s', $site_id, $from_env, $site_id, $to_env, wp_json_encode( $result ) ) );
+
+	return $result;
+}
+
+/**
+ * Clone files from one environment to another.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $from_env Source environment to clone from.
+ * @param string $to_env Target environment to clone to.
+ * @return array|WP_Error Workflow data on success, WP_Error on failure.
+ */
+function clone_files( $site_id, $from_env, $to_env ) {
+	/* Validate environments. */
+	if ( empty( $from_env ) || empty( $to_env ) ) {
+		return new \WP_Error(
+			'invalid_environment',
+			__( 'Source and target environments are required.', 'ash-nazg' )
+		);
+	}
+
+	if ( $from_env === $to_env ) {
+		return new \WP_Error(
+			'same_environment',
+			__( 'Source and target environments must be different.', 'ash-nazg' )
+		);
+	}
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/files/clone', $site_id, $to_env );
+
+	$body = [
+		'from_environment' => $from_env,
+	];
+
+	$result = api_request( $endpoint, 'POST', $body );
+
+	if ( is_wp_error( $result ) ) {
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to clone files from %s.%s to %s.%s - Error: %s', $site_id, $from_env, $site_id, $to_env, $result->get_error_message() ) );
+		return $result;
+	}
+
+	/* Clear environment state cache. */
+	delete_transient( sprintf( 'ash_nazg_env_state_%s_%s', $site_id, $to_env ) );
+
+	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Cloned files from %s.%s to %s.%s - Response: %s', $site_id, $from_env, $site_id, $to_env, wp_json_encode( $result ) ) );
+
+	return $result;
+}
+
+/**
  * Get git branches and commits (code tips).
  *
  * @param string $site_id Site UUID.

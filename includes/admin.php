@@ -38,6 +38,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_create_backup', __NAMESPACE__ . '\\ajax_create_backup' );
 	add_action( 'wp_ajax_ash_nazg_download_backup', __NAMESPACE__ . '\\ajax_download_backup' );
 	add_action( 'wp_ajax_ash_nazg_restore_backup', __NAMESPACE__ . '\\ajax_restore_backup' );
+	add_action( 'wp_ajax_ash_nazg_clone_content', __NAMESPACE__ . '\\ajax_clone_content' );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
 }
@@ -99,6 +100,16 @@ function add_admin_menu() {
 		__NAMESPACE__ . '\\render_backups_page'
 	);
 
+	// Clone page.
+	add_submenu_page(
+		'ash-nazg',
+		__( 'Clone Content', 'ash-nazg' ),
+		__( 'Clone', 'ash-nazg' ),
+		'manage_options',
+		'ash-nazg-clone',
+		__NAMESPACE__ . '\\render_clone_page'
+	);
+
 	// Logs page.
 	add_submenu_page(
 		'ash-nazg',
@@ -134,6 +145,7 @@ function enqueue_assets( $hook ) {
 		'ash-nazg_page_ash-nazg-workflows',
 		'ash-nazg_page_ash-nazg-development',
 		'ash-nazg_page_ash-nazg-backups',
+		'ash-nazg_page_ash-nazg-clone',
 		'ash-nazg_page_ash-nazg-logs',
 		'ash-nazg_page_ash-nazg-settings',
 	];
@@ -294,6 +306,41 @@ function enqueue_assets( $hook ) {
 					'timeoutError' => __( 'Operation timed out. Please check the Pantheon dashboard.', 'ash-nazg' ),
 					'statusError' => __( 'Failed to get workflow status.', 'ash-nazg' ),
 					'ajaxError' => __( 'AJAX request failed.', 'ash-nazg' ),
+				],
+			]
+		);
+	}
+
+	// Enqueue clone JavaScript on clone page.
+	if ( 'ash-nazg_page_ash-nazg-clone' === $hook ) {
+		wp_enqueue_script(
+			'ash-nazg-clone',
+			ASH_NAZG_PLUGIN_URL . 'assets/js/clone.js',
+			[ 'jquery' ],
+			ASH_NAZG_VERSION,
+			true
+		);
+
+		// Localize clone script.
+		wp_localize_script(
+			'ash-nazg-clone',
+			'ashNazgClone',
+			[
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'cloneContentNonce' => wp_create_nonce( 'ash_nazg_clone_content' ),
+				'workflowStatusNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
+				'i18n' => [
+					'confirmClone' => __( 'Are you sure? This will overwrite the target environment\'s content. This action cannot be undone.', 'ash-nazg' ),
+					'cloningContent' => __( 'Cloning Content...', 'ash-nazg' ),
+					'cloneSuccess' => __( 'Content cloned successfully!', 'ash-nazg' ),
+					'pleaseWait' => __( 'Please wait while the operation completes.', 'ash-nazg' ),
+					'operationFailed' => __( 'Operation failed. Please try again.', 'ash-nazg' ),
+					'timeoutError' => __( 'Operation timed out. Please check the Pantheon dashboard.', 'ash-nazg' ),
+					'statusError' => __( 'Failed to get workflow status.', 'ash-nazg' ),
+					'ajaxError' => __( 'AJAX request failed.', 'ash-nazg' ),
+					'selectBoth' => __( 'Please select both source and target environments.', 'ash-nazg' ),
+					'sameEnvironment' => __( 'Source and target environments must be different.', 'ash-nazg' ),
+					'selectOne' => __( 'Please select at least one option (Database or Files).', 'ash-nazg' ),
 				],
 			]
 		);
@@ -1743,6 +1790,45 @@ function render_backups_page() {
 }
 
 /**
+ * Render clone page.
+ *
+ * @return void
+ */
+function render_clone_page() {
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$message = null;
+	$error = null;
+
+	// Get site ID.
+	$site_id = API\get_pantheon_site_id();
+	$current_env = API\get_pantheon_environment();
+
+	// Get all environments.
+	$environments = [];
+	if ( $site_id ) {
+		$envs_result = API\get_environments( $site_id );
+		if ( ! is_wp_error( $envs_result ) ) {
+			$environments = $envs_result;
+		}
+	}
+
+	// Check initialization status for all environments.
+	$initialized = [];
+	if ( $site_id && ! empty( $environments ) ) {
+		foreach ( $environments as $env_id => $env_data ) {
+			$initialized[ $env_id ] = Helpers\is_environment_initialized( $site_id, $env_id );
+		}
+	}
+
+	// Include the view.
+	require_once ASH_NAZG_PLUGIN_DIR . '/includes/views/clone.php';
+}
+
+/**
  * Render logs page.
  *
  * @return void
@@ -1999,6 +2085,126 @@ function ajax_restore_backup() {
 			'workflow_id' => $result['id'] ?? null,
 			'site_id' => $site_id,
 			'message' => __( 'Backup restore started.', 'ash-nazg' ),
+		]
+	);
+}
+
+/**
+ * AJAX handler for cloning content between environments.
+ *
+ * @return void
+ */
+function ajax_clone_content() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_clone_content', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+
+	if ( ! $site_id ) {
+		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
+	}
+
+	// Get parameters.
+	$from_env = isset( $_POST['from_env'] ) ? sanitize_text_field( wp_unslash( $_POST['from_env'] ) ) : '';
+	$to_env = isset( $_POST['to_env'] ) ? sanitize_text_field( wp_unslash( $_POST['to_env'] ) ) : '';
+	$clone_database = isset( $_POST['clone_database'] ) && 'true' === $_POST['clone_database'];
+	$clone_files = isset( $_POST['clone_files'] ) && 'true' === $_POST['clone_files'];
+
+	// Validate parameters.
+	if ( empty( $from_env ) || empty( $to_env ) ) {
+		wp_send_json_error( [ 'message' => __( 'Source and target environments are required.', 'ash-nazg' ) ] );
+	}
+
+	if ( $from_env === $to_env ) {
+		wp_send_json_error( [ 'message' => __( 'Source and target environments must be different.', 'ash-nazg' ) ] );
+	}
+
+	if ( ! $clone_database && ! $clone_files ) {
+		wp_send_json_error( [ 'message' => __( 'At least one of database or files must be selected.', 'ash-nazg' ) ] );
+	}
+
+	// Check source environment is initialized.
+	if ( ! Helpers\is_environment_initialized( $site_id, $from_env ) ) {
+		wp_send_json_error(
+			[
+				'message' => sprintf(
+					/* translators: %s: environment name */
+					__( 'Cannot clone from %s: environment is not initialized.', 'ash-nazg' ),
+					strtoupper( $from_env )
+				),
+			]
+		);
+	}
+
+	// Check target environment is initialized.
+	if ( ! Helpers\is_environment_initialized( $site_id, $to_env ) ) {
+		wp_send_json_error(
+			[
+				'message' => sprintf(
+					/* translators: %s: environment name */
+					__( 'Cannot clone to %s: environment is not initialized.', 'ash-nazg' ),
+					strtoupper( $to_env )
+				),
+			]
+		);
+	}
+
+	$workflow_ids = [];
+
+	// Clone database if requested.
+	if ( $clone_database ) {
+		// Auto-detect URLs for WordPress search-replace.
+		$from_url = '';
+		$to_url = '';
+
+		$environments = API\get_environments( $site_id );
+		if ( ! is_wp_error( $environments ) ) {
+			if ( isset( $environments[ $from_env ]['primary_domain'] ) ) {
+				$from_domain = $environments[ $from_env ]['primary_domain'];
+				$from_url = 'https://' . $from_domain;
+			}
+
+			if ( isset( $environments[ $to_env ]['primary_domain'] ) ) {
+				$to_domain = $environments[ $to_env ]['primary_domain'];
+				$to_url = 'https://' . $to_domain;
+			}
+		}
+
+		$result = API\clone_database( $site_id, $from_env, $to_env, $from_url, $to_url );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+		}
+
+		if ( isset( $result['id'] ) ) {
+			$workflow_ids[] = $result['id'];
+		}
+	}
+
+	// Clone files if requested.
+	if ( $clone_files ) {
+		$result = API\clone_files( $site_id, $from_env, $to_env );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+		}
+
+		if ( isset( $result['id'] ) ) {
+			$workflow_ids[] = $result['id'];
+		}
+	}
+
+	// Return workflow IDs for polling.
+	wp_send_json_success(
+		[
+			'workflow_ids' => $workflow_ids,
+			'site_id' => $site_id,
+			'message' => __( 'Clone operation started.', 'ash-nazg' ),
 		]
 	);
 }

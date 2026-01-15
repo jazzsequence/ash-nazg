@@ -145,3 +145,21 @@ No active work in progress.
   - Cache management with 5-minute TTL
   - Full PHPUnit test coverage
   - Tested end-to-end on properly initialized Pantheon environments
+- ✅ Clone Content
+  - Clone admin page for copying database and/or files between environments
+  - Dropdown selectors for source and target environment selection
+  - Checkboxes to select database only, files only, or both
+  - Database clone: POST /v0/sites/{site_id}/environments/{env}/database/clone
+    - Automatic URL search-replace for WordPress (from_url / to_url detection)
+    - Optional cache clearing and database updates
+  - Files clone: POST /v0/sites/{site_id}/environments/{env}/files/clone
+    - Simple file copy from source to target environment
+  - Environment validation:
+    - Prevents cloning from/to uninitialized environments
+    - Prevents same source and target selection
+    - Validates at least one option (DB or files) is selected
+  - Destructive operation warnings with confirmation dialogs
+  - Multi-workflow monitoring (polls both DB and files workflows simultaneously)
+  - Cache clearing after successful clone operations
+  - Full PHPUnit test coverage
+  - Security: nonce verification, capability checks, initialization validation
