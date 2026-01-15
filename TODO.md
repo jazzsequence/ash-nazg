@@ -4,20 +4,6 @@
 
 No active work in progress.
 
-## Critical Fixes (Production Blockers - RESOLVED)
-
-### Environment Initialization Safeguards ✅
-- **Issue**: Deploying code to uninitialized test/live environments caused permanent environment corruption
-- **Impact**: Lost test/live containers on cxr-ash-nazg-ms site (requires Pantheon Support to fix)
-- **Root Cause**: Assumed code deployment would initialize environments (incorrect assumption)
-- **Fix**:
-  - Added `is_environment_initialized()` helper to check API `initialized` field
-  - Added backend validation in `ajax_deploy_code()` to reject uninitialized deploys
-  - Added UI warnings and disabled deploy buttons for uninitialized environments
-  - Clear error messages directing users to Pantheon Dashboard for initialization
-- **API Limitation**: No API endpoint exists to initialize test/live environments (Dashboard only)
-- **Status**: ✅ Complete - safeguards in place, tested against uninitialized environments
-
 ## Phase 3: Build Pipeline & Design
 
 ### Design Review & Refactoring
@@ -42,24 +28,21 @@ No active work in progress.
   - Stored as `pantheon_get_secret("ash_nazg_machine_token_{user_id}")`
   - Allows better audit trails and token revocation per user
 
-### Destructive Operations
-- [x] Delete Site page with big red button
-  - Only visible when `?debug=1` query parameter is present
-  - Red menu text: "⚠️ DO NOT CLICK"
-  - 500px circular red button with embossed text and diagonal shadow
-  - Type "DELETE" to enable button
-  - First confirmation: Modal with danger warnings and "I Understand the Risk" button
-  - Second confirmation: JavaScript alert for final chance to cancel
-  - "Whew! That was a close one!" message on cancellation
-  - Fully functional - actually deletes site via `DELETE /v0/sites/{site_id}`
-  - Redirects to Pantheon sites dashboard after deletion
-  - Full PHPUnit test coverage
-
-## Future Enhancements
-- [ ] Domain management for multisite (experimental/PoC)
-- [ ] Custom workflow triggers
-- [ ] Audit trail for API actions
-- [ ] Performance optimization and caching refinement
+### Domain Management for Multisite (Complexity: LOW-MEDIUM, Est: 4-6 hours)
+- [ ] Automatic domain addition when new multisite subsites are created
+  - **Hook**: `wpmu_new_blog` or `wp_initialize_site` (WP 5.1+)
+  - **API Endpoint**: `POST /v0/sites/{site_id}/environments/{env_id}/domains`
+  - **Request Body**: `{"domain": "subdomain.example.com"}` (simple!)
+  - **Behavior**:
+    - Skip local environments (Lando, etc.) using `is_local_environment()`
+    - Extract subdomain from new site URL
+    - Add domain to live environment via API
+    - Synchronous operation (no workflow polling needed!)
+  - **Optional**: Admin notice for success/failure feedback
+  - **Testing Requirements**: Real multisite setup needed
+  - **Files to modify**: `includes/api.php` (add_domain function), `includes/admin.php` or new file (hook handler)
+  - **Estimated Lines**: ~80-100 lines total
+  - **Key Insight**: Domain addition is synchronous (no modal/polling UI required)
 
 ## Documentation
 - [ ] Update README with Phase 3 completion notes
@@ -170,3 +153,16 @@ No active work in progress.
   - Cache clearing after successful clone operations
   - Full PHPUnit test coverage
   - Security: nonce verification, capability checks, initialization validation
+- ✅ Delete Site (Destructive Operation - Debug Mode Only)
+  - Delete Site admin page with big red button (demonstration feature)
+  - Only visible when `?debug=1` query parameter is present
+  - Red menu text: "⚠️ DO NOT CLICK"
+  - 500px circular red button with embossed text and diagonal shadow
+  - Type "DELETE" to enable button
+  - First confirmation: Modal with danger warnings and "I Understand the Risk" button
+  - Second confirmation: JavaScript alert for final chance to cancel
+  - "Whew! That was a close one!" message on cancellation
+  - Fully functional - actually deletes site via `DELETE /v0/sites/{site_id}`
+  - Redirects to Pantheon sites dashboard after deletion
+  - Full PHPUnit test coverage (9 tests)
+  - Referer-based access control for navigation
