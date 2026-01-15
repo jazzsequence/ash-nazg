@@ -1771,7 +1771,7 @@ function create_backup( $element, $keep_for = 365, $site_id = null, $env = null 
 	// Clear backups cache after creating backup.
 	delete_transient( sprintf( 'ash_nazg_backups_%s_%s', $site_id, $api_env ) );
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Created %s backup for %s.%s - Workflow ID: %s', $element, $site_id, $api_env, $result['workflow_id'] ?? 'unknown' ) );
+	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Created %s backup for %s.%s - Workflow ID: %s', $element, $site_id, $api_env, $result['id'] ?? 'unknown' ) );
 
 	return $result;
 }
