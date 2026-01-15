@@ -7,6 +7,8 @@
 
 namespace Pantheon\AshNazg\API;
 
+use Pantheon\AshNazg\Helpers;
+
 /**
  * Get API session token.
  *
