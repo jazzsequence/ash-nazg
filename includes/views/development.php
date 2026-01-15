@@ -80,7 +80,7 @@ use Pantheon\AshNazg\Helpers;
 		}
 		?>
 		<?php if ( $update_count > 0 ) : ?>
-		<div class="ash-nazg-card ash-nazg-card-full">
+		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
 			<h2><?php esc_html_e( 'Upstream Updates', 'ash-nazg' ); ?></h2>
 			<p>
 				<?php
@@ -207,7 +207,7 @@ use Pantheon\AshNazg\Helpers;
 			}
 		}
 		?>
-		<div class="ash-nazg-card ash-nazg-card-full">
+		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
 			<h2><?php esc_html_e( 'Code Deployment', 'ash-nazg' ); ?></h2>
 			<p class="description"><?php esc_html_e( 'Deploy code between environments. Buttons are disabled if there are no changes to deploy.', 'ash-nazg' ); ?></p>
 
@@ -357,7 +357,7 @@ use Pantheon\AshNazg\Helpers;
 		<?php endif; ?>
 
 		<!-- Environment Commits -->
-		<div class="ash-nazg-card ash-nazg-card-full<?php echo $update_count > 0 ? ' ash-nazg-mt-20' : ''; ?>">
+		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
 			<h2><?php esc_html_e( 'Recent Commits', 'ash-nazg' ); ?></h2>
 			<?php if ( is_wp_error( $commits ) ) : ?>
 				<div class="notice notice-error">
@@ -434,7 +434,7 @@ use Pantheon\AshNazg\Helpers;
 		<!-- Grid container for side-by-side cards -->
 		<div class="ash-nazg-dashboard">
 			<!-- Environments -->
-			<div class="ash-nazg-card">
+			<div class="ash-nazg-card ash-nazg-card-1-col">
 			<div class="ash-nazg-flex-between ash-nazg-mb-10">
 				<h2 class="ash-nazg-m-0"><?php esc_html_e( 'Environments', 'ash-nazg' ); ?></h2>
 				<a href="<?php echo esc_url( add_query_arg( 'refresh_environments', '1' ) ); ?>" class="button button-secondary">
@@ -483,7 +483,7 @@ use Pantheon\AshNazg\Helpers;
 
 
 			<!-- Multidev Management -->
-			<div class="ash-nazg-card">
+			<div class="ash-nazg-card ash-nazg-card-2-col">
 			<h2><?php esc_html_e( 'Multidev Management', 'ash-nazg' ); ?></h2>
 
 			<!-- Create Multidev -->

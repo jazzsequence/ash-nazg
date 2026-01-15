@@ -54,7 +54,7 @@ use Pantheon\AshNazg\API;
 		<?php endif; ?>
 	<?php endif; ?>
 
-	<div class="card">
+	<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20" style="margin-top: 30px;">
 		<h2><?php esc_html_e( 'Environment Information', 'ash-nazg' ); ?></h2>
 		<table class="form-table">
 			<tr>
@@ -92,100 +92,104 @@ use Pantheon\AshNazg\API;
 				</td>
 			</tr>
 		</table>
-	</div>
 
-	<?php if ( ! empty( $machine_token ) ) : ?>
-		<table class="form-table">
-			<tr>
-				<th scope="row">
-					<?php esc_html_e( 'Machine Token', 'ash-nazg' ); ?>
-				</th>
-				<td>
-					<p>
-						<span class="dashicons dashicons-yes-alt ash-nazg-icon-success"></span>
-						<?php esc_html_e( 'A machine token is currently set.', 'ash-nazg' ); ?>
-					</p>
-				</td>
-			</tr>
-		</table>
-	<?php else : ?>
-		<form method="post" action="">
-			<?php wp_nonce_field( 'ash_nazg_settings', 'ash_nazg_settings_nonce' ); ?>
+		<hr style="margin: 30px 0;">
 
+		<?php if ( ! empty( $machine_token ) ) : ?>
 			<table class="form-table">
 				<tr>
 					<th scope="row">
-						<label for="ash_nazg_machine_token">
-							<?php esc_html_e( 'Machine Token', 'ash-nazg' ); ?>
-						</label>
+						<?php esc_html_e( 'Machine Token', 'ash-nazg' ); ?>
 					</th>
 					<td>
-						<?php if ( $has_secret_api ) : ?>
-							<p class="description">
-								<?php
-								esc_html_e(
-									'It is recommended that you store your machine token in Pantheon Secrets. To update it, use the Pantheon CLI:',
-									'ash-nazg'
-								);
-								?>
-							</p>
-							<code>terminus secret:set <?php echo isset( $_ENV['PANTHEON_SITE_NAME'] ) ? esc_attr( sanitize_text_field( wp_unslash( $_ENV['PANTHEON_SITE_NAME'] ) ) ) : '<site>'; ?> ash_nazg_machine_token YOUR_TOKEN --scope=user,web</code>
-							<p class="description">
-								<?php esc_html_e( 'Alternatively, you can enter a token below which is stored in the WordPress database.', 'ash-nazg' ); ?>
-							</p>
-						<?php else : ?>
-							<p class="description">
-								<?php esc_html_e( 'Enter your Pantheon machine token below. It will be stored in the WordPress database.', 'ash-nazg' ); ?>
-							</p>
-						<?php endif; ?>
-
-						<input
-							type="password"
-							id="ash_nazg_machine_token"
-							name="ash_nazg_machine_token"
-							value=""
-							class="regular-text"
-							placeholder="<?php esc_attr_e( 'Enter Pantheon machine token', 'ash-nazg' ); ?>"
-						/>
-
-						<p class="description">
-							<?php
-							printf(
-								/* translators: %s: URL to Pantheon dashboard */
-								esc_html__( 'Generate a machine token in your %s.', 'ash-nazg' ),
-								'<a href="https://dashboard.pantheon.io/users/#account/tokens" target="_blank">' .
-								esc_html__( 'Pantheon account settings', 'ash-nazg' ) .
-								'</a>'
-							);
-							?>
+						<p>
+							<span class="dashicons dashicons-yes-alt ash-nazg-icon-success"></span>
+							<?php esc_html_e( 'A machine token is currently set.', 'ash-nazg' ); ?>
 						</p>
 					</td>
 				</tr>
 			</table>
+		<?php else : ?>
+			<form method="post" action="">
+				<?php wp_nonce_field( 'ash_nazg_settings', 'ash_nazg_settings_nonce' ); ?>
 
-			<p class="submit">
-				<?php submit_button( __( 'Save Settings', 'ash-nazg' ), 'primary', 'submit', false ); ?>
-			</p>
-		</form>
-	<?php endif; ?>
+				<table class="form-table">
+					<tr>
+						<th scope="row">
+							<label for="ash_nazg_machine_token">
+								<?php esc_html_e( 'Machine Token', 'ash-nazg' ); ?>
+							</label>
+						</th>
+						<td>
+							<?php if ( $has_secret_api ) : ?>
+								<p class="description">
+									<?php
+									esc_html_e(
+										'It is recommended that you store your machine token in Pantheon Secrets. To update it, use the Pantheon CLI:',
+										'ash-nazg'
+									);
+									?>
+								</p>
+								<code>terminus secret:set <?php echo isset( $_ENV['PANTHEON_SITE_NAME'] ) ? esc_attr( sanitize_text_field( wp_unslash( $_ENV['PANTHEON_SITE_NAME'] ) ) ) : '<site>'; ?> ash_nazg_machine_token YOUR_TOKEN --scope=user,web</code>
+								<p class="description">
+									<?php esc_html_e( 'Alternatively, you can enter a token below which is stored in the WordPress database.', 'ash-nazg' ); ?>
+								</p>
+							<?php else : ?>
+								<p class="description">
+									<?php esc_html_e( 'Enter your Pantheon machine token below. It will be stored in the WordPress database.', 'ash-nazg' ); ?>
+								</p>
+							<?php endif; ?>
 
-	<hr>
+							<input
+								type="password"
+								id="ash_nazg_machine_token"
+								name="ash_nazg_machine_token"
+								value=""
+								class="regular-text"
+								placeholder="<?php esc_attr_e( 'Enter Pantheon machine token', 'ash-nazg' ); ?>"
+							/>
 
-	<h2><?php esc_html_e( 'Test Connection', 'ash-nazg' ); ?></h2>
-	<p><?php esc_html_e( 'Test your Pantheon API connection to verify the machine token is valid.', 'ash-nazg' ); ?></p>
+							<p class="description">
+								<?php
+								printf(
+									/* translators: %s: URL to Pantheon dashboard */
+									esc_html__( 'Generate a machine token in your %s.', 'ash-nazg' ),
+									'<a href="https://dashboard.pantheon.io/users/#account/tokens" target="_blank">' .
+									esc_html__( 'Pantheon account settings', 'ash-nazg' ) .
+									'</a>'
+								);
+								?>
+							</p>
+						</td>
+					</tr>
+				</table>
 
-	<form method="post" action="">
-		<?php wp_nonce_field( 'test_connection', 'test_connection_nonce' ); ?>
-		<?php submit_button( __( 'Test Connection', 'ash-nazg' ), 'secondary', 'test_connection' ); ?>
-	</form>
+				<p class="submit">
+					<?php submit_button( __( 'Save Settings', 'ash-nazg' ), 'primary', 'submit', false ); ?>
+				</p>
+			</form>
+		<?php endif; ?>
+	</div>
 
-	<hr>
+	<div class="ash-nazg-dashboard">
+		<div class="ash-nazg-card">
+			<h2><?php esc_html_e( 'Test Connection', 'ash-nazg' ); ?></h2>
+			<p><?php esc_html_e( 'Test your Pantheon API connection to verify the machine token is valid.', 'ash-nazg' ); ?></p>
 
-	<h2><?php esc_html_e( 'Clear Session Token', 'ash-nazg' ); ?></h2>
-	<p><?php esc_html_e( 'Clear the cached session token. Use this if you are experiencing authentication issues or after API downtime. A new session token will be generated automatically on the next API request.', 'ash-nazg' ); ?></p>
+			<form method="post" action="">
+				<?php wp_nonce_field( 'test_connection', 'test_connection_nonce' ); ?>
+				<?php submit_button( __( 'Test Connection', 'ash-nazg' ), 'secondary', 'test_connection' ); ?>
+			</form>
+		</div>
 
-	<form method="post" action="">
-		<?php wp_nonce_field( 'clear_session', 'clear_session_nonce' ); ?>
-		<?php submit_button( __( 'Clear Session Token', 'ash-nazg' ), 'secondary', 'clear_session' ); ?>
-	</form>
+		<div class="ash-nazg-card">
+			<h2><?php esc_html_e( 'Clear Session Token', 'ash-nazg' ); ?></h2>
+			<p><?php esc_html_e( 'Clear the cached session token. Use this if you are experiencing authentication issues or after API downtime. A new session token will be generated automatically on the next API request.', 'ash-nazg' ); ?></p>
+
+			<form method="post" action="">
+				<?php wp_nonce_field( 'clear_session', 'clear_session_nonce' ); ?>
+				<?php submit_button( __( 'Clear Session Token', 'ash-nazg' ), 'secondary', 'clear_session' ); ?>
+			</form>
+		</div>
+	</div>
 </div>

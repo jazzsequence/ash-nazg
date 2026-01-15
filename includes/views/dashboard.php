@@ -517,7 +517,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php endif; ?>
 
 		<?php if ( null === $site_info && null === $environment_info && null === $api_error ) : ?>
-			<div class="ash-nazg-card">
+			<div class="ash-nazg-card ash-nazg-card-full">
 				<h2><?php esc_html_e( 'Getting Started', 'ash-nazg' ); ?></h2>
 				<p>
 					<?php

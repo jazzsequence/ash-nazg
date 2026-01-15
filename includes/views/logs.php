@@ -29,7 +29,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php endif; ?>
 
 	<div class="ash-nazg-dashboard">
-		<div class="ash-nazg-card">
+		<div class="ash-nazg-card ash-nazg-card-full">
 			<h2><?php esc_html_e( 'WordPress Debug Logs', 'ash-nazg' ); ?></h2>
 			<p>
 				<?php esc_html_e( 'View the contents of your WordPress debug.log file. If the site is in Git mode, it will temporarily switch to SFTP mode to read the file, then switch back.', 'ash-nazg' ); ?>
