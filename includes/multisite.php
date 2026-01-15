@@ -70,16 +70,23 @@ function on_new_site_legacy( $blog_id, $_user_id, $domain, $_path, $_site_id, $_
 }
 
 /**
- * Add a domain to Pantheon live environment.
+ * Add a domain to Pantheon environment.
  *
  * @param string $domain Domain name.
  * @param int $blog_id Blog ID for context.
  */
 function add_domain_to_pantheon( $domain, $blog_id ) {
-	Helpers\debug_log( sprintf( 'New multisite subsite created: %s (Blog ID: %d)', $domain, $blog_id ) );
+	// Detect current environment.
+	$env = Helpers\get_pantheon_environment();
+	if ( ! $env ) {
+		Helpers\debug_log( 'Cannot add domain - unable to detect Pantheon environment' );
+		return;
+	}
 
-	// Add domain to live environment.
-	$result = API\add_domain( $domain );
+	Helpers\debug_log( sprintf( 'New multisite subsite created: %s (Blog ID: %d) - adding to %s environment', $domain, $blog_id, $env ) );
+
+	// Add domain to current environment.
+	$result = API\add_domain( $domain, null, $env );
 
 	if ( is_wp_error( $result ) ) {
 		// Store error in transient for admin notice.
@@ -87,6 +94,7 @@ function add_domain_to_pantheon( $domain, $blog_id ) {
 			'ash_nazg_domain_add_error_' . $blog_id,
 			[
 				'domain' => $domain,
+				'env' => $env,
 				'error' => $result->get_error_message(),
 			],
 			HOUR_IN_SECONDS
@@ -94,8 +102,9 @@ function add_domain_to_pantheon( $domain, $blog_id ) {
 
 		Helpers\debug_log(
 			sprintf(
-				'Failed to add domain %s to Pantheon: %s',
+				'Failed to add domain %s to Pantheon %s environment: %s',
 				$domain,
+				$env,
 				$result->get_error_message()
 			)
 		);
@@ -105,11 +114,12 @@ function add_domain_to_pantheon( $domain, $blog_id ) {
 			'ash_nazg_domain_add_success_' . $blog_id,
 			[
 				'domain' => $domain,
+				'env' => $env,
 			],
 			HOUR_IN_SECONDS
 		);
 
-		Helpers\debug_log( sprintf( 'Successfully added domain %s to Pantheon live environment', $domain ) );
+		Helpers\debug_log( sprintf( 'Successfully added domain %s to Pantheon %s environment', $domain, $env ) );
 	}
 }
 
@@ -131,9 +141,10 @@ function display_admin_notices() {
 			<p>
 				<?php
 				printf(
-					/* translators: %s: domain name */
-					esc_html__( 'Domain %s has been added to Pantheon live environment.', 'ash-nazg' ),
-					'<strong>' . esc_html( $success['domain'] ) . '</strong>'
+					/* translators: 1: domain name, 2: environment name */
+					esc_html__( 'Domain %1$s has been added to Pantheon %2$s environment.', 'ash-nazg' ),
+					'<strong>' . esc_html( $success['domain'] ) . '</strong>',
+					'<strong>' . esc_html( $success['env'] ) . '</strong>'
 				);
 				?>
 			</p>
@@ -150,9 +161,10 @@ function display_admin_notices() {
 			<p>
 				<?php
 				printf(
-					/* translators: 1: domain name, 2: error message */
-					esc_html__( 'Failed to add domain %1$s to Pantheon: %2$s', 'ash-nazg' ),
+					/* translators: 1: domain name, 2: environment name, 3: error message */
+					esc_html__( 'Failed to add domain %1$s to Pantheon %2$s environment: %3$s', 'ash-nazg' ),
 					'<strong>' . esc_html( $error['domain'] ) . '</strong>',
+					'<strong>' . esc_html( $error['env'] ) . '</strong>',
 					esc_html( $error['error'] )
 				);
 				?>
