@@ -95,9 +95,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 									<span class="ash-nazg-badge ash-nazg-badge-success">
 										<?php esc_html_e( 'Connected', 'ash-nazg' ); ?>
 									</span>
-									<span class="ash-nazg-text-muted ash-nazg-text-small">
-										<?php esc_html_e( 'Pantheon API connection active', 'ash-nazg' ); ?>
-									</span>
 								<?php else : ?>
 									<span class="ash-nazg-badge ash-nazg-badge-error">
 										<?php esc_html_e( 'Disconnected', 'ash-nazg' ); ?>

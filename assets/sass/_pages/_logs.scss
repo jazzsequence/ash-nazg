@@ -47,3 +47,13 @@
 .ash-nazg-clear-button {
 	margin-left: $spacing-md;
 }
+
+/* Fix icon alignment for logs page buttons */
+#ash-nazg-fetch-logs .dashicons,
+#ash-nazg-clear-logs .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	vertical-align: middle;
+	margin-top: -2px;
+}

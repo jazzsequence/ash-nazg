@@ -754,9 +754,19 @@
 #ash-nazg-connection-mode-toggle {
   display: inline-block;
   margin-left: 10px;
+  vertical-align: middle;
+}
+#ash-nazg-connection-mode-toggle .button {
+  padding: 4px 10px;
+  font-size: 12px;
+  height: auto;
+  line-height: 1.2;
 }
 #ash-nazg-connection-mode-toggle .dashicons {
-  margin-top: 3px;
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
 }
 
 #ash-nazg-mode-loading {
@@ -779,13 +789,28 @@
 }
 
 /* API Endpoints tab links - remove underline */
+.ash-nazg-card .nav-tab-wrapper {
+  margin-bottom: 0;
+}
 .ash-nazg-card .nav-tab-wrapper .nav-tab {
   text-decoration: none;
 }
-
-.ash-nazg-card .nav-tab-wrapper .nav-tab:hover,
-.ash-nazg-card .nav-tab-wrapper .nav-tab:focus {
+.ash-nazg-card .nav-tab-wrapper .nav-tab:hover, .ash-nazg-card .nav-tab-wrapper .nav-tab:focus {
   text-decoration: none;
+}
+
+/* API Endpoints tab content - add top padding */
+.ash-nazg-card .nav-tab-wrapper + table {
+  margin-top: 20px;
+}
+
+/* Refresh Data button icon alignment */
+#ash-nazg-refresh-endpoints .dashicons {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-top: -2px;
 }
 
 /**
@@ -848,6 +873,16 @@
 
 .ash-nazg-clear-button {
   margin-left: 10px;
+}
+
+/* Fix icon alignment for logs page buttons */
+#ash-nazg-fetch-logs .dashicons,
+#ash-nazg-clear-logs .dashicons {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-top: -2px;
 }
 
 /**
