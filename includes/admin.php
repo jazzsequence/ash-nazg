@@ -1235,14 +1235,11 @@ function ajax_clear_logs() {
 	$log_path = WP_CONTENT_DIR . '/debug.log';
 
 	/*
-	 * Check if we need to switch to SFTP mode.
-	 * Only switch if: (1) in Git mode and (2) not in local environment.
-	 * Local environments always have writable wp-content,
-	 * Pantheon Git mode does not.
+	 * Switch to SFTP mode if in Git mode for write operations.
+	 * Skip mode switching for local environments - local filesystems
+	 * are always writable regardless of connection mode.
 	 */
 	$is_local = \Pantheon\AshNazg\Helpers\is_local_environment();
-
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX clear logs - Is local: %s', $is_local ? 'yes' : 'no' ) );
 
 	if ( 'git' === $original_mode && ! $is_local ) {
 		\Pantheon\AshNazg\Helpers\debug_log( 'AJAX clear logs - Switching to SFTP mode' );
@@ -1264,16 +1261,21 @@ function ajax_clear_logs() {
 			\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX clear logs - Mode switch workflow completed with result: %s', $workflow_status['result'] ?? 'unknown' ) );
 		}
 	} else {
-		\Pantheon\AshNazg\Helpers\debug_log( 'AJAX clear logs - Skipping mode switch (already in SFTP mode or local environment)' );
+		\Pantheon\AshNazg\Helpers\debug_log( 'AJAX clear logs - Skipping mode switch (already in SFTP mode)' );
 	}
 
 	// Delete debug.log file.
 
 	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX clear logs - Attempting to delete log at: %s', $log_path ) );
 
+	// Clear stat cache before checking file existence.
+	clearstatcache( true, $log_path );
+
 	if ( file_exists( $log_path ) ) {
 		if ( unlink( $log_path ) ) {
 			\Pantheon\AshNazg\Helpers\debug_log( 'AJAX clear logs - Log file deleted successfully' );
+			// Clear stat cache immediately after deletion.
+			clearstatcache( true, $log_path );
 		} else {
 			\Pantheon\AshNazg\Helpers\debug_log( 'AJAX clear logs - Failed to delete log file' );
 			// Switch back before error.
@@ -1284,20 +1286,6 @@ function ajax_clear_logs() {
 		}
 	} else {
 		\Pantheon\AshNazg\Helpers\debug_log( 'AJAX clear logs - Log file does not exist' );
-	}
-
-	/*
-	 * Verify the log file was deleted.
-	 * Clear stat cache to ensure we get fresh file status information.
-	 */
-	clearstatcache( true, $log_path );
-	if ( file_exists( $log_path ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( 'AJAX clear logs - Log file still exists after deletion attempt' );
-		// Switch back before error.
-		if ( $switched_mode ) {
-			API\update_connection_mode( $site_id, $environment, 'git' );
-		}
-		wp_send_json_error( [ 'message' => __( 'Log file was not deleted. Please try again.', 'ash-nazg' ) ] );
 	}
 
 	// Switch back to original mode if we changed it.

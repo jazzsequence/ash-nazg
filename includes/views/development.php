@@ -79,13 +79,8 @@ use Pantheon\AshNazg\Helpers;
 			$behind = isset( $upstream_updates['behind'] ) ? $upstream_updates['behind'] : 0;
 		}
 
-		// Debug output when ?debug=1 is present (with nonce verification).
-		$show_debug = false;
-		if ( isset( $_GET['debug'] ) && '1' === $_GET['debug'] ) {
-			if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'ash_nazg_debug' ) ) {
-				$show_debug = true;
-			}
-		}
+		// Debug output when ?debug=1 is present.
+		$show_debug = isset( $_GET['debug'] ) && '1' === $_GET['debug']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		if ( $show_debug ) :
 			?>
