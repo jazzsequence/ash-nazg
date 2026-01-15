@@ -78,6 +78,28 @@ use Pantheon\AshNazg\Helpers;
 			$update_count = count( $updates_list );
 			$behind = isset( $upstream_updates['behind'] ) ? $upstream_updates['behind'] : 0;
 		}
+
+		// Debug output when ?debug=1 is present (with nonce verification).
+		$show_debug = false;
+		if ( isset( $_GET['debug'] ) && '1' === $_GET['debug'] ) {
+			if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'ash_nazg_debug' ) ) {
+				$show_debug = true;
+			}
+		}
+
+		if ( $show_debug ) :
+			?>
+			<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20" style="background: #fff8dc; border: 2px solid #f0ad4e;">
+				<h2 style="color: #f0ad4e;">Debug: Upstream Updates Data</h2>
+				<h3>Raw upstream_updates:</h3>
+				<pre><?php echo esc_html( print_r( $upstream_updates, true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r ?></pre>
+				<h3>Extracted values:</h3>
+				<p><strong>update_count:</strong> <?php echo absint( $update_count ); ?></p>
+				<p><strong>behind:</strong> <?php echo absint( $behind ); ?></p>
+				<p><strong>updates_list count:</strong> <?php echo count( $updates_list ); ?></p>
+			</div>
+			<?php
+		endif;
 		?>
 		<?php if ( $update_count > 0 || $behind > 0 ) : ?>
 		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">

@@ -1286,8 +1286,11 @@ function ajax_clear_logs() {
 		\Pantheon\AshNazg\Helpers\debug_log( 'AJAX clear logs - Log file does not exist' );
 	}
 
-	// Verify the log file was deleted.
-	sleep( 1 ); // Give filesystem a moment.
+	/*
+	 * Verify the log file was deleted.
+	 * Clear stat cache to ensure we get fresh file status information.
+	 */
+	clearstatcache( true, $log_path );
 	if ( file_exists( $log_path ) ) {
 		\Pantheon\AshNazg\Helpers\debug_log( 'AJAX clear logs - Log file still exists after deletion attempt' );
 		// Switch back before error.
