@@ -5,6 +5,18 @@
 
 @use '../variables' as *;
 
+// Tablet breakpoint
+@media screen and (max-width: 1200px) {
+	.ash-nazg-dashboard {
+		grid-template-columns: 1fr;
+	}
+
+	.ash-nazg-card-1-col,
+	.ash-nazg-card-2-col {
+		grid-column: 1 / -1;
+	}
+}
+
 @media screen and (max-width: 782px) {
 	.ash-nazg-dashboard {
 		grid-template-columns: 1fr;

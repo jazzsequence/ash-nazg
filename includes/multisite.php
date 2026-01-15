@@ -54,7 +54,7 @@ function add_environment_field() {
 		return;
 	}
 
-	$current_env = Helpers\get_pantheon_environment();
+	$current_env = Helpers\ensure_environment();
 	?>
 	<tr class="form-field">
 		<th scope="row"><?php esc_html_e( 'Add Domain to Pantheon', 'ash-nazg' ); ?></th>

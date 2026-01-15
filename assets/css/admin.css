@@ -49,7 +49,7 @@
  */
 .ash-nazg-dashboard {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   margin-top: 20px;
 }
@@ -64,6 +64,14 @@
 
 .ash-nazg-card-full {
   grid-column: 1/-1;
+}
+
+.ash-nazg-card-1-col {
+  grid-column: span 1;
+}
+
+.ash-nazg-card-2-col {
+  grid-column: span 2;
 }
 
 .ash-nazg-card h2 {
@@ -1202,6 +1210,15 @@
  * Responsive - Mobile
  * Mobile and tablet breakpoint styles
  */
+@media screen and (max-width: 1200px) {
+  .ash-nazg-dashboard {
+    grid-template-columns: 1fr;
+  }
+  .ash-nazg-card-1-col,
+  .ash-nazg-card-2-col {
+    grid-column: 1/-1;
+  }
+}
 @media screen and (max-width: 782px) {
   .ash-nazg-dashboard {
     grid-template-columns: 1fr;

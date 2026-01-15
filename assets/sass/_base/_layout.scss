@@ -7,7 +7,7 @@
 
 .ash-nazg-dashboard {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+	grid-template-columns: repeat(3, 1fr);
 	gap: $spacing-xl;
 	margin-top: $spacing-xl;
 }
@@ -22,6 +22,14 @@
 
 .ash-nazg-card-full {
 	grid-column: 1 / -1;
+}
+
+.ash-nazg-card-1-col {
+	grid-column: span 1;
+}
+
+.ash-nazg-card-2-col {
+	grid-column: span 2;
 }
 
 .ash-nazg-card h2 {

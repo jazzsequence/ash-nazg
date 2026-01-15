@@ -84,7 +84,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	<div class="ash-nazg-dashboard">
 		<?php if ( $is_pantheon ) : ?>
-			<div class="ash-nazg-card">
+			<div class="ash-nazg-card ash-nazg-card-1-col">
 				<h2><?php esc_html_e( 'Environment Information', 'ash-nazg' ); ?></h2>
 				<table class="widefat striped">
 					<tbody>
@@ -208,7 +208,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php endif; ?>
 
 		<?php if ( null !== $site_info ) : ?>
-			<div class="ash-nazg-card">
+			<div class="ash-nazg-card ash-nazg-card-2-col">
 				<h2>
 					<?php esc_html_e( 'Site Information', 'ash-nazg' ); ?>
 					<?php if ( $site_info_cached_at ) : ?>
