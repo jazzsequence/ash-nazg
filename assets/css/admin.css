@@ -548,6 +548,64 @@
    ALL @USE RULES MUST COME FIRST
    ========================================================================== */
 /**
+ * Components - Buttons
+ * Custom button styles including the big red delete button
+ */
+/* Big round red delete button with depressible effect */
+.ash-nazg-big-red-button {
+  background: linear-gradient(to bottom, #dc3232 0%, #b92828 100%);
+  border: 5px solid #8b1f1f;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 56px;
+  font-weight: 700;
+  width: 500px;
+  height: 500px;
+  cursor: pointer;
+  box-shadow: 8px 20px 0 #8b1f1f, 10px 25px 30px rgba(0, 0, 0, 0.4);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5), -1px -1px 2px rgba(255, 255, 255, 0.2);
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  line-height: 1.3;
+}
+
+.ash-nazg-big-red-button:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #e63939 0%, #c92d2d 100%);
+  box-shadow: 9px 22px 0 #8b1f1f, 11px 27px 35px rgba(0, 0, 0, 0.5);
+}
+
+.ash-nazg-big-red-button:active:not(:disabled) {
+  box-shadow: 3px 8px 0 #8b1f1f, 4px 10px 15px rgba(0, 0, 0, 0.3);
+  transform: translateY(12px);
+}
+
+.ash-nazg-big-red-button:disabled {
+  background: linear-gradient(to bottom, #dc3232 0%, #b92828 100%);
+  border-color: #8b1f1f;
+  box-shadow: 8px 20px 0 #8b1f1f, 10px 25px 30px rgba(0, 0, 0, 0.4);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/**
+ * Admin styles for Ash-Nazg plugin.
+ *
+ * Structure:
+ * 1. Variables (SASS variables using PDS tokens)
+ * 2. Base Layout
+ * 3. Typography
+ * 4. Components (Badges, Notices, Cards, Header)
+ * 5. Tables
+ * 6. Page-specific Sections
+ * 7. Utility Classes
+ * 8. Responsive Styles
+ * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ */
+/* ==========================================================================
+   ALL @USE RULES MUST COME FIRST
+   ========================================================================== */
+/**
  * Tables
  * Table styling and column widths
  */

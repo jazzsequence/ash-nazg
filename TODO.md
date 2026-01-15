@@ -42,13 +42,18 @@ No active work in progress.
   - Stored as `pantheon_get_secret("ash_nazg_machine_token_{user_id}")`
   - Allows better audit trails and token revocation per user
 
-### Destructive Operations (Future/Experimental)
-- [ ] Create "Delete Site" page with big red button
-  - Hidden/easter egg admin page with ominous warnings
-  - Multiple confirmation dialogs with scary, explicit messages
-  - Big red button that actually deletes the site via API
-  - Clear warnings about permanent data loss
-  - Final confirmation requiring typing site name to proceed
+### Destructive Operations
+- [x] Delete Site page with big red button
+  - Only visible when `?debug=1` query parameter is present
+  - Red menu text: "⚠️ DO NOT CLICK"
+  - 500px circular red button with embossed text and diagonal shadow
+  - Type "DELETE" to enable button
+  - First confirmation: Modal with danger warnings and "I Understand the Risk" button
+  - Second confirmation: JavaScript alert for final chance to cancel
+  - "Whew! That was a close one!" message on cancellation
+  - Fully functional - actually deletes site via `DELETE /v0/sites/{site_id}`
+  - Redirects to Pantheon sites dashboard after deletion
+  - Full PHPUnit test coverage
 
 ## Future Enhancements
 - [ ] Domain management for multisite (experimental/PoC)

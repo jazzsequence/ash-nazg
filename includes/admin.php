@@ -17,6 +17,7 @@ use Pantheon\AshNazg\Helpers;
  */
 function init() {
 	add_action( 'admin_menu', __NAMESPACE__ . '\\add_admin_menu' );
+	add_action( 'admin_menu', __NAMESPACE__ . '\\add_delete_site_menu', 11 );
 	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\enqueue_assets' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_addon_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_workflow_form_submission' );
@@ -39,6 +40,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_download_backup', __NAMESPACE__ . '\\ajax_download_backup' );
 	add_action( 'wp_ajax_ash_nazg_restore_backup', __NAMESPACE__ . '\\ajax_restore_backup' );
 	add_action( 'wp_ajax_ash_nazg_clone_content', __NAMESPACE__ . '\\ajax_clone_content' );
+	add_action( 'wp_ajax_ash_nazg_delete_site', __NAMESPACE__ . '\\ajax_delete_site' );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
 }
@@ -132,6 +134,47 @@ function add_admin_menu() {
 }
 
 /**
+ * Add delete site menu (only visible with ?debug=1).
+ *
+ * @return void
+ */
+function add_delete_site_menu() {
+	// Only show delete site menu when ?debug=1 query parameter is present.
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only query param check for menu visibility.
+	if ( ! isset( $_GET['debug'] ) || '1' !== $_GET['debug'] ) {
+		return;
+	}
+
+	add_submenu_page(
+		'ash-nazg',
+		__( 'Delete Site', 'ash-nazg' ),
+		'<span style="background: #dc3232; color: #fff; padding: 2px 8px; border-radius: 3px;">⚠️ DO NOT CLICK</span>',
+		'manage_options',
+		'ash-nazg-delete-site',
+		__NAMESPACE__ . '\\render_delete_site_page'
+	);
+
+	// Add JavaScript to modify the menu link to include &debug=1.
+	add_action(
+		'admin_footer',
+		function() {
+			?>
+			<script>
+			jQuery(document).ready(function($) {
+				$('a[href="admin.php?page=ash-nazg-delete-site"]').each(function() {
+					var href = $(this).attr('href');
+					if (href && href.indexOf('debug=') === -1) {
+						$(this).attr('href', href + '&debug=1');
+					}
+				});
+			});
+			</script>
+			<?php
+		}
+	);
+}
+
+/**
  * Enqueue admin assets.
  *
  * @param string $hook Current admin page hook.
@@ -146,6 +189,7 @@ function enqueue_assets( $hook ) {
 		'ash-nazg_page_ash-nazg-development',
 		'ash-nazg_page_ash-nazg-backups',
 		'ash-nazg_page_ash-nazg-clone',
+		'ash-nazg_page_ash-nazg-delete-site',
 		'ash-nazg_page_ash-nazg-logs',
 		'ash-nazg_page_ash-nazg-settings',
 	];
@@ -341,6 +385,34 @@ function enqueue_assets( $hook ) {
 					'selectBoth' => __( 'Please select both source and target environments.', 'ash-nazg' ),
 					'sameEnvironment' => __( 'Source and target environments must be different.', 'ash-nazg' ),
 					'selectOne' => __( 'Please select at least one option (Database or Files).', 'ash-nazg' ),
+				],
+			]
+		);
+	}
+
+	// Enqueue delete-site JavaScript on delete site page.
+	if ( 'ash-nazg_page_ash-nazg-delete-site' === $hook ) {
+		wp_enqueue_script(
+			'ash-nazg-delete-site',
+			ASH_NAZG_PLUGIN_URL . 'assets/js/delete-site.js',
+			[ 'jquery' ],
+			ASH_NAZG_VERSION,
+			true
+		);
+
+		// Localize delete-site script.
+		wp_localize_script(
+			'ash-nazg-delete-site',
+			'ashNazgDeleteSite',
+			[
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce' => wp_create_nonce( 'ash_nazg_delete_site' ),
+				'i18n' => [
+					'confirmMessage' => __( "Are you ABSOLUTELY SURE you want to DELETE this site?\n\nTHIS CANNOT BE UNDONE.\n\nAll data will be PERMANENTLY LOST.", 'ash-nazg' ),
+					'secondConfirmMessage' => __( "This is your LAST CHANCE to cancel.\n\nClick OK to DELETE your site FOREVER.\nClick Cancel to keep your site safe.", 'ash-nazg' ),
+					'deleting' => __( 'Deleting site... This may take a moment...', 'ash-nazg' ),
+					'deleted' => __( 'Site has been deleted. You will be redirected to Pantheon dashboard.', 'ash-nazg' ),
+					'error' => __( 'Deletion failed. Please try again or contact support.', 'ash-nazg' ),
 				],
 			]
 		);
@@ -1846,6 +1918,40 @@ function render_clone_page() {
 }
 
 /**
+ * Render delete site page.
+ *
+ * @return void
+ */
+function render_delete_site_page() {
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	// Check if debug=1 is in current URL or referer.
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only access control check.
+	$has_debug_param = isset( $_GET['debug'] ) && '1' === $_GET['debug'];
+	$referer_has_debug = false;
+
+	if ( isset( $_SERVER['HTTP_REFERER'] ) ) {
+		$referer_url = filter_var( wp_unslash( $_SERVER['HTTP_REFERER'] ), FILTER_SANITIZE_URL );
+		$referer_has_debug = str_contains( $referer_url, 'debug=1' );
+	}
+
+	if ( ! $has_debug_param && ! $referer_has_debug ) {
+		wp_die( esc_html__( 'Access denied. This page requires debug mode.', 'ash-nazg' ) );
+	}
+
+	// Get site info.
+	$site_id = API\get_pantheon_site_id();
+	$site_info = API\get_site_info( $site_id );
+	$site_name = API\get_api_field( 'site', 'name' );
+
+	// Include the view.
+	require_once ASH_NAZG_PLUGIN_DIR . '/includes/views/delete-site.php';
+}
+
+/**
  * Render logs page.
  *
  * @return void
@@ -2224,4 +2330,42 @@ function ajax_clone_content() {
 			'message' => __( 'Clone operation started.', 'ash-nazg' ),
 		]
 	);
+}
+
+/**
+ * AJAX handler for deleting the site.
+ *
+ * @return void
+ */
+function ajax_delete_site() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_delete_site', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$site_id = API\get_pantheon_site_id();
+
+	if ( ! $site_id ) {
+		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
+	}
+
+	// Get confirmation text.
+	$confirmation = isset( $_POST['confirmation'] ) ? sanitize_text_field( wp_unslash( $_POST['confirmation'] ) ) : '';
+
+	// Verify user typed "DELETE" exactly.
+	if ( 'DELETE' !== $confirmation ) {
+		wp_send_json_error( [ 'message' => __( 'Confirmation text does not match. Deletion cancelled.', 'ash-nazg' ) ] );
+	}
+
+	// Perform site deletion.
+	$result = API\delete_site( $site_id );
+
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+	}
+
+	wp_send_json_success( [ 'message' => __( 'Site has been deleted.', 'ash-nazg' ) ] );
 }
