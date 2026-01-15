@@ -219,7 +219,17 @@ use Pantheon\AshNazg\Helpers;
 						<div class="notice notice-error inline">
 							<p>
 								<strong><?php esc_html_e( 'Test environment is not initialized.', 'ash-nazg' ); ?></strong><br />
-								<?php esc_html_e( 'You must initialize it via the Pantheon Dashboard before deploying code.', 'ash-nazg' ); ?>
+								<?php
+								printf(
+									/* translators: %s: URL to Pantheon Dashboard */
+									esc_html__( 'You must initialize it via the %s before deploying code.', 'ash-nazg' ),
+									sprintf(
+										'<a href="https://dashboard.pantheon.io/sites/%s#test" target="_blank" rel="noopener noreferrer">%s</a>',
+										esc_attr( $site_id ),
+										esc_html__( 'Pantheon Dashboard', 'ash-nazg' )
+									)
+								);
+								?>
 							</p>
 						</div>
 					<?php elseif ( ! $dev_has_changes_for_test ) : ?>
@@ -255,7 +265,17 @@ use Pantheon\AshNazg\Helpers;
 						<div class="notice notice-error inline">
 							<p>
 								<strong><?php esc_html_e( 'Live environment is not initialized.', 'ash-nazg' ); ?></strong><br />
-								<?php esc_html_e( 'You must initialize it via the Pantheon Dashboard before deploying code.', 'ash-nazg' ); ?>
+								<?php
+								printf(
+									/* translators: %s: URL to Pantheon Dashboard */
+									esc_html__( 'You must initialize it via the %s before deploying code.', 'ash-nazg' ),
+									sprintf(
+										'<a href="https://dashboard.pantheon.io/sites/%s#live" target="_blank" rel="noopener noreferrer">%s</a>',
+										esc_attr( $site_id ),
+										esc_html__( 'Pantheon Dashboard', 'ash-nazg' )
+									)
+								);
+								?>
 							</p>
 						</div>
 					<?php elseif ( ! $test_has_changes_for_live ) : ?>
