@@ -34,3 +34,13 @@
 	vertical-align: middle;
 	margin-right: $spacing-xs;
 }
+
+/* API Endpoints tab links - remove underline */
+.ash-nazg-card .nav-tab-wrapper .nav-tab {
+	text-decoration: none;
+}
+
+.ash-nazg-card .nav-tab-wrapper .nav-tab:hover,
+.ash-nazg-card .nav-tab-wrapper .nav-tab:focus {
+	text-decoration: none;
+}
