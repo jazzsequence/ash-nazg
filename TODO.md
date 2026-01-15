@@ -21,8 +21,8 @@ No active work in progress.
 ## Phase 3: Build Pipeline & Design
 
 ### Design Review & Refactoring
-- [ ] Overall design review with Pantheon Design System
-- [ ] Ensure consistent use of PDS components
+- [x] PDS integration: fonts, design tokens, foundations, and branded header
+- [ ] Review all cards and interfaces for full PDS component compliance
 - [ ] Review and optimize responsive breakpoints
 - [ ] Accessibility audit (WCAG compliance)
 - [ ] Add JavaScript bundling and minification
@@ -121,6 +121,11 @@ No active work in progress.
   - CSS compilation from SASS sources
   - Pantheon Design System (pds-core) integration
     - Imports design tokens from local ~/git/pds-core copy
+    - Copies PDS foundations, utilities, and Pantheon logos during build
+    - PDS fonts (Poppins, Aleo, Source Code Pro) loaded via Google Fonts
+    - PDS design tokens and foundations imported in compiled CSS
+    - Pantheon branded header with logo above page title
+    - PDS badge styles (success/error) using PDS color tokens
     - Organized SASS structure: _base, _components, _pages, _utilities, _typography
     - Build command: `npm run build` (compiles SASS → CSS)
     - Watch mode: `npm run watch` (auto-compiles SASS on file changes)
