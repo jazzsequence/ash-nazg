@@ -31,7 +31,7 @@ No active work in progress.
 ## Code Quality
 
 ### Refactoring
-- [ ] Replace ~60 WP_DEBUG logging patterns with `debug_log()` helper (currently only 4/60 replaced)
+- [x] Replace WP_DEBUG logging patterns with `debug_log()` helper (80 uses throughout codebase)
 - [ ] Create `ensure_site_id()` and `ensure_environment()` helpers
   - Pattern to replace: repeated `if ( ! $site_id ) { return WP_Error... }`
 
