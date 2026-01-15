@@ -4,6 +4,20 @@
 
 No active work in progress.
 
+## Critical Fixes (Production Blockers - RESOLVED)
+
+### Environment Initialization Safeguards ✅
+- **Issue**: Deploying code to uninitialized test/live environments caused permanent environment corruption
+- **Impact**: Lost test/live containers on cxr-ash-nazg-ms site (requires Pantheon Support to fix)
+- **Root Cause**: Assumed code deployment would initialize environments (incorrect assumption)
+- **Fix**:
+  - Added `is_environment_initialized()` helper to check API `initialized` field
+  - Added backend validation in `ajax_deploy_code()` to reject uninitialized deploys
+  - Added UI warnings and disabled deploy buttons for uninitialized environments
+  - Clear error messages directing users to Pantheon Dashboard for initialization
+- **API Limitation**: No API endpoint exists to initialize test/live environments (Dashboard only)
+- **Status**: ✅ Complete - safeguards in place, tested against uninitialized environments
+
 ## Phase 3: Build Pipeline & Design
 
 ### Design Review & Refactoring
