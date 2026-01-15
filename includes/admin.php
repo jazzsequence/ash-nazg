@@ -8,6 +8,7 @@
 namespace Pantheon\AshNazg\Admin;
 
 use Pantheon\AshNazg\API;
+use Pantheon\AshNazg\Helpers;
 
 /**
  * Initialize admin interface.
