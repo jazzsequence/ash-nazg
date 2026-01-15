@@ -252,3 +252,61 @@ function is_environment_initialized( $site_id, $env ) {
 	// Check the initialized field from the API.
 	return isset( $environments[ $env ]['initialized'] ) && true === $environments[ $env ]['initialized'];
 }
+
+/**
+ * Ensure site ID is available, auto-detecting if not provided.
+ *
+ * Replaces the repeated pattern:
+ * if ( ! $site_id ) {
+ *     $site_id = get_pantheon_site_id();
+ * }
+ * if ( ! $site_id ) {
+ *     return new \WP_Error( 'no_site_id', __( 'Unable to detect Pantheon site ID', 'ash-nazg' ) );
+ * }
+ *
+ * @param string|null $site_id Optional site ID. If null, attempts to auto-detect.
+ * @return string|\WP_Error Site ID on success, WP_Error on failure.
+ */
+function ensure_site_id( $site_id = null ) {
+	if ( ! $site_id ) {
+		$site_id = \Pantheon\AshNazg\API\get_pantheon_site_id();
+	}
+
+	if ( ! $site_id ) {
+		return new \WP_Error(
+			'no_site_id',
+			__( 'Unable to detect Pantheon site ID', 'ash-nazg' )
+		);
+	}
+
+	return $site_id;
+}
+
+/**
+ * Ensure environment name is available, auto-detecting if not provided.
+ *
+ * Replaces the repeated pattern:
+ * if ( ! $env ) {
+ *     $env = get_pantheon_environment();
+ * }
+ * if ( ! $env ) {
+ *     return new \WP_Error( 'no_environment', __( 'Unable to detect Pantheon environment', 'ash-nazg' ) );
+ * }
+ *
+ * @param string|null $env Optional environment name. If null, attempts to auto-detect.
+ * @return string|\WP_Error Environment name on success, WP_Error on failure.
+ */
+function ensure_environment( $env = null ) {
+	if ( ! $env ) {
+		$env = \Pantheon\AshNazg\API\get_pantheon_environment();
+	}
+
+	if ( ! $env ) {
+		return new \WP_Error(
+			'no_environment',
+			__( 'Unable to detect Pantheon environment', 'ash-nazg' )
+		);
+	}
+
+	return $env;
+}

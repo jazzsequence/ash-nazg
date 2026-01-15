@@ -233,14 +233,15 @@ class Test_Backups_API extends TestCase {
 	 */
 	public function test_backup_error_handling() {
 		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
+		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/helpers.php';
 
 		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
 
-		// Should check for site ID and environment.
+		// Should use ensure_site_id() helper for validation.
 		$this->assertGreaterThan(
 			3,
-			substr_count( $api_file_contents, 'no_site_id' ),
-			'Backup functions should check for missing site ID'
+			substr_count( $api_file_contents, 'Helpers\ensure_site_id' ),
+			'Backup functions should use ensure_site_id() helper'
 		);
 
 		// Should handle API errors with is_wp_error checks.

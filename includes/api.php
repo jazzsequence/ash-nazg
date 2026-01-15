@@ -417,14 +417,9 @@ function get_environment_info_from_env() {
  * @return array|\WP_Error Site data or WP_Error on failure.
  */
 function get_site_info( $site_id = null ) {
-	if ( null === $site_id ) {
-		$site_id = get_pantheon_site_id();
-		if ( ! $site_id ) {
-			return new \WP_Error(
-				'no_site_id',
-				__( 'Unable to detect Pantheon site ID', 'ash-nazg' )
-			);
-		}
+	$site_id = Helpers\ensure_site_id( $site_id );
+	if ( is_wp_error( $site_id ) ) {
+		return $site_id;
 	}
 
 	// Prefer $_ENV data if available (no API call needed).
@@ -501,24 +496,14 @@ function update_site_label( $site_id, $label ) {
  * @return array|\WP_Error Environment data or WP_Error on failure.
  */
 function get_environment_info( $site_id = null, $env = null ) {
-	if ( null === $site_id ) {
-		$site_id = get_pantheon_site_id();
-		if ( ! $site_id ) {
-			return new \WP_Error(
-				'no_site_id',
-				__( 'Unable to detect Pantheon site ID', 'ash-nazg' )
-			);
-		}
+	$site_id = Helpers\ensure_site_id( $site_id );
+	if ( is_wp_error( $site_id ) ) {
+		return $site_id;
 	}
 
-	if ( null === $env ) {
-		$env = get_pantheon_environment();
-		if ( ! $env ) {
-			return new \WP_Error(
-				'no_environment',
-				__( 'Unable to detect Pantheon environment', 'ash-nazg' )
-			);
-		}
+	$env = Helpers\ensure_environment( $env );
+	if ( is_wp_error( $env ) ) {
+		return $env;
 	}
 
 	// Map local environments to dev for API queries.
@@ -766,15 +751,9 @@ function test_connection() {
  * @return array|\WP_Error Array of addon objects on success, WP_Error on failure.
  */
 function get_site_addons( $site_id = null ) {
-	if ( ! $site_id ) {
-		$site_id = get_pantheon_site_id();
-	}
-
-	if ( ! $site_id ) {
-		return new \WP_Error(
-			'missing_site_id',
-			__( 'Site ID could not be determined.', 'ash-nazg' )
-		);
+	$site_id = Helpers\ensure_site_id( $site_id );
+	if ( is_wp_error( $site_id ) ) {
+		return $site_id;
 	}
 
 	// Check cache first.
@@ -1773,24 +1752,14 @@ function poll_workflow( $site_id, $workflow_id, $max_attempts = 60, $sleep_secon
  * @return array|\WP_Error Backups catalog (map of backup_id => Backup) or WP_Error on failure.
  */
 function get_backups( $site_id = null, $env = null ) {
-	if ( null === $site_id ) {
-		$site_id = get_pantheon_site_id();
-		if ( ! $site_id ) {
-			return new \WP_Error(
-				'no_site_id',
-				__( 'Unable to detect Pantheon site ID', 'ash-nazg' )
-			);
-		}
+	$site_id = Helpers\ensure_site_id( $site_id );
+	if ( is_wp_error( $site_id ) ) {
+		return $site_id;
 	}
 
-	if ( null === $env ) {
-		$env = get_pantheon_environment();
-		if ( ! $env ) {
-			return new \WP_Error(
-				'no_environment',
-				__( 'Unable to detect Pantheon environment', 'ash-nazg' )
-			);
-		}
+	$env = Helpers\ensure_environment( $env );
+	if ( is_wp_error( $env ) ) {
+		return $env;
 	}
 
 	// Map local environments to dev for API queries.
@@ -1822,24 +1791,14 @@ function get_backups( $site_id = null, $env = null ) {
  * @return array|\WP_Error Workflow response or WP_Error on failure.
  */
 function create_backup( $element, $keep_for = 365, $site_id = null, $env = null ) {
-	if ( null === $site_id ) {
-		$site_id = get_pantheon_site_id();
-		if ( ! $site_id ) {
-			return new \WP_Error(
-				'no_site_id',
-				__( 'Unable to detect Pantheon site ID', 'ash-nazg' )
-			);
-		}
+	$site_id = Helpers\ensure_site_id( $site_id );
+	if ( is_wp_error( $site_id ) ) {
+		return $site_id;
 	}
 
-	if ( null === $env ) {
-		$env = get_pantheon_environment();
-		if ( ! $env ) {
-			return new \WP_Error(
-				'no_environment',
-				__( 'Unable to detect Pantheon environment', 'ash-nazg' )
-			);
-		}
+	$env = Helpers\ensure_environment( $env );
+	if ( is_wp_error( $env ) ) {
+		return $env;
 	}
 
 	// Validate element type.
@@ -1892,24 +1851,14 @@ function create_backup( $element, $keep_for = 365, $site_id = null, $env = null 
  * @return array|\WP_Error Workflow response or WP_Error on failure.
  */
 function restore_backup( $backup_id, $element, $site_id = null, $env = null ) {
-	if ( null === $site_id ) {
-		$site_id = get_pantheon_site_id();
-		if ( ! $site_id ) {
-			return new \WP_Error(
-				'no_site_id',
-				__( 'Unable to detect Pantheon site ID', 'ash-nazg' )
-			);
-		}
+	$site_id = Helpers\ensure_site_id( $site_id );
+	if ( is_wp_error( $site_id ) ) {
+		return $site_id;
 	}
 
-	if ( null === $env ) {
-		$env = get_pantheon_environment();
-		if ( ! $env ) {
-			return new \WP_Error(
-				'no_environment',
-				__( 'Unable to detect Pantheon environment', 'ash-nazg' )
-			);
-		}
+	$env = Helpers\ensure_environment( $env );
+	if ( is_wp_error( $env ) ) {
+		return $env;
 	}
 
 	// Validate element type (note: 'all' is not valid for restore).
@@ -1958,24 +1907,14 @@ function restore_backup( $backup_id, $element, $site_id = null, $env = null ) {
  * @return string|\WP_Error Download URL or WP_Error on failure.
  */
 function get_backup_download_url( $backup_id, $element, $site_id = null, $env = null ) {
-	if ( null === $site_id ) {
-		$site_id = get_pantheon_site_id();
-		if ( ! $site_id ) {
-			return new \WP_Error(
-				'no_site_id',
-				__( 'Unable to detect Pantheon site ID', 'ash-nazg' )
-			);
-		}
+	$site_id = Helpers\ensure_site_id( $site_id );
+	if ( is_wp_error( $site_id ) ) {
+		return $site_id;
 	}
 
-	if ( null === $env ) {
-		$env = get_pantheon_environment();
-		if ( ! $env ) {
-			return new \WP_Error(
-				'no_environment',
-				__( 'Unable to detect Pantheon environment', 'ash-nazg' )
-			);
-		}
+	$env = Helpers\ensure_environment( $env );
+	if ( is_wp_error( $env ) ) {
+		return $env;
 	}
 
 	// Validate element type.
