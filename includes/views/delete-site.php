@@ -27,7 +27,7 @@
 
 	<!-- Deletion Form -->
 	<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20"
-		 style="border: 3px solid #dc3232; background: #fff8f8;">
+		style="border: 3px solid #dc3232; background: #fff8f8;">
 		<h2 style="color: #dc3232;">
 			<?php esc_html_e( 'Final Confirmation Required', 'ash-nazg' ); ?>
 		</h2>

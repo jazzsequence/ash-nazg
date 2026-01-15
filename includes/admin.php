@@ -157,7 +157,7 @@ function add_delete_site_menu() {
 	// Add JavaScript to modify the menu link to include &debug=1.
 	add_action(
 		'admin_footer',
-		function() {
+		function () {
 			?>
 			<script>
 			jQuery(document).ready(function($) {
