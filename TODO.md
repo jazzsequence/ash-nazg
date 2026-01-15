@@ -30,12 +30,6 @@ No active work in progress.
 
 ## Code Quality
 
-### Refactoring
-- [x] Replace WP_DEBUG logging patterns with `debug_log()` helper (80 uses throughout codebase)
-- [x] Create `ensure_site_id()` and `ensure_environment()` helpers
-  - Replaced pattern: repeated `if ( ! $site_id ) { return WP_Error... }`
-  - Refactored 6 API functions to use these helpers
-
 ### Testing
 - [ ] Add Playwright E2E tests (as mentioned in CLAUDE.md Phase 3)
 - [ ] Increase test coverage for git-related functions
@@ -98,11 +92,11 @@ No active work in progress.
 - ✅ Auto-clear invalid session tokens on 401/403 errors
 - ✅ Manual session token clearing on Settings page
 - ✅ Upstream cache invalidation after applying updates
-- ✅ Helper functions created for repeated patterns:
-  - `debug_log()` - WP_DEBUG logging wrapper
+- ✅ Helper functions and refactoring for code quality:
+  - `debug_log()` - WP_DEBUG logging wrapper (80 uses throughout codebase)
   - `verify_ajax_request()` - AJAX nonce and capability verification
-  - `ensure_site_id()` - Auto-detect site ID or return WP_Error
-  - `ensure_environment()` - Auto-detect environment or return WP_Error
+  - `ensure_site_id()` - Auto-detect site ID or return WP_Error (refactored 6 API functions)
+  - `ensure_environment()` - Auto-detect environment or return WP_Error (refactored 6 API functions)
   - `is_local_environment()` - Detect local dev environments
   - `is_multidev_environment()` - Detect Pantheon multidev environments
   - `dev_has_changes_for_env()` - Compare commits between dev and target env
