@@ -3,9 +3,8 @@
 ## Current Work-in-Progress
 
 ### Testing & Verification
-- [ ] Test code deployment end-to-end on Pantheon dev environment
-- [ ] Verify workflow monitoring displays correctly during deployment
-- [ ] Verify cache clearing after deployment completes
+- [ ] Test backup management end-to-end on Pantheon dev environment
+- [ ] Verify backup creation, restore, and download workflows
 
 ## Phase 3: Build Pipeline & Design
 
@@ -15,7 +14,7 @@
 - [ ] Review and optimize responsive breakpoints
 - [ ] Accessibility audit (WCAG compliance)
 - [ ] Add JavaScript bundling and minification
-- [ ] Configure watch mode for development
+- [x] Configure watch mode for development (npm run watch)
 
 ## Code Quality
 
@@ -29,13 +28,6 @@
 - [ ] Increase test coverage for git-related functions
 
 ## Planned Features
-
-### Backup Management
-- [ ] Create Backups admin page
-- [ ] List available backups with API endpoint: GET /v0/sites/{site_id}/environments/{env}/backups/catalog
-- [ ] Create backup button with API endpoint: POST /v0/sites/{site_id}/environments/{env}/backups/create
-- [ ] Download backup links (if API provides download URLs)
-- [ ] Restore backup functionality (evaluate security implications)
 
 ### Authentication & Security
 - [ ] User-scoped machine tokens (store in user meta with Pantheon secrets using user ID suffix)
@@ -119,3 +111,19 @@
     - Imports design tokens from local ~/git/pds-core copy
     - Organized SASS structure: _base, _components, _pages, _utilities, _typography
     - Build command: `npm run build` (compiles SASS → CSS)
+    - Watch mode: `npm run watch` (auto-compiles SASS on file changes)
+- ✅ Backup Management
+  - Backups admin page with create/list/download/restore UI
+  - List available backups: GET /v0/sites/{site_id}/environments/{env}/backups/catalog
+  - Create backups: POST /v0/sites/{site_id}/environments/{env}/backups
+    - Supports all, code, database, or files elements
+    - Configurable retention period (keep_for parameter)
+  - Restore backups: POST /v0/sites/{site_id}/environments/{env}/backups/{backup_id}/restore
+    - Confirmation dialogs for destructive operations
+    - Workflow monitoring with progress modals
+  - Download backups: POST /v0/sites/{site_id}/environments/{env}/backups/{backup_id}/{element}/download-url
+    - Generates signed URLs for secure downloads
+  - Backup catalog grouped by backup set (timestamp)
+  - Individual element management (code/database/files)
+  - Cache management with 5-minute TTL
+  - Full PHPUnit test coverage
