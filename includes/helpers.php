@@ -227,3 +227,28 @@ function filter_upstream_updates_for_env( $upstream_updates, $site_id, $env ) {
 
 	return $filtered_updates;
 }
+
+/**
+ * Check if a Pantheon environment is initialized.
+ *
+ * Initialized environments have containers, databases, and are ready to use.
+ * Uninitialized environments exist in the API but cannot be deployed to.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $env Environment name (e.g., 'test', 'live').
+ * @return bool True if initialized, false otherwise.
+ */
+function is_environment_initialized( $site_id, $env ) {
+	$environments = \Pantheon\AshNazg\API\get_environments( $site_id );
+
+	if ( is_wp_error( $environments ) ) {
+		return false;
+	}
+
+	if ( ! isset( $environments[ $env ] ) ) {
+		return false;
+	}
+
+	// Check the initialized field from the API.
+	return isset( $environments[ $env ]['initialized'] ) && true === $environments[ $env ]['initialized'];
+}

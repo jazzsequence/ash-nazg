@@ -1520,6 +1520,19 @@ function ajax_deploy_code() {
 		wp_send_json_error( [ 'message' => __( 'Invalid target environment.', 'ash-nazg' ) ] );
 	}
 
+	// CRITICAL: Check if target environment is initialized before deploying.
+	if ( ! Helpers\is_environment_initialized( $site_id, $target_env ) ) {
+		wp_send_json_error(
+			[
+				'message' => sprintf(
+					/* translators: %s: environment name */
+					__( 'The %s environment is not initialized. You must initialize it via the Pantheon Dashboard before deploying code.', 'ash-nazg' ),
+					strtoupper( $target_env )
+				),
+			]
+		);
+	}
+
 	// Get optional parameters.
 	$clear_cache = isset( $_POST['clear_cache'] ) && 'true' === $_POST['clear_cache'];
 	$sync_content = isset( $_POST['sync_content'] ) && 'true' === $_POST['sync_content'];
@@ -1674,6 +1687,10 @@ function render_development_page() {
 			$diffstat = API\get_diffstat( $site_id, $environment );
 		}
 	}
+
+	// Check initialization status for test and live environments.
+	$test_initialized = Helpers\is_environment_initialized( $site_id, 'test' );
+	$live_initialized = Helpers\is_environment_initialized( $site_id, 'live' );
 
 	// Include the view.
 	require_once ASH_NAZG_PLUGIN_DIR . '/includes/views/development.php';

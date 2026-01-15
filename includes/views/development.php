@@ -215,12 +215,19 @@ use Pantheon\AshNazg\Helpers;
 				<!-- Deploy to Test -->
 				<div class="ash-nazg-deploy-column">
 					<h3><?php esc_html_e( 'Deploy to Test', 'ash-nazg' ); ?></h3>
-					<?php if ( ! $dev_has_changes_for_test ) : ?>
+					<?php if ( ! $test_initialized ) : ?>
+						<div class="notice notice-error inline">
+							<p>
+								<strong><?php esc_html_e( 'Test environment is not initialized.', 'ash-nazg' ); ?></strong><br />
+								<?php esc_html_e( 'You must initialize it via the Pantheon Dashboard before deploying code.', 'ash-nazg' ); ?>
+							</p>
+						</div>
+					<?php elseif ( ! $dev_has_changes_for_test ) : ?>
 						<p class="description ash-nazg-text-muted"><?php esc_html_e( 'Test environment is up-to-date with dev.', 'ash-nazg' ); ?></p>
 					<?php else : ?>
 						<p class="description"><?php esc_html_e( 'Deploy code from dev to test.', 'ash-nazg' ); ?></p>
 					<?php endif; ?>
-					<button id="ash-nazg-deploy-to-test-toggle" class="button button-primary" <?php echo ! $dev_has_changes_for_test ? 'disabled' : ''; ?>>
+					<button id="ash-nazg-deploy-to-test-toggle" class="button button-primary" <?php echo ( ! $dev_has_changes_for_test || ! $test_initialized ) ? 'disabled' : ''; ?>>
 						<?php esc_html_e( 'Deploy to Test', 'ash-nazg' ); ?>
 					</button>
 
@@ -244,12 +251,19 @@ use Pantheon\AshNazg\Helpers;
 				<!-- Deploy to Live -->
 				<div class="ash-nazg-deploy-column">
 					<h3><?php esc_html_e( 'Deploy to Live', 'ash-nazg' ); ?></h3>
-					<?php if ( ! $test_has_changes_for_live ) : ?>
+					<?php if ( ! $live_initialized ) : ?>
+						<div class="notice notice-error inline">
+							<p>
+								<strong><?php esc_html_e( 'Live environment is not initialized.', 'ash-nazg' ); ?></strong><br />
+								<?php esc_html_e( 'You must initialize it via the Pantheon Dashboard before deploying code.', 'ash-nazg' ); ?>
+							</p>
+						</div>
+					<?php elseif ( ! $test_has_changes_for_live ) : ?>
 						<p class="description ash-nazg-text-muted"><?php esc_html_e( 'Live environment is up-to-date with test.', 'ash-nazg' ); ?></p>
 					<?php else : ?>
 						<p class="description"><?php esc_html_e( 'Deploy code from test to live.', 'ash-nazg' ); ?></p>
 					<?php endif; ?>
-					<button id="ash-nazg-deploy-to-live-toggle" class="button button-primary" <?php echo ! $test_has_changes_for_live ? 'disabled' : ''; ?>>
+					<button id="ash-nazg-deploy-to-live-toggle" class="button button-primary" <?php echo ( ! $test_has_changes_for_live || ! $live_initialized ) ? 'disabled' : ''; ?>>
 						<?php esc_html_e( 'Deploy to Live', 'ash-nazg' ); ?>
 					</button>
 
