@@ -2,9 +2,7 @@
 
 ## Current Work-in-Progress
 
-### Testing & Verification
-- [ ] Test backup management end-to-end on Pantheon dev environment
-- [ ] Verify backup creation, restore, and download workflows
+No active work in progress.
 
 ## Phase 3: Build Pipeline & Design
 
@@ -114,6 +112,10 @@
     - Watch mode: `npm run watch` (auto-compiles SASS on file changes)
 - ✅ Backup Management
   - Backups admin page with create/list/download/restore UI
+  - Master control center pattern: operate on any environment from anywhere
+    - Environment dropdown selector for backup creation
+    - Display backups from all environments with clear labels
+    - Environment-specific sections with visual separation
   - List available backups: GET /v0/sites/{site_id}/environments/{env}/backups/catalog
   - Create backups: POST /v0/sites/{site_id}/environments/{env}/backups
     - Supports all, code, database, or files elements
@@ -125,5 +127,7 @@
     - Generates signed URLs for secure downloads
   - Backup catalog grouped by backup set (timestamp)
   - Individual element management (code/database/files)
+  - Collapsible backup set UI to reduce vertical space
   - Cache management with 5-minute TTL
   - Full PHPUnit test coverage
+  - Tested end-to-end on properly initialized Pantheon environments
