@@ -1127,9 +1127,19 @@ function ajax_fetch_logs() {
 	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX fetch logs - Original mode: %s', $original_mode ) );
 
 	$switched_mode = false;
+	$log_path = WP_CONTENT_DIR . '/debug.log';
 
-	// If in Git mode, switch to SFTP temporarily.
-	if ( 'git' === $original_mode ) {
+	/*
+	 * Check if we need to switch to SFTP mode.
+	 * Only switch if: (1) in Git mode, (2) file is not readable,
+	 * and (3) not in local environment.
+	 */
+	$file_readable = file_exists( $log_path ) && is_readable( $log_path );
+	$is_local = \Pantheon\AshNazg\Helpers\is_local_environment();
+
+	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX fetch logs - File readable: %s, Is local: %s', $file_readable ? 'yes' : 'no', $is_local ? 'yes' : 'no' ) );
+
+	if ( 'git' === $original_mode && ! $file_readable && ! $is_local ) {
 		\Pantheon\AshNazg\Helpers\debug_log( 'AJAX fetch logs - Switching to SFTP mode' );
 		$result = API\update_connection_mode( $site_id, $environment, 'sftp' );
 		if ( is_wp_error( $result ) ) {
@@ -1148,10 +1158,11 @@ function ajax_fetch_logs() {
 			}
 			\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX fetch logs - Mode switch workflow completed with result: %s', $workflow_status['result'] ?? 'unknown' ) );
 		}
+	} else {
+		\Pantheon\AshNazg\Helpers\debug_log( 'AJAX fetch logs - Skipping mode switch (file already readable or local environment)' );
 	}
 
 	// Read debug.log file.
-	$log_path = WP_CONTENT_DIR . '/debug.log';
 	$logs = '';
 
 	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX fetch logs - Looking for log at: %s', $log_path ) );
@@ -1221,9 +1232,19 @@ function ajax_clear_logs() {
 	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX clear logs - Original mode: %s', $original_mode ) );
 
 	$switched_mode = false;
+	$log_path = WP_CONTENT_DIR . '/debug.log';
 
-	// If in Git mode, switch to SFTP temporarily.
-	if ( 'git' === $original_mode ) {
+	/*
+	 * Check if we need to switch to SFTP mode.
+	 * Only switch if: (1) in Git mode and (2) not in local environment.
+	 * Local environments always have writable wp-content,
+	 * Pantheon Git mode does not.
+	 */
+	$is_local = \Pantheon\AshNazg\Helpers\is_local_environment();
+
+	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX clear logs - Is local: %s', $is_local ? 'yes' : 'no' ) );
+
+	if ( 'git' === $original_mode && ! $is_local ) {
 		\Pantheon\AshNazg\Helpers\debug_log( 'AJAX clear logs - Switching to SFTP mode' );
 		$result = API\update_connection_mode( $site_id, $environment, 'sftp' );
 		if ( is_wp_error( $result ) ) {
@@ -1242,10 +1263,11 @@ function ajax_clear_logs() {
 			}
 			\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX clear logs - Mode switch workflow completed with result: %s', $workflow_status['result'] ?? 'unknown' ) );
 		}
+	} else {
+		\Pantheon\AshNazg\Helpers\debug_log( 'AJAX clear logs - Skipping mode switch (already in SFTP mode or local environment)' );
 	}
 
 	// Delete debug.log file.
-	$log_path = WP_CONTENT_DIR . '/debug.log';
 
 	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'AJAX clear logs - Attempting to delete log at: %s', $log_path ) );
 
