@@ -28,22 +28,6 @@ No active work in progress.
   - Stored as `pantheon_get_secret("ash_nazg_machine_token_{user_id}")`
   - Allows better audit trails and token revocation per user
 
-### Domain Management for Multisite (Complexity: LOW-MEDIUM, Est: 4-6 hours)
-- [ ] Automatic domain addition when new multisite subsites are created
-  - **Hook**: `wpmu_new_blog` or `wp_initialize_site` (WP 5.1+)
-  - **API Endpoint**: `POST /v0/sites/{site_id}/environments/{env_id}/domains`
-  - **Request Body**: `{"domain": "subdomain.example.com"}` (simple!)
-  - **Behavior**:
-    - Skip local environments (Lando, etc.) using `is_local_environment()`
-    - Extract subdomain from new site URL
-    - Add domain to live environment via API
-    - Synchronous operation (no workflow polling needed!)
-  - **Optional**: Admin notice for success/failure feedback
-  - **Testing Requirements**: Real multisite setup needed
-  - **Files to modify**: `includes/api.php` (add_domain function), `includes/admin.php` or new file (hook handler)
-  - **Estimated Lines**: ~80-100 lines total
-  - **Key Insight**: Domain addition is synchronous (no modal/polling UI required)
-
 ## Documentation
 - [ ] Update README with Phase 3 completion notes
 - [ ] Add screenshots to README
@@ -166,3 +150,14 @@ No active work in progress.
   - Redirects to Pantheon sites dashboard after deletion
   - Full PHPUnit test coverage (9 tests)
   - Referer-based access control for navigation
+- ✅ Domain Management for WordPress Multisite
+  - Automatic domain addition when new multisite subsites are created
+  - Hooks: `wp_initialize_site` (WP 5.1+) and `wpmu_new_blog` (legacy)
+  - Skips local environments (Lando, etc.) using `is_local_environment()`
+  - Adds domains to Pantheon live environment via API
+  - Synchronous operation (no workflow polling needed)
+  - Admin notices for success/failure feedback via transients
+  - API functions: `get_domains()`, `add_domain()`, `delete_domain()`
+  - Endpoints: GET/POST/DELETE `/v0/sites/{site_id}/environments/{env_id}/domains`
+  - Full PHPUnit test coverage (13 tests)
+  - Multisite integration module: `includes/multisite.php`
