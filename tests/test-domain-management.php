@@ -204,6 +204,11 @@ class Test_Domain_Management extends TestCase {
 		);
 
 		$this->assertTrue(
+			function_exists( 'Pantheon\\AshNazg\\Multisite\\add_environment_field' ),
+			'add_environment_field function should exist'
+		);
+
+		$this->assertTrue(
 			function_exists( 'Pantheon\\AshNazg\\Multisite\\on_new_site' ),
 			'on_new_site function should exist'
 		);
@@ -239,6 +244,13 @@ class Test_Domain_Management extends TestCase {
 			"'wpmu_new_blog'",
 			$multisite_file,
 			'Should register wpmu_new_blog hook for legacy support'
+		);
+
+		// Should hook into network_site_new_form for custom field.
+		$this->assertStringContainsString(
+			"'network_site_new_form'",
+			$multisite_file,
+			'Should register network_site_new_form hook for custom field'
 		);
 
 		// Should check for is_multisite.
@@ -292,6 +304,64 @@ class Test_Domain_Management extends TestCase {
 			'ash_nazg_domain_add_error_',
 			$multisite_file,
 			'Should store errors in transient'
+		);
+	}
+
+	/**
+	 * Test environment selector field.
+	 */
+	public function test_environment_selector_field() {
+		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/multisite.php';
+
+		$multisite_file = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/multisite.php' );
+
+		// Should have environment checkboxes.
+		$this->assertStringContainsString(
+			'ash_nazg_environments[]',
+			$multisite_file,
+			'Should have environment selector checkboxes'
+		);
+
+		// Should have dev, test, and live options.
+		$this->assertStringContainsString(
+			'value="dev"',
+			$multisite_file,
+			'Should have dev environment option'
+		);
+
+		$this->assertStringContainsString(
+			'value="test"',
+			$multisite_file,
+			'Should have test environment option'
+		);
+
+		$this->assertStringContainsString(
+			'value="live"',
+			$multisite_file,
+			'Should have live environment option'
+		);
+	}
+
+	/**
+	 * Test multisite processes selected environments.
+	 */
+	public function test_multisite_processes_selected_environments() {
+		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/multisite.php';
+
+		$multisite_file = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/multisite.php' );
+
+		// Should check for $_POST environments.
+		$this->assertStringContainsString(
+			"_POST['ash_nazg_environments']",
+			$multisite_file,
+			'Should check for selected environments in POST data'
+		);
+
+		// Should loop through selected environments.
+		$this->assertStringContainsString(
+			'foreach ( $environments as $env )',
+			$multisite_file,
+			'Should loop through selected environments'
 		);
 	}
 

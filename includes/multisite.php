@@ -30,6 +30,66 @@ function init() {
 	// Hook admin notices for displaying results.
 	add_action( 'admin_notices', __NAMESPACE__ . '\\display_admin_notices' );
 	add_action( 'network_admin_notices', __NAMESPACE__ . '\\display_admin_notices' );
+
+	// Add custom field to Add New Site form.
+	add_action( 'network_site_new_form', __NAMESPACE__ . '\\add_environment_field' );
+}
+
+/**
+ * Add environment selection field to Add New Site form.
+ */
+function add_environment_field() {
+	// Skip on local environments.
+	if ( Helpers\is_local_environment() ) {
+		?>
+		<tr class="form-field">
+			<th scope="row"><?php esc_html_e( 'Pantheon Domain', 'ash-nazg' ); ?></th>
+			<td>
+				<p class="description">
+					<?php esc_html_e( 'Local environment detected. Domain will not be added to Pantheon.', 'ash-nazg' ); ?>
+				</p>
+			</td>
+		</tr>
+		<?php
+		return;
+	}
+
+	$current_env = Helpers\get_pantheon_environment();
+	?>
+	<tr class="form-field">
+		<th scope="row"><?php esc_html_e( 'Add Domain to Pantheon', 'ash-nazg' ); ?></th>
+		<td>
+			<fieldset>
+				<legend class="screen-reader-text">
+					<?php esc_html_e( 'Select Pantheon environments to add domain to', 'ash-nazg' ); ?>
+				</legend>
+				<label>
+					<input type="checkbox" name="ash_nazg_environments[]" value="dev" <?php checked( 'dev', $current_env ); ?>>
+					<?php esc_html_e( 'Dev', 'ash-nazg' ); ?>
+				</label>
+				<br>
+				<label>
+					<input type="checkbox" name="ash_nazg_environments[]" value="test">
+					<?php esc_html_e( 'Test', 'ash-nazg' ); ?>
+				</label>
+				<br>
+				<label>
+					<input type="checkbox" name="ash_nazg_environments[]" value="live">
+					<?php esc_html_e( 'Live', 'ash-nazg' ); ?>
+				</label>
+				<p class="description">
+					<?php
+					printf(
+						/* translators: %s: current environment name */
+						esc_html__( 'Select which Pantheon environment(s) to add this domain to. Current environment: %s', 'ash-nazg' ),
+						'<strong>' . esc_html( $current_env ) . '</strong>'
+					);
+					?>
+				</p>
+			</fieldset>
+		</td>
+	</tr>
+	<?php
 }
 
 /**
@@ -46,7 +106,21 @@ function on_new_site( $new_site, $_args ) {
 	}
 
 	$domain = $new_site->domain;
-	add_domain_to_pantheon( $domain, $new_site->blog_id );
+
+	// Get selected environments from form submission.
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$environments = isset( $_POST['ash_nazg_environments'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['ash_nazg_environments'] ) ) : [];
+
+	// If no environments selected, skip domain addition.
+	if ( empty( $environments ) ) {
+		Helpers\debug_log( sprintf( 'No environments selected for domain %s - skipping domain addition', $domain ) );
+		return;
+	}
+
+	// Add domain to each selected environment.
+	foreach ( $environments as $env ) {
+		add_domain_to_pantheon( $domain, $new_site->blog_id, $env );
+	}
 }
 
 /**
@@ -66,7 +140,20 @@ function on_new_site_legacy( $blog_id, $_user_id, $domain, $_path, $_site_id, $_
 		return;
 	}
 
-	add_domain_to_pantheon( $domain, $blog_id );
+	// Get selected environments from form submission.
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$environments = isset( $_POST['ash_nazg_environments'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['ash_nazg_environments'] ) ) : [];
+
+	// If no environments selected, skip domain addition.
+	if ( empty( $environments ) ) {
+		Helpers\debug_log( sprintf( 'No environments selected for domain %s - skipping domain addition', $domain ) );
+		return;
+	}
+
+	// Add domain to each selected environment.
+	foreach ( $environments as $env ) {
+		add_domain_to_pantheon( $domain, $blog_id, $env );
+	}
 }
 
 /**
@@ -74,24 +161,19 @@ function on_new_site_legacy( $blog_id, $_user_id, $domain, $_path, $_site_id, $_
  *
  * @param string $domain Domain name.
  * @param int $blog_id Blog ID for context.
+ * @param string $env Environment name (dev, test, live).
  */
-function add_domain_to_pantheon( $domain, $blog_id ) {
-	// Detect current environment.
-	$env = Helpers\get_pantheon_environment();
-	if ( ! $env ) {
-		Helpers\debug_log( 'Cannot add domain - unable to detect Pantheon environment' );
-		return;
-	}
+function add_domain_to_pantheon( $domain, $blog_id, $env ) {
+	Helpers\debug_log( sprintf( 'Adding domain %s (Blog ID: %d) to %s environment', $domain, $blog_id, $env ) );
 
-	Helpers\debug_log( sprintf( 'New multisite subsite created: %s (Blog ID: %d) - adding to %s environment', $domain, $blog_id, $env ) );
-
-	// Add domain to current environment.
+	// Add domain to specified environment.
 	$result = API\add_domain( $domain, null, $env );
 
 	if ( is_wp_error( $result ) ) {
-		// Store error in transient for admin notice.
+		// Store error in transient for admin notice (unique key per environment).
+		$transient_key = sprintf( 'ash_nazg_domain_add_error_%d_%s', $blog_id, $env );
 		set_transient(
-			'ash_nazg_domain_add_error_' . $blog_id,
+			$transient_key,
 			[
 				'domain' => $domain,
 				'env' => $env,
@@ -109,9 +191,10 @@ function add_domain_to_pantheon( $domain, $blog_id ) {
 			)
 		);
 	} else {
-		// Store success in transient for admin notice.
+		// Store success in transient for admin notice (unique key per environment).
+		$transient_key = sprintf( 'ash_nazg_domain_add_success_%d_%s', $blog_id, $env );
 		set_transient(
-			'ash_nazg_domain_add_success_' . $blog_id,
+			$transient_key,
 			[
 				'domain' => $domain,
 				'env' => $env,
@@ -132,45 +215,52 @@ function display_admin_notices() {
 	}
 
 	$blog_id = get_current_blog_id();
+	$environments = [ 'dev', 'test', 'live' ];
 
-	// Check for success notice.
-	$success = get_transient( 'ash_nazg_domain_add_success_' . $blog_id );
-	if ( $success ) {
-		?>
-		<div class="notice notice-success is-dismissible">
-			<p>
-				<?php
-				printf(
-					/* translators: 1: domain name, 2: environment name */
-					esc_html__( 'Domain %1$s has been added to Pantheon %2$s environment.', 'ash-nazg' ),
-					'<strong>' . esc_html( $success['domain'] ) . '</strong>',
-					'<strong>' . esc_html( $success['env'] ) . '</strong>'
-				);
-				?>
-			</p>
-		</div>
-		<?php
-		delete_transient( 'ash_nazg_domain_add_success_' . $blog_id );
+	// Check for success notices across all environments.
+	foreach ( $environments as $env ) {
+		$transient_key = sprintf( 'ash_nazg_domain_add_success_%d_%s', $blog_id, $env );
+		$success = get_transient( $transient_key );
+		if ( $success ) {
+			?>
+			<div class="notice notice-success is-dismissible">
+				<p>
+					<?php
+					printf(
+						/* translators: 1: domain name, 2: environment name */
+						esc_html__( 'Domain %1$s has been added to Pantheon %2$s environment.', 'ash-nazg' ),
+						'<strong>' . esc_html( $success['domain'] ) . '</strong>',
+						'<strong>' . esc_html( $success['env'] ) . '</strong>'
+					);
+					?>
+				</p>
+			</div>
+			<?php
+			delete_transient( $transient_key );
+		}
 	}
 
-	// Check for error notice.
-	$error = get_transient( 'ash_nazg_domain_add_error_' . $blog_id );
-	if ( $error ) {
-		?>
-		<div class="notice notice-error is-dismissible">
-			<p>
-				<?php
-				printf(
-					/* translators: 1: domain name, 2: environment name, 3: error message */
-					esc_html__( 'Failed to add domain %1$s to Pantheon %2$s environment: %3$s', 'ash-nazg' ),
-					'<strong>' . esc_html( $error['domain'] ) . '</strong>',
-					'<strong>' . esc_html( $error['env'] ) . '</strong>',
-					esc_html( $error['error'] )
-				);
-				?>
-			</p>
-		</div>
-		<?php
-		delete_transient( 'ash_nazg_domain_add_error_' . $blog_id );
+	// Check for error notices across all environments.
+	foreach ( $environments as $env ) {
+		$transient_key = sprintf( 'ash_nazg_domain_add_error_%d_%s', $blog_id, $env );
+		$error = get_transient( $transient_key );
+		if ( $error ) {
+			?>
+			<div class="notice notice-error is-dismissible">
+				<p>
+					<?php
+					printf(
+						/* translators: 1: domain name, 2: environment name, 3: error message */
+						esc_html__( 'Failed to add domain %1$s to Pantheon %2$s environment: %3$s', 'ash-nazg' ),
+						'<strong>' . esc_html( $error['domain'] ) . '</strong>',
+						'<strong>' . esc_html( $error['env'] ) . '</strong>',
+						esc_html( $error['error'] )
+					);
+					?>
+				</p>
+			</div>
+			<?php
+			delete_transient( $transient_key );
+		}
 	}
 }
