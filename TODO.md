@@ -32,8 +32,9 @@ No active work in progress.
 
 ### Refactoring
 - [x] Replace WP_DEBUG logging patterns with `debug_log()` helper (80 uses throughout codebase)
-- [ ] Create `ensure_site_id()` and `ensure_environment()` helpers
-  - Pattern to replace: repeated `if ( ! $site_id ) { return WP_Error... }`
+- [x] Create `ensure_site_id()` and `ensure_environment()` helpers
+  - Replaced pattern: repeated `if ( ! $site_id ) { return WP_Error... }`
+  - Refactored 6 API functions to use these helpers
 
 ### Testing
 - [ ] Add Playwright E2E tests (as mentioned in CLAUDE.md Phase 3)
@@ -100,6 +101,8 @@ No active work in progress.
 - ✅ Helper functions created for repeated patterns:
   - `debug_log()` - WP_DEBUG logging wrapper
   - `verify_ajax_request()` - AJAX nonce and capability verification
+  - `ensure_site_id()` - Auto-detect site ID or return WP_Error
+  - `ensure_environment()` - Auto-detect environment or return WP_Error
   - `is_local_environment()` - Detect local dev environments
   - `is_multidev_environment()` - Detect Pantheon multidev environments
   - `dev_has_changes_for_env()` - Compare commits between dev and target env
