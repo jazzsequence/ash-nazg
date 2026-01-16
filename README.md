@@ -305,7 +305,6 @@ npm test
 - Accessibility audit (WCAG compliance)
 - JavaScript bundling and minification
 - Playwright E2E tests
-- Update CLAUDE.md with latest patterns
 - User-scoped machine tokens (per-user authentication)
 
 ## FAQ
