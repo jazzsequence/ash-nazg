@@ -34,6 +34,20 @@ No active work in progress.
   - Expand screen options to more admin pages beyond Development
   - Allow users to customize column visibility, items per page, etc.
 
+### Analytics & Metrics
+- [ ] Environment metrics visualization
+  - API endpoint: GET /v0/sites/{site_id}/environments/{env_id}/metrics
+  - Duration parameter: "28d" (28 days), "12w" (12 weeks), "12m" (12 months)
+  - Metrics data:
+    - Pages served (traffic volume)
+    - Unique visits (visitor count)
+    - Cache hits/misses (cache performance)
+    - Timestamp/datetime for each data point
+  - Display timeseries data with charts/graphs
+  - Environment selector to view metrics for any environment
+  - Cache hit ratio calculation and display
+  - Traffic trends and performance analysis
+
 ## Documentation
 - [x] Update README with concise feature descriptions
 - [x] Add screenshot placeholders to README
