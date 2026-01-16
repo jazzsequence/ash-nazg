@@ -28,7 +28,7 @@ _[Screenshot: Dashboard page showing environment status, site info card, connect
 
 ### Development
 
-Manage code deployment, upstream updates, multidev environments, and uncommitted changes from a single interface. Master control panel approach lets you operate on any environment from anywhere.
+Manage code deployment, upstream updates, multidev environments, and uncommitted changes from a single interface. All development operations accessible from one page regardless of your current environment.
 
 _[Screenshot: Development page showing upstream updates, code deployment panels, multidev management table, and uncommitted changes]_
 
@@ -59,7 +59,7 @@ _[Screenshot: Development page showing upstream updates, code deployment panels,
 
 ### Backups
 
-Create, restore, and download backups for any environment. Master control center design lets you operate on all environments from one page.
+Create, restore, and download backups for any environment. Manage backups across all environments from a single interface.
 
 _[Screenshot: Backups page showing environment selector, backup catalog, and restore/download buttons]_
 
