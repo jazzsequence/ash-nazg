@@ -69,12 +69,24 @@ use Pantheon\AshNazg\Helpers;
 
 		<!-- Upstream Updates -->
 		<?php
-		// Extract actual updates from update_log object.
+		/*
+		 * Extract actual updates from update_log object.
+		 * Terminus API returns update_log as associative array keyed by hash.
+		 * Convert to numeric array for consistency.
+		 */
 		$updates_list = [];
 		$update_count = 0;
 		$behind = 0;
 		if ( ! is_wp_error( $upstream_updates ) && $upstream_updates && is_array( $upstream_updates ) ) {
-			$updates_list = isset( $upstream_updates['update_log'] ) ? $upstream_updates['update_log'] : [];
+			$raw_updates = isset( $upstream_updates['update_log'] ) ? $upstream_updates['update_log'] : [];
+
+			// Convert associative array to numeric array if needed (Terminus API format).
+			if ( ! empty( $raw_updates ) && ! isset( $raw_updates[0] ) ) {
+				$updates_list = array_values( $raw_updates );
+			} else {
+				$updates_list = $raw_updates;
+			}
+
 			$update_count = count( $updates_list );
 			$behind = isset( $upstream_updates['behind'] ) ? $upstream_updates['behind'] : 0;
 		}
@@ -86,9 +98,13 @@ use Pantheon\AshNazg\Helpers;
 			?>
 			<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20" style="background: #fff8dc; border: 2px solid #f0ad4e;">
 				<h2 style="color: #f0ad4e;">Debug: Upstream Updates Data</h2>
-				<h3>Raw upstream_updates:</h3>
+				<h3>1. Raw upstream_updates (BEFORE filtering):</h3>
+				<pre><?php echo esc_html( print_r( $upstream_updates_raw ?? 'Not available', true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r ?></pre>
+				<h3>2. Filtered upstream_updates (AFTER filtering):</h3>
 				<pre><?php echo esc_html( print_r( $upstream_updates, true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r ?></pre>
-				<h3>Extracted values:</h3>
+				<h3>3. Current environment commits (first 5):</h3>
+				<pre><?php echo esc_html( print_r( array_slice( $commits ?? [], 0, 5 ), true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r ?></pre>
+				<h3>4. Extracted values:</h3>
 				<p><strong>update_count:</strong> <?php echo absint( $update_count ); ?></p>
 				<p><strong>behind:</strong> <?php echo absint( $behind ); ?></p>
 				<p><strong>updates_list count:</strong> <?php echo count( $updates_list ); ?></p>

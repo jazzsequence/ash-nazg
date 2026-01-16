@@ -3,7 +3,7 @@
  * Plugin Name: Ash-Nazg - One Ring to Rule Them All
  * Plugin URI: https://github.com/jazzsequence/ash-nazg
  * Description: Integrates Pantheon Public API into WordPress admin dashboard
- * Version: 0.3.1
+ * Version: 0.3.2
  * Author: Chris Reynolds
  * Author URI: https://chrisreynolds.io
  * License: MIT
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'ASH_NAZG_VERSION', '0.3.1' );
+define( 'ASH_NAZG_VERSION', '0.3.2' );
 define( 'ASH_NAZG_PLUGIN_FILE', __FILE__ );
 define( 'ASH_NAZG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ASH_NAZG_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

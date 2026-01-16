@@ -163,7 +163,7 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 		);
 
 		$site_endpoints['Code'][] = test_endpoint(
-			sprintf( '/v0/sites/%s/code-upstream-updates', $site_id ),
+			sprintf( '/v0/sites/%s/upstream-updates', $site_id ),
 			__( 'Upstream Updates', 'ash-nazg' ),
 			__( 'Available upstream update commits', 'ash-nazg' )
 		);
