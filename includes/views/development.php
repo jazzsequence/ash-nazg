@@ -15,7 +15,7 @@ use Pantheon\AshNazg\Helpers;
 ?>
 
 <div class="wrap">
-	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+	<?php \Pantheon\AshNazg\Admin\render_pantheon_header( get_admin_page_title() ); ?>
 
 	<p><?php esc_html_e( 'Git commits, upstream updates, and code management.', 'ash-nazg' ); ?></p>
 

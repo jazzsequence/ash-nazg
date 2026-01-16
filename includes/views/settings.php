@@ -14,7 +14,7 @@ use Pantheon\AshNazg\API;
 ?>
 
 <div class="wrap">
-	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+	<?php \Pantheon\AshNazg\Admin\render_pantheon_header( get_admin_page_title() ); ?>
 
 	<?php if ( ! empty( $message ) ) : ?>
 		<div class="notice notice-success is-dismissible">

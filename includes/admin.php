@@ -75,7 +75,7 @@ function add_admin_menu() {
 	// Workflows page.
 	add_submenu_page(
 		'ash-nazg',
-		__( 'Pantheon Workflows', 'ash-nazg' ),
+		__( 'Workflows', 'ash-nazg' ),
 		__( 'Workflows', 'ash-nazg' ),
 		'manage_options',
 		'ash-nazg-workflows',
@@ -125,7 +125,7 @@ function add_admin_menu() {
 	// Settings page.
 	add_submenu_page(
 		'ash-nazg',
-		__( 'Pantheon Settings', 'ash-nazg' ),
+		__( 'Settings', 'ash-nazg' ),
 		__( 'Settings', 'ash-nazg' ),
 		'manage_options',
 		'ash-nazg-settings',

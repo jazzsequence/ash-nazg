@@ -14,10 +14,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 
 <div class="wrap">
-	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+	<?php render_pantheon_header( get_admin_page_title() ); ?>
 
 	<p class="description">
-		<?php esc_html_e( 'Manage Pantheon site addons such as Redis, Solr, and other available services.', 'ash-nazg' ); ?>
+		<?php esc_html_e( 'Manage site addons such as Redis, Solr, and other available services.', 'ash-nazg' ); ?>
 	</p>
 
 	<p class="description">

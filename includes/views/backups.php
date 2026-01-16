@@ -15,9 +15,9 @@ use Pantheon\AshNazg\Helpers;
 ?>
 
 <div class="wrap">
-	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+	<?php \Pantheon\AshNazg\Admin\render_pantheon_header( get_admin_page_title() ); ?>
 
-	<p><?php esc_html_e( 'Create, download, and restore backups for your Pantheon environments.', 'ash-nazg' ); ?></p>
+	<p><?php esc_html_e( 'Create, download, and restore backups for your environments.', 'ash-nazg' ); ?></p>
 
 	<?php if ( $message ) : ?>
 		<div class="notice notice-success is-dismissible">
