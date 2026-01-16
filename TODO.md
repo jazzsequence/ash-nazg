@@ -27,6 +27,12 @@ No active work in progress.
   - Instead of site-wide tokens, each user with manage_options can have their own token
   - Stored as `pantheon_get_secret("ash_nazg_machine_token_{user_id}")`
   - Allows better audit trails and token revocation per user
+- [ ] MD5 hash machine tokens stored in database (currently plaintext)
+
+### UI/UX Improvements
+- [ ] More screen options integration
+  - Expand screen options to more admin pages beyond Development
+  - Allow users to customize column visibility, items per page, etc.
 
 ## Documentation
 - [x] Update README with concise feature descriptions
