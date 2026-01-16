@@ -206,51 +206,29 @@ wp plugin activate ash-nazg
 
 ### Setting Up Your Pantheon Machine Token
 
-This plugin uses [Pantheon Secrets](https://docs.pantheon.io/guides/secrets) to securely store your machine token. The token is **never stored in the database**.
-
 1. **Create a machine token:**
    - Log into your Pantheon Dashboard
    - Go to Account > Machine Tokens
-   - Create a new machine token (ideally from a "machine user" service account)
+   - Create a new machine token
    - Copy the token (you'll only see it once!)
 
-2. **Store the token in Pantheon Secrets:**
-   - SSH into your Pantheon environment or use Terminus
-   - Store the token using the Pantheon Secrets API with the label `ash_nazg_machine_token`:
-     ```bash
-     # Example using terminus
-     terminus secret:set ash_nazg_machine_token <your-token-here> --scope=site --env=live
-     ```
-   - The plugin will retrieve the token using `pantheon_get_secret('ash_nazg_machine_token')`
+2. **Store the token (Recommended: Pantheon Secrets):**
 
-   **For Development/Testing Only:**
-   - If you don't have access to Pantheon Secrets (local development), you can configure the token in the WordPress admin under **Pantheon > Settings**
-   - This stores the token in WordPress options (less secure, not recommended for production)
+   We highly recommend using [Pantheon Secrets](https://docs.pantheon.io/guides/secrets) to securely store your machine token:
 
-3. **Activate and configure:**
+   ```bash
+   terminus secret:set <site> ash_nazg_machine_token YOUR_TOKEN --scope=user,web
+   ```
+
+   The plugin will retrieve the token using `pantheon_get_secret('ash_nazg_machine_token')`.
+
+   **Alternative: WordPress Database**
+
+   You can also configure the token in **Ash Nazg > Settings** in the WordPress admin. This stores the token in the WordPress database in plaintext, which is less secure than using Pantheon Secrets.
+
+3. **Verify setup:**
+   - Navigate to **Ash Nazg** in your WordPress admin menu
    - The plugin will auto-detect your Pantheon environment variables
-   - Navigate to **Pantheon** in your WordPress admin menu to verify setup
-
-### Security Notes
-
-- **Production:** Machine tokens should be stored in **Pantheon Secrets**, not the WordPress database
-- Tokens are retrieved from Pantheon Secrets at runtime via `pantheon_get_secret('ash_nazg_machine_token')`
-- **Development fallback:** For local development, tokens can be stored in WordPress options (less secure)
-- Consider using a dedicated "machine user" Pantheon account for the token
-- Never share your token or commit it to version control
-- WordPress admin compromise = Pantheon API access (within operational scope only)
-
-## Usage
-
-After configuration, access **Ash Nazg** from your WordPress admin menu:
-
-- **Dashboard** - Environment status, connection mode toggle, API endpoints monitoring
-- **Logs** - View and clear debug logs with automatic SFTP mode switching
-- **Addons** - Enable/disable Redis and Apache Solr
-- **Workflows** - Trigger Object Cache Pro installation and other Pantheon workflows
-- **Settings** - Machine token configuration
-
-All pages show "Last checked" timestamps for cached data. Use "Refresh Data" to fetch fresh information from the Pantheon API.
 
 ## Development
 
@@ -261,7 +239,7 @@ This plugin is under active development. See [CLAUDE.md](./CLAUDE.md) for techni
 - **Functional programming** with `Pantheon\AshNazg` namespace
 - **Traditional WordPress admin** interface using Pantheon Design System (PDS Core)
 - **API-first approach** using `api.pantheon.io`
-- **Secure by design** - no database storage of credentials
+- **Secure credential storage** via Pantheon Secrets (recommended) or WordPress database
 
 ### Contributing
 
@@ -322,63 +300,20 @@ npm test
 - **npm/yarn:**
   - Pantheon Design System (PDS Core) - UI components
 
-## Roadmap
+## Future Improvements
 
-### Phase 1: Foundation & Core Status (Complete)
-- [x] Plugin bootstrap and activation
-- [x] Composer setup with dependencies
-- [x] Basic API client with authentication (`get_api_token()`)
-- [x] Pantheon environment detection
-- [x] Settings page with machine token setup
-- [x] Environment status display via API
-- [x] API connection testing interface
-- [x] Comprehensive API endpoints testing and status display
-- [x] Site addons management (Redis, Solr)
-- [x] Workflows integration (trigger scaffold_extensions workflows)
-- [x] Smart caching with timestamps (24-hour cache)
-- [~] Launch check status information (not available via API - terminus only)
-- [~] Error/debug log viewer (files may not exist due to read-only filesystem)
-
-### Phase 2: Development Workflow Features (Complete)
-- [x] SFTP/Git mode toggle with polling verification
-- [x] Environment state management and persistence
-- [x] Automatic mode switching for file operations
-- [x] Debug log viewer with fetch/clear functionality
-- [x] JavaScript organization (separate files with proper enqueuing)
-- [x] CSS organization standards (utility classes, no inline styles)
-- [x] Comprehensive testing suite (API, state management, AJAX handlers)
-- [x] Upstream update detection and filtering per environment
-- [x] Code deployment (deploy to test/live environments)
-- [x] Multidev creation, merge, and deletion
-- [x] Backup management (create, list, restore, download)
-- [x] Workflow status monitoring with polling for long-running operations
-- [x] Clone content between environments (database and/or files)
-
-### Phase 3: Build Pipeline & Design (Complete)
-- [x] SASS build pipeline with PDS integration
-- [x] Pantheon Design System fonts, tokens, and foundations
-- [x] Branded Pantheon header with logo
-- [x] PDS component compliance review
-- [x] Responsive breakpoints optimization
-- [x] Build and watch mode npm scripts
-
-### Phase 4: Advanced Features (Complete)
-- [x] Domain management for WordPress multisite
-- [x] Delete site functionality (debug mode only, demonstration feature)
-
-### Ongoing Improvements
-- [ ] Accessibility audit (WCAG compliance)
-- [ ] JavaScript bundling and minification
-- [ ] Playwright E2E tests
-- [ ] Update CLAUDE.md with latest patterns
-- [ ] User-scoped machine tokens (per-user authentication)
-- [ ] Internationalization (i18n)
+- Accessibility audit (WCAG compliance)
+- JavaScript bundling and minification
+- Playwright E2E tests
+- Update CLAUDE.md with latest patterns
+- User-scoped machine tokens (per-user authentication)
+- Internationalization (i18n)
 
 ## FAQ
 
 ### Is this an official Pantheon plugin?
 
-No, this is a community-developed plugin that uses the public Pantheon API. It is not officially supported by Pantheon.
+No, this is a Hackathon 2026 project built by Chris Reynolds, Senior Developer Advocate at Pantheon. It was built independently and is not officially supported by Pantheon.
 
 ### Will this work with other hosting providers?
 
@@ -393,10 +328,9 @@ The Pantheon API is available to all Pantheon customers. Some features may vary 
 
 ### Is my machine token secure?
 
-Yes, tokens are stored in **Pantheon Secrets**, not in the WordPress database. The plugin retrieves tokens at runtime using `pantheon_get_secret()`. However, be aware:
-- WordPress admin compromise = Pantheon API access (within token scope)
-- The plugin only exposes operational features, not administrative/billing functions
-- Consider using a dedicated "machine user" account with limited permissions
+**Yes, if using Pantheon Secrets.** Tokens stored in Pantheon Secrets are encrypted and retrieved at runtime using `pantheon_get_secret()`.
+
+**Less secure if using database storage.** Tokens stored in the WordPress database are stored in plaintext and are only as secure as your database. We highly recommend using Pantheon Secrets instead of database storage.
 
 ### What permissions does this plugin grant WordPress admins?
 
@@ -410,11 +344,7 @@ WordPress admins **cannot** (via this plugin):
 - Manage Pantheon users or organizations
 - Access billing information
 - Generate or revoke machine tokens
-- Delete sites or perform other destructive administrative actions
-
-### Why the "PoC approach" of implementing broadly then restricting?
-
-We're exploring the full capabilities of the Pantheon API to understand what's possible and useful. Features that grant too much power or prove impractical will be removed or gated. This approach helps us build the most useful tool while maintaining security.
+- Delete sites (except via debug mode demonstration feature)
 
 ## Support
 
