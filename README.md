@@ -306,6 +306,7 @@ npm test
 - JavaScript bundling and minification
 - Playwright E2E tests
 - User-scoped machine tokens (per-user authentication)
+- MD5 hash machine tokens stored in database (currently stored in plaintext)
 
 ## FAQ
 
