@@ -736,6 +736,50 @@
    ALL @USE RULES MUST COME FIRST
    ========================================================================== */
 /**
+ * Components - Code Block and User ID
+ * Styling for Pantheon Secrets command display and user ID highlighting
+ */
+/* Pantheon Secrets command display */
+.ash-nazg-code-block {
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  border-left: 4px solid #0073aa;
+  padding: 12px;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 10px 0;
+}
+
+/* User ID highlighting */
+.ash-nazg-user-id {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  padding: 2px 8px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/**
+ * Admin styles for Ash-Nazg plugin.
+ *
+ * Structure:
+ * 1. Variables (SASS variables using PDS tokens)
+ * 2. Base Layout
+ * 3. Typography
+ * 4. Components (Badges, Notices, Cards, Header)
+ * 5. Tables
+ * 6. Page-specific Sections
+ * 7. Utility Classes
+ * 8. Responsive Styles
+ * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ */
+/* ==========================================================================
+   ALL @USE RULES MUST COME FIRST
+   ========================================================================== */
+/**
  * Tables
  * Table styling and column widths
  */

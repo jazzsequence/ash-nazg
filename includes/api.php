@@ -15,19 +15,33 @@ use Pantheon\AshNazg\Helpers;
  * Retrieves machine token from Pantheon Secrets, exchanges it for a session token,
  * and caches the result. Auto-refreshes when expired.
  *
+ * @param int|null $user_id Optional. User ID. Defaults to current user.
  * @return string|\WP_Error Session token on success, WP_Error on failure.
  */
-function get_api_token() {
-	// Check for cached session token.
-	$cached_token = get_transient( 'ash_nazg_session_token' );
+function get_api_token( $user_id = null ) {
+	if ( null === $user_id ) {
+		$user_id = get_current_user_id();
+	}
+
+	if ( ! $user_id ) {
+		Helpers\debug_log( 'Unable to get API token - no user ID' );
+		return new \WP_Error(
+			'no_user',
+			__( 'Unable to authenticate - no user logged in.', 'ash-nazg' )
+		);
+	}
+
+	// Check for cached session token (per-user).
+	$cache_key = sprintf( 'ash_nazg_session_token_%d', $user_id );
+	$cached_token = get_transient( $cache_key );
 	if ( false !== $cached_token ) {
 		return $cached_token;
 	}
 
-	// Get machine token from Pantheon Secrets or settings.
-	$machine_token = get_machine_token();
+	// Get machine token for this user.
+	$machine_token = get_user_machine_token( $user_id );
 	if ( ! $machine_token ) {
-		\Pantheon\AshNazg\Helpers\debug_log( 'No machine token available' );
+		Helpers\debug_log( sprintf( 'No machine token found for user %d', $user_id ) );
 		return new \WP_Error(
 			'no_token',
 			__( 'No machine token configured. Please add a token in Settings.', 'ash-nazg' )
@@ -143,10 +157,127 @@ function get_api_token() {
 
 	$session_token = $data['session'];
 
-	// Cache for 1 hour (tokens are valid for longer, but we refresh regularly for security).
-	set_transient( 'ash_nazg_session_token', $session_token, HOUR_IN_SECONDS );
+	/*
+	 * Cache for 1 hour (tokens are valid for longer, but we refresh
+	 * regularly for security). Use per-user cache key.
+	 */
+	set_transient( $cache_key, $session_token, HOUR_IN_SECONDS );
 
 	return $session_token;
+}
+
+/**
+ * Encrypt a token before storing in database.
+ *
+ * Uses WordPress salts for encryption key and AES-256-CBC encryption.
+ * Tokens stored in Pantheon Secrets are not encrypted (already secure).
+ *
+ * @param string $token Plain text token.
+ * @return string Encrypted token (base64 encoded).
+ */
+function encrypt_token( $token ) {
+	// Use WordPress AUTH_SALT for encryption key.
+	$key = wp_salt( 'auth' );
+
+	// Generate initialization vector from key (16 bytes for AES-256-CBC).
+	$iv = substr( md5( $key ), 0, 16 );
+
+	// Encrypt token.
+	$encrypted = openssl_encrypt( $token, 'AES-256-CBC', $key, 0, $iv );
+
+	// Return base64 encoded encrypted string.
+	return base64_encode( $encrypted );
+}
+
+/**
+ * Decrypt a stored token from database.
+ *
+ * @param string $encrypted_token Encrypted token (base64 encoded).
+ * @return string|false Plain text token on success, false on failure.
+ */
+function decrypt_token( $encrypted_token ) {
+	if ( empty( $encrypted_token ) ) {
+		return false;
+	}
+
+	// Use same WordPress AUTH_SALT as encryption.
+	$key = wp_salt( 'auth' );
+
+	// Generate same initialization vector.
+	$iv = substr( md5( $key ), 0, 16 );
+
+	// Decode base64 and decrypt.
+	$decrypted = openssl_decrypt( base64_decode( $encrypted_token ), 'AES-256-CBC', $key, 0, $iv );
+
+	return $decrypted !== false ? $decrypted : false;
+}
+
+/**
+ * Get machine token for a specific user.
+ *
+ * Checks in this order:
+ * 1. Pantheon Secret with user ID suffix (pantheon_get_secret)
+ * 2. User meta (encrypted, stored in database)
+ * 3. Global Pantheon Secret (backward compatibility)
+ * 4. Global option (backward compatibility)
+ *
+ * @param int|null $user_id Optional. User ID. Defaults to current user.
+ * @return string|false Machine token on success, false on failure.
+ */
+function get_user_machine_token( $user_id = null ) {
+	if ( null === $user_id ) {
+		$user_id = get_current_user_id();
+	}
+
+	if ( ! $user_id ) {
+		Helpers\debug_log( 'Cannot get user machine token - no user ID' );
+		return false;
+	}
+
+	// Try per-user Pantheon Secret first.
+	if ( function_exists( 'pantheon_get_secret' ) ) {
+		$secret_key = sprintf( 'ash_nazg_machine_token_%d', $user_id );
+		$token = pantheon_get_secret( $secret_key );
+		if ( ! empty( $token ) ) {
+			Helpers\debug_log( sprintf( 'Retrieved machine token from Pantheon Secret for user %d', $user_id ) );
+			return $token;
+		}
+	}
+
+	// Try per-user meta (encrypted).
+	$encrypted_token = get_user_meta( $user_id, 'ash_nazg_user_machine_token', true );
+	if ( ! empty( $encrypted_token ) ) {
+		$token = decrypt_token( $encrypted_token );
+		if ( $token ) {
+			Helpers\debug_log( sprintf( 'Retrieved machine token from user meta for user %d', $user_id ) );
+			return $token;
+		}
+	}
+
+	// Fallback to global token (backward compatibility).
+	Helpers\debug_log( sprintf( 'No per-user token found for user %d, falling back to global token', $user_id ) );
+	return get_machine_token();
+}
+
+/**
+ * Clear session token for a user.
+ *
+ * @param int|null $user_id Optional. User ID. Defaults to current user.
+ */
+function clear_user_session_token( $user_id = null ) {
+	if ( null === $user_id ) {
+		$user_id = get_current_user_id();
+	}
+
+	if ( ! $user_id ) {
+		Helpers\debug_log( 'Cannot clear session token - no user ID' );
+		return;
+	}
+
+	$cache_key = sprintf( 'ash_nazg_session_token_%d', $user_id );
+	delete_transient( $cache_key );
+
+	Helpers\debug_log( sprintf( 'Cleared session token for user %d', $user_id ) );
 }
 
 /**
@@ -221,8 +352,8 @@ function api_request( $endpoint, $method = 'GET', $body = [] ) {
 
 	// Handle authentication errors by clearing cached session token.
 	if ( 401 === $status_code || 403 === $status_code ) {
-		delete_transient( 'ash_nazg_session_token' );
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Authentication failed (%d), cleared cached session token', $status_code ) );
+		clear_user_session_token();
+		Helpers\debug_log( sprintf( 'Authentication failed (%d), cleared cached session token', $status_code ) );
 		return new \WP_Error(
 			'authentication_failed',
 			sprintf(

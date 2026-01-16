@@ -104,8 +104,24 @@ use Pantheon\AshNazg\API;
 					<td>
 						<p>
 							<span class="dashicons dashicons-yes-alt ash-nazg-icon-success"></span>
-							<?php esc_html_e( 'A machine token is currently set.', 'ash-nazg' ); ?>
+							<?php
+							if ( $has_global_token && ! $has_user_token ) {
+								esc_html_e( 'A site-wide machine token is currently set (shared by all admins).', 'ash-nazg' );
+							} else {
+								esc_html_e( 'A machine token is currently set.', 'ash-nazg' );
+							}
+							?>
 						</p>
+						<?php if ( $has_global_token && ! $has_user_token ) : ?>
+							<p>
+								<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg-settings&ash_nazg_migrate=me' ), 'ash_nazg_migrate_token' ) ); ?>" class="button button-secondary">
+									<?php esc_html_e( 'Migrate to My Account', 'ash-nazg' ); ?>
+								</a>
+							</p>
+							<p class="description">
+								<?php esc_html_e( 'Starting with version 0.4.0, each admin can have their own machine token for better security and audit trails. Click "Migrate to My Account" to copy the site-wide token to your user account.', 'ash-nazg' ); ?>
+							</p>
+						<?php endif; ?>
 					</td>
 				</tr>
 			</table>
@@ -121,22 +137,43 @@ use Pantheon\AshNazg\API;
 							</label>
 						</th>
 						<td>
-							<?php if ( $has_secret_api ) : ?>
+							<?php if ( $has_secret_api && ! $has_user_secret ) : ?>
+								<div class="notice notice-info inline" style="margin: 0 0 15px 0; padding: 10px;">
+									<p>
+										<strong><?php esc_html_e( 'Recommended: Use Pantheon Secrets for Your Token', 'ash-nazg' ); ?></strong>
+									</p>
+									<p>
+										<?php
+										esc_html_e(
+											'For better security, store your machine token using Pantheon Secrets. Your token will be encrypted and retrieved at runtime.',
+											'ash-nazg'
+										);
+										?>
+									</p>
+									<p>
+										<strong><?php esc_html_e( 'Your User ID:', 'ash-nazg' ); ?></strong>
+										<code class="ash-nazg-user-id"><?php echo absint( $user_id ); ?></code>
+									</p>
+									<p>
+										<?php esc_html_e( 'Run this command from your local terminal (copy and paste):', 'ash-nazg' ); ?>
+									</p>
+									<pre class="ash-nazg-code-block">terminus secret:set <?php echo ! empty( $site_name ) ? esc_attr( $site_name ) : '<site>'; ?> ash_nazg_machine_token_<?php echo absint( $user_id ); ?> YOUR_TOKEN --scope=user,web</pre>
+									<p class="description">
+										<?php
+										printf(
+											/* translators: %s: user ID number */
+											esc_html__( 'Note: The "_%s" suffix in the secret name is your user ID. Each WordPress admin can have their own Pantheon machine token.', 'ash-nazg' ),
+											'<strong>' . absint( $user_id ) . '</strong>'
+										);
+										?>
+									</p>
+								</div>
 								<p class="description">
-									<?php
-									esc_html_e(
-										'It is recommended that you store your machine token in Pantheon Secrets. To update it, use the Pantheon CLI:',
-										'ash-nazg'
-									);
-									?>
-								</p>
-								<code>terminus secret:set <?php echo isset( $_ENV['PANTHEON_SITE_NAME'] ) ? esc_attr( sanitize_text_field( wp_unslash( $_ENV['PANTHEON_SITE_NAME'] ) ) ) : '<site>'; ?> ash_nazg_machine_token YOUR_TOKEN --scope=user,web</code>
-								<p class="description">
-									<?php esc_html_e( 'Alternatively, you can enter a token below which is stored in the WordPress database.', 'ash-nazg' ); ?>
+									<?php esc_html_e( 'Alternatively, you can enter a token below which will be encrypted and stored in the WordPress database.', 'ash-nazg' ); ?>
 								</p>
 							<?php else : ?>
 								<p class="description">
-									<?php esc_html_e( 'Enter your Pantheon machine token below. It will be stored in the WordPress database.', 'ash-nazg' ); ?>
+									<?php esc_html_e( 'Enter your Pantheon machine token below. It will be encrypted and stored in the WordPress database.', 'ash-nazg' ); ?>
 								</p>
 							<?php endif; ?>
 

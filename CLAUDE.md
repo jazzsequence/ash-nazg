@@ -16,14 +16,24 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 
 **Implementation:**
 - Uses Pantheon machine tokens for API authentication
-- One site-wide machine token (not per-user)
-- Machine tokens stored via Pantheon Secrets API (recommended) or WordPress database (less secure)
-- Retrieved using `pantheon_get_secret()` function (Pantheon) or `get_option()` (database fallback)
-- Machine tokens are exchanged for session tokens via `/v0/authorize/machine-token` endpoint
+- **Per-user machine tokens**: Each admin with `manage_options` capability has their own token (v0.4.0+)
+- Machine tokens stored via:
+  - **Pantheon Secrets API** (recommended): `ash_nazg_machine_token_{user_id}` (e.g., `ash_nazg_machine_token_1`)
+  - **WordPress user meta** (fallback): Encrypted with AES-256-CBC using WordPress AUTH_SALT
+  - **Legacy global token**: Backward compatibility for pre-v0.4.0 installations
+- Retrieved using `get_user_machine_token()` with fallback chain:
+  1. Per-user Pantheon Secret (`pantheon_get_secret("ash_nazg_machine_token_{user_id}")`)
+  2. Per-user encrypted meta (`get_user_meta()` with `decrypt_token()`)
+  3. Global Pantheon Secret (`pantheon_get_secret("ash_nazg_machine_token")`)
+  4. Global option (`get_option("ash_nazg_machine_token")`)
+- Machine tokens exchanged for session tokens via `/v0/authorize/machine-token` endpoint
 - Bearer token authentication for all subsequent API requests
-- Session tokens cached in Transients (with appropriate TTL)
+- **Per-user session tokens**: Cached in Transients with user ID suffix (`ash_nazg_session_token_{user_id}`)
+- Session token TTL: 1 hour (HOUR_IN_SECONDS)
+- Token encryption: AES-256-CBC with WordPress salts for database-stored tokens
 - Auto-detect Pantheon environment variables (`$_ENV['PANTHEON_SITE']`, etc.) to minimize manual configuration
 - Access gated by `manage_options` capability
+- Migration system: Admin notices and settings page button to migrate from global to per-user tokens
 
 **References:**
 - Pantheon Secrets: https://docs.pantheon.io/guides/secrets
@@ -229,12 +239,20 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 **File:** `includes/api.php` (namespace: `Pantheon\AshNazg\API`)
 
 **Core Functions:**
-- `get_api_token()` - Central function that handles:
-  - Retrieving machine token from Pantheon Secrets via `pantheon_get_secret()` or WordPress database via `get_option()`
-  - Exchanging machine token for session token via `/v0/authorize/machine-token`
-  - Caching session token in Transients with appropriate TTL
+- `get_user_machine_token( $user_id = null )` - Retrieves machine token for a specific user:
+  - Checks per-user Pantheon Secret (`ash_nazg_machine_token_{user_id}`)
+  - Checks per-user encrypted meta (with `decrypt_token()`)
+  - Falls back to global token for backward compatibility
+  - Returns decrypted token ready for API use
+- `encrypt_token( $token )` - Encrypts token with AES-256-CBC using WordPress AUTH_SALT
+- `decrypt_token( $encrypted_token )` - Decrypts token from user meta
+- `get_api_token( $user_id = null )` - Central authentication function:
+  - Retrieves per-user machine token via `get_user_machine_token()`
+  - Exchanges machine token for session token via `/v0/authorize/machine-token`
+  - Caches session token in per-user Transient (`ash_nazg_session_token_{user_id}`)
   - Auto-refreshing session tokens when expired
-  - Auto-clearing invalid tokens on 401/403 errors
+  - Auto-clearing invalid tokens on 401/403 errors via `clear_user_session_token()`
+- `clear_user_session_token( $user_id = null )` - Clears per-user cached session token
 
 **API Resource Functions:**
 - Each API function embeds its own caching logic
@@ -519,8 +537,6 @@ This is a Hackathon 2026 project that demonstrates the full capabilities of the 
 - Accessibility audit (WCAG compliance)
 - JavaScript bundling and minification
 - Playwright E2E tests
-- User-scoped machine tokens (per-user authentication)
-- MD5 hash machine tokens stored in database
 - More screen options integration
 
 ## API Reference

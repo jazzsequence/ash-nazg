@@ -22,13 +22,6 @@ No active work in progress.
 
 ## Planned Features
 
-### Authentication & Security
-- [ ] User-scoped machine tokens (store in user meta with Pantheon secrets using user ID suffix)
-  - Instead of site-wide tokens, each user with manage_options can have their own token
-  - Stored as `pantheon_get_secret("ash_nazg_machine_token_{user_id}")`
-  - Allows better audit trails and token revocation per user
-- [ ] MD5 hash machine tokens stored in database (currently plaintext)
-
 ### UI/UX Improvements
 - [ ] More screen options integration
   - Expand screen options to more admin pages beyond Development
@@ -181,3 +174,17 @@ No active work in progress.
   - Endpoints: GET/POST/DELETE `/v0/sites/{site_id}/environments/{env_id}/domains`
   - Full PHPUnit test coverage (13 tests)
   - Multisite integration module: `includes/multisite.php`
+- ✅ Per-User Machine Token Storage (v0.4.0)
+  - User-scoped tokens: each admin with `manage_options` has their own machine token
+  - Pantheon Secrets with user ID suffix: `ash_nazg_machine_token_{user_id}`
+  - Database storage: encrypted with AES-256-CBC using WordPress AUTH_SALT
+  - Per-user session token caching: separate transients per user
+  - Token encryption/decryption functions: `encrypt_token()`, `decrypt_token()`
+  - Token retrieval: `get_user_machine_token()` with 4-tier fallback chain
+  - Migration system: backward-compatible migration from global tokens
+  - Migration UI: admin notice with progressive nag (1 week → 24 hours)
+  - Settings page migration button for global token users
+  - User ID display in settings for Pantheon Secrets setup
+  - Better security: individual token revocation per user
+  - Better audit trails: track API actions by user
+  - Full PHPUnit test coverage (12 tests)

@@ -386,7 +386,18 @@ Named after Tolkien's One Ring inscription: "Ash nazg durbatulûk, ash nazg gimb
 
 ## Changelog
 
-### 0.3.2 - Current Release
+### 0.4.0 - Current Release
+- **Per-User Token Storage**: Machine tokens now stored per-user instead of site-wide
+- **Token Encryption**: AES-256-CBC encryption for database-stored tokens using WordPress salts
+- **Pantheon Secrets Integration**: Per-user secret keys with user ID suffix (ash_nazg_machine_token_{user_id})
+- **Migration System**: Backward-compatible migration from global to per-user tokens
+- **Migration UI**: Admin notice with progressive nag (1 week → 24 hours) and settings page migration button
+- **Per-User Session Tokens**: Separate session token caching per user for better audit trails
+- **Security Enhancement**: Better security and audit trails with individual token revocation
+- **User ID Display**: Prominent user ID display in settings for Pantheon Secrets setup
+- **PHPUnit Tests**: Comprehensive test suite for user token functionality
+
+### 0.3.2
 - **Bug Fixes**: Clear logs false negative with clearstatcache(), SFTP mode switching on local environments
 - **API Endpoint Testing**: Corrected upstream-updates endpoint path in dashboard testing
 - **Version Bump**: Browser cache busting for modal.js and other JavaScript files

@@ -24,6 +24,8 @@ function init() {
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_commit_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_multidev_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_screen_options_submission' );
+	add_action( 'admin_init', __NAMESPACE__ . '\\handle_token_migration' );
+	add_action( 'admin_notices', __NAMESPACE__ . '\\display_token_migration_notice' );
 	add_action( 'wp_ajax_ash_nazg_fetch_logs', __NAMESPACE__ . '\\ajax_fetch_logs' );
 	add_action( 'wp_ajax_ash_nazg_clear_logs', __NAMESPACE__ . '\\ajax_clear_logs' );
 	add_action( 'wp_ajax_ash_nazg_get_workflow_status', __NAMESPACE__ . '\\ajax_get_workflow_status' );
@@ -2408,4 +2410,193 @@ function ajax_delete_site() {
 	}
 
 	wp_send_json_success( [ 'message' => __( 'Site has been deleted.', 'ash-nazg' ) ] );
+}
+
+/**
+ * Display token migration notice on Ash Nazg pages.
+ *
+ * Progressive nag system:
+ * - First dismiss: remind in 1 week
+ * - Second dismiss: remind in 1 day
+ * - Third+ dismiss: remind every 24 hours
+ *
+ * @return void
+ */
+function display_token_migration_notice() {
+	// Only show on Ash Nazg pages.
+	$screen = get_current_screen();
+	if ( ! $screen || false === strpos( $screen->id, 'ash-nazg' ) ) {
+		return;
+	}
+
+	// Only for users who can manage options.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$user_id = get_current_user_id();
+
+	// Check if user already has token.
+	$user_token = get_user_meta( $user_id, 'ash_nazg_user_machine_token', true );
+	if ( ! empty( $user_token ) ) {
+		return;
+	}
+
+	// Check for global token.
+	$global_token = get_option( 'ash_nazg_machine_token' );
+	$global_secret = function_exists( 'pantheon_get_secret' ) ? pantheon_get_secret( 'ash_nazg_machine_token' ) : false;
+	$has_global_token = ! empty( $global_token ) || ! empty( $global_secret );
+
+	if ( ! $has_global_token ) {
+		return;
+	}
+
+	// Check dismiss status with progressive nag.
+	$dismissed_timestamp = get_user_meta( $user_id, 'ash_nazg_migration_dismissed_time', true );
+	$dismiss_count = absint( get_user_meta( $user_id, 'ash_nazg_migration_dismiss_count', true ) );
+
+	if ( $dismissed_timestamp ) {
+		$time_since_dismiss = time() - absint( $dismissed_timestamp );
+
+		// Determine wait period based on dismiss count.
+		if ( 0 === $dismiss_count ) {
+			// First dismiss: wait 1 week.
+			$wait_period = WEEK_IN_SECONDS;
+			$remind_text = __( 'Remind me in 1 week', 'ash-nazg' );
+		} else {
+			// Second+ dismiss: wait 24 hours.
+			$wait_period = DAY_IN_SECONDS;
+			$remind_text = __( 'Remind me in 24 hours', 'ash-nazg' );
+		}
+
+		// Don't show if not enough time has passed.
+		if ( $time_since_dismiss < $wait_period ) {
+			return;
+		}
+	} else {
+		// First time seeing notice.
+		$remind_text = __( 'Remind me in 1 week', 'ash-nazg' );
+	}
+
+	// Show migration notice.
+	?>
+	<div class="notice notice-info is-dismissible ash-nazg-migration-notice">
+		<p>
+			<strong><?php esc_html_e( 'Migrate to Per-User Tokens:', 'ash-nazg' ); ?></strong>
+			<?php esc_html_e( 'A site-wide machine token was found. Starting with version 0.4.0, Ash Nazg supports per-user machine tokens for better security and audit trails. Would you like to migrate the existing token to your user account?', 'ash-nazg' ); ?>
+		</p>
+		<p>
+			<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&ash_nazg_migrate=me' ), 'ash_nazg_migrate_token' ) ); ?>" class="button button-primary">
+				<?php esc_html_e( 'Migrate to Me', 'ash-nazg' ); ?>
+			</a>
+			<?php if ( current_user_can( 'manage_options' ) && count( get_users( [ 'capability' => 'manage_options' ] ) ) > 1 ) : ?>
+				<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&ash_nazg_migrate=choose' ), 'ash_nazg_migrate_token' ) ); ?>" class="button">
+					<?php esc_html_e( 'Choose Different User', 'ash-nazg' ); ?>
+				</a>
+			<?php endif; ?>
+			<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&ash_nazg_migrate=dismiss' ), 'ash_nazg_migrate_token' ) ); ?>" class="button">
+				<?php echo esc_html( $remind_text ); ?>
+			</a>
+		</p>
+	</div>
+	<?php
+}
+
+/**
+ * Handle token migration actions.
+ *
+ * @return void
+ */
+function handle_token_migration() {
+	if ( ! isset( $_GET['ash_nazg_migrate'], $_GET['_wpnonce'] ) ) {
+		return;
+	}
+
+	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'ash_nazg_migrate_token' ) ) {
+		wp_die( esc_html__( 'Invalid nonce.', 'ash-nazg' ) );
+	}
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( esc_html__( 'Permission denied.', 'ash-nazg' ) );
+	}
+
+	$action = sanitize_text_field( wp_unslash( $_GET['ash_nazg_migrate'] ) );
+	$user_id = get_current_user_id();
+
+	switch ( $action ) {
+		case 'me':
+			// Migrate global token to current user.
+			$global_token_from_db = get_option( 'ash_nazg_machine_token' );
+			$global_token_from_secret = false;
+
+			if ( empty( $global_token_from_db ) && function_exists( 'pantheon_get_secret' ) ) {
+				$global_token_from_secret = pantheon_get_secret( 'ash_nazg_machine_token' );
+			}
+
+			$global_token = ! empty( $global_token_from_db ) ? $global_token_from_db : $global_token_from_secret;
+
+			if ( ! empty( $global_token ) ) {
+				// Encrypt and save to user meta.
+				$encrypted_token = API\encrypt_token( $global_token );
+				update_user_meta( $user_id, 'ash_nazg_user_machine_token', $encrypted_token );
+
+				// Delete global database token if it exists.
+				if ( ! empty( $global_token_from_db ) ) {
+					delete_option( 'ash_nazg_machine_token' );
+				}
+
+				// Clear session token for this user.
+				API\clear_user_session_token( $user_id );
+
+				// Show success message with instructions for secret users.
+				if ( $global_token_from_secret ) {
+					$message = __( 'Token migrated to your account. Note: The global Pantheon Secret still exists. To complete migration, delete it with: terminus secret:delete <site> ash_nazg_machine_token', 'ash-nazg' );
+				} else {
+					$message = __( 'Token successfully migrated to your account.', 'ash-nazg' );
+				}
+
+				set_transient(
+					sprintf( 'ash_nazg_migration_success_%d', $user_id ),
+					$message,
+					30
+				);
+
+				Helpers\debug_log( sprintf( 'User %d successfully migrated global token to their account (from %s)', $user_id, $global_token_from_secret ? 'secret' : 'database' ) );
+			}
+			break;
+
+		case 'choose':
+			/*
+			 * Show user selection form (implement separately). Could be AJAX
+			 * modal or redirect to settings page with user dropdown. For now,
+			 * just redirect back with a message.
+			 */
+			set_transient(
+				sprintf( 'ash_nazg_migration_info_%d', $user_id ),
+				__( 'User selection for migration is not yet implemented. Please use "Migrate to Me" or set your token in Settings.', 'ash-nazg' ),
+				30
+			);
+			break;
+
+		case 'dismiss':
+			// Store dismiss timestamp and increment count.
+			update_user_meta( $user_id, 'ash_nazg_migration_dismissed_time', time() );
+
+			// Increment dismiss count for progressive nag.
+			$dismiss_count = absint( get_user_meta( $user_id, 'ash_nazg_migration_dismiss_count', true ) );
+			update_user_meta( $user_id, 'ash_nazg_migration_dismiss_count', $dismiss_count + 1 );
+
+			Helpers\debug_log(
+				sprintf(
+					'User %d dismissed token migration (count: %d)',
+					$user_id,
+					$dismiss_count + 1
+				)
+			);
+			break;
+	}
+
+	// Redirect back to current page without query args.
+	wp_safe_redirect( admin_url( 'admin.php?page=ash-nazg' ) );
+	exit;
 }
