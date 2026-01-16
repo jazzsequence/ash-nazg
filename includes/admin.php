@@ -2443,22 +2443,9 @@ function display_token_migration_notice() {
 	$has_user_token = false;
 
 	// Check per-user secret.
-	$has_secret_api = function_exists( 'pantheon_get_secret' );
-	Helpers\debug_log( sprintf( 'Migration notice check: pantheon_get_secret exists=%s', $has_secret_api ? 'yes' : 'no' ) );
-
-	if ( $has_secret_api ) {
+	if ( function_exists( 'pantheon_get_secret' ) ) {
 		$secret_key = sprintf( 'ash_nazg_machine_token_%d', $user_id );
 		$user_secret = pantheon_get_secret( $secret_key );
-
-		Helpers\debug_log(
-			sprintf(
-				'Migration notice check: user_id=%d, secret_key=%s, has_secret=%s',
-				$user_id,
-				$secret_key,
-				! empty( $user_secret ) ? 'yes' : 'no'
-			)
-		);
-
 		if ( ! empty( $user_secret ) ) {
 			$has_user_token = true;
 		}
@@ -2572,16 +2559,6 @@ function display_global_secret_cleanup_notice() {
 	// Check per-user secret.
 	$secret_key = sprintf( 'ash_nazg_machine_token_%d', $user_id );
 	$user_secret = pantheon_get_secret( $secret_key );
-
-	Helpers\debug_log(
-		sprintf(
-			'Cleanup notice check: user_id=%d, secret_key=%s, has_user_secret=%s',
-			$user_id,
-			$secret_key,
-			! empty( $user_secret ) ? 'yes' : 'no'
-		)
-	);
-
 	if ( ! empty( $user_secret ) ) {
 		$has_user_token = true;
 	}
@@ -2592,20 +2569,10 @@ function display_global_secret_cleanup_notice() {
 		if ( ! empty( $user_meta_token ) ) {
 			$has_user_token = true;
 		}
-
-		Helpers\debug_log(
-			sprintf(
-				'Cleanup notice check: has_user_meta=%s',
-				! empty( $user_meta_token ) ? 'yes' : 'no'
-			)
-		);
 	}
-
-	Helpers\debug_log( sprintf( 'Cleanup notice check: has_user_token=%s', $has_user_token ? 'yes' : 'no' ) );
 
 	// Only show if user has their own token.
 	if ( ! $has_user_token ) {
-		Helpers\debug_log( 'Cleanup notice: early return - user has no token' );
 		return;
 	}
 
@@ -2614,17 +2581,7 @@ function display_global_secret_cleanup_notice() {
 	$global_secret = pantheon_get_secret( 'ash_nazg_machine_token' );
 	$has_global_token = ! empty( $global_token ) || ! empty( $global_secret );
 
-	Helpers\debug_log(
-		sprintf(
-			'Cleanup notice check: has_global_db=%s, has_global_secret=%s, has_global_token=%s',
-			! empty( $global_token ) ? 'yes' : 'no',
-			! empty( $global_secret ) ? 'yes' : 'no',
-			$has_global_token ? 'yes' : 'no'
-		)
-	);
-
 	if ( ! $has_global_token ) {
-		Helpers\debug_log( 'Cleanup notice: early return - no global token' );
 		return;
 	}
 
