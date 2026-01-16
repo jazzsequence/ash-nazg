@@ -307,7 +307,6 @@ npm test
 - Playwright E2E tests
 - Update CLAUDE.md with latest patterns
 - User-scoped machine tokens (per-user authentication)
-- Internationalization (i18n)
 
 ## FAQ
 
