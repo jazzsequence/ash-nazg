@@ -147,16 +147,6 @@ use Pantheon\AshNazg\API;
 							<p class="description">
 								<?php esc_html_e( 'Starting with version 0.4.0, each admin can have their own machine token for better security and audit trails. Click "Migrate to My Account" to copy the site-wide token to your user account.', 'ash-nazg' ); ?>
 							</p>
-						<?php elseif ( ! empty( $global_token ) && ( $has_user_token || $has_user_secret ) ) : ?>
-							<p class="notice notice-warning inline" style="margin: 10px 0; padding: 10px;">
-								<strong><?php esc_html_e( 'Global Token Still Exists:', 'ash-nazg' ); ?></strong>
-								<?php esc_html_e( 'You have your own per-user token, but a site-wide database token still exists (shared by all admins). For security, consider deleting the global token.', 'ash-nazg' ); ?>
-							</p>
-							<p>
-								<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg-settings&ash_nazg_delete_global=1' ), 'ash_nazg_delete_global_token' ) ); ?>" class="button button-secondary" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete the global token? Other admins without their own tokens will lose access.', 'ash-nazg' ); ?>');">
-									<?php esc_html_e( 'Delete Global Token', 'ash-nazg' ); ?>
-								</a>
-							</p>
 						<?php endif; ?>
 					</td>
 				</tr>
