@@ -50,8 +50,15 @@ function render_settings_page() {
 
 	$user_id = get_current_user_id();
 
-	// Handle settings update.
+	// Check for migration success message from transient.
 	$message = '';
+	$migration_message = get_transient( sprintf( 'ash_nazg_migration_success_%d', $user_id ) );
+	if ( $migration_message ) {
+		$message = $migration_message;
+		delete_transient( sprintf( 'ash_nazg_migration_success_%d', $user_id ) );
+	}
+
+	// Handle settings update.
 	if ( isset( $_POST['ash_nazg_settings_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ash_nazg_settings_nonce'] ) ), 'ash_nazg_settings' ) ) {
 		if ( isset( $_POST['ash_nazg_machine_token'] ) ) {
 			$token = sanitize_text_field( wp_unslash( $_POST['ash_nazg_machine_token'] ) );

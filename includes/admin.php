@@ -2689,8 +2689,9 @@ function handle_token_migration() {
 			break;
 	}
 
-	// Redirect back to current page without query args.
-	wp_safe_redirect( admin_url( 'admin.php?page=ash-nazg' ) );
+	// Redirect back to the page we came from (settings or dashboard).
+	$redirect_page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : 'ash-nazg';
+	wp_safe_redirect( admin_url( 'admin.php?page=' . $redirect_page ) );
 	exit;
 }
 
@@ -2719,7 +2720,8 @@ function handle_global_secret_cleanup_dismissal() {
 
 	Helpers\debug_log( sprintf( 'User %d dismissed global secret cleanup notice', $user_id ) );
 
-	// Redirect back to current page without query args.
-	wp_safe_redirect( admin_url( 'admin.php?page=ash-nazg' ) );
+	// Redirect back to the page we came from (settings or dashboard).
+	$redirect_page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : 'ash-nazg';
+	wp_safe_redirect( admin_url( 'admin.php?page=' . $redirect_page ) );
 	exit;
 }

@@ -17,8 +17,34 @@ use Pantheon\AshNazg\API;
 	<?php \Pantheon\AshNazg\Admin\render_pantheon_header( get_admin_page_title() ); ?>
 
 	<?php if ( ! empty( $message ) ) : ?>
-		<div class="notice notice-success is-dismissible">
-			<p><?php echo esc_html( $message ); ?></p>
+		<?php
+		// Check if this is a migration instructions message (contains terminus command).
+		$is_instructions = strpos( $message, 'terminus secret:set' ) !== false;
+		$notice_type = $is_instructions ? 'notice-info' : 'notice-success';
+		?>
+		<div class="notice <?php echo esc_attr( $notice_type ); ?> is-dismissible">
+			<?php if ( $is_instructions ) : ?>
+				<?php
+				// Extract the command from the message for better formatting.
+				preg_match( '/terminus secret:set [^\s]+ ash_nazg_machine_token_\d+ YOUR_TOKEN --scope=user,web/', $message, $matches );
+				$command = ! empty( $matches[0] ) ? $matches[0] : '';
+
+				// Split message into parts.
+				$parts = explode( 'Run this command from your local terminal:', $message );
+				$before_command = trim( $parts[0] );
+				$after_command = isset( $parts[1] ) ? trim( str_replace( $command, '', $parts[1] ) ) : '';
+				?>
+				<p><?php echo esc_html( $before_command ); ?></p>
+				<?php if ( $command ) : ?>
+					<p><strong><?php esc_html_e( 'Run this command from your local terminal:', 'ash-nazg' ); ?></strong></p>
+					<pre class="ash-nazg-code-block"><?php echo esc_html( $command ); ?></pre>
+				<?php endif; ?>
+				<?php if ( $after_command ) : ?>
+					<p><?php echo esc_html( $after_command ); ?></p>
+				<?php endif; ?>
+			<?php else : ?>
+				<p><?php echo esc_html( $message ); ?></p>
+			<?php endif; ?>
 		</div>
 	<?php endif; ?>
 
