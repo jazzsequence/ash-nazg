@@ -25,7 +25,9 @@ function init() {
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_multidev_form_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_screen_options_submission' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_token_migration' );
+	add_action( 'admin_init', __NAMESPACE__ . '\\handle_global_secret_cleanup_dismissal' );
 	add_action( 'admin_notices', __NAMESPACE__ . '\\display_token_migration_notice' );
+	add_action( 'admin_notices', __NAMESPACE__ . '\\display_global_secret_cleanup_notice' );
 	add_action( 'wp_ajax_ash_nazg_fetch_logs', __NAMESPACE__ . '\\ajax_fetch_logs' );
 	add_action( 'wp_ajax_ash_nazg_clear_logs', __NAMESPACE__ . '\\ajax_clear_logs' );
 	add_action( 'wp_ajax_ash_nazg_get_workflow_status', __NAMESPACE__ . '\\ajax_get_workflow_status' );
@@ -2503,6 +2505,88 @@ function display_token_migration_notice() {
 }
 
 /**
+ * Display reminder to delete global secret after migration.
+ *
+ * Shows when user has their own per-user token but global secret still exists.
+ *
+ * @return void
+ */
+function display_global_secret_cleanup_notice() {
+	// Only show on Ash Nazg pages.
+	$screen = get_current_screen();
+	if ( ! $screen || false === strpos( $screen->id, 'ash-nazg' ) ) {
+		return;
+	}
+
+	// Only for users who can manage options.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	// Only check if Pantheon Secrets API is available.
+	if ( ! function_exists( 'pantheon_get_secret' ) ) {
+		return;
+	}
+
+	$user_id = get_current_user_id();
+
+	// Check if user has their own token (either secret or database).
+	$has_user_token = false;
+
+	// Check per-user secret.
+	$secret_key = sprintf( 'ash_nazg_machine_token_%d', $user_id );
+	$user_secret = pantheon_get_secret( $secret_key );
+	if ( ! empty( $user_secret ) ) {
+		$has_user_token = true;
+	}
+
+	// Check per-user meta.
+	if ( ! $has_user_token ) {
+		$user_meta_token = get_user_meta( $user_id, 'ash_nazg_user_machine_token', true );
+		if ( ! empty( $user_meta_token ) ) {
+			$has_user_token = true;
+		}
+	}
+
+	// Only show if user has their own token.
+	if ( ! $has_user_token ) {
+		return;
+	}
+
+	// Check if global secret still exists.
+	$global_secret = pantheon_get_secret( 'ash_nazg_machine_token' );
+	if ( empty( $global_secret ) ) {
+		return;
+	}
+
+	// Check if notice has been dismissed.
+	$dismissed = get_user_meta( $user_id, 'ash_nazg_global_secret_cleanup_dismissed', true );
+	if ( $dismissed ) {
+		return;
+	}
+
+	// Show cleanup reminder.
+	$site_name = isset( $_ENV['PANTHEON_SITE_NAME'] ) ? sanitize_text_field( wp_unslash( $_ENV['PANTHEON_SITE_NAME'] ) ) : '<site>';
+	?>
+	<div class="notice notice-warning is-dismissible ash-nazg-global-secret-cleanup-notice">
+		<p>
+			<strong><?php esc_html_e( 'Cleanup Reminder:', 'ash-nazg' ); ?></strong>
+			<?php esc_html_e( 'You have successfully set up your per-user machine token, but the global Pantheon Secret still exists. For security best practices, delete the global secret to prevent other users from using it.', 'ash-nazg' ); ?>
+		</p>
+		<p>
+			<strong><?php esc_html_e( 'Run this command from your local terminal:', 'ash-nazg' ); ?></strong>
+		</p>
+		<pre class="ash-nazg-code-block">terminus secret:delete <?php echo esc_attr( $site_name ); ?> ash_nazg_machine_token</pre>
+		<p>
+			<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&ash_nazg_dismiss_cleanup=1' ), 'ash_nazg_dismiss_cleanup' ) ); ?>" class="button">
+				<?php esc_html_e( 'Dismiss', 'ash-nazg' ); ?>
+			</a>
+		</p>
+	</div>
+	<?php
+}
+
+/**
  * Handle token migration actions.
  *
  * @return void
@@ -2533,35 +2617,44 @@ function handle_token_migration() {
 				$global_token_from_secret = pantheon_get_secret( 'ash_nazg_machine_token' );
 			}
 
-			$global_token = ! empty( $global_token_from_db ) ? $global_token_from_db : $global_token_from_secret;
-
-			if ( ! empty( $global_token ) ) {
-				// Encrypt and save to user meta.
-				$encrypted_token = API\encrypt_token( $global_token );
+			if ( ! empty( $global_token_from_db ) ) {
+				// Database-stored token: migrate to encrypted user meta.
+				$encrypted_token = API\encrypt_token( $global_token_from_db );
 				update_user_meta( $user_id, 'ash_nazg_user_machine_token', $encrypted_token );
 
-				// Delete global database token if it exists.
-				if ( ! empty( $global_token_from_db ) ) {
-					delete_option( 'ash_nazg_machine_token' );
-				}
+				// Delete global database token.
+				delete_option( 'ash_nazg_machine_token' );
 
 				// Clear session token for this user.
 				API\clear_user_session_token( $user_id );
 
-				// Show success message with instructions for secret users.
-				if ( $global_token_from_secret ) {
-					$message = __( 'Token migrated to your account. Note: The global Pantheon Secret still exists. To complete migration, delete it with: terminus secret:delete <site> ash_nazg_machine_token', 'ash-nazg' );
-				} else {
-					$message = __( 'Token successfully migrated to your account.', 'ash-nazg' );
-				}
+				$message = __( 'Token successfully migrated to your account.', 'ash-nazg' );
 
+				Helpers\debug_log( sprintf( 'User %d successfully migrated global database token to their account', $user_id ) );
+			} elseif ( $global_token_from_secret ) {
+				/*
+				 * Pantheon Secret: instruct user to set their own per-user
+				 * secret. Do NOT copy to database (security downgrade).
+				 */
+				$site_name = isset( $_ENV['PANTHEON_SITE_NAME'] ) ? sanitize_text_field( wp_unslash( $_ENV['PANTHEON_SITE_NAME'] ) ) : '<site>';
+
+				$message = sprintf(
+					/* translators: 1: user ID, 2: site name, 3: user ID again */
+					__( 'To migrate to per-user tokens, set your own Pantheon Secret with your user ID (%1$s). Run this command from your local terminal: terminus secret:set %2$s ash_nazg_machine_token_%3$s YOUR_TOKEN --scope=user,web. The global secret will remain as a fallback until you set your own.', 'ash-nazg' ),
+					$user_id,
+					$site_name,
+					$user_id
+				);
+
+				Helpers\debug_log( sprintf( 'User %d shown instructions to set per-user secret (global secret exists)', $user_id ) );
+			}
+
+			if ( ! empty( $message ) ) {
 				set_transient(
 					sprintf( 'ash_nazg_migration_success_%d', $user_id ),
 					$message,
 					30
 				);
-
-				Helpers\debug_log( sprintf( 'User %d successfully migrated global token to their account (from %s)', $user_id, $global_token_from_secret ? 'secret' : 'database' ) );
 			}
 			break;
 
@@ -2595,6 +2688,36 @@ function handle_token_migration() {
 			);
 			break;
 	}
+
+	// Redirect back to current page without query args.
+	wp_safe_redirect( admin_url( 'admin.php?page=ash-nazg' ) );
+	exit;
+}
+
+/**
+ * Handle global secret cleanup notice dismissal.
+ *
+ * @return void
+ */
+function handle_global_secret_cleanup_dismissal() {
+	if ( ! isset( $_GET['ash_nazg_dismiss_cleanup'], $_GET['_wpnonce'] ) ) {
+		return;
+	}
+
+	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'ash_nazg_dismiss_cleanup' ) ) {
+		wp_die( esc_html__( 'Invalid nonce.', 'ash-nazg' ) );
+	}
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( esc_html__( 'Permission denied.', 'ash-nazg' ) );
+	}
+
+	$user_id = get_current_user_id();
+
+	// Mark notice as dismissed for this user.
+	update_user_meta( $user_id, 'ash_nazg_global_secret_cleanup_dismissed', true );
+
+	Helpers\debug_log( sprintf( 'User %d dismissed global secret cleanup notice', $user_id ) );
 
 	// Redirect back to current page without query args.
 	wp_safe_redirect( admin_url( 'admin.php?page=ash-nazg' ) );
