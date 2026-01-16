@@ -8,8 +8,8 @@ No active work in progress.
 
 ### Design Review & Refactoring
 - [x] PDS integration: fonts, design tokens, foundations, and branded header
-- [ ] Review all cards and interfaces for full PDS component compliance
-- [ ] Review and optimize responsive breakpoints
+- [x] Review all cards and interfaces for full PDS component compliance
+- [x] Review and optimize responsive breakpoints
 - [ ] Accessibility audit (WCAG compliance)
 - [ ] Add JavaScript bundling and minification
 - [x] Configure watch mode for development (npm run watch)
@@ -29,8 +29,8 @@ No active work in progress.
   - Allows better audit trails and token revocation per user
 
 ## Documentation
-- [ ] Update README with Phase 3 completion notes
-- [ ] Add screenshots to README
+- [x] Update README with concise feature descriptions
+- [x] Add screenshot placeholders to README
 - [ ] Update CLAUDE.md with latest patterns and standards
 - [x] Document build process and SASS usage (npm scripts in package.json)
 

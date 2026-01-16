@@ -4,55 +4,174 @@
 
 ![One Ring](https://static.wikia.nocookie.net/lotr/images/0/0d/The_One_Ring_on_a_map_of_Middle-earth.jpg)
 
-Ash Nazg is a WordPress plugin that integrates the Pantheon Public API into your WordPress admin dashboard, allowing site administrators to manage critical Pantheon platform features without leaving WordPress.
+Ash Nazg integrates the Pantheon Public API into your WordPress admin dashboard. Toggle between SFTP and Git mode, view debug logs, manage addons, trigger workflows, and monitor your Pantheon environment—all without leaving WordPress.
 
 ## Why "Ash Nazg"?
 
-The name comes from the inscription on the One Ring in J.R.R. Tolkien's works. Just as the One Ring unified power, this plugin unifies your workflow by bringing Pantheon's platform management capabilities into the one place you're already working: your WordPress admin.
+The name comes from the One Ring inscription in Tolkien's works. Just as the One Ring unified power, this plugin unifies your workflow by bringing Pantheon platform management into the one place you're already working: WordPress admin.
 
 ## Features
 
-This plugin follows a **Proof of Concept (PoC) approach**: implement API capabilities broadly, test what works, then restrict features that grant too much power or prove impractical.
+### Dashboard & Monitoring
 
-### Currently Implemented
+View your Pantheon environment status, site information, and connection mode at a glance. Monitor 26+ API endpoints with live status indicators showing which Pantheon features are available. Toggle between SFTP and Git mode with automatic verification.
 
-#### Core Features
-- **Environment Detection** - Auto-detect Pantheon environment (dev/test/live/multidev/local)
-- **Site Status Dashboard** - View Pantheon site details and environment information
-- **API Endpoints Testing** - Comprehensive display of available Pantheon API endpoints with status
-- **Smart Caching** - 24-hour cache with "last checked" timestamps to minimize API calls
-- **Settings Management** - Configure machine tokens and plugin settings
+_[Screenshot: Dashboard page showing environment status, site info card, connection mode toggle, and API endpoints grid]_
 
-#### Development Workflow
-- **SFTP/Git Mode Toggle** - Switch between SFTP and Git mode with one click, includes automatic polling verification
-- **Environment State Management** - Persistent tracking of site state (connection mode, environment) in WordPress
-- **Automatic Mode Switching** - Automatically switches to SFTP mode for file operations, then switches back
-- **Debug Log Viewer** - Read, display, and clear WordPress debug.log files without SSH access
+**Features:**
+- Auto-detect environment (dev/test/live/multidev/local)
+- Real-time API endpoint testing with status indicators (green checkmarks, red X's)
+- Site and environment information from Pantheon API
+- SFTP/Git mode toggle with automatic polling verification
+- Inline site label editing with pencil icon
+- Smart caching with "last checked" timestamps and one-click refresh
 
-#### Site Management
-- **Site Addons Management** - Enable/disable Pantheon addons (Redis, Solr) directly from WordPress
-- **Workflows** - Trigger Pantheon workflows from WordPress admin (e.g., Object Cache Pro installation)
+### Development
 
-### Phase 2: Development Workflow (In Progress)
+Manage code deployment, upstream updates, multidev environments, and uncommitted changes from a single interface. Master control panel approach lets you operate on any environment from anywhere.
 
-- **Upstream Updates** - Detect and apply upstream updates from WordPress admin
-- **Code Deployment** - Push code to test/live environments
-- **Multidev Management** - Create and manage multidev environments
-- **Backup Control** - Create, list, and manage backups
-- **Workflow Monitoring** - Monitor and poll status of long-running workflow operations
+_[Screenshot: Development page showing upstream updates, code deployment panels, multidev management table, and uncommitted changes]_
 
-### Phase 3: Experimental (Evaluation)
+**Code Deployment:**
+- Deploy code from dev to test or test to live
+- Side-by-side panels with environment sync detection
+- Optional "sync content from live" for test→live deployments
+- Change detection disables buttons when environments are in sync
+- Deployment notes with workflow monitoring
 
-- **Multisite Domain Management** - Automatically add new subdomains to Pantheon on multisite subdomain creation (experimental, may be removed)
-- Additional API capabilities as discovered and security-reviewed
+**Upstream Updates:**
+- Detect available upstream updates per environment
+- Per-environment filtering (only shows updates not yet applied)
+- One-click apply with workflow monitoring
+- Automatic cache invalidation after updates
 
-### Explicitly Excluded
+**Multidev Management:**
+- Create new multidev environments from dev
+- Merge multidev into dev or merge dev into multidev
+- Delete multidev environments with confirmation
+- Environment status and branch information display
 
-- **Cache Management** - Handled by Pantheon Advanced Page Cache and Pantheon mu-plugin
-- **Organization Management** - Too much administrative power for WordPress admins
-- **User Management** - Security risk
-- **Billing** - Administrative function only
-- **Token Generation** - Security risk
+**Uncommitted Changes:**
+- View git diffstat in SFTP mode
+- Commit SFTP changes with commit message
+- File count and change type display
+- Recent commits history
+
+### Backups
+
+Create, restore, and download backups for any environment. Master control center design lets you operate on all environments from one page.
+
+_[Screenshot: Backups page showing environment selector, backup catalog, and restore/download buttons]_
+
+**Features:**
+- Environment dropdown selector for backup creation
+- Create backups: all, code only, database only, or files only
+- Configurable retention period (1-365 days)
+- List backups from all environments with visual separation
+- Restore backups with destructive operation warnings
+- Download backups via signed URLs (code/database/files)
+- Collapsible backup sets to reduce vertical space
+- Workflow monitoring for long-running operations
+
+### Clone Content
+
+Copy database and/or files between environments with automatic URL search-replace for WordPress.
+
+_[Screenshot: Clone page showing source/target environment selectors and database/files checkboxes]_
+
+**Features:**
+- Source and target environment dropdown selectors
+- Clone database, files, or both
+- Automatic WordPress URL search-replace (from_url → to_url)
+- Environment initialization validation
+- Destructive operation warnings with confirmation modals
+- Multi-workflow monitoring (polls both DB and files simultaneously)
+- Automatic cache clearing after successful clones
+
+### Debug Logs
+
+View and clear WordPress debug logs without SSH access. Automatically switches to SFTP mode if needed to access log files on Pantheon's read-only Git filesystem.
+
+_[Screenshot: Logs page showing debug.log contents and clear logs button]_
+
+**Features:**
+- Fetch and display debug.log contents
+- One-click log clearing with automatic mode switching
+- Skips SFTP switching on local environments
+- File stat cache clearing for accurate deletion verification
+
+### Addons
+
+Enable or disable Pantheon site addons (Redis object caching, Apache Solr search) directly from WordPress admin.
+
+_[Screenshot: Addons page showing Redis and Solr toggle switches with save button]_
+
+**Features:**
+- Toggle Redis object cache addon
+- Toggle Apache Solr search addon
+- Persistent state tracking in WordPress options
+- Automatic cache clearing after changes
+
+### Workflows
+
+Trigger Pantheon workflows from WordPress, including Object Cache Pro installation via scaffold_extensions workflow.
+
+_[Screenshot: Workflows page showing available workflows and trigger buttons]_
+
+**Features:**
+- Trigger Object Cache Pro installation (scaffold_extensions workflow)
+- Environment validation (dev/multidev only)
+- Workflow status retrieval and monitoring
+- Additional workflow types as discovered
+
+### Domains (Multisite Only)
+
+For WordPress multisite installations, automatically add custom domains to Pantheon when new subsites are created.
+
+_[Screenshot: Multisite domain management settings]_
+
+**Features:**
+- Automatic domain addition on subsite creation
+- Hooks into `wp_initialize_site` (WP 5.1+) and `wpmu_new_blog` (legacy)
+- Skips local environments automatically
+- Adds domains to live environment by default
+- Admin notices for success/failure via transients
+- Synchronous operation (no workflow polling)
+
+### Settings
+
+Configure machine token authentication, view/clear session tokens, and manage plugin settings. Tokens stored securely in Pantheon Secrets (production) or WordPress options (local development fallback).
+
+_[Screenshot: Settings page showing machine token configuration and session token management]_
+
+**Features:**
+- Machine token configuration with Pantheon Secrets integration
+- Session token viewing and manual clearing
+- Auto-clears invalid tokens on 401/403 errors
+- Development fallback for local environments
+
+### Delete Site (Debug Mode Only)
+
+Demonstration feature showing full Pantheon API capabilities. Only visible when `?debug=1` query parameter is present.
+
+_[Screenshot: Delete site page with big red button and danger warnings]_
+
+**Features:**
+- 500px circular red button with embossed text
+- Menu item: "⚠️ DO NOT CLICK" (red background)
+- Type "DELETE" to enable button
+- Two-stage confirmation (modal + JavaScript alert)
+- "Whew! That was a close one!" message on cancellation
+- Fully functional - actually deletes site via Pantheon API
+- Redirects to Pantheon dashboard after deletion
+
+### Excluded for Security
+
+This plugin does **not** provide access to:
+- Organization or user management (beyond what's displayed)
+- Billing information or plan changes
+- Token generation/revocation (only usage)
+- Unrestricted site deletion (only via debug mode)
 
 ## Requirements
 
@@ -129,15 +248,15 @@ This plugin uses [Pantheon Secrets](https://docs.pantheon.io/guides/secrets) to 
 
 ## Usage
 
-After configuration, you'll find an **Ash Nazg** top-level menu in your WordPress admin with the following pages:
+After configuration, access **Ash Nazg** from your WordPress admin menu:
 
-- **Dashboard** - Environment status, site information, connection mode toggle, API endpoints testing with status indicators
-- **Logs** - View and clear WordPress debug.log files (automatically switches to SFTP mode if needed)
-- **Addons** - Enable/disable Pantheon site addons (Redis, Apache Solr)
-- **Workflows** - Trigger Pantheon workflows (currently: Object Cache Pro installation)
-- **Settings** - Machine token configuration and plugin settings
+- **Dashboard** - Environment status, connection mode toggle, API endpoints monitoring
+- **Logs** - View and clear debug logs with automatic SFTP mode switching
+- **Addons** - Enable/disable Redis and Apache Solr
+- **Workflows** - Trigger Object Cache Pro installation and other Pantheon workflows
+- **Settings** - Machine token configuration
 
-Each page displays "Last checked" timestamps showing when cached data was last fetched from the Pantheon API. Use the "Refresh Data" button to manually clear caches and fetch fresh data.
+All pages show "Last checked" timestamps for cached data. Use "Refresh Data" to fetch fresh information from the Pantheon API.
 
 ## Development
 
@@ -226,7 +345,7 @@ npm test
 - [~] Launch check status information (not available via API - terminus only)
 - [~] Error/debug log viewer (files may not exist due to read-only filesystem)
 
-### Phase 2: Development Workflow Features
+### Phase 2: Development Workflow Features (Complete)
 - [x] SFTP/Git mode toggle with polling verification
 - [x] Environment state management and persistence
 - [x] Automatic mode switching for file operations
@@ -234,26 +353,32 @@ npm test
 - [x] JavaScript organization (separate files with proper enqueuing)
 - [x] CSS organization standards (utility classes, no inline styles)
 - [x] Comprehensive testing suite (API, state management, AJAX handlers)
-- [ ] Upstream update detection and application
-- [ ] Code deployment (push to test/live)
-- [ ] Multidev creation
-- [ ] Backup management (create, list, restore if safe)
-- [ ] Workflow status monitoring with polling for long-running operations
-- [ ] Additional workflow types beyond scaffold_extensions
+- [x] Upstream update detection and filtering per environment
+- [x] Code deployment (deploy to test/live environments)
+- [x] Multidev creation, merge, and deletion
+- [x] Backup management (create, list, restore, download)
+- [x] Workflow status monitoring with polling for long-running operations
+- [x] Clone content between environments (database and/or files)
 
-### Phase 3: Experimental/Advanced
-- [ ] Domain management for multisite (PoC)
-- [ ] Additional API capabilities exploration
-- [ ] Security review and feature restriction
-- [ ] Performance optimization and caching refinement
+### Phase 3: Build Pipeline & Design (Complete)
+- [x] SASS build pipeline with PDS integration
+- [x] Pantheon Design System fonts, tokens, and foundations
+- [x] Branded Pantheon header with logo
+- [x] PDS component compliance review
+- [x] Responsive breakpoints optimization
+- [x] Build and watch mode npm scripts
 
-### Post-PoC
+### Phase 4: Advanced Features (Complete)
+- [x] Domain management for WordPress multisite
+- [x] Delete site functionality (debug mode only, demonstration feature)
+
+### Ongoing Improvements
+- [ ] Accessibility audit (WCAG compliance)
+- [ ] JavaScript bundling and minification
 - [ ] Playwright E2E tests
-- [ ] Security hardening
-- [ ] Documentation
-- [ ] Feature flags for experimental capabilities
-- [ ] Accessibility improvements
-- [ ] Internationalization
+- [ ] Update CLAUDE.md with latest patterns
+- [ ] User-scoped machine tokens (per-user authentication)
+- [ ] Internationalization (i18n)
 - [ ] Plugin directory submission (if appropriate)
 
 ## FAQ
@@ -329,42 +454,37 @@ Named after Tolkien's One Ring inscription: "Ash nazg durbatulûk, ash nazg gimb
 
 ## Changelog
 
-### 0.2.0 - In Development (Phase 2 Complete)
-- **SFTP/Git Mode Toggle**: Switch connection modes with one click, includes automatic polling verification
-- **Environment State Management**: Persistent tracking of site state in WordPress options
-- **Automatic Mode Switching**: Automatically switches to SFTP mode for file operations, then reverts
-- **Debug Log Viewer**: View, fetch, and clear WordPress debug.log files without SSH access
-- **JavaScript Organization**: All JS in separate files with proper WordPress enqueuing and localization
-- **CSS Organization Standards**: Comprehensive utility classes system, eliminated all inline styles
-- **Comprehensive Testing**: Added test suites for API patterns, state management, and AJAX handlers
-- **Enhanced Dashboard**: Connection mode display and toggle integrated into dashboard page
-- **Auto-Sync**: State automatically synchronized after mode changes with verification
+### 0.3.2 - Current Release
+- **Bug Fixes**: Clear logs false negative with clearstatcache(), SFTP mode switching on local environments
+- **API Endpoint Testing**: Corrected upstream-updates endpoint path in dashboard testing
+- **Version Bump**: Browser cache busting for modal.js and other JavaScript files
 
-### 0.1.1 - Released
-- **Site Addons Management**: Enable/disable Pantheon addons (Redis, Solr) from WordPress admin
-- **Workflows**: Trigger Pantheon workflows (Object Cache Pro installation via scaffold_extensions)
-- **Enhanced Caching**: 24-hour cache timeout with "last checked" timestamps on all data
-- **API Endpoints Testing**: Comprehensive display of 26+ Pantheon API endpoints organized by category
-- **Environment Mapping**: Local development environments (lando, local) automatically map to dev for API queries
-- **Cache Timestamps**: Display when cached data was last fetched with human-readable time diffs
-- **Auto Cache Clearing**: Caches automatically cleared when triggering workflows or toggling addons
+### 0.3.0 - Major Feature Release
+- **Code Deployment**: Deploy to test/live environments with panel-based UI and sync content option
+- **Multidev Management**: Create, merge, and delete multidev environments
+- **Backup Management**: Create, list, restore, and download backups from any environment
+- **Clone Content**: Copy database and/or files between environments with automatic URL search-replace
+- **Domain Management**: Automatic domain addition for WordPress multisite subsites
+- **Delete Site**: Demonstration feature (debug mode only) with big red button
+- **Build Pipeline**: SASS compilation with Pantheon Design System integration
+- **PDS Integration**: Fonts, design tokens, foundations, and branded Pantheon header
+- **Upstream Updates**: Detection and filtering per environment
+- **Workflow Monitoring**: Polling for long-running operations with progress modals
+
+### 0.2.0 - Development Workflow
+- **SFTP/Git Mode Toggle**: Switch connection modes with automatic verification
+- **Environment State Management**: Persistent tracking in WordPress options
+- **Automatic Mode Switching**: Auto-switch to SFTP for file operations
+- **Debug Log Viewer**: View, fetch, and clear debug.log files without SSH
+- **JavaScript Organization**: Separate files with proper enqueuing
+- **CSS Organization**: Utility classes system, no inline styles
+- **Comprehensive Testing**: API, state management, and AJAX test suites
 
 ### 0.1.0 - Initial Release
-- Initial plugin framework and structure
-- Pantheon API client with authentication (machine token → session token exchange)
+- Pantheon API client with authentication
+- Dashboard with environment detection and API endpoint testing
+- Site addons management (Redis, Solr)
+- Workflows integration (Object Cache Pro installation)
+- Smart caching with timestamps
 - Settings page with machine token configuration
-- Dashboard page displaying:
-  - Pantheon environment detection (dev/test/live/multidev/local)
-  - Site information from API
-  - Current environment details from API
-  - SFTP/Git mode indicator
-  - API connection status
-- Connection testing interface
-- Composer setup with WordPress coding standards and testing tools
-- Development/testing token storage fallback in WordPress options
-- PHPUnit test suite with basic plugin tests
-- Comprehensive linting infrastructure:
-  - PHP syntax checking (`composer lint:php`)
-  - WordPress coding standards (`composer lint:phpcs`)
-  - Combined lint command (`composer lint`)
-  - Pre-commit check command (`composer check`)
+- WordPress coding standards and PHPUnit testing infrastructure
