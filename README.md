@@ -151,7 +151,10 @@ Configure machine token authentication, view/clear session tokens, and manage pl
 ![Settings page showing machine token configuration and session token management](screenshots/ash-nazg-settings.png)
 
 **Features:**
-- Machine token configuration with Pantheon Secrets integration
+- Per-user machine token configuration (v0.4.0+)
+- Pantheon Secrets integration with user ID suffix
+- Encrypted token storage (AES-256-CBC) for database fallback
+- Migration from global to per-user tokens
 - Session token viewing and manual clearing
 - Auto-clears invalid tokens on 401/403 errors
 - Development fallback for local environments
@@ -188,7 +191,7 @@ This plugin does **not** provide access to:
 - **Must be hosted on Pantheon** (plugin uses Pantheon-specific environment variables and Secrets API)
 - WordPress 5.0 or higher
 - PHP 7.4 or higher
-- Pantheon machine token stored in Pantheon Secrets ([how to create](https://pantheon.io/docs/machine-tokens))
+- Pantheon machine token (per-user, v0.4.0+) stored in Pantheon Secrets ([how to create](https://pantheon.io/docs/machine-tokens))
 - User with `manage_options` capability in WordPress
 
 ## Installation
@@ -216,29 +219,48 @@ wp plugin activate ash-nazg
 
 ### Setting Up Your Pantheon Machine Token
 
+**Version 0.4.0+** introduces per-user machine tokens. Each WordPress admin can have their own Pantheon machine token for better security and audit trails.
+
 1. **Create a machine token:**
    - Log into your Pantheon Dashboard
    - Go to Account > Machine Tokens
    - Create a new machine token
    - Copy the token (you'll only see it once!)
 
-2. **Store the token (Recommended: Pantheon Secrets):**
+2. **Find your WordPress user ID:**
+   - Navigate to **Ash Nazg > Settings** in the WordPress admin
+   - Your user ID is displayed prominently in the settings page
+   - You'll need this ID for the next step
 
-   We highly recommend using [Pantheon Secrets](https://docs.pantheon.io/guides/secrets) to securely store your machine token:
+3. **Store the token (Recommended: Pantheon Secrets):**
+
+   We highly recommend using [Pantheon Secrets](https://docs.pantheon.io/guides/secrets) to securely store your machine token. Each user has their own secret with their user ID as a suffix:
 
    ```bash
-   terminus secret:set <site> ash_nazg_machine_token YOUR_TOKEN --scope=user,web
+   terminus secret:set <site> ash_nazg_machine_token_1 YOUR_TOKEN --scope=user,web
    ```
 
-   The plugin will retrieve the token using `pantheon_get_secret('ash_nazg_machine_token')`.
+   Replace `1` with your WordPress user ID (e.g., `ash_nazg_machine_token_1`, `ash_nazg_machine_token_42`, etc.).
+
+   The plugin will retrieve your token using `pantheon_get_secret('ash_nazg_machine_token_{user_id}')`.
 
    **Alternative: WordPress Database**
 
-   You can also configure the token in **Ash Nazg > Settings** in the WordPress admin. This stores the token in the WordPress database in plaintext, which is less secure than using Pantheon Secrets.
+   You can also configure the token in **Ash Nazg > Settings** in the WordPress admin. The token will be encrypted with AES-256-CBC using WordPress salts before being stored in the database. This is less secure than Pantheon Secrets but provides a local development fallback.
 
-3. **Verify setup:**
+4. **Verify setup:**
    - Navigate to **Ash Nazg** in your WordPress admin menu
    - The plugin will auto-detect your Pantheon environment variables
+   - If your token is configured correctly, you'll see environment information on the dashboard
+
+### Migrating from v0.3.x to v0.4.0
+
+If you're upgrading from a previous version with a site-wide global token, the plugin will show a migration notice with instructions:
+
+- **Global database token**: Click "Migrate to My Account" to copy and encrypt the token to your user account
+- **Global Pantheon Secret**: Follow the terminus command instructions to set your per-user secret
+
+The global token will be deleted after migration. Other admins will need to set up their own tokens.
 
 ## Development
 
@@ -315,8 +337,6 @@ npm test
 - Accessibility audit (WCAG compliance)
 - JavaScript bundling and minification
 - Playwright E2E tests
-- User-scoped machine tokens (per-user authentication)
-- MD5 hash machine tokens stored in database
 
 ## FAQ
 
@@ -337,9 +357,11 @@ The Pantheon API is available to all Pantheon customers. Some features may vary 
 
 ### Is my machine token secure?
 
-**Yes, if using Pantheon Secrets.** Tokens stored in Pantheon Secrets are encrypted and retrieved at runtime using `pantheon_get_secret()`.
+**Yes, especially if using Pantheon Secrets.** Starting with v0.4.0, each WordPress admin has their own machine token for better security and audit trails.
 
-**Less secure if using database storage.** Tokens stored in the WordPress database are stored in plaintext and are only as secure as your database. We highly recommend using Pantheon Secrets instead of database storage.
+**Pantheon Secrets (Recommended):** Tokens stored in Pantheon Secrets are encrypted and retrieved at runtime using `pantheon_get_secret()`. This is the most secure option.
+
+**Database Storage (Fallback):** Tokens stored in the WordPress database are encrypted with AES-256-CBC using WordPress salts (v0.4.0+). While encrypted, this is less secure than Pantheon Secrets. We highly recommend using Pantheon Secrets for production environments.
 
 ### What permissions does this plugin grant WordPress admins?
 
