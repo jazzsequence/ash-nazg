@@ -2438,9 +2438,31 @@ function display_token_migration_notice() {
 
 	$user_id = get_current_user_id();
 
-	// Check if user already has token.
-	$user_token = get_user_meta( $user_id, 'ash_nazg_user_machine_token', true );
-	if ( ! empty( $user_token ) ) {
+	// Check if user already has their own token (either secret or meta).
+	$has_user_token = false;
+
+	// Check per-user secret.
+	if ( function_exists( 'pantheon_get_secret' ) ) {
+		$secret_key = sprintf( 'ash_nazg_machine_token_%d', $user_id );
+		$user_secret = pantheon_get_secret( $secret_key );
+		if ( ! empty( $user_secret ) ) {
+			$has_user_token = true;
+		}
+	}
+
+	// Check per-user meta.
+	if ( ! $has_user_token ) {
+		$user_token = get_user_meta( $user_id, 'ash_nazg_user_machine_token', true );
+		if ( ! empty( $user_token ) ) {
+			$has_user_token = true;
+		}
+	}
+
+	/*
+	 * If user has their own token, they don't need migration notice.
+	 * But they might need the cleanup notice if global secret still exists.
+	 */
+	if ( $has_user_token ) {
 		return;
 	}
 
