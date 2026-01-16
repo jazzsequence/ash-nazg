@@ -16,9 +16,9 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 
 **Implementation:**
 - Uses Pantheon machine tokens for API authentication
-- One site-wide machine token (not per-user), typically from a "machine user" or service account in Pantheon
-- Machine tokens stored via Pantheon Secrets API (never in database)
-- Retrieved using `pantheon_get_secret()` function (natively available on Pantheon)
+- One site-wide machine token (not per-user)
+- Machine tokens stored via Pantheon Secrets API (recommended) or WordPress database (less secure)
+- Retrieved using `pantheon_get_secret()` function (Pantheon) or `get_option()` (database fallback)
 - Machine tokens are exchanged for session tokens via `/v0/authorize/machine-token` endpoint
 - Bearer token authentication for all subsequent API requests
 - Session tokens cached in Transients (with appropriate TTL)
@@ -34,9 +34,10 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 
 **Security Model:**
 - Acknowledges that WordPress admin compromise = Pantheon API access (within token scope)
-- Mitigation: start by implementing all API capabilities, then restrict based on security review
-- **Never allow:** token generation, user management, billing, organization admin, site deletion
-- **Allow:** backups, environment info, workflow monitoring, deployment operations, SFTP/Git mode toggle, upstream updates, code deployment
+- Mitigation: implement operational capabilities while restricting administrative functions
+- **Never allow:** token generation, user management, billing, organization admin
+- **Restricted access:** site deletion (debug mode only, demonstration feature)
+- **Allow:** backups, environment info, workflow monitoring, deployment operations, SFTP/Git mode toggle, upstream updates, code deployment, multidev management, domain management
 
 ### API Integration Points
 
@@ -53,7 +54,7 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
    - ✅ Connection mode tracking (SFTP/Git) with automatic synchronization
    - ✅ Debug log viewer with fetch/clear functionality
    - ✅ Automatic mode switching for file operations (switches to SFTP when needed)
-   - ⏳ Show launch check status information (planned)
+   - ⛔ Show launch check status information (not available via API - Terminus only)
 
 2. **Site Information Management**
    - ✅ Inline editing of site label via dashboard
@@ -74,27 +75,51 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
    - ✅ Object Cache Pro installation workflow (`install_ocp` job)
    - ✅ Environment validation (workflows only on dev/multidev/lando)
    - ✅ Workflow status retrieval after triggering
+   - ✅ Workflow monitoring/polling for long-running operations
    - ⏳ Additional workflow types beyond scaffold_extensions (to be discovered)
-   - ⏳ Workflow monitoring/polling for long-running operations (planned)
 
 5. **Development Workflow**
    - ✅ Toggle between SFTP mode and Git mode with AJAX interface
    - ✅ Polling verification to ensure mode changes complete before updating UI
    - ✅ Automatic state synchronization after mode changes
    - ✅ Loading indicators during mode switching operations
-   - ⏳ Detect available upstream updates (planned)
-   - ⏳ Apply upstream updates from WP admin (planned)
-   - ⏳ Push code to test/live environments (planned)
-   - ⏳ Create multidev environments (planned)
+   - ✅ Detect available upstream updates with per-environment filtering
+   - ✅ Apply upstream updates from WP admin
+   - ✅ Push code to test/live environments (code deployment)
+   - ✅ Create multidev environments
+   - ✅ Merge multidev to dev and dev to multidev
+   - ✅ Delete multidev environments
+   - ✅ Commit SFTP changes with commit message
+   - ✅ View uncommitted changes (diffstat)
+   - ✅ Recent commits display
 
-6. **Domain Management** (Experimental/PoC)
-   - ⏳ Hook into WordPress multisite subdomain creation
-   - ⏳ Automatically add new subdomains to Pantheon via API
+6. **Domain Management** (Multisite)
+   - ✅ Hook into WordPress multisite subdomain creation
+   - ✅ Automatically add new subdomains to Pantheon via API
+   - ✅ Hooks: `wp_initialize_site` (WP 5.1+) and `wpmu_new_blog` (legacy)
+   - ✅ Skip local environments automatically
 
-7. **Backup Operations** (Planned)
-   - ⏳ Backup creation and management
-   - ⏳ Backup scheduling
-   - ⏳ Restore operations (if safe to expose)
+7. **Backup Operations**
+   - ✅ Backup creation (all, code, database, files)
+   - ✅ Backup listing (catalog across all environments)
+   - ✅ Backup restore operations
+   - ✅ Backup download via signed URLs
+   - ✅ Configurable retention period (keep_for parameter)
+   - ⛔ Backup scheduling (not available via API)
+
+8. **Clone Content**
+   - ✅ Clone database between environments
+   - ✅ Clone files between environments
+   - ✅ Automatic WordPress URL search-replace
+   - ✅ Environment initialization validation
+   - ✅ Multi-workflow monitoring
+
+9. **Delete Site** (Debug Mode Only)
+   - ✅ Full site deletion via API
+   - ✅ Only visible with `?debug=1` query parameter
+   - ✅ Multiple confirmation dialogs
+   - ✅ Type "DELETE" to enable button
+   - ✅ Demonstration feature showing API capabilities
 
 **Explicitly Excluded:**
 - Cache management (handled by Pantheon Advanced Page Cache and Pantheon mu-plugin)
@@ -111,15 +136,15 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 **Menu Structure:**
 - Top-level menu: "Ash Nazg" (slug: ash-nazg)
 - Implemented submenu pages:
-  - Dashboard - environment status, site/environment info, connection mode toggle, comprehensive API endpoints testing
+  - Dashboard - environment status, site/environment info, connection mode toggle, comprehensive API endpoints testing, inline site label editing
+  - Addons - enable/disable site addons (Redis, Apache Solr)
+  - Workflows - trigger workflows (Object Cache Pro installation via scaffold_extensions)
+  - Development - code deployment, upstream updates, multidev management, uncommitted changes, commit SFTP changes
+  - Backups - create, restore, download backups across all environments
+  - Clone - clone database and/or files between environments
   - Logs - debug log viewer with fetch/clear functionality and auto-mode switching
-  - Addons - enable/disable Pantheon site addons (Redis, Solr)
-  - Workflows - trigger Pantheon workflows (scaffold_extensions for Object Cache Pro installation)
-  - Settings - machine token configuration
-- Planned submenu pages:
-  - Development - upstream updates, code deployment (SFTP/Git toggle now on Dashboard)
-  - Backups - backup management
-  - Multisite Domains - domain management (experimental, if viable)
+  - Settings - machine token configuration, session token management
+  - Delete Site (debug mode only) - site deletion demonstration feature (visible only with `?debug=1`)
 
 **UI Implementation:**
 - Traditional WordPress admin HTML/CSS (no React)
@@ -131,7 +156,7 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 - Follow WordPress admin patterns for forms and tables
 
 #### Data Storage
-- **Credentials:** Never stored in database - use Pantheon Secrets API via `pantheon_get_secret()`
+- **Credentials:** Stored in Pantheon Secrets API (recommended) via `pantheon_get_secret()` or WordPress database (fallback, less secure)
 - **Settings:** WordPress Options API for plugin configuration/preferences
 - **Cached API responses:** WordPress Transients API with appropriate TTLs
   - Respects Redis object caching if enabled on Pantheon
@@ -169,15 +194,16 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 - Session tokens or temporary authentication credentials
 
 **Token Storage Requirements:**
-- **Production**: MUST use Pantheon Secrets API via `pantheon_get_secret('ash_nazg_machine_token')`
+- **Recommended: Pantheon Secrets API** via `pantheon_get_secret('ash_nazg_machine_token')`
   - Secrets are encrypted at rest
-  - Never stored in WordPress database
   - Retrieved at runtime when needed
   - Automatically available in Pantheon environments
-- **Local Development**: Fallback to WordPress options table (`get_option('ash_nazg_machine_token')`)
-  - Only for local development environments
-  - Still never committed to git
-  - Stored in database which is not tracked in git
+  - Set via Terminus: `terminus secret:set <site> ash_nazg_machine_token YOUR_TOKEN --scope=user,web`
+- **Alternative: WordPress Database** via WordPress options table (`get_option('ash_nazg_machine_token')`)
+  - Less secure - stored in plaintext in database
+  - Configurable via Settings page in WordPress admin
+  - Suitable for local development or testing
+  - Database contents never committed to git
 - **Session Tokens**: Cached in WordPress transients
   - Expire automatically after 1 hour
   - Stored in database or Redis (not committed)
@@ -204,10 +230,11 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 
 **Core Functions:**
 - `get_api_token()` - Central function that handles:
-  - Retrieving machine token from Pantheon Secrets via `pantheon_get_secret()`
+  - Retrieving machine token from Pantheon Secrets via `pantheon_get_secret()` or WordPress database via `get_option()`
   - Exchanging machine token for session token via `/v0/authorize/machine-token`
   - Caching session token in Transients with appropriate TTL
   - Auto-refreshing session tokens when expired
+  - Auto-clearing invalid tokens on 401/403 errors
 
 **API Resource Functions:**
 - Each API function embeds its own caching logic
@@ -415,6 +442,11 @@ This runs PHPUnit with the configuration in `phpunit.xml.dist`.
 - `test-api.php` - API client functions and patterns
 - `test-state-management.php` - Environment state management functions
 - `test-ajax-handlers.php` - AJAX handler security and functionality
+- `test-git-api.php` - Git-related API functions (commits, upstream updates, code tips)
+- `test-backups-api.php` - Backup management API functions
+- `test-clone-api.php` - Clone content API functions
+- `test-domain-management.php` - Domain management and multisite integration
+- `test-delete-site-api.php` - Delete site API function and AJAX handlers
 
 **Test Types:**
 1. **Structural Tests** - Verify functions exist and are properly namespaced
@@ -443,46 +475,53 @@ This runs PHPUnit with the configuration in `phpunit.xml.dist`.
 - Test error states and user feedback
 - Cross-browser compatibility testing
 
-### Initial Implementation Priorities
+### Implementation Status
 
 **Development Philosophy:**
-- Build PoC (Proof of Concept) with all possible API capabilities
-- Test what works and what's useful
-- Remove/hide features that grant too much power or prove impractical
-- Iterate based on real-world usage and security review
+This is a Hackathon 2026 project that demonstrates the full capabilities of the Pantheon Public API. The approach was to implement comprehensive API functionality while restricting administrative features that grant too much power.
 
-**Phase 1: Foundation & Core Status**
-- Plugin bootstrap and activation
-- Composer setup with dependencies (coding standards, wpunit-helpers)
-- Basic API client with authentication (`get_api_token()` function)
-- Pantheon environment detection (`$_ENV` variables)
-- Settings page (minimal - may not need much beyond token setup helper)
-- Environment status display (dev/test/live/multidev detection)
-- Launch check status information display
-- Error/debug log viewer (read `$WP_CONTENT_DIR/debug.log`)
+**Phase 1: Foundation & Core Status (Complete)**
+- ✅ Plugin bootstrap and activation
+- ✅ Composer setup with dependencies (coding standards, wpunit-helpers)
+- ✅ Basic API client with authentication (`get_api_token()` function)
+- ✅ Pantheon environment detection (`$_ENV` variables)
+- ✅ Settings page with machine token configuration and session token management
+- ✅ Environment status display (dev/test/live/multidev detection)
+- ✅ Comprehensive API endpoints testing with status indicators
+- ✅ Error/debug log viewer with fetch/clear functionality
+- ⛔ Launch check status information (not available via API - Terminus only)
 
-**Phase 2: Development Workflow Features**
-- SFTP/Git mode toggle
-- Upstream update detection and application
-- Code deployment (push to test/live)
-- Multidev creation
-- Backup management (create, list, restore if safe)
-- Workflow status monitoring with polling
+**Phase 2: Development Workflow Features (Complete)**
+- ✅ SFTP/Git mode toggle with polling verification
+- ✅ Upstream update detection and application with per-environment filtering
+- ✅ Code deployment (deploy to test/live environments)
+- ✅ Multidev creation, merge, and deletion
+- ✅ Backup management (create, list, restore, download)
+- ✅ Workflow status monitoring with polling
+- ✅ Clone content between environments (database and/or files)
+- ✅ Commit SFTP changes with commit message
+- ✅ View uncommitted changes (diffstat)
+- ✅ Recent commits display
 
-**Phase 3: Experimental/Advanced**
-- Domain management for multisite (PoC/experimental)
-  - Hook into `wpmu_new_blog` or similar
-  - Test API capability to add domains
-  - Evaluate feasibility
-- Additional API capabilities as discovered
-- Security review and feature restriction
-- Performance optimization and caching refinement
+**Phase 3: Build Pipeline & Design (Complete)**
+- ✅ SASS build pipeline with Pantheon Design System (PDS Core) integration
+- ✅ PDS fonts, design tokens, and foundations
+- ✅ Branded Pantheon header with logo on all admin pages
+- ✅ Organized CSS structure with utility classes (no inline styles)
+- ✅ JavaScript organization (separate files with proper enqueuing)
+- ✅ Build and watch mode npm scripts
 
-**Post-PoC:**
+**Phase 4: Advanced Features (Complete)**
+- ✅ Domain management for WordPress multisite (automatic domain addition on subsite creation)
+- ✅ Delete site functionality (debug mode only, demonstration feature)
+
+**Future Enhancements:**
+- Accessibility audit (WCAG compliance)
+- JavaScript bundling and minification
 - Playwright E2E tests
-- Security hardening based on Phase 3 review
-- Documentation
-- Feature flags for experimental capabilities
+- User-scoped machine tokens (per-user authentication)
+- MD5 hash machine tokens stored in database
+- More screen options integration
 
 ## API Reference
 
