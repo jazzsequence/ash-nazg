@@ -183,30 +183,28 @@ This plugin does **not** provide access to:
 
 ## Installation
 
-### From Source (Development)
+### Via Composer (Recommended)
 
-1. Clone this repository into your WordPress plugins directory:
-   ```bash
-   cd wp-content/plugins
-   git clone https://github.com/jazzsequence/ash-nazg.git
-   cd ash-nazg
-   ```
+```bash
+composer require jazzsequence/ash-nazg
+```
 
-2. Install dependencies:
-   ```bash
-   composer install
-   npm install  # or yarn install
-   ```
+Activate the plugin through the WordPress admin or via WP-CLI:
 
-3. Configure your Pantheon machine token in Pantheon Secrets (see Configuration below)
+```bash
+wp plugin activate ash-nazg
+```
 
-4. Activate the plugin through the WordPress admin
+### From GitHub Release
 
-5. Navigate to **Pantheon** in the WordPress admin menu
+1. Download the latest release ZIP file from [GitHub Releases](https://github.com/jazzsequence/ash-nazg/releases)
+2. Upload the ZIP file through **WordPress Admin > Plugins > Add New > Upload Plugin**
+3. Activate the plugin
+4. Navigate to **Ash Nazg** in the WordPress admin menu
 
-### Future: WordPress Plugin Directory
+### Via WordPress Plugin Directory
 
-Once stable, this plugin will be available through the WordPress plugin directory for one-click installation.
+Coming soon - this plugin will be available through the WordPress plugin directory for one-click installation.
 
 ## Configuration
 
