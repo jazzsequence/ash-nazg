@@ -202,10 +202,6 @@ wp plugin activate ash-nazg
 3. Activate the plugin
 4. Navigate to **Ash Nazg** in the WordPress admin menu
 
-### Via WordPress Plugin Directory
-
-Coming soon - this plugin will be available through the WordPress plugin directory for one-click installation.
-
 ## Configuration
 
 ### Setting Up Your Pantheon Machine Token
@@ -377,7 +373,6 @@ npm test
 - [ ] Update CLAUDE.md with latest patterns
 - [ ] User-scoped machine tokens (per-user authentication)
 - [ ] Internationalization (i18n)
-- [ ] Plugin directory submission (if appropriate)
 
 ## FAQ
 
