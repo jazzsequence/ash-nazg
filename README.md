@@ -16,7 +16,7 @@ The name comes from the One Ring inscription in Tolkien's works. Just as the One
 
 View your Pantheon environment status, site information, and connection mode at a glance. Monitor 26+ API endpoints with live status indicators showing which Pantheon features are available. Toggle between SFTP and Git mode with automatic verification.
 
-_[Screenshot: Dashboard page showing environment status, site info card, connection mode toggle, and API endpoints grid]_
+![Dashboard page showing environment status, site info card and connection mode toggle](screenshots/ash-nazg-dashboard.png)
 
 **Features:**
 - Auto-detect environment (dev/test/live/multidev/local)
@@ -30,7 +30,9 @@ _[Screenshot: Dashboard page showing environment status, site info card, connect
 
 Manage code deployment, upstream updates, multidev environments, and uncommitted changes from a single interface. All development operations accessible from one page regardless of your current environment.
 
-_[Screenshot: Development page showing upstream updates, code deployment panels, multidev management table, and uncommitted changes]_
+![Development page - code deployment panels and commit list](screenshots/ash-nazg-development-1.png)
+
+![Development page - multidev management table](screenshots/ash-nazg-development-2.png)
 
 **Code Deployment:**
 - Deploy code from dev to test or test to live
@@ -61,7 +63,9 @@ _[Screenshot: Development page showing upstream updates, code deployment panels,
 
 Create, restore, and download backups for any environment. Manage backups across all environments from a single interface.
 
-_[Screenshot: Backups page showing environment selector, backup catalog, and restore/download buttons]_
+![Backups page - environment selector and backup creation](screenshots/ash-nazg-backups-1.png)
+
+![Backups page - backup catalog with restore and download buttons](screenshots/ash-nazg-backups-2.png)
 
 **Features:**
 - Environment dropdown selector for backup creation
@@ -77,7 +81,9 @@ _[Screenshot: Backups page showing environment selector, backup catalog, and res
 
 Copy database and/or files between environments with automatic URL search-replace for WordPress.
 
-_[Screenshot: Clone page showing source/target environment selectors and database/files checkboxes]_
+![Clone page - environment selectors and clone options](screenshots/ash-nazg-clone-1.png)
+
+![Clone page - clone from options](screenshots/ash-nazg-clone-2.png)
 
 **Features:**
 - Source and target environment dropdown selectors
@@ -92,7 +98,7 @@ _[Screenshot: Clone page showing source/target environment selectors and databas
 
 View and clear WordPress debug logs without SSH access. Automatically switches to SFTP mode if needed to access log files on Pantheon's read-only Git filesystem.
 
-_[Screenshot: Logs page showing debug.log contents and clear logs button]_
+![Logs page showing debug.log contents and clear logs button](screenshots/ash-nazg-logs.png)
 
 **Features:**
 - Fetch and display debug.log contents
@@ -104,7 +110,7 @@ _[Screenshot: Logs page showing debug.log contents and clear logs button]_
 
 Enable or disable Pantheon site addons (Redis object caching, Apache Solr search) directly from WordPress admin.
 
-_[Screenshot: Addons page showing Redis and Solr toggle switches with save button]_
+![Addons page showing Redis and Solr toggle switches with save button](screenshots/ash-nazg-addons.png)
 
 **Features:**
 - Toggle Redis object cache addon
@@ -116,7 +122,7 @@ _[Screenshot: Addons page showing Redis and Solr toggle switches with save butto
 
 Trigger Pantheon workflows from WordPress, including Object Cache Pro installation via scaffold_extensions workflow.
 
-_[Screenshot: Workflows page showing available workflows and trigger buttons]_
+![Workflows page showing available workflows and trigger buttons](screenshots/ash-nazg-workflows.png)
 
 **Features:**
 - Trigger Object Cache Pro installation (scaffold_extensions workflow)
@@ -128,7 +134,7 @@ _[Screenshot: Workflows page showing available workflows and trigger buttons]_
 
 For WordPress multisite installations, automatically add custom domains to Pantheon when new subsites are created.
 
-_[Screenshot: Multisite domain management settings]_
+![Multisite domain management settings](screenshots/ash-nazg-multisite.png)
 
 **Features:**
 - Automatic domain addition on subsite creation
@@ -142,7 +148,7 @@ _[Screenshot: Multisite domain management settings]_
 
 Configure machine token authentication, view/clear session tokens, and manage plugin settings. Tokens stored securely in Pantheon Secrets (production) or WordPress options (local development fallback).
 
-_[Screenshot: Settings page showing machine token configuration and session token management]_
+![Settings page showing machine token configuration and session token management](screenshots/ash-nazg-settings.png)
 
 **Features:**
 - Machine token configuration with Pantheon Secrets integration
@@ -154,10 +160,14 @@ _[Screenshot: Settings page showing machine token configuration and session toke
 
 Demonstration feature showing full Pantheon API capabilities. Only visible when `?debug=1` query parameter is present.
 
-_[Screenshot: Delete site page with big red button and danger warnings]_
+![Delete site page - big red delete button enabled after typing DELETE](screenshots/ash-nazg-delete-1.png)
+
+![Delete site page - danger warnings and confirmation input](screenshots/ash-nazg-delete-2.png)
+
+![Delete site page - whew message after cancellation](screenshots/ash-nazg-delete-3.png)
 
 **Features:**
-- 500px circular red button with embossed text
+- Big red DELETE SITE button
 - Menu item: "⚠️ DO NOT CLICK" (red background)
 - Type "DELETE" to enable button
 - Two-stage confirmation (modal + JavaScript alert)
