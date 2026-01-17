@@ -2222,3 +2222,87 @@ function get_backup_download_url( $backup_id, $element, $site_id = null, $env = 
 
 	return $result['url'];
 }
+
+/**
+ * Get environment metrics for a specific time period.
+ *
+ * @param string $duration Time period: "7d", "28d", "12w", or "12m".
+ * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @param string $env Optional. Environment name. Auto-detected if not provided.
+ * @return array|\WP_Error Metrics data or WP_Error on failure.
+ */
+function get_environment_metrics( $duration, $site_id = null, $env = null ) {
+	// Validate duration parameter.
+	$valid_durations = [ '7d', '28d', '12w', '12m' ];
+	if ( ! in_array( $duration, $valid_durations, true ) ) {
+		return new \WP_Error(
+			'invalid_duration',
+			sprintf(
+				/* translators: %s: comma-separated list of valid durations */
+				__( 'Invalid duration. Must be one of: %s', 'ash-nazg' ),
+				implode( ', ', $valid_durations )
+			)
+		);
+	}
+
+	$site_id = Helpers\ensure_site_id( $site_id );
+	if ( is_wp_error( $site_id ) ) {
+		return $site_id;
+	}
+
+	$env = Helpers\ensure_environment( $env );
+	if ( is_wp_error( $env ) ) {
+		return $env;
+	}
+
+	// Map local environments to dev for API queries.
+	$api_env = map_local_env_to_dev( $env );
+
+	$endpoint = sprintf( '/v0/sites/%s/environments/%s/metrics?duration=%s', $site_id, $api_env, $duration );
+	$cache_key = sprintf( 'ash_nazg_metrics_%s_%s_%s', $site_id, $api_env, $duration );
+
+	// Cache for 1 hour (metrics update periodically).
+	$metrics = get_cached_endpoint( $endpoint, $cache_key, HOUR_IN_SECONDS );
+
+	if ( is_wp_error( $metrics ) ) {
+		Helpers\debug_log( sprintf( 'Failed to get metrics for %s.%s (%s) - Error: %s', $site_id, $api_env, $duration, $metrics->get_error_message() ) );
+		return $metrics;
+	}
+
+	Helpers\debug_log( sprintf( 'Retrieved metrics for %s.%s (%s)', $site_id, $api_env, $duration ) );
+
+	return $metrics;
+}
+
+/**
+ * Clear cached metrics data for an environment.
+ *
+ * Clears all duration caches for the specified environment.
+ *
+ * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @param string $env Optional. Environment name. Auto-detected if not provided.
+ * @return void
+ */
+function clear_metrics_cache( $site_id = null, $env = null ) {
+	$site_id = Helpers\ensure_site_id( $site_id );
+	if ( is_wp_error( $site_id ) ) {
+		return;
+	}
+
+	$env = Helpers\ensure_environment( $env );
+	if ( is_wp_error( $env ) ) {
+		return;
+	}
+
+	// Map local environments to dev for API queries.
+	$api_env = map_local_env_to_dev( $env );
+
+	// Clear all duration caches for this environment.
+	$durations = [ '7d', '28d', '12w', '12m' ];
+	foreach ( $durations as $duration ) {
+		$cache_key = sprintf( 'ash_nazg_metrics_%s_%s_%s', $site_id, $api_env, $duration );
+		delete_transient( $cache_key );
+	}
+
+	Helpers\debug_log( sprintf( 'Cleared metrics cache for %s.%s', $site_id, $api_env ) );
+}

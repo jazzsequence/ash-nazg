@@ -1,13 +1,14 @@
 {
   "name": "ash-nazg",
-  "version": "1.0.0",
+  "version": "0.5.0",
   "description": "WordPress plugin that integrates Pantheon Public API into the WordPress admin dashboard",
   "scripts": {
     "copy:pds": "mkdir -p assets/pds assets/pds-design-tokens assets/images && cp -r ../pds-core/src/foundations assets/pds/ && cp -r ../pds-core/src/utilities assets/pds/ && cp ../pds-core/public/design-tokens/pds-design-tokens-light-mode.css assets/pds-design-tokens/ && cp ../pds-core/public/pantheon-logo-light-mode.png assets/images/ && cp ../pds-core/public/pantheon-logo-dark-mode.png assets/images/",
-    "prebuild:css": "npm run copy:pds",
+    "copy:chartjs": "mkdir -p assets/js/libs && cp node_modules/chart.js/dist/chart.umd.js assets/js/libs/",
+    "prebuild:css": "npm run copy:pds && npm run copy:chartjs",
     "build:css": "sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css --style=expanded",
     "build:css:compressed": "sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css --style=compressed",
-    "watch:css": "npm run copy:pds && sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css --watch --style=expanded",
+    "watch:css": "npm run copy:pds && npm run copy:chartjs && sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css --watch --style=expanded",
     "watch": "npm run watch:css",
     "build": "npm run build:css"
   },
@@ -22,6 +23,7 @@
     "sass": "^1.83.4"
   },
   "dependencies": {
-    "@pantheon-systems/pds-design-tokens": "file:../pds-core/node_modules/@pantheon-systems/pds-design-tokens"
+    "@pantheon-systems/pds-design-tokens": "file:../pds-core/node_modules/@pantheon-systems/pds-design-tokens",
+    "chart.js": "^4.4.1"
   }
 }

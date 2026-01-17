@@ -28,18 +28,21 @@ No active work in progress.
   - Allow users to customize column visibility, items per page, etc.
 
 ### Analytics & Metrics
-- [ ] Environment metrics visualization
-  - API endpoint: GET /v0/sites/{site_id}/environments/{env_id}/metrics
-  - Duration parameter: "28d" (28 days), "12w" (12 weeks), "12m" (12 months)
-  - Metrics data:
-    - Pages served (traffic volume)
-    - Unique visits (visitor count)
-    - Cache hits/misses (cache performance)
-    - Timestamp/datetime for each data point
-  - Display timeseries data with charts/graphs
-  - Environment selector to view metrics for any environment
-  - Cache hit ratio calculation and display
-  - Traffic trends and performance analysis
+- [x] Environment metrics visualization
+  - API endpoint: GET /v0/sites/{site_id}/environments/{env_id}/metrics with duration parameter (7d, 28d, 12w, 12m)
+  - New "Metrics" admin page with environment and time period selectors
+  - Chart.js 4.4.1 integration (stored in assets/js/libs/) for three interactive charts:
+    - Pages Served (traffic volume over time)
+    - Unique Visits (visitor count over time)
+    - Cache Performance (hits vs misses over time)
+  - Pantheon Design System colors and styling (blue, yellow, green, red)
+  - Summary statistics with totals and average cache hit ratio
+  - Per-chart breakdowns with descriptive explanations
+  - Refresh button to clear cache and reload current data
+  - Expandable debug panels for API request/response troubleshooting
+  - Responsive design with smooth curves (tension 0.4) and hover interactions
+  - 1-hour cache TTL for metrics data
+  - Comprehensive PHPUnit test coverage (24 tests)
 
 ## Documentation
 - [x] Update README with concise feature descriptions

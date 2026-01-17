@@ -408,7 +408,19 @@ Named after Tolkien's One Ring inscription: "Ash nazg durbatulûk, ash nazg gimb
 
 ## Changelog
 
-### 0.4.0 - Current Release
+### 0.5.0 - Current Release
+- **Environment Metrics Visualization**: New "Metrics" admin page showing traffic and performance analytics
+- **Chart.js Integration**: Interactive line charts with Pantheon Design System colors and styling
+- **Multiple Time Periods**: View metrics for 7 days, 28 days, 12 weeks, or 12 months
+- **Three Chart Types**: Pages Served, Unique Visits, and Cache Performance (hits vs misses)
+- **Summary Statistics**: Overall totals and average cache hit ratio with per-chart breakdowns
+- **Refresh Functionality**: Clear cache and reload current metrics data
+- **Responsive Design**: Mobile-friendly charts with smooth curves and hover interactions
+- **Debug Panels**: Expandable API request/response panels for troubleshooting
+- **Comprehensive Tests**: 24 PHPUnit tests for metrics API and UI components
+- **Chart.js in libs/**: Renamed vendor directory to libs for better clarity
+
+### 0.4.0
 - **Per-User Token Storage**: Machine tokens now stored per-user instead of site-wide
 - **Token Encryption**: AES-256-CBC encryption for database-stored tokens using WordPress salts
 - **Pantheon Secrets Integration**: Per-user secret keys with user ID suffix (ash_nazg_machine_token_{user_id})

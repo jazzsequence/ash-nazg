@@ -736,50 +736,6 @@
    ALL @USE RULES MUST COME FIRST
    ========================================================================== */
 /**
- * Components - Code Block and User ID
- * Styling for Pantheon Secrets command display and user ID highlighting
- */
-/* Pantheon Secrets command display */
-.ash-nazg-code-block {
-  background: #f5f5f5;
-  border: 1px solid #ccc;
-  border-left: 4px solid #0073aa;
-  padding: 12px;
-  font-family: "Courier New", monospace;
-  font-size: 13px;
-  overflow-x: auto;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  margin: 10px 0;
-}
-
-/* User ID highlighting */
-.ash-nazg-user-id {
-  background: #fff3cd;
-  border: 1px solid #ffc107;
-  padding: 2px 8px;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-/**
- * Admin styles for Ash-Nazg plugin.
- *
- * Structure:
- * 1. Variables (SASS variables using PDS tokens)
- * 2. Base Layout
- * 3. Typography
- * 4. Components (Badges, Notices, Cards, Header)
- * 5. Tables
- * 6. Page-specific Sections
- * 7. Utility Classes
- * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
- */
-/* ==========================================================================
-   ALL @USE RULES MUST COME FIRST
-   ========================================================================== */
-/**
  * Tables
  * Table styling and column widths
  */
@@ -1223,6 +1179,136 @@
 }
 
 /* Progress modal (already defined in _progress-modal.scss, but backup-specific overrides can go here if needed) */
+/**
+ * Admin styles for Ash-Nazg plugin.
+ *
+ * Structure:
+ * 1. Variables (SASS variables using PDS tokens)
+ * 2. Base Layout
+ * 3. Typography
+ * 4. Components (Badges, Notices, Cards, Header)
+ * 5. Tables
+ * 6. Page-specific Sections
+ * 7. Utility Classes
+ * 8. Responsive Styles
+ * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ */
+/* ==========================================================================
+   ALL @USE RULES MUST COME FIRST
+   ========================================================================== */
+/**
+ * Pages - Metrics
+ * Metrics page styles including filters, charts, and summary statistics
+ */
+/* Metrics Filters */
+.ash-nazg-metrics-filters {
+  display: flex;
+  gap: 15px;
+  align-items: flex-end;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+.ash-nazg-metrics-filters button {
+  white-space: nowrap;
+}
+
+.ash-nazg-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ash-nazg-filter-group label {
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 0;
+}
+.ash-nazg-filter-group select {
+  min-width: 150px;
+  padding: 4px;
+}
+
+/* Summary Statistics */
+.ash-nazg-metrics-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.ash-nazg-metric-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  background: #f6f7f7;
+  border-radius: 4px;
+}
+
+.ash-nazg-stat-label {
+  font-size: 12px;
+  color: #646970;
+  margin-bottom: 0;
+}
+
+.ash-nazg-stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1d2327;
+  line-height: 1.2;
+}
+
+/* Loading Indicator */
+.ash-nazg-loading {
+  text-align: center;
+  padding: 15px;
+  font-style: italic;
+  color: #646970;
+}
+.ash-nazg-loading p {
+  margin: 0;
+}
+
+/* Chart Canvas */
+canvas {
+  max-height: 400px;
+  width: 100% !important;
+  height: auto !important;
+}
+
+/* Chart Summaries */
+.ash-nazg-chart-summary {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e0e0e0;
+}
+.ash-nazg-chart-summary p {
+  margin: 0;
+  line-height: 1.6;
+}
+.ash-nazg-chart-summary strong {
+  color: #1d2327;
+}
+.ash-nazg-chart-summary span:not(.ash-nazg-summary-separator) {
+  color: #0073aa;
+  font-weight: 600;
+}
+.ash-nazg-chart-summary .ash-nazg-summary-separator {
+  color: #a0a5aa;
+  padding: 0 4px;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 782px) {
+  .ash-nazg-metrics-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ash-nazg-metrics-filters button {
+    width: 100%;
+  }
+  .ash-nazg-filter-group select {
+    width: 100%;
+  }
+}
 /**
  * Admin styles for Ash-Nazg plugin.
  *

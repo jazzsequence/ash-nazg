@@ -131,6 +131,19 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
    - ✅ Type "DELETE" to enable button
    - ✅ Demonstration feature showing API capabilities
 
+10. **Environment Metrics Visualization**
+   - ✅ API endpoint: GET /v0/sites/{site_id}/environments/{env_id}/metrics
+   - ✅ Duration parameters: 7d, 28d, 12w, 12m
+   - ✅ Chart.js integration with Pantheon Design System colors
+   - ✅ Three interactive line charts: Pages Served, Unique Visits, Cache Performance
+   - ✅ Summary statistics with totals and cache hit ratio
+   - ✅ Per-chart breakdowns with descriptions
+   - ✅ Refresh button to clear cache and reload data
+   - ✅ Expandable debug panels for API requests/responses
+   - ✅ 1-hour cache TTL for metrics data
+   - ✅ Chart.js stored in assets/js/libs/ directory
+   - ✅ Responsive design with smooth curves and hover interactions
+
 **Explicitly Excluded:**
 - Cache management (handled by Pantheon Advanced Page Cache and Pantheon mu-plugin)
 - Organization management

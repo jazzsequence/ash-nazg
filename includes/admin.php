@@ -46,6 +46,8 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_restore_backup', __NAMESPACE__ . '\\ajax_restore_backup' );
 	add_action( 'wp_ajax_ash_nazg_clone_content', __NAMESPACE__ . '\\ajax_clone_content' );
 	add_action( 'wp_ajax_ash_nazg_delete_site', __NAMESPACE__ . '\\ajax_delete_site' );
+	add_action( 'wp_ajax_ash_nazg_get_metrics', __NAMESPACE__ . '\\ajax_get_metrics' );
+	add_action( 'wp_ajax_ash_nazg_refresh_metrics', __NAMESPACE__ . '\\ajax_refresh_metrics' );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
 }
@@ -105,6 +107,16 @@ function add_admin_menu() {
 		'manage_options',
 		'ash-nazg-backups',
 		__NAMESPACE__ . '\\render_backups_page'
+	);
+
+	// Metrics page.
+	add_submenu_page(
+		'ash-nazg',
+		__( 'Environment Metrics', 'ash-nazg' ),
+		__( 'Metrics', 'ash-nazg' ),
+		'manage_options',
+		'ash-nazg-metrics',
+		__NAMESPACE__ . '\\render_metrics_page'
 	);
 
 	// Clone page.
@@ -193,6 +205,7 @@ function enqueue_assets( $hook ) {
 		'ash-nazg_page_ash-nazg-workflows',
 		'ash-nazg_page_ash-nazg-development',
 		'ash-nazg_page_ash-nazg-backups',
+		'ash-nazg_page_ash-nazg-metrics',
 		'ash-nazg_page_ash-nazg-clone',
 		'ash-nazg_page_ash-nazg-delete-site',
 		'ash-nazg_page_ash-nazg-logs',
@@ -427,6 +440,43 @@ function enqueue_assets( $hook ) {
 					'deleting' => __( 'Deleting site... This may take a moment...', 'ash-nazg' ),
 					'deleted' => __( 'Site has been deleted. You will be redirected to Pantheon dashboard.', 'ash-nazg' ),
 					'error' => __( 'Deletion failed. Please try again or contact support.', 'ash-nazg' ),
+				],
+			]
+		);
+	}
+
+	// Enqueue metrics JavaScript on metrics page.
+	if ( 'ash-nazg_page_ash-nazg-metrics' === $hook ) {
+		// Enqueue Chart.js from local libs directory.
+		wp_enqueue_script(
+			'chartjs',
+			ASH_NAZG_PLUGIN_URL . 'assets/js/libs/chart.umd.js',
+			[],
+			'4.4.1',
+			true
+		);
+
+		wp_enqueue_script(
+			'ash-nazg-metrics',
+			ASH_NAZG_PLUGIN_URL . 'assets/js/metrics.js',
+			[ 'jquery', 'chartjs' ],
+			ASH_NAZG_VERSION,
+			true
+		);
+
+		// Localize metrics script.
+		wp_localize_script(
+			'ash-nazg-metrics',
+			'ashNazgMetrics',
+			[
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'metricsNonce' => wp_create_nonce( 'ash_nazg_get_metrics' ),
+				'refreshNonce' => wp_create_nonce( 'ash_nazg_refresh_metrics' ),
+				'i18n' => [
+					'loadingError' => __( 'Failed to load metrics data.', 'ash-nazg' ),
+					'noData' => __( 'No metrics data available for this period.', 'ash-nazg' ),
+					'refreshSuccess' => __( 'Metrics cache cleared. Reloading data...', 'ash-nazg' ),
+					'refreshError' => __( 'Failed to clear metrics cache.', 'ash-nazg' ),
 				],
 			]
 		);
@@ -1924,6 +1974,37 @@ function render_backups_page() {
 }
 
 /**
+ * Render metrics page.
+ *
+ * @return void
+ */
+function render_metrics_page() {
+	// Check user capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$site_id = API\get_pantheon_site_id();
+	$current_env = API\get_pantheon_environment();
+	$environments = [];
+
+	if ( $site_id ) {
+		$environments = API\get_environments( $site_id );
+		if ( is_wp_error( $environments ) ) {
+			$environments = [];
+		}
+	}
+
+	// Default to current environment or 'dev'.
+	$selected_env = $current_env ?: 'dev';
+
+	// Default to 28 days.
+	$selected_duration = '28d';
+
+	require ASH_NAZG_PLUGIN_DIR . 'includes/views/metrics.php';
+}
+
+/**
  * Render clone page.
  *
  * @return void
@@ -2413,6 +2494,57 @@ function ajax_delete_site() {
 	}
 
 	wp_send_json_success( [ 'message' => __( 'Site has been deleted.', 'ash-nazg' ) ] );
+}
+
+/**
+ * AJAX handler: Get environment metrics.
+ *
+ * @return void
+ */
+function ajax_get_metrics() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_get_metrics', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	// Get parameters.
+	$duration = isset( $_POST['duration'] ) ? sanitize_text_field( wp_unslash( $_POST['duration'] ) ) : '28d';
+	$env = isset( $_POST['environment'] ) ? sanitize_text_field( wp_unslash( $_POST['environment'] ) ) : null;
+
+	// Fetch metrics.
+	$metrics = API\get_environment_metrics( $duration, null, $env );
+
+	if ( is_wp_error( $metrics ) ) {
+		wp_send_json_error( [ 'message' => $metrics->get_error_message() ] );
+	}
+
+	wp_send_json_success( [ 'metrics' => $metrics ] );
+}
+
+/**
+ * AJAX handler: Refresh metrics (clear cache).
+ *
+ * @return void
+ */
+function ajax_refresh_metrics() {
+	// Check nonce.
+	check_ajax_referer( 'ash_nazg_refresh_metrics', 'nonce' );
+
+	// Check capabilities.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	// Get environment parameter.
+	$env = isset( $_POST['environment'] ) ? sanitize_text_field( wp_unslash( $_POST['environment'] ) ) : null;
+
+	// Clear metrics cache for this environment.
+	API\clear_metrics_cache( null, $env );
+
+	wp_send_json_success( [ 'message' => __( 'Metrics cache cleared successfully.', 'ash-nazg' ) ] );
 }
 
 /**
