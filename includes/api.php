@@ -375,7 +375,8 @@ function api_request( $endpoint, $method = 'GET', $body = [] ) {
 				__( 'API request failed (%1$d): %2$s', 'ash-nazg' ),
 				$status_code,
 				$error_message
-			)
+			),
+			[ 'status' => $status_code ]
 		);
 	}
 
@@ -1360,6 +1361,15 @@ function get_upstream_updates( $site_id ) {
 	$endpoint = sprintf( '/v0/sites/%s/upstream-updates', $site_id );
 	$result = api_request( $endpoint, 'GET' );
 
+	// Public API endpoint not yet deployed — fall back to Terminus API.
+	if ( is_wp_error( $result ) ) {
+		$error_data = $result->get_error_data( 'api_error' );
+		if ( isset( $error_data['status'] ) && 404 === $error_data['status'] ) {
+			\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Public API upstream-updates 404 for %s, trying Terminus API fallback', $site_id ) );
+			$result = get_upstream_updates_via_terminus( $site_id );
+		}
+	}
+
 	if ( is_wp_error( $result ) ) {
 		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get upstream updates for %s: %s', $site_id, $result->get_error_message() ) );
 		return $result;
@@ -1376,6 +1386,100 @@ function get_upstream_updates( $site_id ) {
 	);
 
 	return $result;
+}
+
+/**
+ * Fetch upstream updates from the Terminus API (terminus.pantheon.io).
+ *
+ * Used as a fallback when the public API returns 404. Returns a normalized
+ * response in the same shape as the public API so callers need no changes.
+ *
+ * @param string $site_id Site UUID.
+ * @return array|WP_Error Normalized upstream updates or WP_Error on failure.
+ */
+function get_upstream_updates_via_terminus( $site_id ) {
+	$session_token = get_api_token();
+	if ( is_wp_error( $session_token ) ) {
+		return $session_token;
+	}
+
+	$url = sprintf(
+		'https://terminus.pantheon.io/api/sites/%s/code-upstream-updates?base_branch=%s',
+		rawurlencode( $site_id ),
+		rawurlencode( 'refs/heads/master' )
+	);
+
+	$response = wp_remote_get(
+		$url,
+		[
+			'headers' => [
+				'Authorization' => 'Bearer ' . $session_token,
+				'Accept'        => 'application/json',
+			],
+			'timeout' => 30,
+		]
+	);
+
+	if ( is_wp_error( $response ) ) {
+		return $response;
+	}
+
+	$status_code = wp_remote_retrieve_response_code( $response );
+	$body        = wp_remote_retrieve_body( $response );
+	$data        = json_decode( $body, true );
+
+	if ( $status_code < 200 || $status_code >= 300 ) {
+		$error_message = $data['message'] ?? 'Unknown Terminus API error';
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Terminus API upstream-updates error %d for %s: %s', $status_code, $site_id, $error_message ) );
+		return new \WP_Error(
+			'api_error',
+			sprintf(
+				/* translators: %1$d: HTTP status code, %2$s: error message */
+				__( 'Terminus API request failed (%1$d): %2$s', 'ash-nazg' ),
+				$status_code,
+				$error_message
+			),
+			[ 'status' => $status_code ]
+		);
+	}
+
+	return normalize_terminus_upstream_response( $data );
+}
+
+/**
+ * Normalize a Terminus API upstream response to the public API shape.
+ *
+ * Terminus returns update_log as a hash-keyed object and per-env status as
+ * top-level keys. This converts both to match the public API format so the
+ * rest of the codebase only needs to handle one structure.
+ *
+ * @param array $data Raw Terminus API response.
+ * @return array Normalized response with 'commits', 'behind', 'has_code', 'environments'.
+ */
+function normalize_terminus_upstream_response( $data ) {
+	$commits = [];
+	if ( isset( $data['update_log'] ) && is_array( $data['update_log'] ) ) {
+		foreach ( $data['update_log'] as $hash => $commit ) {
+			if ( ! isset( $commit['hash'] ) ) {
+				$commit['hash'] = $hash;
+			}
+			$commits[] = $commit;
+		}
+	}
+
+	$environments = [];
+	foreach ( [ 'dev', 'test', 'live' ] as $env ) {
+		if ( isset( $data[ $env ] ) ) {
+			$environments[ $env ] = $data[ $env ];
+		}
+	}
+
+	return [
+		'commits'      => $commits,
+		'behind'       => $data['behind'] ?? count( $commits ),
+		'has_code'     => $data['has_code'] ?? true,
+		'environments' => $environments,
+	];
 }
 
 /**

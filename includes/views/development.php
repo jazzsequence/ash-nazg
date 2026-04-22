@@ -69,26 +69,16 @@ use Pantheon\AshNazg\Helpers;
 
 		<!-- Upstream Updates -->
 		<?php
-		/*
-		 * Extract actual updates from update_log object.
-		 * Terminus API returns update_log as associative array keyed by hash.
-		 * Convert to numeric array for consistency.
-		 */
 		$updates_list = [];
 		$update_count = 0;
 		$behind = 0;
-		if ( ! is_wp_error( $upstream_updates ) && $upstream_updates && is_array( $upstream_updates ) ) {
-			$raw_updates = isset( $upstream_updates['update_log'] ) ? $upstream_updates['update_log'] : [];
-
-			// Convert associative array to numeric array if needed (Terminus API format).
-			if ( ! empty( $raw_updates ) && ! isset( $raw_updates[0] ) ) {
-				$updates_list = array_values( $raw_updates );
-			} else {
-				$updates_list = $raw_updates;
-			}
-
+		$upstream_api_error = null;
+		if ( is_wp_error( $upstream_updates_raw ) ) {
+			$upstream_api_error = $upstream_updates_raw->get_error_message();
+		} elseif ( ! is_wp_error( $upstream_updates ) && $upstream_updates && is_array( $upstream_updates ) ) {
+			$updates_list = $upstream_updates['commits'] ?? [];
 			$update_count = count( $updates_list );
-			$behind = isset( $upstream_updates['behind'] ) ? $upstream_updates['behind'] : 0;
+			$behind = $upstream_updates['behind'] ?? 0;
 		}
 
 		// Debug output when ?debug=1 is present.
@@ -112,6 +102,11 @@ use Pantheon\AshNazg\Helpers;
 			<?php
 		endif;
 		?>
+		<?php if ( $upstream_api_error && $show_debug ) : ?>
+		<div class="notice notice-warning">
+			<p><strong><?php esc_html_e( 'Upstream updates unavailable:', 'ash-nazg' ); ?></strong> <?php echo esc_html( $upstream_api_error ); ?></p>
+		</div>
+		<?php endif; ?>
 		<?php if ( $update_count > 0 || $behind > 0 ) : ?>
 		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
 			<h2><?php esc_html_e( 'Upstream Updates', 'ash-nazg' ); ?></h2>
