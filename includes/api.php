@@ -1347,11 +1347,19 @@ function get_environment_commits( $site_id, $env ) {
 /**
  * Get available upstream update commits.
  *
- * @param string $site_id Site UUID.
+ * For multidev environments, pass the environment name so the correct
+ * upstream branch is compared (refs/heads/{env} rather than master).
+ *
+ * @param string      $site_id Site UUID.
+ * @param string|null $env     Current environment name. Null falls back to master branch.
  * @return array|WP_Error Array of upstream commit objects or WP_Error on failure.
  */
-function get_upstream_updates( $site_id ) {
-	$cache_key = sprintf( 'ash_nazg_upstream_updates_%s', $site_id );
+function get_upstream_updates( $site_id, $env = null ) {
+	// Use an env-specific cache key for multidevs since their branch differs from master.
+	$is_multidev = $env && \Pantheon\AshNazg\Helpers\is_multidev_environment( $env );
+	$cache_key = $is_multidev
+		? sprintf( 'ash_nazg_upstream_updates_%s_%s', $site_id, $env )
+		: sprintf( 'ash_nazg_upstream_updates_%s', $site_id );
 	$cached = get_transient( $cache_key );
 
 	if ( false !== $cached ) {
@@ -1366,7 +1374,7 @@ function get_upstream_updates( $site_id ) {
 		$error_data = $result->get_error_data( 'api_error' );
 		if ( isset( $error_data['status'] ) && 404 === $error_data['status'] ) {
 			\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Public API upstream-updates 404 for %s, trying Terminus API fallback', $site_id ) );
-			$result = get_upstream_updates_via_terminus( $site_id );
+			$result = get_upstream_updates_via_terminus( $site_id, $env );
 		}
 	}
 
@@ -1394,19 +1402,26 @@ function get_upstream_updates( $site_id ) {
  * Used as a fallback when the public API returns 404. Returns a normalized
  * response in the same shape as the public API so callers need no changes.
  *
- * @param string $site_id Site UUID.
+ * For multidev environments, pass $env so the comparison uses the correct
+ * branch (refs/heads/{env}) rather than always comparing against master.
+ *
+ * @param string      $site_id Site UUID.
+ * @param string|null $env     Current environment name.
  * @return array|WP_Error Normalized upstream updates or WP_Error on failure.
  */
-function get_upstream_updates_via_terminus( $site_id ) {
+function get_upstream_updates_via_terminus( $site_id, $env = null ) {
 	$session_token = get_api_token();
 	if ( is_wp_error( $session_token ) ) {
 		return $session_token;
 	}
 
+	// Terminus uses the env's branch name: master for dev/test/live, env name for multidevs.
+	$branch = ( $env && \Pantheon\AshNazg\Helpers\is_multidev_environment( $env ) ) ? $env : 'master';
+
 	$url = sprintf(
 		'https://terminus.pantheon.io/api/sites/%s/code-upstream-updates?base_branch=%s',
 		rawurlencode( $site_id ),
-		rawurlencode( 'refs/heads/master' )
+		rawurlencode( 'refs/heads/' . $branch )
 	);
 
 	$response = wp_remote_get(

@@ -1708,9 +1708,11 @@ function ajax_clear_upstream_cache() {
 		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
 	}
 
-	// Clear upstream updates cache.
-	$cache_key = sprintf( 'ash_nazg_upstream_updates_%s', $site_id );
-	delete_transient( $cache_key );
+	// Clear upstream updates cache (shared key for standard envs, env-specific for multidevs).
+	delete_transient( sprintf( 'ash_nazg_upstream_updates_%s', $site_id ) );
+	if ( $environment && Helpers\is_multidev_environment( $environment ) ) {
+		delete_transient( sprintf( 'ash_nazg_upstream_updates_%s_%s', $site_id, $environment ) );
+	}
 
 	// Clear commits cache for current environment to ensure recent commits list refreshes.
 	if ( $environment ) {
@@ -1902,7 +1904,7 @@ function render_development_page() {
 		$environment_info = API\get_environment_info( $site_id, $environment );
 		$commits = API\get_environment_commits( $site_id, $environment );
 		$dev_commits = API\get_environment_commits( $site_id, 'dev' );
-		$upstream_updates_raw = API\get_upstream_updates( $site_id );
+		$upstream_updates_raw = API\get_upstream_updates( $site_id, $environment );
 
 		// Filter upstream updates to only show those not in current environment.
 		$upstream_updates = \Pantheon\AshNazg\Helpers\filter_upstream_updates_for_env( $upstream_updates_raw, $site_id, $environment );

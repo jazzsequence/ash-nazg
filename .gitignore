@@ -42,3 +42,6 @@ Thumbs.db
 /bin/phpunit-test.sh
 # Pantheon API helper — generated docs
 .pantheonapi-docs/
+
+# claude-code-reviewer approval flag
+reviewer-approved
