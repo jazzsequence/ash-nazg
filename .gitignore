@@ -3,6 +3,7 @@
 .github/instructions/codacy.instructions.md
 .codacy/
 .claude/
+.pantheonapi-docs
 
 # Composer
 /vendor/
@@ -39,3 +40,5 @@ Thumbs.db
 /bin/install-local-tests.sh
 /bin/install-wp-tests.sh
 /bin/phpunit-test.sh
+# Pantheon API helper — generated docs
+.pantheonapi-docs/

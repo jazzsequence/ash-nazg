@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@pantheon-systems/pds-design-tokens": "file:../pds-core/node_modules/@pantheon-systems/pds-design-tokens",
-    "chart.js": "^4.4.1"
+    "chart.js": "^4.4.1",
+    "pantheon-api-helper": "github:jazzsequence/pantheon-api-helper"
   }
 }
