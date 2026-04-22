@@ -57,8 +57,13 @@
 		 * @param {Function} options.onCancel Callback when cancelled
 		 * @returns {Promise} Promise that resolves on confirm, rejects on cancel
 		 */
-		confirm: function(options) {
+		confirm: function(options, onConfirm, type) {
 			ensureModalExists();
+
+			// Support legacy positional args: confirm(message, onConfirm, type)
+			if (typeof options === 'string') {
+				options = { message: options, onConfirm: onConfirm, type: type };
+			}
 
 			const defaults = {
 				title: 'Confirm Action',
@@ -133,8 +138,13 @@
 		 * @param {Function} options.onClose Callback when closed
 		 * @returns {Promise} Promise that resolves when closed
 		 */
-		alert: function(options) {
+		alert: function(options, onClose, type) {
 			ensureModalExists();
+
+			// Support legacy positional args: alert(message, onClose, type)
+			if (typeof options === 'string') {
+				options = { message: options, onClose: onClose, type: type };
+			}
 
 			const defaults = {
 				title: 'Notice',

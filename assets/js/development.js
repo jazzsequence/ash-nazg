@@ -40,14 +40,13 @@
 			var nonce = $button.data('nonce');
 
 			// Confirm action
-			window.AshNazgModal.confirm(
-				ashNazgDevelopment.i18n.confirmApplyUpdates,
-				function() {
-					// User confirmed - execute upstream updates
+			window.AshNazgModal.confirm({
+				message: ashNazgDevelopment.i18n.confirmApplyUpdates,
+				type: 'warning',
+				onConfirm: function() {
 					executeApplyUpstreamUpdates($button, nonce);
-				},
-				'warning'
-			);
+				}
+			});
 		});
 
 		// Merge Dev to Multidev button
@@ -58,14 +57,13 @@
 			var nonce = $button.data('nonce');
 
 			// Confirm action
-			window.AshNazgModal.confirm(
-				ashNazgDevelopment.i18n.confirmMergeDevToMultidev,
-				function() {
-					// User confirmed - execute merge
+			window.AshNazgModal.confirm({
+				message: ashNazgDevelopment.i18n.confirmMergeDevToMultidev,
+				type: 'warning',
+				onConfirm: function() {
 					executeMergeDevToMultidev($button, nonce);
-				},
-				'warning'
-			);
+				}
+			});
 		});
 
 		// Toggle Deploy to Test panel
@@ -98,14 +96,13 @@
 			fullNote += '(Triggered by Ash Nazg at ' + siteUrl + ')';
 
 			// Confirm action
-			window.AshNazgModal.confirm(
-				ashNazgDevelopment.i18n.confirmDeployToTest,
-				function() {
-					// User confirmed - execute deploy to test
+			window.AshNazgModal.confirm({
+				message: ashNazgDevelopment.i18n.confirmDeployToTest,
+				type: 'warning',
+				onConfirm: function() {
 					executeDeployToTest($button, nonce, target, fullNote);
-				},
-				'warning'
-			);
+				}
+			});
 		});
 
 		// Toggle Deploy to Live panel
@@ -142,14 +139,13 @@
 			var syncContent = $('#ash-nazg-sync-content').is(':checked');
 
 			// Confirm action (warn about live deployment)
-			window.AshNazgModal.confirm(
-				ashNazgDevelopment.i18n.confirmDeployToLive,
-				function() {
-					// User confirmed - execute deploy to live
+			window.AshNazgModal.confirm({
+				message: ashNazgDevelopment.i18n.confirmDeployToLive,
+				type: 'danger',
+				onConfirm: function() {
 					executeDeployToLive($button, nonce, target, fullNote, syncContent);
-				},
-				'danger'
-			);
+				}
+			});
 		});
 	});
 
@@ -200,13 +196,13 @@
 									},
 									complete: function() {
 										// Reload page whether cache clear succeeded or not
-										window.AshNazgModal.alert(
-											ashNazgDevelopment.i18n.updatesApplied,
-											function() {
+										window.AshNazgModal.alert({
+											message: ashNazgDevelopment.i18n.updatesApplied,
+											type: 'info',
+											onClose: function() {
 												window.location.reload();
-											},
-											'info'
-										);
+											}
+										});
 									}
 								});
 							} else {
