@@ -224,11 +224,17 @@ function enqueue_assets( $hook ) {
 		return;
 	}
 
-	// Enqueue admin styles.
+	// Enqueue modal base styles (shared with non-plugin pages) then admin styles (PDS overrides).
+	wp_enqueue_style(
+		'ash-nazg-modal',
+		ASH_NAZG_PLUGIN_URL . 'assets/css/modal.css',
+		[],
+		ASH_NAZG_VERSION
+	);
 	wp_enqueue_style(
 		'ash-nazg-admin',
 		ASH_NAZG_PLUGIN_URL . 'assets/css/admin.css',
-		[],
+		[ 'ash-nazg-modal' ],
 		ASH_NAZG_VERSION
 	);
 
@@ -1662,7 +1668,7 @@ function ajax_apply_upstream_updates() {
 	}
 
 	$site_id = API\get_pantheon_site_id();
-	$env = API\get_pantheon_environment();
+	$env     = API\get_effective_environment( $site_id );
 
 	if ( ! $site_id || ! $env ) {
 		wp_send_json_error( [ 'message' => __( 'Site ID or environment not found.', 'ash-nazg' ) ] );
