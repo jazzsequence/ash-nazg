@@ -6,26 +6,17 @@
 		var $input = $('#delete-confirmation');
 		var $button = $('#delete-site-button');
 		var $cancelMessage = $('#cancel-message');
-		var $modal = $('#danger-modal');
-		var $modalConfirm = $('#modal-confirm');
-		var $modalCancel = $('#modal-cancel');
 
 		// Enable button only when "DELETE" is typed exactly
 		$input.on('input', function() {
-			var typed = $(this).val();
-			if (typed === 'DELETE') {
-				$button.prop('disabled', false);
-			} else {
-				$button.prop('disabled', true);
-			}
+			$button.prop('disabled', $(this).val() !== 'DELETE');
 		});
 
-		// Form submission with modal and alert confirmations
+		// Form submission — two-step modal confirmation before deleting
 		$form.on('submit', function(e) {
 			e.preventDefault();
 
-			var typedText = $input.val();
-			if (typedText !== 'DELETE') {
+			if ($input.val() !== 'DELETE') {
 				window.AshNazgModal.alert({
 					title: 'Validation Error',
 					message: 'You must type DELETE to proceed.',
@@ -34,24 +25,47 @@
 				return;
 			}
 
-			// Show modal for first confirmation
-			$modal.show();
+			// First confirmation: detail the consequences
+			window.AshNazgModal.confirm({
+				title: 'DANGER: PERMANENT DELETION',
+				message: '<p><strong>This action is PERMANENT and IRREVERSIBLE.</strong></p>' +
+					'<ul style="list-style:disc;margin-left:20px;line-height:1.8">' +
+					'<li>ALL environments (dev, test, live, multidevs) will be DELETED</li>' +
+					'<li>ALL database content will be PERMANENTLY LOST</li>' +
+					'<li>ALL files and uploads will be PERMANENTLY LOST</li>' +
+					'<li>ALL backups will be PERMANENTLY LOST</li>' +
+					'<li>There is NO UNDO. This cannot be reversed.</li>' +
+					'</ul>' +
+					'<p style="font-weight:bold;color:#dc3232">Your website will be gone forever. All data will be lost.</p>',
+				confirmText: 'I Understand the Risk',
+				cancelText: 'Cancel',
+				type: 'danger',
+				onConfirm: function() {
+					// Second confirmation: last chance
+					window.AshNazgModal.confirm({
+						title: 'Final Confirmation',
+						message: '<p>This is your <strong>LAST CHANCE</strong> to cancel.</p>' +
+							'<p>Click <strong>DELETE FOREVER</strong> to permanently delete your site.</p>',
+						confirmText: 'DELETE FOREVER',
+						cancelText: 'Keep My Site',
+						type: 'danger',
+						onConfirm: function() {
+							performDeletion();
+						},
+						onCancel: function() {
+							showCancelMessage();
+						}
+					});
+				},
+				onCancel: function() {
+					showCancelMessage();
+				}
+			});
 		});
 
-		// Modal confirm button - proceed to second confirmation
-		$modalConfirm.on('click', function() {
-			$modal.hide();
-
-			// Second confirmation (JavaScript alert)
-			if (!confirm(ashNazgDeleteSite.i18n.secondConfirmMessage)) {
-				showCancelMessage();
-				return;
-			}
-
-			// Disable button and show loading state
+		function performDeletion() {
 			$button.prop('disabled', true).text(ashNazgDeleteSite.i18n.deleting);
 
-			// Perform deletion
 			$.ajax({
 				url: ashNazgDeleteSite.ajaxUrl,
 				type: 'POST',
@@ -67,7 +81,6 @@
 							message: ashNazgDeleteSite.i18n.deleted,
 							type: 'info',
 							onClose: function() {
-								// Redirect to Pantheon sites dashboard
 								window.location.href = 'https://dashboard.pantheon.io/sites';
 							}
 						});
@@ -89,33 +102,17 @@
 					$button.prop('disabled', false).text('DELETE SITE');
 				}
 			});
-		});
-
-		// Modal cancel button - show "whew" message
-		$modalCancel.on('click', function() {
-			$modal.hide();
-			showCancelMessage();
-		});
-
-		// Close modal if clicking outside
-		$modal.on('click', function(e) {
-			if (e.target === this) {
-				$modal.hide();
-				showCancelMessage();
-			}
-		});
+		}
 
 		function showCancelMessage() {
 			$cancelMessage.show();
 			$input.val('');
 			$button.prop('disabled', true);
 
-			// Scroll to message
 			$('html, body').animate({
 				scrollTop: $cancelMessage.offset().top - 100
 			}, 500);
 
-			// Hide message after 8 seconds
 			setTimeout(function() {
 				$cancelMessage.fadeOut();
 			}, 8000);
