@@ -729,6 +729,74 @@ function map_local_env_to_dev( $env ) {
 }
 
 /**
+ * Get the current git branch by reading .git/HEAD directly.
+ *
+ * Avoids shelling out. Returns null when not in a git repo or in detached HEAD state.
+ *
+ * @return string|null Branch name or null.
+ */
+function get_current_git_branch() {
+	$head_file = ABSPATH . '.git/HEAD';
+	if ( ! file_exists( $head_file ) ) {
+		return null;
+	}
+	$head = trim( file_get_contents( $head_file ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+	if ( 0 === strpos( $head, 'ref: refs/heads/' ) ) {
+		return substr( $head, strlen( 'ref: refs/heads/' ) );
+	}
+	return null;
+}
+
+/**
+ * Get the effective Pantheon environment, resolving multidev context for local environments.
+ *
+ * When running locally (Lando, ddev, etc.), reads the current git branch. If that
+ * branch corresponds to an existing Pantheon multidev, returns the multidev name.
+ * Falls back to 'dev' when on master/main or when no matching environment exists.
+ *
+ * On actual Pantheon environments this is identical to get_pantheon_environment().
+ *
+ * @param string|null $site_id Site UUID. Auto-detected if null.
+ * @return string Environment name.
+ */
+function get_effective_environment( $site_id = null ) {
+	static $cached = null;
+	if ( null !== $cached ) {
+		return $cached;
+	}
+
+	$env = get_pantheon_environment();
+
+	$local_env_names = [ 'lando', 'local', 'localhost', 'ddev' ];
+	if ( ! $env || ! in_array( strtolower( $env ), $local_env_names, true ) ) {
+		$cached = $env ?: 'dev';
+		return $cached;
+	}
+
+	// Read the git branch to detect multidev context locally.
+	$branch = get_current_git_branch();
+	if ( ! $branch || in_array( $branch, [ 'master', 'main' ], true ) ) {
+		$cached = 'dev';
+		return $cached;
+	}
+
+	// Only use the branch name if the corresponding Pantheon environment actually exists.
+	if ( ! $site_id ) {
+		$site_id = get_pantheon_site_id();
+	}
+	if ( $site_id ) {
+		$environments = get_environments( $site_id );
+		if ( ! is_wp_error( $environments ) && isset( $environments[ $branch ] ) ) {
+			$cached = $branch;
+			return $cached;
+		}
+	}
+
+	$cached = 'dev';
+	return $cached;
+}
+
+/**
  * Clear all API caches.
  *
  * @return void

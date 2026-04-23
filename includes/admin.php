@@ -1800,7 +1800,7 @@ function render_development_page() {
 	}
 
 	$site_id = API\get_pantheon_site_id();
-	$environment = API\get_pantheon_environment();
+	$environment = API\get_effective_environment( $site_id );
 
 	// Get commits per page from screen options.
 	$commits_per_page = get_commits_per_page();

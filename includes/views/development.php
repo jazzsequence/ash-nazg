@@ -39,7 +39,7 @@ use Pantheon\AshNazg\Helpers;
 
 		<!-- Merge Dev to Multidev (only shown in multidev environments) -->
 		<?php
-		$current_env = API\get_pantheon_environment();
+		$current_env = $environment; // Already resolved to effective env (multidev branch if applicable).
 		$is_multidev = Helpers\is_multidev_environment( $current_env );
 		?>
 		<?php
