@@ -234,6 +234,50 @@ use Pantheon\AshNazg\Helpers;
 		</div>
 		<?php endif; ?>
 
+		<!-- Unpushed Local Commits -->
+		<?php if ( is_array( $local_unpushed ) && ! empty( $local_unpushed ) ) : ?>
+		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
+			<h2><?php esc_html_e( 'Unpushed Local Commits', 'ash-nazg' ); ?></h2>
+			<p>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: %d: number of commits not yet pushed to remote */
+						_n(
+							'%d commit has not been pushed to Pantheon. Push before deploying.',
+							'%d commits have not been pushed to Pantheon. Push before deploying.',
+							count( $local_unpushed ),
+							'ash-nazg'
+						),
+						count( $local_unpushed )
+					)
+				);
+				?>
+			</p>
+			<ul>
+				<?php foreach ( array_slice( $local_unpushed, 0, 10 ) as $commit ) : ?>
+					<li>
+						<code><?php echo esc_html( substr( $commit['hash'] ?? '', 0, 8 ) ); ?></code>
+						&mdash; <?php echo esc_html( $commit['message'] ?? '' ); ?>
+					</li>
+				<?php endforeach; ?>
+				<?php if ( count( $local_unpushed ) > 10 ) : ?>
+					<li>
+						<?php
+						echo esc_html(
+							sprintf(
+								/* translators: %d: number of additional commits not shown */
+								__( '…and %d more.', 'ash-nazg' ),
+								count( $local_unpushed ) - 10
+							)
+						);
+						?>
+					</li>
+				<?php endif; ?>
+			</ul>
+		</div>
+		<?php endif; ?>
+
 		<!-- Code Deployment -->
 		<?php
 		// Check if dev has ANY changes for test (even 1 commit).

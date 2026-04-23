@@ -338,4 +338,87 @@ class Test_Git_API extends TestCase {
 			'get_local_git_diffstat must not use --no-color (rejected by older git versions)'
 		);
 	}
+
+	/**
+	 * Test that get_local_git_unpushed and parse_git_log_lines exist.
+	 */
+	public function test_local_git_unpushed_functions_exist() {
+		$this->assertTrue(
+			function_exists( 'Pantheon\AshNazg\API\get_local_git_unpushed' ),
+			'get_local_git_unpushed function should exist'
+		);
+		$this->assertTrue(
+			function_exists( 'Pantheon\AshNazg\API\parse_git_log_lines' ),
+			'parse_git_log_lines function should exist'
+		);
+	}
+
+	/**
+	 * Test parse_git_log_lines parses hash and message correctly.
+	 */
+	public function test_parse_git_log_lines_parses_commit() {
+		$hash   = 'abc123def456abc123def456abc123def456abc1';
+		$result = \Pantheon\AshNazg\API\parse_git_log_lines(
+			[ $hash . '|Fix upstream updates' ]
+		);
+		$this->assertCount( 1, $result );
+		$this->assertSame( $hash, $result[0]['hash'] );
+		$this->assertSame( 'Fix upstream updates', $result[0]['message'] );
+	}
+
+	/**
+	 * Test parse_git_log_lines handles multiple commits.
+	 */
+	public function test_parse_git_log_lines_multiple_commits() {
+		$lines  = [
+			'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|First commit',
+			'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|Second commit',
+		];
+		$result = \Pantheon\AshNazg\API\parse_git_log_lines( $lines );
+		$this->assertCount( 2, $result );
+		$this->assertSame( 'First commit', $result[0]['message'] );
+		$this->assertSame( 'Second commit', $result[1]['message'] );
+	}
+
+	/**
+	 * Test parse_git_log_lines returns empty array for empty input.
+	 */
+	public function test_parse_git_log_lines_empty_input() {
+		$this->assertSame( [], \Pantheon\AshNazg\API\parse_git_log_lines( [] ) );
+	}
+
+	/**
+	 * Test parse_git_log_lines handles message with pipe characters.
+	 */
+	public function test_parse_git_log_lines_message_with_pipe() {
+		$hash   = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+		$result = \Pantheon\AshNazg\API\parse_git_log_lines(
+			[ $hash . '|Feat: foo|bar (message with pipe)' ]
+		);
+		$this->assertSame( 'Feat: foo|bar (message with pipe)', $result[0]['message'] );
+	}
+
+	/**
+	 * Test get_local_git_unpushed uses safe.directory for container compatibility.
+	 */
+	public function test_local_git_unpushed_uses_safe_directory() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+		$this->assertMatchesRegularExpression(
+			'/function get_local_git_unpushed.*safe\.directory/s',
+			$file_contents,
+			'get_local_git_unpushed must use safe.directory for containerised environments'
+		);
+	}
+
+	/**
+	 * Test get_local_git_unpushed uses @{u} to compare against remote tracking branch.
+	 */
+	public function test_local_git_unpushed_compares_to_upstream() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+		$this->assertMatchesRegularExpression(
+			'/function get_local_git_unpushed.*@\{u\}/s',
+			$file_contents,
+			'get_local_git_unpushed must use @{u} to find commits not on the remote'
+		);
+	}
 }

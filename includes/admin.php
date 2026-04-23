@@ -1934,10 +1934,12 @@ function render_development_page() {
 		}
 	}
 
-	// Get local git diffstat when running in a local environment.
-	$local_diffstat = null;
+	// Get local git diffstat and unpushed commits when running in a local environment.
+	$local_diffstat  = null;
+	$local_unpushed  = null;
 	if ( Helpers\is_local_environment( API\get_pantheon_environment() ) ) {
 		$local_diffstat = API\get_local_git_diffstat();
+		$local_unpushed = API\get_local_git_unpushed();
 	}
 
 	// Check initialization status for test and live environments.

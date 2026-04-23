@@ -830,6 +830,82 @@ function parse_git_porcelain_lines( $lines ) {
 }
 
 /**
+ * Get commits that exist locally but have not been pushed to the remote tracking branch.
+ *
+ * Uses `git log @{u}..` which compares the current branch HEAD against its upstream.
+ * Returns null when there is no remote tracking branch configured or git is unavailable.
+ * Returns an empty array when all commits have been pushed.
+ *
+ * @return array[]|null Array of ['hash' => string, 'message' => string], or null on error.
+ */
+function get_local_git_unpushed() {
+	if ( ! is_dir( ABSPATH . '.git' ) ) {
+		return null;
+	}
+
+	$git_bin = 'git';
+	if ( function_exists( 'shell_exec' ) ) { // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec
+		$which = trim( (string) shell_exec( 'which git 2>/dev/null' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec
+		if ( $which ) {
+			$git_bin = $which;
+		}
+	}
+
+	$safe_dir = rtrim( ABSPATH, '/' );
+	$cmd      = escapeshellarg( $git_bin )
+		. ' -c safe.directory=' . escapeshellarg( $safe_dir )
+		. ' -C ' . escapeshellarg( ABSPATH )
+		. ' log @{u}.. --format="%H|%s" 2>/dev/null';
+
+	if ( function_exists( 'exec' ) ) { // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
+		$output      = [];
+		$return_code = 0;
+		exec( $cmd, $output, $return_code ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
+		if ( 0 !== $return_code ) {
+			return null;
+		}
+	} elseif ( function_exists( 'shell_exec' ) ) {
+		$raw = shell_exec( $cmd ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec
+		if ( null === $raw || false === $raw ) {
+			return null;
+		}
+		$output = array_filter( explode( "\n", trim( $raw ) ) );
+	} else {
+		return null;
+	}
+
+	return parse_git_log_lines( array_filter( (array) $output ) );
+}
+
+/**
+ * Parse raw lines from `git log --format="%H|%s"` into structured commit data.
+ *
+ * The pipe separator is used with explode limit=2 so message text containing
+ * pipes is preserved correctly.
+ *
+ * @param array $lines Raw output lines.
+ * @return array[] Array of ['hash' => string, 'message' => string].
+ */
+function parse_git_log_lines( $lines ) {
+	$commits = [];
+	foreach ( (array) $lines as $line ) {
+		$line = trim( $line );
+		if ( ! $line ) {
+			continue;
+		}
+		$parts = explode( '|', $line, 2 );
+		if ( count( $parts ) < 2 ) {
+			continue;
+		}
+		$commits[] = [
+			'hash'    => trim( $parts[0] ),
+			'message' => trim( $parts[1] ),
+		];
+	}
+	return $commits;
+}
+
+/**
  * Get the effective Pantheon environment, resolving multidev context for local environments.
  *
  * When running locally (Lando, ddev, etc.), reads the current git branch. If that
