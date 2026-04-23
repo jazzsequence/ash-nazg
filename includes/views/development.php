@@ -479,7 +479,13 @@ use Pantheon\AshNazg\Helpers;
 
 		<!-- Environment Commits -->
 		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
-			<h2><?php esc_html_e( 'Recent Commits', 'ash-nazg' ); ?></h2>
+			<div class="ash-nazg-flex-between ash-nazg-mb-10">
+				<h2 class="ash-nazg-m-0"><?php esc_html_e( 'Recent Commits', 'ash-nazg' ); ?></h2>
+				<a href="<?php echo esc_url( add_query_arg( 'refresh_environments', '1' ) ); ?>" class="button button-secondary">
+					<span class="dashicons dashicons-update"></span>
+					<?php esc_html_e( 'Refresh', 'ash-nazg' ); ?>
+				</a>
+			</div>
 			<?php if ( is_wp_error( $commits ) ) : ?>
 				<div class="notice notice-error">
 					<p>
