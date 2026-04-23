@@ -35,6 +35,9 @@
 	<rule ref="WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec">
 		<exclude-pattern>*/includes/api.php</exclude-pattern>
 	</rule>
+	<rule ref="WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec">
+		<exclude-pattern>*/includes/api.php</exclude-pattern>
+	</rule>
 	<rule ref="Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed">
 		<exclude-pattern>*/includes/multisite.php</exclude-pattern>
 	</rule>

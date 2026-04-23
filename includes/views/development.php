@@ -98,6 +98,12 @@ use Pantheon\AshNazg\Helpers;
 				<p><strong>update_count:</strong> <?php echo absint( $update_count ); ?></p>
 				<p><strong>behind:</strong> <?php echo absint( $behind ); ?></p>
 				<p><strong>updates_list count:</strong> <?php echo count( $updates_list ); ?></p>
+				<h3>5. Local git diffstat:</h3>
+				<p><strong>exec() available:</strong> <?php echo function_exists( 'exec' ) ? 'yes' : 'no'; ?></p>
+				<p><strong>shell_exec() available:</strong> <?php echo function_exists( 'shell_exec' ) ? 'yes' : 'no'; ?></p>
+				<p><strong>ABSPATH:</strong> <?php echo esc_html( ABSPATH ); ?></p>
+				<p><strong>local_diffstat:</strong></p>
+				<pre><?php echo esc_html( print_r( $local_diffstat, true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r ?></pre>
 			</div>
 			<?php
 		endif;
@@ -119,6 +125,15 @@ use Pantheon\AshNazg\Helpers;
 						$update_count
 					)
 				);
+				if ( $behind > 0 ) {
+					echo ' ' . esc_html(
+						sprintf(
+							/* translators: %d: number of commits the environment is behind upstream */
+							_n( '(You are %d commit behind.)', '(You are %d commits behind.)', $behind, 'ash-nazg' ),
+							$behind
+						)
+					);
+				}
 				?>
 			</p>
 			<table class="widefat">

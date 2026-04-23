@@ -6,6 +6,32 @@
 	'use strict';
 
 	$(document).ready(function() {
+		// Move our notice to sit directly after the "Last checked on..." paragraph,
+		// which is the natural position between the version info and the update sections.
+		var $notice = $('#ash-nazg-upstream-notice');
+		if ($notice.length) {
+			$notice.detach();
+			// Primary: after the "Last checked on... Check again." paragraph.
+			var $lastChecked = $('p.update-last-checked');
+			if ($lastChecked.length) {
+				$lastChecked.after($notice);
+			} else {
+				// Fallback: after the "Current version:" h2.
+				var $version = $('h2.wp-current-version');
+				if ($version.length) {
+					$version.after($notice);
+				} else {
+					// Last resort: before the first h2 in the page content.
+					var $firstH2 = $('div.wrap h2').first();
+					if ($firstH2.length) {
+						$firstH2.before($notice);
+					} else {
+						$('div.wrap').append($notice);
+					}
+				}
+			}
+		}
+
 		$('#ash-nazg-apply-upstream-updates-core').on('click', function(e) {
 			e.preventDefault();
 

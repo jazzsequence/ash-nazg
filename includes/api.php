@@ -759,19 +759,23 @@ function get_current_git_branch() {
  * @return array|null Array of [ 'filename' => [ 'status' => 'M' ] ] or null.
  */
 function get_local_git_diffstat() {
-	if ( ! function_exists( 'exec' ) ) { // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
-		return null;
-	}
+	$cmd = 'git -C ' . escapeshellarg( ABSPATH ) . ' status --short 2>/dev/null';
 
-	$output      = [];
-	$return_code = 0;
-	exec( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
-		'git -C ' . escapeshellarg( ABSPATH ) . ' status --short 2>/dev/null',
-		$output,
-		$return_code
-	);
-
-	if ( 0 !== $return_code ) {
+	// Try exec() first; fall back to shell_exec() if exec() is disabled.
+	if ( function_exists( 'exec' ) ) { // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
+		$output      = [];
+		$return_code = 0;
+		exec( $cmd, $output, $return_code ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
+		if ( 0 !== $return_code ) {
+			return null;
+		}
+	} elseif ( function_exists( 'shell_exec' ) ) {
+		$raw = shell_exec( $cmd ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec
+		if ( null === $raw || false === $raw ) {
+			return null;
+		}
+		$output = array_filter( explode( "\n", trim( $raw ) ) );
+	} else {
 		return null;
 	}
 

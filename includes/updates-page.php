@@ -136,7 +136,7 @@ function render_notice() {
  */
 function render_updates_page_section( $commits, $behind, $has_updates, $dev_page_url ) {
 	?>
-	<div class="notice notice-warning">
+	<div id="ash-nazg-upstream-notice" class="notice notice-warning">
 		<h3><?php esc_html_e( 'Pantheon Upstream Updates', 'ash-nazg' ); ?></h3>
 		<?php if ( $has_updates ) : ?>
 			<p>
