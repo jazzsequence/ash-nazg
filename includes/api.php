@@ -773,7 +773,11 @@ function get_local_git_diffstat() {
 		}
 	}
 
-	$cmd = escapeshellarg( $git_bin ) . ' -C ' . escapeshellarg( ABSPATH ) . ' status --short 2>/dev/null';
+	/*
+	 * --no-color prevents ANSI codes that break positional parsing.
+	 * --porcelain is the stable machine-readable format.
+	 */
+	$cmd = escapeshellarg( $git_bin ) . ' -C ' . escapeshellarg( ABSPATH ) . ' status --porcelain --no-color 2>/dev/null';
 
 	// Try exec() first; fall back to shell_exec() if exec() is disabled.
 	if ( function_exists( 'exec' ) ) { // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
@@ -800,14 +804,17 @@ function get_local_git_diffstat() {
 
 	$files = [];
 	foreach ( $output as $line ) {
-		// git status --short: two-character XY status code followed by a space and filename.
-		if ( strlen( $line ) < 3 ) {
+		/*
+		 * Porcelain: XY<space>filename. Regex avoids fixed substr offsets
+		 * that break if color codes are present.
+		 */
+		if ( ! preg_match( '/^([ACDMRUT?! ]{2})\s(.+)$/', $line, $matches ) ) {
 			continue;
 		}
-		$status   = trim( substr( $line, 0, 2 ) );
-		$filename = trim( substr( $line, 3 ) );
+		$status   = trim( $matches[1] );
+		$filename = trim( $matches[2] );
 		if ( $filename ) {
-			$files[ $filename ] = [ 'status' => $status ];
+			$files[ $filename ] = [ 'status' => $status ?: '?' ];
 		}
 	}
 
