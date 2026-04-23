@@ -114,19 +114,11 @@ use Pantheon\AshNazg\Helpers;
 				<?php
 				echo esc_html(
 					sprintf(
-						/* translators: %d: number of upstream updates */
-						_n( '%d upstream update available:', '%d upstream updates available:', $update_count, 'ash-nazg' ),
+						/* translators: %d: number of upstream commits available */
+						_n( '%d upstream update available.', '%d upstream updates available.', $update_count, 'ash-nazg' ),
 						$update_count
 					)
 				);
-				if ( $behind > 0 ) {
-					echo ' ';
-					printf(
-						/* translators: %d: number of commits behind */
-						esc_html__( '(You are %d commit behind)', 'ash-nazg' ),
-						absint( $behind )
-					);
-				}
 				?>
 			</p>
 			<table class="widefat">
