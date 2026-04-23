@@ -774,10 +774,15 @@ function get_local_git_diffstat() {
 	}
 
 	/*
-	 * --porcelain: stable machine-readable format; suppresses color by design.
-	 * Do not add --no-color — some git versions reject it for this subcommand.
+	 * -c safe.directory bypasses git's ownership check which blocks access in
+	 * containerised environments (e.g. Lando) where PHP runs as a different
+	 * user than who owns the repository. --porcelain is stable and color-free.
 	 */
-	$cmd = escapeshellarg( $git_bin ) . ' -C ' . escapeshellarg( ABSPATH ) . ' status --porcelain 2>/dev/null';
+	$safe_dir = rtrim( ABSPATH, '/' );
+	$cmd      = escapeshellarg( $git_bin )
+		. ' -c safe.directory=' . escapeshellarg( $safe_dir )
+		. ' -C ' . escapeshellarg( ABSPATH )
+		. ' status --porcelain 2>/dev/null';
 
 	// Try exec() first; fall back to shell_exec() if exec() is disabled.
 	if ( function_exists( 'exec' ) ) { // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
@@ -798,16 +803,20 @@ function get_local_git_diffstat() {
 		return null;
 	}
 
-	if ( empty( $output ) ) {
-		return [];
-	}
+	return parse_git_porcelain_lines( $output );
+}
 
+/**
+ * Parse raw lines from `git status --porcelain` into a filename-keyed array.
+ *
+ * Extracted so it can be unit-tested independently of exec().
+ *
+ * @param array $lines Raw output lines from git status --porcelain.
+ * @return array Map of filename => ['status' => 'XY'] for every changed file.
+ */
+function parse_git_porcelain_lines( $lines ) {
 	$files = [];
-	foreach ( $output as $line ) {
-		/*
-		 * Porcelain: XY<space>filename. Regex avoids fixed substr offsets
-		 * that break if color codes are present.
-		 */
+	foreach ( (array) $lines as $line ) {
 		if ( ! preg_match( '/^([ACDMRUT?! ]{2})\s(.+)$/', $line, $matches ) ) {
 			continue;
 		}
@@ -817,7 +826,6 @@ function get_local_git_diffstat() {
 			$files[ $filename ] = [ 'status' => $status ?: '?' ];
 		}
 	}
-
 	return $files;
 }
 

@@ -222,15 +222,120 @@ class Test_Git_API extends TestCase {
 		);
 
 		$this->assertMatchesRegularExpression(
-			'/function get_upstream_updates.*set_transient.*HOUR_IN_SECONDS/s',
+			'/function get_upstream_updates.*set_transient.*MINUTE_IN_SECONDS/s',
 			$file_contents,
-			'get_upstream_updates should cache for 1 hour'
+			'get_upstream_updates should cache for 5 minutes (short TTL so reverts self-heal)'
 		);
 
 		$this->assertMatchesRegularExpression(
 			'/function get_code_tips.*set_transient.*HOUR_IN_SECONDS/s',
 			$file_contents,
 			'get_code_tips should cache for 1 hour'
+		);
+	}
+
+	/**
+	 * Test that get_local_git_diffstat and parse_git_porcelain_lines exist.
+	 */
+	public function test_local_git_diffstat_functions_exist() {
+		$this->assertTrue(
+			function_exists( 'Pantheon\AshNazg\API\get_local_git_diffstat' ),
+			'get_local_git_diffstat function should exist'
+		);
+		$this->assertTrue(
+			function_exists( 'Pantheon\AshNazg\API\parse_git_porcelain_lines' ),
+			'parse_git_porcelain_lines function should exist'
+		);
+	}
+
+	/**
+	 * Test porcelain parser handles unstaged modifications (" M filename").
+	 */
+	public function test_parse_porcelain_unstaged_modification() {
+		$result = \Pantheon\AshNazg\API\parse_git_porcelain_lines(
+			[ ' M wp-content/plugins/ash-nazg/includes/api.php' ]
+		);
+		$this->assertArrayHasKey( 'wp-content/plugins/ash-nazg/includes/api.php', $result );
+		$this->assertSame( 'M', $result['wp-content/plugins/ash-nazg/includes/api.php']['status'] );
+	}
+
+	/**
+	 * Test porcelain parser handles staged modifications ("M  filename").
+	 */
+	public function test_parse_porcelain_staged_modification() {
+		$result = \Pantheon\AshNazg\API\parse_git_porcelain_lines(
+			[ 'M  wp-content/plugins/ash-nazg/includes/api.php' ]
+		);
+		$this->assertArrayHasKey( 'wp-content/plugins/ash-nazg/includes/api.php', $result );
+		$this->assertSame( 'M', $result['wp-content/plugins/ash-nazg/includes/api.php']['status'] );
+	}
+
+	/**
+	 * Test porcelain parser handles new staged files ("A  filename").
+	 */
+	public function test_parse_porcelain_staged_new_file() {
+		$result = \Pantheon\AshNazg\API\parse_git_porcelain_lines(
+			[ 'A  wp-content/plugins/ash-nazg/assets/css/modal.css' ]
+		);
+		$this->assertArrayHasKey( 'wp-content/plugins/ash-nazg/assets/css/modal.css', $result );
+		$this->assertSame( 'A', $result['wp-content/plugins/ash-nazg/assets/css/modal.css']['status'] );
+	}
+
+	/**
+	 * Test porcelain parser handles untracked files ("?? filename").
+	 */
+	public function test_parse_porcelain_untracked_file() {
+		$result = \Pantheon\AshNazg\API\parse_git_porcelain_lines(
+			[ '?? wp-content/plugins/ash-nazg/reviewer-approved' ]
+		);
+		$this->assertArrayHasKey( 'wp-content/plugins/ash-nazg/reviewer-approved', $result );
+		$this->assertSame( '??', $result['wp-content/plugins/ash-nazg/reviewer-approved']['status'] );
+	}
+
+	/**
+	 * Test porcelain parser handles both staged and unstaged on same file ("MM filename").
+	 */
+	public function test_parse_porcelain_staged_and_unstaged() {
+		$result = \Pantheon\AshNazg\API\parse_git_porcelain_lines(
+			[ 'MM wp-content/plugins/ash-nazg/includes/api.php' ]
+		);
+		$this->assertArrayHasKey( 'wp-content/plugins/ash-nazg/includes/api.php', $result );
+		$this->assertSame( 'MM', $result['wp-content/plugins/ash-nazg/includes/api.php']['status'] );
+	}
+
+	/**
+	 * Test porcelain parser returns empty array for empty input.
+	 */
+	public function test_parse_porcelain_empty_input() {
+		$this->assertSame( [], \Pantheon\AshNazg\API\parse_git_porcelain_lines( [] ) );
+	}
+
+	/**
+	 * Test get_local_git_diffstat uses safe.directory to handle containerised environments.
+	 */
+	public function test_local_git_diffstat_uses_safe_directory() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+		$this->assertStringContainsString(
+			'safe.directory',
+			$file_contents,
+			'get_local_git_diffstat must pass safe.directory to git to work in containers'
+		);
+	}
+
+	/**
+	 * Test get_local_git_diffstat uses porcelain format (not --no-color which some versions reject).
+	 */
+	public function test_local_git_diffstat_uses_porcelain_not_no_color() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+		$this->assertStringContainsString(
+			'--porcelain',
+			$file_contents,
+			'get_local_git_diffstat should use --porcelain for stable output'
+		);
+		$this->assertStringNotContainsString(
+			'--no-color',
+			$file_contents,
+			'get_local_git_diffstat must not use --no-color (rejected by older git versions)'
 		);
 	}
 }
