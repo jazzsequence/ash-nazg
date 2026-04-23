@@ -102,6 +102,8 @@ use Pantheon\AshNazg\Helpers;
 				<p><strong>exec() available:</strong> <?php echo function_exists( 'exec' ) ? 'yes' : 'no'; ?></p>
 				<p><strong>shell_exec() available:</strong> <?php echo function_exists( 'shell_exec' ) ? 'yes' : 'no'; ?></p>
 				<p><strong>ABSPATH:</strong> <?php echo esc_html( ABSPATH ); ?></p>
+				<p><strong>.git dir exists:</strong> <?php echo is_dir( ABSPATH . '.git' ) ? 'yes' : 'no'; ?></p>
+				<p><strong>git binary:</strong> <?php echo esc_html( function_exists( 'shell_exec' ) ? trim( (string) shell_exec( 'which git 2>/dev/null' ) ) : 'shell_exec unavailable' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec ?></p>
 				<p><strong>local_diffstat:</strong></p>
 				<pre><?php echo esc_html( print_r( $local_diffstat, true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r ?></pre>
 			</div>

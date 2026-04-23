@@ -759,7 +759,21 @@ function get_current_git_branch() {
  * @return array|null Array of [ 'filename' => [ 'status' => 'M' ] ] or null.
  */
 function get_local_git_diffstat() {
-	$cmd = 'git -C ' . escapeshellarg( ABSPATH ) . ' status --short 2>/dev/null';
+	// Bail early if ABSPATH is not a git repository root.
+	if ( ! is_dir( ABSPATH . '.git' ) ) {
+		return null;
+	}
+
+	// Resolve the git binary — PHP's exec() PATH may not include /usr/bin.
+	$git_bin = 'git';
+	if ( function_exists( 'shell_exec' ) ) { // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec
+		$which = trim( (string) shell_exec( 'which git 2>/dev/null' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec
+		if ( $which ) {
+			$git_bin = $which;
+		}
+	}
+
+	$cmd = escapeshellarg( $git_bin ) . ' -C ' . escapeshellarg( ABSPATH ) . ' status --short 2>/dev/null';
 
 	// Try exec() first; fall back to shell_exec() if exec() is disabled.
 	if ( function_exists( 'exec' ) ) { // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
@@ -767,6 +781,7 @@ function get_local_git_diffstat() {
 		$return_code = 0;
 		exec( $cmd, $output, $return_code ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
 		if ( 0 !== $return_code ) {
+			\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'get_local_git_diffstat: git returned exit code %d', $return_code ) );
 			return null;
 		}
 	} elseif ( function_exists( 'shell_exec' ) ) {
