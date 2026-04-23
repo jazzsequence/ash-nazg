@@ -146,7 +146,9 @@ function render_notice() {
 function render_updates_page_section( $commits, $behind, $has_updates, $dev_page_url ) {
 	?>
 	<div id="ash-nazg-upstream-notice" class="notice notice-warning">
-		<h3><?php esc_html_e( 'Pantheon Upstream Updates', 'ash-nazg' ); ?></h3>
+		<p>
+			<strong><?php esc_html_e( 'Pantheon Upstream Updates', 'ash-nazg' ); ?></strong>
+		</p>
 		<?php if ( $has_updates ) : ?>
 			<p>
 				<?php
@@ -161,27 +163,18 @@ function render_updates_page_section( $commits, $behind, $has_updates, $dev_page
 				?>
 			</p>
 			<?php if ( ! empty( $commits ) ) : ?>
-				<ul>
-					<?php foreach ( array_slice( $commits, 0, 5 ) as $commit ) : ?>
-						<li>
-							<code><?php echo esc_html( substr( $commit['hash'] ?? '', 0, 8 ) ); ?></code>
-							&mdash; <?php echo esc_html( $commit['message'] ?? '' ); ?>
-						</li>
+				<p>
+					<?php foreach ( array_slice( $commits, 0, 5 ) as $i => $commit ) : ?>
+						<?php if ( $i > 0 ) : ?>
+							<br>
+						<?php endif; ?>
+						<code><?php echo esc_html( substr( $commit['hash'] ?? '', 0, 8 ) ); ?></code>
+						&mdash; <?php echo esc_html( $commit['message'] ?? '' ); ?>
 					<?php endforeach; ?>
 					<?php if ( count( $commits ) > 5 ) : ?>
-						<li>
-							<?php
-							echo esc_html(
-								sprintf(
-									/* translators: %d: number of additional commits not shown */
-									__( '…and %d more.', 'ash-nazg' ),
-									count( $commits ) - 5
-								)
-							);
-							?>
-						</li>
+						<br><?php echo esc_html( sprintf( /* translators: %d: number of additional commits not shown */ __( '…and %d more.', 'ash-nazg' ), count( $commits ) - 5 ) ); ?>
 					<?php endif; ?>
-				</ul>
+				</p>
 			<?php endif; ?>
 			<p>
 				<button type="button" id="ash-nazg-apply-upstream-updates-core" class="button button-primary">
