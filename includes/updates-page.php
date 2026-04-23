@@ -42,10 +42,26 @@ function enqueue_scripts( $hook ) {
 		return;
 	}
 
+	// Load standalone modal CSS (WP admin colors, no PDS dependency).
+	wp_enqueue_style(
+		'ash-nazg-modal',
+		ASH_NAZG_PLUGIN_URL . 'assets/css/modal.css',
+		[],
+		ASH_NAZG_VERSION
+	);
+
+	wp_enqueue_script(
+		'ash-nazg-modal',
+		ASH_NAZG_PLUGIN_URL . 'assets/js/modal.js',
+		[ 'jquery' ],
+		ASH_NAZG_VERSION,
+		true
+	);
+
 	wp_enqueue_script(
 		'ash-nazg-updates-page',
 		ASH_NAZG_PLUGIN_URL . 'assets/js/updates-page.js',
-		[ 'jquery' ],
+		[ 'jquery', 'ash-nazg-modal' ],
 		ASH_NAZG_VERSION,
 		true
 	);
@@ -60,7 +76,8 @@ function enqueue_scripts( $hook ) {
 			'clearCacheNonce' => wp_create_nonce( 'ash_nazg_clear_upstream_cache' ),
 			'i18n'            => [
 				'confirmApply' => __( 'Are you sure you want to apply upstream updates? This action cannot be undone.', 'ash-nazg' ),
-				'applying'     => __( 'Applying upstream updates…', 'ash-nazg' ),
+				'applying'     => __( 'Applying Upstream Updates…', 'ash-nazg' ),
+				'pleaseWait'   => __( 'Please wait while the updates are applied.', 'ash-nazg' ),
 				'applied'      => __( 'Upstream updates applied successfully!', 'ash-nazg' ),
 				'failed'       => __( 'Failed to apply upstream updates. Please try again or check the Pantheon dashboard.', 'ash-nazg' ),
 				'ajaxError'    => __( 'Request failed. Please try again.', 'ash-nazg' ),

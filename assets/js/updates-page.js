@@ -1,8 +1,5 @@
 /**
  * Pantheon upstream updates integration for the WordPress Updates page.
- *
- * Uses native browser dialogs intentionally — no plugin CSS is loaded on
- * WP core admin pages, so AshNazgModal cannot be used here.
  */
 
 (function($) {
@@ -10,6 +7,39 @@
 
 	if (typeof ashNazgUpdatesPage === 'undefined') {
 		return;
+	}
+
+	/**
+	 * Show a progress modal with an animated progress bar.
+	 * Matches showProgressModal() from development.js exactly.
+	 */
+	function showProgressModal(title, message) {
+		var modal   = $('<div class="ash-nazg-progress-modal"></div>');
+		var overlay = $('<div class="ash-nazg-progress-overlay"></div>');
+
+		var content = $('<div class="ash-nazg-progress-content"></div>');
+		content.append('<h2>' + title + '</h2>');
+		content.append('<p class="ash-nazg-progress-message">' + message + '</p>');
+		content.append('<div class="ash-nazg-progress-bar"><div class="ash-nazg-progress-fill"></div></div>');
+		content.append('<p class="ash-nazg-progress-percent">0%</p>');
+		content.append('<p class="ash-nazg-progress-status"></p>');
+
+		modal.append(content);
+		$('body').append(overlay).append(modal);
+
+		return {
+			updateProgress: function(percent, status) {
+				modal.find('.ash-nazg-progress-fill').css('width', percent + '%');
+				modal.find('.ash-nazg-progress-percent').text(percent + '%');
+				if (status) {
+					modal.find('.ash-nazg-progress-status').text(status);
+				}
+			},
+			close: function() {
+				modal.remove();
+				overlay.remove();
+			}
+		};
 	}
 
 	$(document).ready(function() {
@@ -38,14 +68,25 @@
 		$('#ash-nazg-apply-upstream-updates-core').on('click', function(e) {
 			e.preventDefault();
 
-			// Native confirm — no plugin CSS needed on WP core pages.
-			if (!window.confirm(ashNazgUpdatesPage.i18n.confirmApply)) {
-				return;
-			}
-
 			var $btn = $(this);
 			var originalText = $btn.text();
-			$btn.prop('disabled', true).text(ashNazgUpdatesPage.i18n.applying);
+
+			window.AshNazgModal.confirm({
+				message: ashNazgUpdatesPage.i18n.confirmApply,
+				type: 'warning',
+				onConfirm: function() {
+					executeApply($btn, originalText);
+				}
+			});
+		});
+
+		function executeApply($btn, originalText) {
+			$btn.prop('disabled', true);
+
+			var progressModal = showProgressModal(
+				ashNazgUpdatesPage.i18n.applying,
+				ashNazgUpdatesPage.i18n.pleaseWait
+			);
 
 			$.ajax({
 				url: ashNazgUpdatesPage.ajaxUrl,
@@ -59,14 +100,19 @@
 				},
 				success: function(response) {
 					if (response && response.success && response.data && response.data.workflow_id) {
-						pollWorkflow(response.data.workflow_id, response.data.site_id, $btn, originalText);
+						pollWorkflow(response.data.workflow_id, response.data.site_id, $btn, originalText, progressModal);
 					} else {
-						$btn.prop('disabled', false).text(originalText);
-						window.alert((response && response.data && response.data.message) || ashNazgUpdatesPage.i18n.failed);
+						progressModal.close();
+						$btn.prop('disabled', false);
+						window.AshNazgModal.alert({
+							message: (response && response.data && response.data.message) || ashNazgUpdatesPage.i18n.failed,
+							type: 'danger'
+						});
 					}
 				},
 				error: function(xhr) {
-					$btn.prop('disabled', false).text(originalText);
+					progressModal.close();
+					$btn.prop('disabled', false);
 					var msg = ashNazgUpdatesPage.i18n.ajaxError;
 					try {
 						var parsed = JSON.parse(xhr.responseText);
@@ -74,12 +120,12 @@
 							msg = parsed.data.message;
 						}
 					} catch (e) {}
-					window.alert(msg);
+					window.AshNazgModal.alert({ message: msg, type: 'danger' });
 				}
 			});
-		});
+		}
 
-		function pollWorkflow(workflowId, siteId, $btn, originalText) {
+		function pollWorkflow(workflowId, siteId, $btn, originalText, progressModal) {
 			var attempts    = 0;
 			var maxAttempts = 60;
 
@@ -96,29 +142,47 @@
 					},
 					success: function(response) {
 						if (!response || !response.success || !response.data) {
-							$btn.prop('disabled', false).text(originalText);
+							progressModal.close();
+							$btn.prop('disabled', false);
 							return;
 						}
 
 						var status = response.data;
+						var progress = 0;
+						if (status.step && status.operations && status.operations.length > 0) {
+							progress = Math.round((status.step / status.operations.length) * 100);
+						}
+						if (progress > 0) {
+							progressModal.updateProgress(progress, status.active_description || '');
+						}
 
 						if (status.result === 'succeeded') {
-							clearCacheAndReload($btn, originalText);
+							progressModal.updateProgress(100, '');
+							clearCacheAndComplete($btn, originalText, progressModal);
 						} else if (status.result === 'failed') {
-							$btn.prop('disabled', false).text(originalText);
-							window.alert(status.error || ashNazgUpdatesPage.i18n.failed);
+							progressModal.close();
+							$btn.prop('disabled', false);
+							window.AshNazgModal.alert({
+								message: status.error || ashNazgUpdatesPage.i18n.failed,
+								type: 'danger'
+							});
 						} else {
 							attempts++;
 							if (attempts < maxAttempts) {
 								setTimeout(checkStatus, 5000);
 							} else {
-								$btn.prop('disabled', false).text(originalText);
-								window.alert(ashNazgUpdatesPage.i18n.timeout);
+								progressModal.close();
+								$btn.prop('disabled', false);
+								window.AshNazgModal.alert({
+									message: ashNazgUpdatesPage.i18n.timeout,
+									type: 'warning'
+								});
 							}
 						}
 					},
 					error: function() {
-						$btn.prop('disabled', false).text(originalText);
+						progressModal.close();
+						$btn.prop('disabled', false);
 					}
 				});
 			}
@@ -126,7 +190,7 @@
 			checkStatus();
 		}
 
-		function clearCacheAndReload($btn, originalText) {
+		function clearCacheAndComplete($btn, originalText, progressModal) {
 			$.ajax({
 				url: ashNazgUpdatesPage.ajaxUrl,
 				type: 'POST',
@@ -136,9 +200,13 @@
 					nonce: ashNazgUpdatesPage.clearCacheNonce
 				},
 				complete: function() {
-					$btn.prop('disabled', false).text(originalText);
-					window.alert(ashNazgUpdatesPage.i18n.applied);
-					window.location.reload();
+					progressModal.close();
+					$btn.prop('disabled', false);
+					window.AshNazgModal.alert({
+						message: ashNazgUpdatesPage.i18n.applied,
+						type: 'info',
+						onClose: function() { window.location.reload(); }
+					});
 				}
 			});
 		}
