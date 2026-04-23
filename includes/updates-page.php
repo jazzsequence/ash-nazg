@@ -42,7 +42,14 @@ function enqueue_scripts( $hook ) {
 		return;
 	}
 
-	// Modal is loaded globally on ash-nazg pages but needs explicit load here.
+	// Styles and modal are normally loaded only on ash-nazg pages; register them here too.
+	wp_enqueue_style(
+		'ash-nazg-admin',
+		ASH_NAZG_PLUGIN_URL . 'assets/css/admin.css',
+		[],
+		ASH_NAZG_VERSION
+	);
+
 	wp_enqueue_script(
 		'ash-nazg-modal',
 		ASH_NAZG_PLUGIN_URL . 'assets/js/modal.js',
