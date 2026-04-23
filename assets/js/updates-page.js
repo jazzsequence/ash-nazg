@@ -5,15 +5,12 @@
 (function($) {
 	'use strict';
 
-	// Bail early if localization data is missing — prevents silent failures
-	// when the script loads on unexpected pages.
 	if (typeof ashNazgUpdatesPage === 'undefined') {
 		return;
 	}
 
 	$(document).ready(function() {
-		// Move our notice to sit directly after the "Last checked on..." paragraph,
-		// which is the natural position between the version info and the update sections.
+		// Move our notice to sit directly after the "Last checked on..." paragraph.
 		var $notice = $('#ash-nazg-upstream-notice');
 		if ($notice.length) {
 			$notice.detach();
@@ -39,20 +36,26 @@
 			e.preventDefault();
 
 			var $btn = $(this);
-			$btn.prop('disabled', true);
+			var originalText = $btn.text();
 
-			// Show progress modal immediately so the user has feedback.
-			window.AshNazgModal.alert({
-				title: ashNazgUpdatesPage.i18n.applying,
-				message: ashNazgUpdatesPage.i18n.pleaseWait,
-				type: 'info'
+			// Step 1: ask for confirmation, matching the Development page flow.
+			window.AshNazgModal.confirm({
+				message: ashNazgUpdatesPage.i18n.confirmApply,
+				type: 'warning',
+				confirmText: ashNazgUpdatesPage.i18n.confirmText,
+				onConfirm: function() {
+					executeApply($btn, originalText);
+				}
 			});
-			// Hide the OK button — modal should not be dismissable while in progress.
-			$('#ash-nazg-modal-confirm').prop('disabled', true).hide();
+		});
+
+		function executeApply($btn, originalText) {
+			$btn.prop('disabled', true).text(ashNazgUpdatesPage.i18n.applying);
 
 			$.ajax({
 				url: ashNazgUpdatesPage.ajaxUrl,
 				type: 'POST',
+				dataType: 'json',
 				data: {
 					action: 'ash_nazg_apply_upstream_updates',
 					nonce: ashNazgUpdatesPage.applyNonce,
@@ -60,29 +63,31 @@
 					xoption: false
 				},
 				success: function(response) {
-					if (response.success && response.data && response.data.workflow_id) {
-						pollWorkflow(response.data.workflow_id, response.data.site_id, $btn);
+					if (response && response.success && response.data && response.data.workflow_id) {
+						pollWorkflow(response.data.workflow_id, response.data.site_id, $btn, originalText);
 					} else {
-						window.AshNazgModal.close();
-						$btn.prop('disabled', false);
+						$btn.prop('disabled', false).text(originalText);
 						window.AshNazgModal.alert({
-							message: (response.data && response.data.message) || ashNazgUpdatesPage.i18n.failed,
+							message: (response && response.data && response.data.message) || ashNazgUpdatesPage.i18n.failed,
 							type: 'danger'
 						});
 					}
 				},
-				error: function() {
-					window.AshNazgModal.close();
-					$btn.prop('disabled', false);
-					window.AshNazgModal.alert({
-						message: ashNazgUpdatesPage.i18n.ajaxError,
-						type: 'danger'
-					});
+				error: function(xhr) {
+					$btn.prop('disabled', false).text(originalText);
+					var msg = ashNazgUpdatesPage.i18n.ajaxError;
+					try {
+						var parsed = JSON.parse(xhr.responseText);
+						if (parsed && parsed.data && parsed.data.message) {
+							msg = parsed.data.message;
+						}
+					} catch (e) {}
+					window.AshNazgModal.alert({ message: msg, type: 'danger' });
 				}
 			});
-		});
+		}
 
-		function pollWorkflow(workflowId, siteId, $btn) {
+		function pollWorkflow(workflowId, siteId, $btn, originalText) {
 			var attempts    = 0;
 			var maxAttempts = 60;
 
@@ -90,6 +95,7 @@
 				$.ajax({
 					url: ashNazgUpdatesPage.ajaxUrl,
 					type: 'POST',
+					dataType: 'json',
 					data: {
 						action: 'ash_nazg_get_workflow_status',
 						nonce: ashNazgUpdatesPage.workflowNonce,
@@ -97,24 +103,22 @@
 						workflow_id: workflowId
 					},
 					success: function(response) {
-						if (!response.success || !response.data) {
-							window.AshNazgModal.close();
-							$btn.prop('disabled', false);
+						if (!response || !response.success || !response.data) {
+							$btn.prop('disabled', false).text(originalText);
 							return;
 						}
 
 						var status = response.data;
 
 						if (status.result === 'succeeded') {
-							window.AshNazgModal.close();
+							$btn.prop('disabled', false).text(originalText);
 							window.AshNazgModal.alert({
 								message: ashNazgUpdatesPage.i18n.applied,
 								type: 'info',
 								onClose: function() { window.location.reload(); }
 							});
 						} else if (status.result === 'failed') {
-							window.AshNazgModal.close();
-							$btn.prop('disabled', false);
+							$btn.prop('disabled', false).text(originalText);
 							window.AshNazgModal.alert({
 								message: status.error || ashNazgUpdatesPage.i18n.failed,
 								type: 'danger'
@@ -124,8 +128,7 @@
 							if (attempts < maxAttempts) {
 								setTimeout(checkStatus, 5000);
 							} else {
-								window.AshNazgModal.close();
-								$btn.prop('disabled', false);
+								$btn.prop('disabled', false).text(originalText);
 								window.AshNazgModal.alert({
 									message: ashNazgUpdatesPage.i18n.timeout,
 									type: 'warning'
@@ -134,8 +137,7 @@
 						}
 					},
 					error: function() {
-						window.AshNazgModal.close();
-						$btn.prop('disabled', false);
+						$btn.prop('disabled', false).text(originalText);
 					}
 				});
 			}

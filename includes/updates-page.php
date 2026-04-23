@@ -74,12 +74,13 @@ function enqueue_scripts( $hook ) {
 			'applyNonce'    => wp_create_nonce( 'ash_nazg_apply_upstream_updates' ),
 			'workflowNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
 			'i18n'          => [
-				'applying'  => __( 'Applying Upstream Updates…', 'ash-nazg' ),
-				'pleaseWait' => __( 'Please wait while the updates are applied. This may take a minute.', 'ash-nazg' ),
-				'applied'   => __( 'Upstream updates applied successfully!', 'ash-nazg' ),
-				'failed'    => __( 'Failed to apply upstream updates. Please try again.', 'ash-nazg' ),
-				'ajaxError' => __( 'An error occurred. Please try again.', 'ash-nazg' ),
-				'timeout'   => __( 'Operation timed out. Please check the Pantheon dashboard.', 'ash-nazg' ),
+				'confirmApply' => __( 'Are you sure you want to apply upstream updates? This action cannot be undone.', 'ash-nazg' ),
+				'confirmText'  => __( 'Apply Updates', 'ash-nazg' ),
+				'applying'     => __( 'Applying…', 'ash-nazg' ),
+				'applied'      => __( 'Upstream updates applied successfully!', 'ash-nazg' ),
+				'failed'       => __( 'Failed to apply upstream updates. Please try again.', 'ash-nazg' ),
+				'ajaxError'    => __( 'An error occurred. Please try again.', 'ash-nazg' ),
+				'timeout'      => __( 'Operation timed out. Please check the Pantheon dashboard.', 'ash-nazg' ),
 			],
 		]
 	);
