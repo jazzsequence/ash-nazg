@@ -774,10 +774,10 @@ function get_local_git_diffstat() {
 	}
 
 	/*
-	 * --no-color prevents ANSI codes that break positional parsing.
-	 * --porcelain is the stable machine-readable format.
+	 * --porcelain: stable machine-readable format; suppresses color by design.
+	 * Do not add --no-color — some git versions reject it for this subcommand.
 	 */
-	$cmd = escapeshellarg( $git_bin ) . ' -C ' . escapeshellarg( ABSPATH ) . ' status --porcelain --no-color 2>/dev/null';
+	$cmd = escapeshellarg( $git_bin ) . ' -C ' . escapeshellarg( ABSPATH ) . ' status --porcelain 2>/dev/null';
 
 	// Try exec() first; fall back to shell_exec() if exec() is disabled.
 	if ( function_exists( 'exec' ) ) { // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
