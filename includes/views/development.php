@@ -482,7 +482,6 @@ use Pantheon\AshNazg\Helpers;
 			<div class="ash-nazg-flex-between ash-nazg-mb-10">
 				<h2 class="ash-nazg-m-0"><?php esc_html_e( 'Recent Commits', 'ash-nazg' ); ?></h2>
 				<a href="<?php echo esc_url( add_query_arg( 'refresh_environments', '1' ) ); ?>" class="button button-secondary">
-					<span class="dashicons dashicons-update"></span>
 					<?php esc_html_e( 'Refresh', 'ash-nazg' ); ?>
 				</a>
 			</div>

@@ -5,21 +5,6 @@
 
 @use '../variables' as *;
 
-/* Align dashicons inside WP buttons with the button label text */
-.button {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-
-	.dashicons {
-		flex-shrink: 0;
-		font-size: 18px;
-		width: 18px;
-		height: 18px;
-		line-height: 1;
-	}
-}
-
 /* Big round red delete button with depressible effect */
 .ash-nazg-big-red-button {
 	background: linear-gradient(to bottom, #dc3232 0%, #b92828 100%);
