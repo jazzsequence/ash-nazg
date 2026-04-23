@@ -562,13 +562,7 @@ use Pantheon\AshNazg\Helpers;
 		<div class="ash-nazg-dashboard">
 			<!-- Environments -->
 			<div class="ash-nazg-card ash-nazg-card-1-col">
-			<div class="ash-nazg-flex-between ash-nazg-mb-10">
-				<h2 class="ash-nazg-m-0"><?php esc_html_e( 'Environments', 'ash-nazg' ); ?></h2>
-				<a href="<?php echo esc_url( add_query_arg( 'refresh_environments', '1' ) ); ?>" class="button button-secondary">
-					<span class="dashicons dashicons-update"></span>
-					<?php esc_html_e( 'Refresh', 'ash-nazg' ); ?>
-				</a>
-			</div>
+			<h2><?php esc_html_e( 'Environments', 'ash-nazg' ); ?></h2>
 			<?php if ( is_wp_error( $environments ) ) : ?>
 				<div class="notice notice-error">
 					<p>
