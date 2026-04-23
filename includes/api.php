@@ -1518,14 +1518,17 @@ function get_upstream_updates( $site_id, $env = null ) {
 		return $result;
 	}
 
-	/* Cache for 1 hour. */
+	/*
+	 * Cache for 5 minutes.
+	 * Short TTL so a revert on Pantheon doesn't leave stale data for long.
+	 */
 	set_transient(
 		$cache_key,
 		[
 			'data' => $result,
 			'cached_at' => time(),
 		],
-		HOUR_IN_SECONDS
+		5 * MINUTE_IN_SECONDS
 	);
 
 	return $result;

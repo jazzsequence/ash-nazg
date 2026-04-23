@@ -1713,8 +1713,8 @@ function ajax_clear_upstream_cache() {
 		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
 	}
 
-	$site_id = API\get_pantheon_site_id();
-	$environment = API\get_pantheon_environment();
+	$site_id     = API\get_pantheon_site_id();
+	$environment = API\get_effective_environment( $site_id );
 
 	if ( ! $site_id ) {
 		wp_send_json_error( [ 'message' => __( 'Site ID not found.', 'ash-nazg' ) ] );
