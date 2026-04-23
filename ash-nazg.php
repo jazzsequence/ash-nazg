@@ -41,6 +41,7 @@ function bootstrap() {
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/api.php';
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/settings.php';
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/admin.php';
+	require_once ASH_NAZG_PLUGIN_DIR . 'includes/updates-page.php';
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/multisite.php';
 
 	// Initialize admin interface.
