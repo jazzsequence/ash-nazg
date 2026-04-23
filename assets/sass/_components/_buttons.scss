@@ -5,18 +5,18 @@
 
 @use '../variables' as *;
 
-/* Icon buttons — scoped class so WP's global .button styles are not affected */
+/*
+ * Icon buttons — scoped class so WP's global .button styles are not affected.
+ * WP's dashicons.css sets vertical-align:top; !important is required to override it
+ * regardless of CSS load order.
+ */
 .ash-nazg-btn-icon {
-	display: inline-flex !important;
-	align-items: center;
-	gap: 4px;
-
 	.dashicons {
-		flex-shrink: 0;
-		font-size: 18px;
-		width: 18px;
-		height: 18px;
-		line-height: 1;
+		vertical-align: middle !important;
+		font-size: 16px;
+		width: 16px;
+		height: 16px;
+		margin-top: -1px;
 	}
 }
 
