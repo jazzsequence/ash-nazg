@@ -82,6 +82,15 @@
   font-size: 18px;
 }
 
+.ash-nazg-card ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 10px 0;
+}
+.ash-nazg-card ul li {
+  padding: 4px 0;
+}
+
 /**
  * Admin styles for Ash-Nazg plugin.
  *

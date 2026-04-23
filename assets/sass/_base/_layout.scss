@@ -39,3 +39,13 @@
 	border-bottom: 1px solid $color-border-light;
 	font-size: $font-size-large;
 }
+
+.ash-nazg-card ul {
+	list-style: none;
+	padding-left: 0;
+	margin: $spacing-md 0;
+
+	li {
+		padding: $spacing-xs 0;
+	}
+}
