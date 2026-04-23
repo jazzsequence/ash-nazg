@@ -532,9 +532,12 @@ This runs PHPUnit with the configuration in `phpunit.xml.dist`.
 3. Write test methods prefixed with `test_`
 4. Run `composer test` to verify
 
-#### Playwright Tests (Future)
-- E2E tests for admin interface workflows
-- Test user flows: token setup, environment management, backup operations
+#### Playwright Tests (Future) — a11y + E2E
+- Requires WP Playground (`@wp-playground/cli`) as the runtime — no Docker
+- Requires a dedicated Pantheon fixture/demo site (real site UUID + machine token stored as CI secrets) so the plugin has live API data to render against
+- Blueprint mounts the plugin, sets `PANTHEON_SITE`/`PANTHEON_ENVIRONMENT` constants, and stores the machine token as a WordPress option on startup
+- Playwright runs axe-core accessibility audits against every admin page + key interactive states
+- E2E coverage: token setup, environment management, backup operations, upstream update flow
 - Test error states and user feedback
 - Cross-browser compatibility testing
 

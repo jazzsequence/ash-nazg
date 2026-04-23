@@ -1922,6 +1922,12 @@ function render_development_page() {
 		}
 	}
 
+	// Get local git diffstat when running in a local environment.
+	$local_diffstat = null;
+	if ( Helpers\is_local_environment( API\get_pantheon_environment() ) ) {
+		$local_diffstat = API\get_local_git_diffstat();
+	}
+
 	// Check initialization status for test and live environments.
 	$test_initialized = Helpers\is_environment_initialized( $site_id, 'test' );
 	$live_initialized = Helpers\is_environment_initialized( $site_id, 'live' );

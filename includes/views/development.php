@@ -340,6 +340,46 @@ use Pantheon\AshNazg\Helpers;
 			</div>
 		</div>
 
+		<!-- Uncommitted Local Changes -->
+		<?php if ( $local_diffstat && ! empty( $local_diffstat ) ) : ?>
+		<div class="ash-nazg-card ash-nazg-card-full<?php echo $update_count > 0 ? ' ash-nazg-mt-20' : ''; ?>">
+			<h2><?php esc_html_e( 'Uncommitted Local Changes', 'ash-nazg' ); ?></h2>
+			<p><?php esc_html_e( 'Your local working copy has uncommitted changes. Use git to commit or stash them before deploying.', 'ash-nazg' ); ?></p>
+
+			<h3><?php esc_html_e( 'Changed Files:', 'ash-nazg' ); ?></h3>
+			<?php
+			$local_file_list   = array_keys( $local_diffstat );
+			$local_shown_files  = array_slice( $local_file_list, 0, 10 );
+			$local_hidden_files = array_slice( $local_file_list, 10 );
+			?>
+			<ul>
+				<?php foreach ( $local_shown_files as $file ) : ?>
+					<li>
+						<code><?php echo esc_html( $file ); ?></code>
+						<?php if ( isset( $local_diffstat[ $file ]['status'] ) ) : ?>
+							<span class="ash-nazg-text-muted"> — <?php echo esc_html( $local_diffstat[ $file ]['status'] ); ?></span>
+						<?php endif; ?>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+			<?php if ( ! empty( $local_hidden_files ) ) : ?>
+				<details>
+					<summary><strong><?php echo esc_html( sprintf( /* translators: %d: number of hidden files */ __( 'Show %d more files', 'ash-nazg' ), count( $local_hidden_files ) ) ); ?></strong></summary>
+					<ul>
+						<?php foreach ( $local_hidden_files as $file ) : ?>
+							<li>
+								<code><?php echo esc_html( $file ); ?></code>
+								<?php if ( isset( $local_diffstat[ $file ]['status'] ) ) : ?>
+									<span class="ash-nazg-text-muted"> — <?php echo esc_html( $local_diffstat[ $file ]['status'] ); ?></span>
+								<?php endif; ?>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+				</details>
+			<?php endif; ?>
+		</div>
+		<?php endif; ?>
+
 		<!-- Uncommitted SFTP Changes -->
 		<?php if ( 'sftp' === $connection_mode && $diffstat && ! is_wp_error( $diffstat ) && ! empty( $diffstat ) ) : ?>
 		<div class="ash-nazg-card ash-nazg-card-full<?php echo $update_count > 0 ? ' ash-nazg-mt-20' : ''; ?>">

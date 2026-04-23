@@ -748,6 +748,54 @@ function get_current_git_branch() {
 }
 
 /**
+ * Get uncommitted git changes for local development environments.
+ *
+ * Runs `git status --short` to surface all modified, added, deleted, and
+ * untracked files. Returns an array keyed by filename — same shape as the
+ * SFTP diffstat response — so the view can reuse the same rendering logic.
+ *
+ * Returns null when exec() is unavailable or we are not in a git repo.
+ *
+ * @return array|null Array of [ 'filename' => [ 'status' => 'M' ] ] or null.
+ */
+function get_local_git_diffstat() {
+	if ( ! function_exists( 'exec' ) ) { // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
+		return null;
+	}
+
+	$output      = [];
+	$return_code = 0;
+	exec( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
+		'git -C ' . escapeshellarg( ABSPATH ) . ' status --short 2>/dev/null',
+		$output,
+		$return_code
+	);
+
+	if ( 0 !== $return_code ) {
+		return null;
+	}
+
+	if ( empty( $output ) ) {
+		return [];
+	}
+
+	$files = [];
+	foreach ( $output as $line ) {
+		// git status --short: two-character XY status code followed by a space and filename.
+		if ( strlen( $line ) < 3 ) {
+			continue;
+		}
+		$status   = trim( substr( $line, 0, 2 ) );
+		$filename = trim( substr( $line, 3 ) );
+		if ( $filename ) {
+			$files[ $filename ] = [ 'status' => $status ];
+		}
+	}
+
+	return $files;
+}
+
+/**
  * Get the effective Pantheon environment, resolving multidev context for local environments.
  *
  * When running locally (Lando, ddev, etc.), reads the current git branch. If that
