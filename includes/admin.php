@@ -1678,6 +1678,12 @@ function ajax_apply_upstream_updates() {
 		wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 	}
 
+	// Clear env-specific cache for multidev contexts (apply_upstream_updates clears the standard key).
+	$effective_env = API\get_effective_environment( $site_id );
+	if ( $effective_env && Helpers\is_multidev_environment( $effective_env ) ) {
+		delete_transient( sprintf( 'ash_nazg_upstream_updates_%s_%s', $site_id, $effective_env ) );
+	}
+
 	// Return workflow ID for polling.
 	wp_send_json_success(
 		[

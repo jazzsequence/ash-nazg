@@ -42,26 +42,10 @@ function enqueue_scripts( $hook ) {
 		return;
 	}
 
-	// Styles and modal are normally loaded only on ash-nazg pages; register them here too.
-	wp_enqueue_style(
-		'ash-nazg-admin',
-		ASH_NAZG_PLUGIN_URL . 'assets/css/admin.css',
-		[],
-		ASH_NAZG_VERSION
-	);
-
-	wp_enqueue_script(
-		'ash-nazg-modal',
-		ASH_NAZG_PLUGIN_URL . 'assets/js/modal.js',
-		[ 'jquery' ],
-		ASH_NAZG_VERSION,
-		true
-	);
-
 	wp_enqueue_script(
 		'ash-nazg-updates-page',
 		ASH_NAZG_PLUGIN_URL . 'assets/js/updates-page.js',
-		[ 'jquery', 'ash-nazg-modal' ],
+		[ 'jquery' ],
 		ASH_NAZG_VERSION,
 		true
 	);
@@ -70,17 +54,17 @@ function enqueue_scripts( $hook ) {
 		'ash-nazg-updates-page',
 		'ashNazgUpdatesPage',
 		[
-			'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
-			'applyNonce'    => wp_create_nonce( 'ash_nazg_apply_upstream_updates' ),
-			'workflowNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
-			'i18n'          => [
+			'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+			'applyNonce'      => wp_create_nonce( 'ash_nazg_apply_upstream_updates' ),
+			'workflowNonce'   => wp_create_nonce( 'ash_nazg_workflow_status' ),
+			'clearCacheNonce' => wp_create_nonce( 'ash_nazg_clear_upstream_cache' ),
+			'i18n'            => [
 				'confirmApply' => __( 'Are you sure you want to apply upstream updates? This action cannot be undone.', 'ash-nazg' ),
-				'confirmText'  => __( 'Apply Updates', 'ash-nazg' ),
-				'applying'     => __( 'Applying…', 'ash-nazg' ),
+				'applying'     => __( 'Applying upstream updates…', 'ash-nazg' ),
 				'applied'      => __( 'Upstream updates applied successfully!', 'ash-nazg' ),
-				'failed'       => __( 'Failed to apply upstream updates. Please try again.', 'ash-nazg' ),
-				'ajaxError'    => __( 'An error occurred. Please try again.', 'ash-nazg' ),
-				'timeout'      => __( 'Operation timed out. Please check the Pantheon dashboard.', 'ash-nazg' ),
+				'failed'       => __( 'Failed to apply upstream updates. Please try again or check the Pantheon dashboard.', 'ash-nazg' ),
+				'ajaxError'    => __( 'Request failed. Please try again.', 'ash-nazg' ),
+				'timeout'      => __( 'Operation timed out. Check the Pantheon dashboard for workflow status.', 'ash-nazg' ),
 			],
 		]
 	);

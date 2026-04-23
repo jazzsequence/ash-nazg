@@ -1,5 +1,8 @@
 /**
  * Pantheon upstream updates integration for the WordPress Updates page.
+ *
+ * Uses native browser dialogs intentionally — no plugin CSS is loaded on
+ * WP core admin pages, so AshNazgModal cannot be used here.
  */
 
 (function($) {
@@ -35,21 +38,13 @@
 		$('#ash-nazg-apply-upstream-updates-core').on('click', function(e) {
 			e.preventDefault();
 
+			// Native confirm — no plugin CSS needed on WP core pages.
+			if (!window.confirm(ashNazgUpdatesPage.i18n.confirmApply)) {
+				return;
+			}
+
 			var $btn = $(this);
 			var originalText = $btn.text();
-
-			// Step 1: ask for confirmation, matching the Development page flow.
-			window.AshNazgModal.confirm({
-				message: ashNazgUpdatesPage.i18n.confirmApply,
-				type: 'warning',
-				confirmText: ashNazgUpdatesPage.i18n.confirmText,
-				onConfirm: function() {
-					executeApply($btn, originalText);
-				}
-			});
-		});
-
-		function executeApply($btn, originalText) {
 			$btn.prop('disabled', true).text(ashNazgUpdatesPage.i18n.applying);
 
 			$.ajax({
@@ -67,10 +62,7 @@
 						pollWorkflow(response.data.workflow_id, response.data.site_id, $btn, originalText);
 					} else {
 						$btn.prop('disabled', false).text(originalText);
-						window.AshNazgModal.alert({
-							message: (response && response.data && response.data.message) || ashNazgUpdatesPage.i18n.failed,
-							type: 'danger'
-						});
+						window.alert((response && response.data && response.data.message) || ashNazgUpdatesPage.i18n.failed);
 					}
 				},
 				error: function(xhr) {
@@ -82,10 +74,10 @@
 							msg = parsed.data.message;
 						}
 					} catch (e) {}
-					window.AshNazgModal.alert({ message: msg, type: 'danger' });
+					window.alert(msg);
 				}
 			});
-		}
+		});
 
 		function pollWorkflow(workflowId, siteId, $btn, originalText) {
 			var attempts    = 0;
@@ -111,28 +103,17 @@
 						var status = response.data;
 
 						if (status.result === 'succeeded') {
-							$btn.prop('disabled', false).text(originalText);
-							window.AshNazgModal.alert({
-								message: ashNazgUpdatesPage.i18n.applied,
-								type: 'info',
-								onClose: function() { window.location.reload(); }
-							});
+							clearCacheAndReload($btn, originalText);
 						} else if (status.result === 'failed') {
 							$btn.prop('disabled', false).text(originalText);
-							window.AshNazgModal.alert({
-								message: status.error || ashNazgUpdatesPage.i18n.failed,
-								type: 'danger'
-							});
+							window.alert(status.error || ashNazgUpdatesPage.i18n.failed);
 						} else {
 							attempts++;
 							if (attempts < maxAttempts) {
 								setTimeout(checkStatus, 5000);
 							} else {
 								$btn.prop('disabled', false).text(originalText);
-								window.AshNazgModal.alert({
-									message: ashNazgUpdatesPage.i18n.timeout,
-									type: 'warning'
-								});
+								window.alert(ashNazgUpdatesPage.i18n.timeout);
 							}
 						}
 					},
@@ -143,6 +124,23 @@
 			}
 
 			checkStatus();
+		}
+
+		function clearCacheAndReload($btn, originalText) {
+			$.ajax({
+				url: ashNazgUpdatesPage.ajaxUrl,
+				type: 'POST',
+				dataType: 'json',
+				data: {
+					action: 'ash_nazg_clear_upstream_cache',
+					nonce: ashNazgUpdatesPage.clearCacheNonce
+				},
+				complete: function() {
+					$btn.prop('disabled', false).text(originalText);
+					window.alert(ashNazgUpdatesPage.i18n.applied);
+					window.location.reload();
+				}
+			});
 		}
 	});
 })(jQuery);
