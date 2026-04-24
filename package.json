@@ -8,7 +8,7 @@
     "prebuild:css": "npm run copy:pds && npm run copy:chartjs",
     "build:css": "sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css --style=expanded && sass --load-path=assets/sass assets/sass/dashboard-widget.scss assets/css/dashboard-widget.css --style=expanded",
     "build:css:compressed": "sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css --style=compressed && sass --load-path=assets/sass assets/sass/dashboard-widget.scss assets/css/dashboard-widget.css --style=compressed",
-    "watch:css": "npm run copy:pds && npm run copy:chartjs && sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css --watch --style=expanded",
+    "watch:css": "npm run copy:pds && npm run copy:chartjs && sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css assets/sass/dashboard-widget.scss assets/css/dashboard-widget.css --watch --style=expanded",
     "watch": "npm run watch:css",
     "build": "npm run build:css",
     "build:dist": "bash bin/build-dist.sh"

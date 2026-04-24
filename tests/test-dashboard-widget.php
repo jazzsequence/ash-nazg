@@ -110,6 +110,35 @@ class Test_Dashboard_Widget extends TestCase {
 	}
 
 	/**
+	 * Test that the logo is in the widget title (register function), not the render function.
+	 */
+	public function test_widget_logo_in_title_not_render() {
+		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$this->assertStringContainsString(
+			'ash-nazg-widget-title-wrap',
+			$admin_contents,
+			'Widget title should use ash-nazg-widget-title-wrap to keep logo and text together'
+		);
+
+		// Logo must appear in register_dashboard_widget, before render_dashboard_widget.
+		$register_pos = strpos( $admin_contents, 'function register_dashboard_widget' );
+		$render_pos = strpos( $admin_contents, 'function render_dashboard_widget' );
+		$logo_pos = strpos( $admin_contents, 'ash-nazg-widget-title-logo' );
+
+		$this->assertLessThan(
+			$render_pos,
+			$logo_pos,
+			'Logo class should appear in register_dashboard_widget (before render_dashboard_widget)'
+		);
+		$this->assertGreaterThan(
+			$register_pos,
+			$logo_pos,
+			'Logo class should appear after the register_dashboard_widget function definition'
+		);
+	}
+
+	/**
 	 * Test that the widget links to the Metrics page.
 	 */
 	public function test_widget_links_to_metrics_page() {
