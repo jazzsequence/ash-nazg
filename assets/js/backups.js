@@ -5,6 +5,18 @@
 	'use strict';
 
 	$(document).ready(function() {
+		// Environment tab switching
+		$('.ash-nazg-backup-env-tab').on('click', function(e) {
+			e.preventDefault();
+			var env = $(this).data('env');
+
+			$('.ash-nazg-backup-env-tab').removeClass('nav-tab-active');
+			$(this).addClass('nav-tab-active');
+
+			$('.ash-nazg-backup-env-panel').addClass('hidden');
+			$('#ash-nazg-backup-env-' + env).removeClass('hidden');
+		});
+
 		// Toggle backup set visibility
 		$('.ash-nazg-backup-toggle').on('click keypress', function(e) {
 			// Allow both click and Enter key

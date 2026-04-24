@@ -29,15 +29,9 @@
 	}
 }
 
-/* Environment separator */
+/* Environment separator — hidden now that envs use tabs */
 .ash-nazg-backup-environment-separator {
-	height: 1px;
-	background: #dcdcde;
-	margin: 30px 0;
-
-	&:last-child {
-		display: none;
-	}
+	display: none;
 }
 
 /* Backup set container */
@@ -135,4 +129,33 @@
 	}
 }
 
-/* Progress modal (already defined in _progress-modal.scss, but backup-specific overrides can go here if needed) */
+/* Environment tab panel visibility */
+.ash-nazg-backup-env-panel {
+	padding-top: 20px;
+}
+
+/* Filename: keep on one line, truncate with ellipsis if needed */
+.ash-nazg-backup-filename {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+	display: block;
+}
+
+/* Compact columns — size, expires, actions need minimal space */
+.ash-nazg-backup-size-col,
+.ash-nazg-backup-expires-col {
+	white-space: nowrap;
+	width: 10%;
+}
+
+.ash-nazg-backup-actions-col {
+	white-space: nowrap;
+	width: 15%;
+}
+
+/* Tab wrapper inside card */
+.ash-nazg-backup-tabs {
+	margin-bottom: 0;
+}

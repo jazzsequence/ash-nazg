@@ -87,6 +87,11 @@
 	th.ash-nazg-th-5 {
 		width: 5%;
 	}
+
+	// Backup table: element column dominates; size/expires/actions share the rest.
+	th.ash-nazg-backup-element-col {
+		width: 55%;
+	}
 }
 
 .ash-nazg-table-mb {
