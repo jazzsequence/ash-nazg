@@ -187,10 +187,12 @@ use Pantheon\AshNazg\Helpers;
 				</p>
 			</div>
 
+			<?php if ( $show_debug ) : ?>
 			<details class="ash-nazg-mt-20">
-				<summary><strong><?php esc_html_e( 'Raw API Response (Debug)', 'ash-nazg' ); ?></strong></summary>
-				<pre style="background: #f5f5f5; padding: 15px; overflow: auto; max-height: 400px;"><?php echo esc_html( wp_json_encode( $upstream_updates, JSON_PRETTY_PRINT ) ); ?></pre>
+				<summary class="ash-nazg-details-summary"><strong><?php esc_html_e( 'Raw API Response (Debug)', 'ash-nazg' ); ?></strong></summary>
+				<pre class="ash-nazg-code-block ash-nazg-code-block--scrollable"><?php echo esc_html( wp_json_encode( $upstream_updates, JSON_PRETTY_PRINT ) ); ?></pre>
 			</details>
+			<?php endif; ?>
 		</div>
 		<?php endif; ?>
 
@@ -549,10 +551,12 @@ use Pantheon\AshNazg\Helpers;
 					</tbody>
 				</table>
 
-				<details class="ash-nazg-mt-20">
-					<summary><strong><?php esc_html_e( 'Raw API Response (Debug)', 'ash-nazg' ); ?></strong></summary>
-					<pre style="background: #f5f5f5; padding: 15px; overflow: auto; max-height: 400px;"><?php echo esc_html( wp_json_encode( array_slice( $commits, 0, 5 ), JSON_PRETTY_PRINT ) ); ?></pre>
-				</details>
+				<?php if ( $show_debug ) : ?>
+					<details class="ash-nazg-mt-20">
+						<summary class="ash-nazg-details-summary"><strong><?php esc_html_e( 'Raw API Response (Debug)', 'ash-nazg' ); ?></strong></summary>
+						<pre class="ash-nazg-code-block ash-nazg-code-block--scrollable"><?php echo esc_html( wp_json_encode( array_slice( $commits, 0, 5 ), JSON_PRETTY_PRINT ) ); ?></pre>
+					</details>
+				<?php endif; ?>
 			<?php else : ?>
 				<p><?php esc_html_e( 'No commits found.', 'ash-nazg' ); ?></p>
 			<?php endif; ?>
@@ -593,10 +597,12 @@ use Pantheon\AshNazg\Helpers;
 						<?php endforeach; ?>
 					</tbody>
 				</table>
-				<details class="ash-nazg-mt-20">
-					<summary><strong><?php esc_html_e( 'Raw API Response (Debug)', 'ash-nazg' ); ?></strong></summary>
-					<pre style="background: #f5f5f5; padding: 15px; overflow: auto; max-height: 400px;"><?php echo esc_html( wp_json_encode( $environments, JSON_PRETTY_PRINT ) ); ?></pre>
-				</details>
+				<?php if ( $show_debug ) : ?>
+					<details class="ash-nazg-mt-20">
+						<summary class="ash-nazg-details-summary"><strong><?php esc_html_e( 'Raw API Response (Debug)', 'ash-nazg' ); ?></strong></summary>
+						<pre class="ash-nazg-code-block ash-nazg-code-block--scrollable"><?php echo esc_html( wp_json_encode( $environments, JSON_PRETTY_PRINT ) ); ?></pre>
+					</details>
+				<?php endif; ?>
 			<?php else : ?>
 				<p><?php esc_html_e( 'No environments found.', 'ash-nazg' ); ?></p>
 			<?php endif; ?>
