@@ -476,7 +476,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</div>
 		<?php endif; ?>
 
-		<?php if ( ! empty( $endpoints_site ) || ! empty( $endpoints_user ) || ! empty( $endpoints_all ) ) : ?>
+		<?php if ( $show_endpoints && ( ! empty( $endpoints_site ) || ! empty( $endpoints_user ) || ! empty( $endpoints_all ) ) ) : ?>
 			<?php
 			/*
 			 * Determine active tab.
@@ -559,6 +559,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</p>
 
 				<?php foreach ( $endpoints_status as $category => $endpoints ) : ?>
+					<?php if ( ! in_array( $category, $hidden_groups, true ) ) : ?>
 					<h3 class="ash-nazg-section-header">
 						<?php echo esc_html( $category ); ?>
 						<span class="ash-nazg-label-text">
@@ -621,6 +622,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<?php endforeach; ?>
 						</tbody>
 					</table>
+				<?php endif; // hidden group check. ?>
 				<?php endforeach; ?>
 			</div>
 		<?php endif; ?>

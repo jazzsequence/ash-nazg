@@ -50,6 +50,8 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_refresh_metrics', __NAMESPACE__ . '\\ajax_refresh_metrics' );
 	add_action( 'wp_ajax_ash_nazg_save_primary_org', __NAMESPACE__ . '\\ajax_save_primary_org' );
 	add_action( 'wp_ajax_ash_nazg_copy_machine_token', __NAMESPACE__ . '\\ajax_copy_machine_token' );
+	add_action( 'load-toplevel_page_ash-nazg', __NAMESPACE__ . '\\dashboard_screen_options' );
+	add_filter( 'screen_settings', __NAMESPACE__ . '\\dashboard_screen_settings', 10, 2 );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
 }
@@ -654,7 +656,16 @@ function render_dashboard_page() {
 		}
 	}
 
-	// Get current Pantheon user profile (whoami equivalent) and org memberships.
+	/*
+	 * Read dashboard screen options (endpoint visibility prefs) and
+	 * current Pantheon user profile (whoami equivalent) and org memberships.
+	 */
+	$_wp_user_id    = get_current_user_id();
+	$show_endpoints = get_user_meta( $_wp_user_id, 'ash_nazg_dashboard_show_endpoints', true );
+	$show_endpoints = '' === $show_endpoints ? true : (bool) $show_endpoints;
+	$hidden_groups  = get_user_meta( $_wp_user_id, 'ash_nazg_dashboard_hidden_groups', true );
+	$hidden_groups  = $hidden_groups ? array_filter( explode( ',', $hidden_groups ) ) : [];
+
 	$pantheon_user      = API\get_current_pantheon_user();
 	$user_organizations = API\get_user_organizations();
 	$primary_org_id     = get_user_meta( get_current_user_id(), 'ash_nazg_primary_org_id', true );
@@ -1101,18 +1112,33 @@ function handle_screen_options_submission() {
 		return;
 	}
 
-	// Verify we're on the development page.
-	if ( ! isset( $_GET['page'] ) || 'ash-nazg-development' !== $_GET['page'] ) {
-		return;
+	$user_id = get_current_user_id();
+	$page    = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : '';
+
+	if ( 'ash-nazg-development' === $page ) {
+		// Get and validate commits per page value.
+		if ( isset( $_POST['ash_nazg_commits_per_page'] ) ) {
+			$value = min( absint( $_POST['ash_nazg_commits_per_page'] ), 50 );
+			update_user_meta( $user_id, 'ash_nazg_commits_per_page', $value );
+		}
 	}
 
-	// Get and validate commits per page value.
-	if ( isset( $_POST['ash_nazg_commits_per_page'] ) ) {
-		$value = absint( $_POST['ash_nazg_commits_per_page'] );
-		// Cap at 50 due to Pantheon API limitation.
-		$value = min( $value, 50 );
-		// Save to user meta.
-		update_user_meta( get_current_user_id(), 'ash_nazg_commits_per_page', $value );
+	if ( '' === $page ) {
+		// Dashboard screen options (main ash-nazg page has no ?page= param).
+		$show = isset( $_POST['ash_nazg_dashboard_show_endpoints'] ) ? 1 : 0;
+		update_user_meta( $user_id, 'ash_nazg_dashboard_show_endpoints', $show );
+
+		// Save which groups are checked; unchecked ones are hidden.
+		$visible = isset( $_POST['ash_nazg_dashboard_visible_group'] )
+			? array_map( 'sanitize_text_field', (array) $_POST['ash_nazg_dashboard_visible_group'] )
+			: [];
+
+		// All known groups come from a prior request; store the hidden ones instead.
+		if ( isset( $_POST['ash_nazg_all_endpoint_groups'] ) ) {
+			$all_groups     = array_map( 'sanitize_text_field', explode( ',', sanitize_text_field( $_POST['ash_nazg_all_endpoint_groups'] ) ) );
+			$hidden_groups  = array_values( array_diff( $all_groups, $visible ) );
+			update_user_meta( $user_id, 'ash_nazg_dashboard_hidden_groups', implode( ',', $hidden_groups ) );
+		}
 	}
 // phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended
 }
@@ -2153,6 +2179,89 @@ function render_logs_page() {
  *
  * @return void
  */
+/**
+ * Register Screen Options for the main dashboard page.
+ *
+ * @return void
+ */
+function dashboard_screen_options() {
+	$screen = get_current_screen();
+	if ( ! is_object( $screen ) || 'toplevel_page_ash-nazg' !== $screen->id ) {
+		return;
+	}
+	// Screen settings HTML is injected via the screen_settings filter.
+}
+
+/**
+ * Add endpoint visibility checkboxes to the dashboard Screen Options panel.
+ *
+ * Group names are read from the cached endpoint data so they stay in sync
+ * with whatever the API actually returns.
+ *
+ * @param string    $settings Existing screen settings HTML.
+ * @param WP_Screen $screen   Current screen object.
+ * @return string
+ */
+function dashboard_screen_settings( $settings, $screen ) {
+	if ( ! is_object( $screen ) || 'toplevel_page_ash-nazg' !== $screen->id ) {
+		return $settings;
+	}
+
+	$user_id        = get_current_user_id();
+	$site_id        = API\get_pantheon_site_id();
+	$environment    = API\get_pantheon_environment();
+	$show_endpoints = get_user_meta( $user_id, 'ash_nazg_dashboard_show_endpoints', true );
+	$show_endpoints = '' === $show_endpoints ? true : (bool) $show_endpoints;
+	$hidden_groups  = get_user_meta( $user_id, 'ash_nazg_dashboard_hidden_groups', true );
+	$hidden_groups  = $hidden_groups ? array_filter( explode( ',', $hidden_groups ) ) : [];
+
+	// Get group names from cached endpoint data.
+	$group_names = [];
+	if ( $site_id && $environment ) {
+		$endpoints_data = API\get_endpoints_status( $site_id, $environment );
+		if ( is_array( $endpoints_data ) ) {
+			$all = isset( $endpoints_data['all'] ) ? $endpoints_data['all'] : $endpoints_data;
+			$group_names = array_keys( $all );
+		}
+	}
+
+	ob_start();
+	?>
+	<fieldset class="screen-options">
+		<legend><?php esc_html_e( 'API Endpoints', 'ash-nazg' ); ?></legend>
+		<label>
+			<input type="checkbox" name="ash_nazg_dashboard_show_endpoints" value="1" id="ash_nazg_dashboard_show_endpoints"
+				<?php checked( $show_endpoints, true ); ?> />
+			<?php esc_html_e( 'Show API Endpoints section', 'ash-nazg' ); ?>
+		</label>
+		<?php if ( ! empty( $group_names ) ) : ?>
+		<fieldset id="ash-nazg-endpoint-group-options">
+			<legend><?php esc_html_e( 'Show endpoint groups:', 'ash-nazg' ); ?></legend>
+			<?php foreach ( $group_names as $group ) : ?>
+				<label>
+					<input type="checkbox" name="ash_nazg_dashboard_visible_group[]" value="<?php echo esc_attr( $group ); ?>"
+						<?php checked( ! in_array( $group, $hidden_groups, true ), true ); ?> />
+					<?php echo esc_html( $group ); ?>
+				</label>
+			<?php endforeach; ?>
+		</fieldset>
+		<?php endif; ?>
+		<?php if ( ! empty( $group_names ) ) : ?>
+		<input type="hidden" name="ash_nazg_all_endpoint_groups" value="<?php echo esc_attr( implode( ',', $group_names ) ); ?>" />
+		<?php endif; ?>
+		<?php submit_button( __( 'Apply', 'ash-nazg' ), 'primary', 'screen-options-apply', false ); ?>
+	</fieldset>
+	<?php
+	$settings .= ob_get_clean();
+
+	return $settings;
+}
+
+/**
+ * Register Screen Options for the Development page (commits per page).
+ *
+ * @return void
+ */
 function development_screen_options() {
 	$screen = get_current_screen();
 
@@ -2201,6 +2310,14 @@ function set_screen_option( $status, $option, $value ) {
 		// Cap at 50 due to Pantheon API limitation.
 		$value = absint( $value );
 		return min( $value, 50 );
+	}
+
+	if ( 'ash_nazg_dashboard_show_endpoints' === $option ) {
+		return (int) $value;
+	}
+
+	if ( 'ash_nazg_dashboard_hidden_groups' === $option ) {
+		return sanitize_text_field( $value );
 	}
 
 	return $status;

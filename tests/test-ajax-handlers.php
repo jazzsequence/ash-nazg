@@ -269,6 +269,52 @@ class Test_AJAX_Handlers extends TestCase {
 	}
 
 	/**
+	 * Test that dashboard screen options hook is registered.
+	 */
+	public function test_dashboard_screen_options_registered() {
+		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+		$this->assertStringContainsString(
+			'load-toplevel_page_ash-nazg',
+			$admin_file_contents,
+			'Dashboard screen options hook should be registered on load-toplevel_page_ash-nazg'
+		);
+		$this->assertStringContainsString(
+			'dashboard_screen_options',
+			$admin_file_contents,
+			'dashboard_screen_options function should be referenced in hooks'
+		);
+	}
+
+	/**
+	 * Test that screen_settings filter is registered for the dashboard.
+	 */
+	public function test_dashboard_screen_settings_filter_exists() {
+		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+		$this->assertStringContainsString(
+			'dashboard_screen_settings',
+			$admin_file_contents,
+			'dashboard_screen_settings filter function should exist'
+		);
+	}
+
+	/**
+	 * Test that set_screen_option handles endpoint visibility options.
+	 */
+	public function test_set_screen_option_handles_endpoint_visibility() {
+		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+		$this->assertMatchesRegularExpression(
+			'/function set_screen_option.*ash_nazg_dashboard_show_endpoints/s',
+			$admin_file_contents,
+			'set_screen_option should handle ash_nazg_dashboard_show_endpoints option'
+		);
+		$this->assertMatchesRegularExpression(
+			'/function set_screen_option.*ash_nazg_dashboard_hidden_groups/s',
+			$admin_file_contents,
+			'set_screen_option should handle ash_nazg_dashboard_hidden_groups option'
+		);
+	}
+
+	/**
 	 * Test AJAX handlers for org selection and machine token copy are registered.
 	 */
 	public function test_org_and_token_ajax_handlers_exist() {
