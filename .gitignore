@@ -18,6 +18,7 @@ assets/images/
 
 # Build artifacts
 *.css.map
+dist/
 
 # WordPress
 wp-config-local.php
