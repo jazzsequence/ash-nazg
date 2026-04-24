@@ -1,0 +1,7 @@
+/**
+ * Dashboard widget standalone styles.
+ * Only the widget component — no PDS tokens or full admin styles.
+ */
+
+@use 'variables' as *;
+@use '_components/_dashboard-widget';

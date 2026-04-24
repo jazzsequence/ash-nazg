@@ -607,9 +607,17 @@ function register_dashboard_widget() {
 		return;
 	}
 
+	$logo_url = ASH_NAZG_PLUGIN_URL . 'assets/images/pantheon-logo-light-mode.png';
+	$title = sprintf(
+		'<span class="ash-nazg-widget-title-wrap"><img src="%s" alt="%s" class="ash-nazg-widget-title-logo" /> %s</span>',
+		esc_url( $logo_url ),
+		esc_attr__( 'Pantheon', 'ash-nazg' ),
+		esc_html__( 'Cache Performance', 'ash-nazg' )
+	);
+
 	wp_add_dashboard_widget(
 		'ash_nazg_metrics_widget',
-		__( 'Pantheon Cache Performance', 'ash-nazg' ),
+		$title,
 		__NAMESPACE__ . '\\render_dashboard_widget'
 	);
 }
@@ -621,17 +629,8 @@ function register_dashboard_widget() {
  */
 function render_dashboard_widget() {
 	$metrics_url = admin_url( 'admin.php?page=ash-nazg-metrics' );
-	$logo_url = ASH_NAZG_PLUGIN_URL . 'assets/images/pantheon-logo-light-mode.png';
 	?>
 	<div class="ash-nazg-widget">
-		<div class="ash-nazg-widget-header">
-			<img
-				src="<?php echo esc_url( $logo_url ); ?>"
-				alt="<?php esc_attr_e( 'Pantheon', 'ash-nazg' ); ?>"
-				class="ash-nazg-widget-logo"
-			/>
-		</div>
-
 		<div id="ash-nazg-widget-loading" class="ash-nazg-widget-loading">
 			<p><?php esc_html_e( 'Loading metrics…', 'ash-nazg' ); ?></p>
 		</div>

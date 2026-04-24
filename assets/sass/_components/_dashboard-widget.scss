@@ -1,0 +1,86 @@
+/**
+ * Components - Dashboard Widget
+ * WP admin dashboard Pantheon cache performance widget
+ */
+
+@use '../variables' as *;
+
+// Ensure hidden utility is available when only dashboard-widget.css is loaded.
+.ash-nazg-hidden {
+	display: none;
+}
+
+// Logo + title kept together as a flex unit in the widget title bar.
+.ash-nazg-widget-title-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.ash-nazg-widget-title-logo {
+	height: 24px;
+	width: auto;
+	display: block;
+	flex-shrink: 0;
+}
+
+.ash-nazg-widget {
+	padding: 0;
+}
+
+.ash-nazg-widget-loading {
+	text-align: center;
+	padding: $spacing-md 0;
+	color: #646970;
+	font-style: italic;
+}
+
+.ash-nazg-widget-chart-wrap {
+	position: relative;
+	width: 100%;
+	height: 120px;
+	margin-bottom: $spacing-md;
+}
+
+.ash-nazg-widget-stats {
+	border-top: 1px solid #e0e0e0;
+	padding-top: $spacing-md;
+	margin-bottom: $spacing-md;
+	display: flex;
+	flex-direction: column;
+	gap: $spacing-xs;
+}
+
+.ash-nazg-widget-stat {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: $spacing-sm;
+}
+
+.ash-nazg-widget-stat-label {
+	font-size: $font-size-small;
+	color: #646970;
+}
+
+.ash-nazg-widget-stat-value {
+	font-weight: 600;
+	color: #1d2327;
+	white-space: nowrap;
+}
+
+.ash-nazg-widget-footer {
+	margin: 0;
+	padding-top: $spacing-sm;
+	border-top: 1px solid #e0e0e0;
+	font-size: $font-size-small;
+
+	a {
+		text-decoration: none;
+		color: #2271b1;
+
+		&:hover {
+			color: #135e96;
+		}
+	}
+}
