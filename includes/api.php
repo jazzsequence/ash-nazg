@@ -553,7 +553,27 @@ function get_environment_info_from_env() {
  * @return array|null User data with 'email', 'profile.firstname', 'profile.lastname', or null.
  */
 function get_current_pantheon_user() {
-	$pantheon_user_id = get_transient( 'ash_nazg_user_id' );
+	/*
+	 * Session token format: "{pantheon_user_uuid}:{session_uuid}:{token}".
+	 * Parse the UUID directly so this works on every request, not only when
+	 * the ash_nazg_user_id transient happens to be set.
+	 */
+	$wp_user_id    = get_current_user_id();
+	$session_token = get_transient( sprintf( 'ash_nazg_session_token_%d', $wp_user_id ) );
+
+	$pantheon_user_id = null;
+	if ( $session_token && is_string( $session_token ) ) {
+		$segments = explode( ':', $session_token, 2 );
+		if ( ! empty( $segments[0] ) && preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $segments[0] ) ) {
+			$pantheon_user_id = $segments[0];
+		}
+	}
+
+	// Fallback to the transient set during token exchange.
+	if ( ! $pantheon_user_id ) {
+		$pantheon_user_id = get_transient( 'ash_nazg_user_id' );
+	}
+
 	if ( ! $pantheon_user_id ) {
 		return null;
 	}
