@@ -503,13 +503,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</a>
 				</div>
 
+				<?php
+				// Determine which tabs have at least one visible group.
+				$site_tab_visible = ! empty( array_diff( array_keys( $endpoints_site ), $hidden_groups ) );
+				$user_tab_visible = ! empty( array_diff( array_keys( $endpoints_user ), $hidden_groups ) );
+
+				// If the active tab has no visible content, fall back to first available.
+				if ( 'site' === $active_tab && ! $site_tab_visible ) {
+					$active_tab = $user_tab_visible ? 'user' : 'all';
+				} elseif ( 'user' === $active_tab && ! $user_tab_visible ) {
+					$active_tab = $site_tab_visible ? 'site' : 'all';
+				}
+				?>
 				<h2 class="nav-tab-wrapper">
+					<?php if ( $site_tab_visible ) : ?>
 					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=site#endpoints' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'site' === $active_tab ? 'nav-tab-active' : ''; ?>">
 						<?php esc_html_e( 'Site Endpoints', 'ash-nazg' ); ?>
 					</a>
+					<?php endif; ?>
+					<?php if ( $user_tab_visible ) : ?>
 					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=user#endpoints' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'user' === $active_tab ? 'nav-tab-active' : ''; ?>">
 						<?php esc_html_e( 'User Endpoints', 'ash-nazg' ); ?>
 					</a>
+					<?php endif; ?>
 					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=all#endpoints' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'all' === $active_tab ? 'nav-tab-active' : ''; ?>">
 						<?php esc_html_e( 'All Endpoints', 'ash-nazg' ); ?>
 					</a>
