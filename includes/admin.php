@@ -1123,8 +1123,8 @@ function handle_screen_options_submission() {
 		}
 	}
 
-	if ( '' === $page ) {
-		// Dashboard screen options (main ash-nazg page has no ?page= param).
+	if ( 'ash-nazg' === $page ) {
+		// Dashboard screen options.
 		$show = isset( $_POST['ash_nazg_dashboard_show_endpoints'] ) ? 1 : 0;
 		update_user_meta( $user_id, 'ash_nazg_dashboard_show_endpoints', $show );
 
