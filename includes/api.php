@@ -545,10 +545,50 @@ function get_environment_info_from_env() {
 }
 
 /**
- * Get site information.
+ * Get the current authenticated Pantheon user's profile (terminus whoami equivalent).
  *
- * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
- * @return array|\WP_Error Site data or WP_Error on failure.
+ * Uses the user_id cached during session token exchange to fetch name and email
+ * from /v0/users/{user_id}. Returns null when no session has been established.
+ *
+ * @return array|null User data with 'email', 'profile.firstname', 'profile.lastname', or null.
+ */
+function get_current_pantheon_user() {
+	$pantheon_user_id = get_transient( 'ash_nazg_user_id' );
+	if ( ! $pantheon_user_id ) {
+		return null;
+	}
+
+	$cache_key = sprintf( 'ash_nazg_pantheon_user_%s', $pantheon_user_id );
+	$cached    = get_transient( $cache_key );
+	if ( false !== $cached ) {
+		return $cached['data'];
+	}
+
+	$endpoint = sprintf( '/v0/users/%s', rawurlencode( $pantheon_user_id ) );
+	$result   = api_request( $endpoint, 'GET' );
+
+	if ( is_wp_error( $result ) ) {
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get Pantheon user profile: %s', $result->get_error_message() ) );
+		return null;
+	}
+
+	set_transient(
+		$cache_key,
+		[
+			'data'      => $result,
+			'cached_at' => time(),
+		],
+		DAY_IN_SECONDS
+	);
+
+	return $result;
+}
+
+/**
+ * Get Pantheon site information.
+ *
+ * @param string|null $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @return array|WP_Error Site data or WP_Error on failure.
  */
 function get_site_info( $site_id = null ) {
 	$site_id = Helpers\ensure_site_id( $site_id );

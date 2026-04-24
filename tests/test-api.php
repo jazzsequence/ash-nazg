@@ -49,6 +49,10 @@ class Test_API extends TestCase {
 			function_exists( 'Pantheon\AshNazg\API\clear_cache' ),
 			'clear_cache function should exist'
 		);
+		$this->assertTrue(
+			function_exists( 'Pantheon\AshNazg\API\get_current_pantheon_user' ),
+			'get_current_pantheon_user function should exist'
+		);
 	}
 
 	/**
@@ -212,6 +216,30 @@ class Test_API extends TestCase {
 			'environment_not_found',
 			$api_file_contents,
 			'Should handle environment not found error'
+		);
+	}
+
+	/**
+	 * Test that get_current_pantheon_user uses the correct endpoint.
+	 */
+	public function test_get_current_pantheon_user_endpoint() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+		$this->assertMatchesRegularExpression(
+			'/function get_current_pantheon_user.*\/v0\/users\//s',
+			$file_contents,
+			'get_current_pantheon_user should call /v0/users/{user_id}'
+		);
+	}
+
+	/**
+	 * Test that get_current_pantheon_user caches its result.
+	 */
+	public function test_get_current_pantheon_user_caching() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+		$this->assertMatchesRegularExpression(
+			'/function get_current_pantheon_user.*get_transient.*set_transient/s',
+			$file_contents,
+			'get_current_pantheon_user should use WordPress transients for caching'
 		);
 	}
 }

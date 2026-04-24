@@ -649,6 +649,9 @@ function render_dashboard_page() {
 		}
 	}
 
+	// Get current Pantheon user profile (whoami equivalent).
+	$pantheon_user = API\get_current_pantheon_user();
+
 	// Get cache timestamps.
 	$site_info_cached_at = null;
 	$env_info_cached_at = null;

@@ -199,6 +199,46 @@ if ( ! defined( 'ABSPATH' ) ) {
 							</td>
 						</tr>
 					<?php endif; ?>
+					<?php if ( $pantheon_user ) : ?>
+						<tr>
+							<th><?php esc_html_e( 'Pantheon Account', 'ash-nazg' ); ?></th>
+							<td>
+								<?php
+								$firstname = $pantheon_user['profile']['firstname'] ?? '';
+								$lastname  = $pantheon_user['profile']['lastname'] ?? '';
+								$fullname  = trim( $firstname . ' ' . $lastname );
+								$email     = $pantheon_user['email'] ?? '';
+								if ( $fullname ) {
+									echo esc_html( $fullname );
+								}
+								if ( $email ) {
+									echo ' <span class="ash-nazg-text-muted">(' . esc_html( $email ) . ')</span>';
+								}
+								?>
+							</td>
+						</tr>
+					<?php endif; ?>
+					<tr>
+						<th><?php esc_html_e( 'WordPress', 'ash-nazg' ); ?></th>
+						<td><code><?php echo esc_html( get_bloginfo( 'version' ) ); ?></code></td>
+					</tr>
+					<tr>
+						<th><?php esc_html_e( 'MySQL', 'ash-nazg' ); ?></th>
+						<td>
+							<code>
+								<?php
+								global $wpdb;
+								echo esc_html( $wpdb->db_version() );
+								?>
+							</code>
+						</td>
+					</tr>
+					<?php if ( defined( 'PANTHEON_MU_PLUGIN_VERSION' ) ) : ?>
+						<tr>
+							<th><?php esc_html_e( 'Pantheon MU Plugin', 'ash-nazg' ); ?></th>
+							<td><code><?php echo esc_html( PANTHEON_MU_PLUGIN_VERSION ); ?></code></td>
+						</tr>
+					<?php endif; ?>
 					</tbody>
 				</table>
 			</div>
