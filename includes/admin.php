@@ -75,6 +75,26 @@ function add_admin_menu() {
 		80
 	);
 
+	// Metrics page.
+	add_submenu_page(
+		'ash-nazg',
+		__( 'Environment Metrics', 'ash-nazg' ),
+		__( 'Metrics', 'ash-nazg' ),
+		'manage_options',
+		'ash-nazg-metrics',
+		__NAMESPACE__ . '\\render_metrics_page'
+	);
+
+	// Development page.
+	add_submenu_page(
+		'ash-nazg',
+		__( 'Development', 'ash-nazg' ),
+		__( 'Development', 'ash-nazg' ),
+		'manage_options',
+		'ash-nazg-development',
+		__NAMESPACE__ . '\\render_development_page'
+	);
+
 	// Addons page.
 	add_submenu_page(
 		'ash-nazg',
@@ -95,16 +115,6 @@ function add_admin_menu() {
 		__NAMESPACE__ . '\\render_workflows_page'
 	);
 
-	// Development page.
-	add_submenu_page(
-		'ash-nazg',
-		__( 'Development', 'ash-nazg' ),
-		__( 'Development', 'ash-nazg' ),
-		'manage_options',
-		'ash-nazg-development',
-		__NAMESPACE__ . '\\render_development_page'
-	);
-
 	// Backups page.
 	add_submenu_page(
 		'ash-nazg',
@@ -113,16 +123,6 @@ function add_admin_menu() {
 		'manage_options',
 		'ash-nazg-backups',
 		__NAMESPACE__ . '\\render_backups_page'
-	);
-
-	// Metrics page.
-	add_submenu_page(
-		'ash-nazg',
-		__( 'Environment Metrics', 'ash-nazg' ),
-		__( 'Metrics', 'ash-nazg' ),
-		'manage_options',
-		'ash-nazg-metrics',
-		__NAMESPACE__ . '\\render_metrics_page'
 	);
 
 	// Clone page.
