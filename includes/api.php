@@ -1207,11 +1207,121 @@ function test_connection() {
 }
 
 /**
+ * Get live addon environment variables from $_ENV (Pantheon) or Terminus internal API (local).
+ *
+ * On Pantheon environments, reads directly from $_ENV which is always current.
+ * On local environments (Lando/ddev), calls the Terminus internal variables endpoint
+ * which returns the full env var set including PANTHEON_INDEX_* for Solr.
+ *
+ * @param string $site_id Optional. Site UUID.
+ * @param string $env     Optional. Environment name.
+ * @return array|\WP_Error Array of env var key/value pairs, WP_Error on failure.
+ */
+function get_addon_env_variables( $site_id = null, $env = null ) {
+	$site_id = Helpers\ensure_site_id( $site_id );
+	if ( is_wp_error( $site_id ) ) {
+		return $site_id;
+	}
+
+	$env = Helpers\ensure_environment( $env );
+	$api_env = map_local_env_to_dev( $env );
+
+	// On Pantheon (non-local), $_ENV is always current — no API call needed.
+	if ( ! is_local_environment( $env ) ) {
+		return [
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- used only as truthiness check, never rendered
+			'CACHE_BINDING_ID' => sanitize_text_field( wp_unslash( $_ENV['CACHE_BINDING_ID'] ?? '' ) ),
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- used only as truthiness check, never rendered
+			'PANTHEON_SEARCH_VERSION' => sanitize_text_field( wp_unslash( $_ENV['PANTHEON_SEARCH_VERSION'] ?? '' ) ),
+		];
+	}
+
+	// Local: check transient cache first.
+	$cache_key = sprintf( 'ash_nazg_addon_env_vars_%s_%s', $site_id, $api_env );
+	$cached = get_transient( $cache_key );
+	if ( false !== $cached ) {
+		return $cached;
+	}
+
+	// Local: call Terminus internal variables endpoint which returns full env var set.
+	$token = get_api_token();
+	if ( is_wp_error( $token ) ) {
+		return $token;
+	}
+
+	$terminus_url = sprintf(
+		'https://terminus.pantheon.io/api/sites/%s/environments/%s/variables',
+		$site_id,
+		$api_env
+	);
+
+	$response = wp_remote_get(
+		$terminus_url,
+		[
+			'headers' => [
+				'Authorization' => 'Bearer ' . $token,
+			],
+			'timeout' => 15,
+		]
+	);
+
+	if ( is_wp_error( $response ) ) {
+		Helpers\debug_log( 'get_addon_env_variables: Terminus API request failed: ' . $response->get_error_message() );
+		return $response;
+	}
+
+	$status_code = wp_remote_retrieve_response_code( $response );
+	$body = wp_remote_retrieve_body( $response );
+	$data = json_decode( $body, true );
+
+	if ( 401 === $status_code || 403 === $status_code ) {
+		clear_user_session_token();
+		Helpers\debug_log( sprintf( 'get_addon_env_variables: Auth failed (%d), cleared session token', $status_code ) );
+		return new \WP_Error(
+			'authentication_failed',
+			sprintf(
+				/* translators: %d: HTTP status code */
+				__( 'Authentication failed (%d). Session token has been cleared. Please try again.', 'ash-nazg' ),
+				$status_code
+			)
+		);
+	}
+
+	if ( $status_code < 200 || $status_code >= 300 ) {
+		$error_message = isset( $data['message'] ) ? $data['message'] : 'Unknown error';
+		Helpers\debug_log( sprintf( 'get_addon_env_variables: Terminus API error %d: %s', $status_code, $error_message ) );
+		return new \WP_Error(
+			'api_error',
+			sprintf(
+				/* translators: %1$d: HTTP status code, %2$s: error message */
+				__( 'Terminus variables request failed (%1$d): %2$s', 'ash-nazg' ),
+				$status_code,
+				$error_message
+			),
+			[ 'status' => $status_code ]
+		);
+	}
+
+	if ( ! is_array( $data ) ) {
+		return new \WP_Error( 'invalid_response', __( 'Invalid response from Terminus variables endpoint.', 'ash-nazg' ) );
+	}
+
+	$vars = [
+		'CACHE_BINDING_ID' => $data['CACHE_BINDING_ID'] ?? '',
+		'PANTHEON_SEARCH_VERSION' => $data['PANTHEON_SEARCH_VERSION'] ?? '',
+	];
+
+	set_transient( $cache_key, $vars, HOUR_IN_SECONDS );
+
+	return $vars;
+}
+
+/**
  * Get site addons.
  *
- * Returns list of known Pantheon addons with their last known state.
- * Note: The Pantheon API addon endpoints only accept PUT/DELETE, not GET.
- * We track addon state locally after each update.
+ * Returns list of known Pantheon addons with live enabled/disabled status.
+ * On Pantheon, reads directly from $_ENV. On local, uses the Terminus internal
+ * variables API. Falls back to stored state if the live check fails.
  *
  * @param string $site_id Optional. Site UUID. If not provided, auto-detected.
  * @return array|\WP_Error Array of addon objects on success, WP_Error on failure.
@@ -1233,18 +1343,20 @@ function get_site_addons( $site_id = null ) {
 		return $cached;
 	}
 
-	// Get stored addon states from environment state.
+	// Get live addon status from environment variables.
+	$env_vars = get_addon_env_variables( $site_id );
+	$use_live = ! is_wp_error( $env_vars );
+
+	// Fallback: stored addon states from environment state.
 	$env_state = get_environment_state();
 	$stored_states = ( $env_state && isset( $env_state['addons'] ) ) ? $env_state['addons'] : [];
 
-	// Fallback: check old addon_states option for migration.
+	// Migrate old addon_states option if present.
 	if ( empty( $stored_states ) ) {
 		$old_states = get_option( 'ash_nazg_addon_states', [] );
 		if ( ! empty( $old_states ) ) {
-			// Migrate old addon states to new environment state.
 			update_environment_state( [ 'addons' => $old_states ] );
 			$stored_states = $old_states;
-			// Clean up old option.
 			delete_option( 'ash_nazg_addon_states' );
 		}
 	}
@@ -1265,22 +1377,32 @@ function get_site_addons( $site_id = null ) {
 
 	$addons = [];
 
-	// Build addon list with stored state information.
 	foreach ( $known_addons as $addon_id => $addon_meta ) {
 		$addon = $addon_meta;
 
-		// Get stored state for this addon (defaults to false if never set).
-		$addon['enabled'] = isset( $stored_states[ $addon_id ] ) ? (bool) $stored_states[ $addon_id ] : false;
+		if ( $use_live ) {
+			// Determine live status from environment variables.
+			if ( 'redis' === $addon_id ) {
+				$addon['enabled'] = ! empty( $env_vars['CACHE_BINDING_ID'] );
+			} elseif ( 'solr' === $addon_id ) {
+				$addon['enabled'] = ! empty( $env_vars['PANTHEON_SEARCH_VERSION'] );
+			} else {
+				$addon['enabled'] = isset( $stored_states[ $addon_id ] ) ? (bool) $stored_states[ $addon_id ] : false;
+			}
+		} else {
+			// Fall back to stored state when live check fails.
+			$addon['enabled'] = isset( $stored_states[ $addon_id ] ) ? (bool) $stored_states[ $addon_id ] : false;
+		}
 
 		$addons[] = $addon;
 	}
 
-	// Cache for 24 hours with timestamp.
+	// Cache for 1 hour — addon status can change.
 	$cached_data = [
 		'data' => $addons,
 		'cached_at' => time(),
 	];
-	set_transient( $cache_key, $cached_data, DAY_IN_SECONDS );
+	set_transient( $cache_key, $cached_data, HOUR_IN_SECONDS );
 
 	return $addons;
 }
