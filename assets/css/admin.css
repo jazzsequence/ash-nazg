@@ -54,6 +54,9 @@
   gap: 20px;
   margin-top: 20px;
 }
+.ash-nazg-dashboard--2col {
+  grid-template-columns: repeat(2, 1fr);
+}
 
 .ash-nazg-card {
   background: var(--pds-color-background-default);
@@ -569,19 +572,6 @@
  * Components - Buttons
  * Custom button styles including the big red delete button
  */
-/*
- * Icon buttons — scoped class so WP's global .button styles are not affected.
- * WP's dashicons.css sets vertical-align:top; !important is required to override it
- * regardless of CSS load order.
- */
-.ash-nazg-btn-icon .dashicons {
-  vertical-align: middle !important;
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-  margin-top: -1px;
-}
-
 /* Big round red delete button with depressible effect */
 .ash-nazg-big-red-button {
   background: linear-gradient(to bottom, #dc3232 0%, #b92828 100%);
@@ -850,14 +840,21 @@
   margin: 0 10px 0 0;
 }
 
-.ash-nazg-card .dashicons-update {
-  margin-top: 3px;
-}
-
-/* Buttons with dashicons */
+/* Buttons with dashicons — sized to balance with button text */
 .button .dashicons {
   vertical-align: middle;
   margin-right: 4px;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+/* Buttons in card headers need explicit vertical padding so icons center properly */
+.ash-nazg-flex-between .button {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  line-height: 1.4;
+  height: auto;
 }
 
 /* API Endpoints tab links - remove underline */

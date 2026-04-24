@@ -5,21 +5,6 @@
 
 @use '../variables' as *;
 
-/*
- * Icon buttons — scoped class so WP's global .button styles are not affected.
- * WP's dashicons.css sets vertical-align:top; !important is required to override it
- * regardless of CSS load order.
- */
-.ash-nazg-btn-icon {
-	.dashicons {
-		vertical-align: middle !important;
-		font-size: 16px;
-		width: 16px;
-		height: 16px;
-		margin-top: -1px;
-	}
-}
-
 /* Big round red delete button with depressible effect */
 .ash-nazg-big-red-button {
 	background: linear-gradient(to bottom, #dc3232 0%, #b92828 100%);
