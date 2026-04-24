@@ -1,0 +1,29 @@
+/**
+ * Components - Code Blocks and Debug Details
+ * Reusable styles for pre/code display and collapsible debug sections
+ */
+
+@use '../variables' as *;
+
+.ash-nazg-code-block {
+	background: #f6f7f7;
+	padding: $spacing-md;
+	overflow-x: auto;
+	margin: $spacing-sm 0;
+
+	&--scrollable {
+		max-height: 400px;
+		overflow-y: auto;
+	}
+}
+
+.ash-nazg-details-summary {
+	cursor: pointer;
+	padding: $spacing-sm;
+	background: #f6f7f7;
+	font-weight: 600;
+}
+
+.ash-nazg-details-body {
+	padding: $spacing-sm 0;
+}

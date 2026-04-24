@@ -216,107 +216,116 @@
 		};
 
 		// Pages Served Chart.
-		const pagesCtx = document.getElementById('pages-served-chart').getContext('2d');
-		pagesServedChart = new Chart(pagesCtx, {
-			type: 'line',
-			data: {
-				labels: labels,
-				datasets: [{
-					label: 'Pages Served',
-					data: pagesServedData,
-					borderColor: pdsColors.blue.border,
-					backgroundColor: pdsColors.blue.background,
-					borderWidth: 3,
-					pointRadius: 4,
-					pointHoverRadius: 6,
-					pointBackgroundColor: pdsColors.blue.border,
-					pointBorderColor: '#fff',
-					pointBorderWidth: 2,
-					fill: true,
-					tension: 0.4
-				}]
-			},
-			options: commonOptions
-		});
+		const pagesEl = document.getElementById('pages-served-chart');
+		if (pagesEl) {
+			const pagesCtx = pagesEl.getContext('2d');
+			pagesServedChart = new Chart(pagesCtx, {
+				type: 'line',
+				data: {
+					labels: labels,
+					datasets: [{
+						label: 'Pages Served',
+						data: pagesServedData,
+						borderColor: pdsColors.blue.border,
+						backgroundColor: pdsColors.blue.background,
+						borderWidth: 3,
+						pointRadius: 4,
+						pointHoverRadius: 6,
+						pointBackgroundColor: pdsColors.blue.border,
+						pointBorderColor: '#fff',
+						pointBorderWidth: 2,
+						fill: true,
+						tension: 0.4
+					}]
+				},
+				options: commonOptions
+			});
+		} // end pages chart guard
 
 		// Unique Visits Chart.
-		const visitsCtx = document.getElementById('unique-visits-chart').getContext('2d');
-		uniqueVisitsChart = new Chart(visitsCtx, {
-			type: 'line',
-			data: {
-				labels: labels,
-				datasets: [{
-					label: 'Unique Visits',
-					data: visitsData,
-					borderColor: pdsColors.purple.border,
-					backgroundColor: pdsColors.purple.background,
-					borderWidth: 3,
-					pointRadius: 4,
-					pointHoverRadius: 6,
-					pointBackgroundColor: pdsColors.purple.border,
-					pointBorderColor: '#fff',
-					pointBorderWidth: 2,
-					fill: true,
-					tension: 0.4
-				}]
-			},
-			options: commonOptions
-		});
+		const visitsEl = document.getElementById('unique-visits-chart');
+		if (visitsEl) {
+			const visitsCtx = visitsEl.getContext('2d');
+			uniqueVisitsChart = new Chart(visitsCtx, {
+				type: 'line',
+				data: {
+					labels: labels,
+					datasets: [{
+						label: 'Unique Visits',
+						data: visitsData,
+						borderColor: pdsColors.purple.border,
+						backgroundColor: pdsColors.purple.background,
+						borderWidth: 3,
+						pointRadius: 4,
+						pointHoverRadius: 6,
+						pointBackgroundColor: pdsColors.purple.border,
+						pointBorderColor: '#fff',
+						pointBorderWidth: 2,
+						fill: true,
+						tension: 0.4
+					}]
+				},
+				options: commonOptions
+			});
+		} // end visits chart guard
 
 		// Cache Performance Chart.
-		const cacheCtx = document.getElementById('cache-performance-chart').getContext('2d');
+		const cacheEl = document.getElementById('cache-performance-chart');
+		if (cacheEl) {
+			const cacheCtx = cacheEl.getContext('2d');
 
-		// Clone common options and enable legend for cache chart.
-		const cacheOptions = JSON.parse(JSON.stringify(commonOptions));
-		cacheOptions.plugins.legend = {
-			display: true,
-			position: 'top',
-			labels: {
-				usePointStyle: true,
-				padding: 15,
-				font: {
-					size: 12
-				}
-			}
-		};
-
-		cachePerformanceChart = new Chart(cacheCtx, {
-			type: 'line',
-			data: {
-				labels: labels,
-				datasets: [
-					{
-						label: 'Cache Hits',
-						data: cacheHitsData,
-						borderColor: pdsColors.green.border,
-						backgroundColor: pdsColors.green.background,
-						borderWidth: 3,
-						pointRadius: 4,
-						pointHoverRadius: 6,
-						pointBackgroundColor: pdsColors.green.border,
-						pointBorderColor: '#fff',
-						pointBorderWidth: 2,
-						fill: true,
-						tension: 0.4
-					},
-					{
-						label: 'Cache Misses',
-						data: cacheMissesData,
-						borderColor: pdsColors.red.border,
-						backgroundColor: pdsColors.red.background,
-						borderWidth: 3,
-						pointRadius: 4,
-						pointHoverRadius: 6,
-						pointBackgroundColor: pdsColors.red.border,
-						pointBorderColor: '#fff',
-						pointBorderWidth: 2,
-						fill: true,
-						tension: 0.4
+			// Clone common options and enable legend for cache chart.
+			const cacheOptions = JSON.parse(JSON.stringify(commonOptions));
+			cacheOptions.plugins.legend = {
+				display: true,
+				position: 'top',
+				labels: {
+					usePointStyle: true,
+					padding: 15,
+					font: {
+						size: 12
 					}
-				]
-			},
-			options: cacheOptions
-		});
+				}
+			};
+
+			cachePerformanceChart = new Chart(cacheCtx, {
+				type: 'line',
+				data: {
+					labels: labels,
+					datasets: [
+						{
+							label: 'Cache Hits',
+							data: cacheHitsData,
+							borderColor: pdsColors.green.border,
+							backgroundColor: pdsColors.green.background,
+							borderWidth: 3,
+							pointRadius: 4,
+							pointHoverRadius: 6,
+							pointBackgroundColor: pdsColors.green.border,
+							pointBorderColor: '#fff',
+							pointBorderWidth: 2,
+							fill: true,
+							tension: 0.4
+						},
+						{
+							label: 'Cache Misses',
+							data: cacheMissesData,
+							borderColor: pdsColors.red.border,
+							backgroundColor: pdsColors.red.background,
+							borderWidth: 3,
+							pointRadius: 4,
+							pointHoverRadius: 6,
+							pointBackgroundColor: pdsColors.red.border,
+							pointBorderColor: '#fff',
+							pointBorderWidth: 2,
+							fill: true,
+							tension: 0.4
+						}
+					]
+				},
+				options: cacheOptions
+			});
+		} // end cache chart guard
 	}
 
 	/**
@@ -388,18 +397,41 @@
 	}
 
 	// Event handlers.
+	// Persist and restore filter selections via localStorage.
+	var STORAGE_KEY_ENV = 'ashNazgMetricsEnv';
+	var STORAGE_KEY_DUR = 'ashNazgMetricsDuration';
+
+	function restoreFilters() {
+		var env = localStorage.getItem(STORAGE_KEY_ENV);
+		var dur = localStorage.getItem(STORAGE_KEY_DUR);
+		if (env) {
+			$('#metrics-environment').val(env);
+		}
+		if (dur) {
+			$('#metrics-duration').val(dur);
+		}
+	}
+
+	function saveFilters() {
+		localStorage.setItem(STORAGE_KEY_ENV, $('#metrics-environment').val());
+		localStorage.setItem(STORAGE_KEY_DUR, $('#metrics-duration').val());
+	}
+
 	$('#load-metrics').on('click', function(e) {
 		e.preventDefault();
+		saveFilters();
 		loadMetrics();
 	});
 
 	$('#refresh-metrics').on('click', function(e) {
 		e.preventDefault();
+		saveFilters();
 		refreshMetrics();
 	});
 
-	// Auto-load on page load with default selections.
+	// Restore saved filters then auto-load on page load.
 	$(document).ready(function() {
+		restoreFilters();
 		loadMetrics();
 	});
 

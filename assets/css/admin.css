@@ -683,6 +683,49 @@
    ALL @USE RULES MUST COME FIRST
    ========================================================================== */
 /**
+ * Components - Code Blocks and Debug Details
+ * Reusable styles for pre/code display and collapsible debug sections
+ */
+.ash-nazg-code-block {
+  background: #f6f7f7;
+  padding: 10px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.ash-nazg-code-block--scrollable {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.ash-nazg-details-summary {
+  cursor: pointer;
+  padding: 8px;
+  background: #f6f7f7;
+  font-weight: 600;
+}
+
+.ash-nazg-details-body {
+  padding: 8px 0;
+}
+
+/**
+ * Admin styles for Ash-Nazg plugin.
+ *
+ * Structure:
+ * 1. Variables (SASS variables using PDS tokens)
+ * 2. Base Layout
+ * 3. Typography
+ * 4. Components (Badges, Notices, Cards, Header)
+ * 5. Tables
+ * 6. Page-specific Sections
+ * 7. Utility Classes
+ * 8. Responsive Styles
+ * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ */
+/* ==========================================================================
+   ALL @USE RULES MUST COME FIRST
+   ========================================================================== */
+/**
  * Tables
  * Table styling and column widths
  */
@@ -1451,6 +1494,10 @@ canvas {
 
 .ash-nazg-my-10 {
   margin: 10px 0;
+}
+
+.ash-nazg-mt-10 {
+  margin-top: 10px;
 }
 
 /**
