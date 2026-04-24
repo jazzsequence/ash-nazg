@@ -605,6 +605,59 @@ function get_current_pantheon_user() {
 }
 
 /**
+ * Get organizations the current Pantheon user belongs to.
+ *
+ * Returns an array of [{id, organization: {id, profile: {name, machine_name}}}].
+ * Cached per-user for 1 hour since org membership changes infrequently.
+ *
+ * @return array|null Array of org membership objects, or null on error.
+ */
+function get_user_organizations() {
+	$wp_user_id = get_current_user_id();
+
+	// Get Pantheon user UUID from session token.
+	$session_token    = get_transient( sprintf( 'ash_nazg_session_token_%d', $wp_user_id ) );
+	$pantheon_user_id = null;
+	if ( $session_token && is_string( $session_token ) ) {
+		$segments = explode( ':', $session_token, 2 );
+		if ( ! empty( $segments[0] ) && preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $segments[0] ) ) {
+			$pantheon_user_id = $segments[0];
+		}
+	}
+	if ( ! $pantheon_user_id ) {
+		$pantheon_user_id = get_transient( 'ash_nazg_user_id' );
+	}
+	if ( ! $pantheon_user_id ) {
+		return null;
+	}
+
+	$cache_key = sprintf( 'ash_nazg_user_orgs_%s', $pantheon_user_id );
+	$cached    = get_transient( $cache_key );
+	if ( false !== $cached ) {
+		return $cached['data'];
+	}
+
+	$endpoint = sprintf( '/v0/users/%s/memberships/organizations', rawurlencode( $pantheon_user_id ) );
+	$result   = api_request( $endpoint, 'GET' );
+
+	if ( is_wp_error( $result ) ) {
+		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get user organizations: %s', $result->get_error_message() ) );
+		return null;
+	}
+
+	set_transient(
+		$cache_key,
+		[
+			'data'      => $result,
+			'cached_at' => time(),
+		],
+		HOUR_IN_SECONDS
+	);
+
+	return $result;
+}
+
+/**
  * Get Pantheon site information.
  *
  * @param string|null $site_id Optional. Site UUID. Auto-detected if not provided.

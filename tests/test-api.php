@@ -53,6 +53,10 @@ class Test_API extends TestCase {
 			function_exists( 'Pantheon\AshNazg\API\get_current_pantheon_user' ),
 			'get_current_pantheon_user function should exist'
 		);
+		$this->assertTrue(
+			function_exists( 'Pantheon\AshNazg\API\get_user_organizations' ),
+			'get_user_organizations function should exist'
+		);
 	}
 
 	/**
@@ -252,6 +256,30 @@ class Test_API extends TestCase {
 			'/function get_user_id.*ash_nazg_user_id/s',
 			$file_contents,
 			'get_user_id should fall back to the ash_nazg_user_id transient'
+		);
+	}
+
+	/**
+	 * Test that get_user_organizations uses the correct endpoint.
+	 */
+	public function test_get_user_organizations_endpoint() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+		$this->assertMatchesRegularExpression(
+			'/function get_user_organizations.*\/v0\/users\/.*\/memberships\/organizations/s',
+			$file_contents,
+			'get_user_organizations should call /v0/users/{id}/memberships/organizations'
+		);
+	}
+
+	/**
+	 * Test that get_user_organizations caches its result.
+	 */
+	public function test_get_user_organizations_caching() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+		$this->assertMatchesRegularExpression(
+			'/function get_user_organizations.*get_transient.*set_transient/s',
+			$file_contents,
+			'get_user_organizations should use WordPress transients for caching'
 		);
 	}
 

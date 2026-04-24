@@ -267,4 +267,58 @@ class Test_AJAX_Handlers extends TestCase {
 			'Should log AJAX operations'
 		);
 	}
+
+	/**
+	 * Test AJAX handlers for org selection and machine token copy are registered.
+	 */
+	public function test_org_and_token_ajax_handlers_exist() {
+		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$this->assertStringContainsString(
+			'ash_nazg_save_primary_org',
+			$admin_file_contents,
+			'save_primary_org AJAX action should be registered'
+		);
+		$this->assertStringContainsString(
+			'ash_nazg_copy_machine_token',
+			$admin_file_contents,
+			'copy_machine_token AJAX action should be registered'
+		);
+	}
+
+	/**
+	 * Test that machine token copy handler has nonce and capability checks.
+	 */
+	public function test_copy_machine_token_security() {
+		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$this->assertMatchesRegularExpression(
+			'/function ajax_copy_machine_token.*check_ajax_referer/s',
+			$admin_file_contents,
+			'ajax_copy_machine_token must verify nonce'
+		);
+		$this->assertMatchesRegularExpression(
+			'/function ajax_copy_machine_token.*current_user_can/s',
+			$admin_file_contents,
+			'ajax_copy_machine_token must check capabilities'
+		);
+	}
+
+	/**
+	 * Test that primary org handler has nonce and capability checks.
+	 */
+	public function test_save_primary_org_security() {
+		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$this->assertMatchesRegularExpression(
+			'/function ajax_save_primary_org.*check_ajax_referer/s',
+			$admin_file_contents,
+			'ajax_save_primary_org must verify nonce'
+		);
+		$this->assertMatchesRegularExpression(
+			'/function ajax_save_primary_org.*current_user_can/s',
+			$admin_file_contents,
+			'ajax_save_primary_org must check capabilities'
+		);
+	}
 }

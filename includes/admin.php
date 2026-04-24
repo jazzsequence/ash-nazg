@@ -48,6 +48,8 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_delete_site', __NAMESPACE__ . '\\ajax_delete_site' );
 	add_action( 'wp_ajax_ash_nazg_get_metrics', __NAMESPACE__ . '\\ajax_get_metrics' );
 	add_action( 'wp_ajax_ash_nazg_refresh_metrics', __NAMESPACE__ . '\\ajax_refresh_metrics' );
+	add_action( 'wp_ajax_ash_nazg_save_primary_org', __NAMESPACE__ . '\\ajax_save_primary_org' );
+	add_action( 'wp_ajax_ash_nazg_copy_machine_token', __NAMESPACE__ . '\\ajax_copy_machine_token' );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
 }
@@ -267,11 +269,14 @@ function enqueue_assets( $hook ) {
 				'updateLabelNonce' => wp_create_nonce( 'ash_nazg_update_site_label' ),
 				'workflowStatusNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
 				'i18n' => [
-					'toggleError' => __( 'Failed to switch connection mode.', 'ash-nazg' ),
-					'ajaxError' => __( 'An error occurred while switching connection mode.', 'ash-nazg' ),
-					'updateLabelError' => __( 'Failed to update site label.', 'ash-nazg' ),
-					'emptyLabelError' => __( 'Site label cannot be empty.', 'ash-nazg' ),
-					'timeoutError' => __( 'Operation timed out. Please check the dashboard.', 'ash-nazg' ),
+					'toggleError'       => __( 'Failed to switch connection mode.', 'ash-nazg' ),
+					'ajaxError'         => __( 'An error occurred while switching connection mode.', 'ash-nazg' ),
+					'updateLabelError'  => __( 'Failed to update site label.', 'ash-nazg' ),
+					'emptyLabelError'   => __( 'Site label cannot be empty.', 'ash-nazg' ),
+					'timeoutError'      => __( 'Operation timed out. Please check the dashboard.', 'ash-nazg' ),
+					'copyTokenError'    => __( 'Failed to retrieve machine token.', 'ash-nazg' ),
+					'clipboardError'    => __( 'Could not copy to clipboard. Check browser permissions.', 'ash-nazg' ),
+					'saveOrgError'      => __( 'Failed to save organization preference.', 'ash-nazg' ),
 				],
 			]
 		);
@@ -649,8 +654,11 @@ function render_dashboard_page() {
 		}
 	}
 
-	// Get current Pantheon user profile (whoami equivalent).
-	$pantheon_user = API\get_current_pantheon_user();
+	// Get current Pantheon user profile (whoami equivalent) and org memberships.
+	$pantheon_user      = API\get_current_pantheon_user();
+	$user_organizations = API\get_user_organizations();
+	$primary_org_id     = get_user_meta( get_current_user_id(), 'ash_nazg_primary_org_id', true );
+	$primary_org_name   = get_user_meta( get_current_user_id(), 'ash_nazg_primary_org_name', true );
 
 	// Get cache timestamps.
 	$site_info_cached_at = null;
@@ -2570,6 +2578,63 @@ function ajax_refresh_metrics() {
 	API\clear_metrics_cache( null, $env );
 
 	wp_send_json_success( [ 'message' => __( 'Metrics cache cleared successfully.', 'ash-nazg' ) ] );
+}
+
+/**
+ * AJAX handler to save the user's preferred primary organization.
+ *
+ * Stores the selected org ID in WP user meta so it persists across sessions.
+ *
+ * @return void
+ */
+function ajax_save_primary_org() {
+	check_ajax_referer( 'ash_nazg_save_primary_org', 'nonce' );
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$org_id   = isset( $_POST['org_id'] ) ? sanitize_text_field( wp_unslash( $_POST['org_id'] ) ) : '';
+	$org_name = isset( $_POST['org_name'] ) ? sanitize_text_field( wp_unslash( $_POST['org_name'] ) ) : '';
+
+	if ( ! $org_id ) {
+		wp_send_json_error( [ 'message' => __( 'Organization ID is required.', 'ash-nazg' ) ] );
+	}
+
+	update_user_meta( get_current_user_id(), 'ash_nazg_primary_org_id', $org_id );
+	update_user_meta( get_current_user_id(), 'ash_nazg_primary_org_name', $org_name );
+
+	wp_send_json_success(
+		[
+			'org_id'   => $org_id,
+			'org_name' => $org_name,
+		]
+	);
+}
+
+/**
+ * AJAX handler to return the current user's machine token for clipboard copy.
+ *
+ * The token is returned in the JSON response and never written into the HTML.
+ * The frontend JS immediately calls navigator.clipboard.writeText() and discards it.
+ *
+ * @return void
+ */
+function ajax_copy_machine_token() {
+	check_ajax_referer( 'ash_nazg_copy_machine_token', 'nonce' );
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$token = API\get_user_machine_token( get_current_user_id() );
+
+	if ( ! $token ) {
+		wp_send_json_error( [ 'message' => __( 'No machine token found for this user.', 'ash-nazg' ) ] );
+	}
+
+	// Return the token once — JS must copy it immediately and not store it.
+	wp_send_json_success( [ 'token' => $token ] );
 }
 
 /**
