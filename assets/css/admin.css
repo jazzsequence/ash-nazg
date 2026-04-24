@@ -388,12 +388,18 @@
  * Components - Edit Link
  * Inline edit pencil icon styling
  */
+/* Container for inline text + edit pencil — flex keeps both vertically centered */
+.ash-nazg-editable {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .ash-nazg-edit-link {
   text-decoration: none;
   color: var(--pds-color-neutral-400);
-  margin-left: 8px;
-  font-size: 16px;
-  vertical-align: middle;
+  line-height: 1;
+  flex-shrink: 0;
 }
 .ash-nazg-edit-link:hover {
   color: #0073aa;
@@ -402,6 +408,7 @@
   font-size: 16px;
   width: 16px;
   height: 16px;
+  display: block;
 }
 
 /**

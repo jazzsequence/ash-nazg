@@ -5,12 +5,18 @@
 
 @use '../variables' as *;
 
+/* Container for inline text + edit pencil — flex keeps both vertically centered */
+.ash-nazg-editable {
+	display: inline-flex;
+	align-items: center;
+	gap: $spacing-sm;
+}
+
 .ash-nazg-edit-link {
 	text-decoration: none;
 	color: $color-text-meta;
-	margin-left: $spacing-sm;
-	font-size: $font-size-medium;
-	vertical-align: middle;
+	line-height: 1;
+	flex-shrink: 0;
 
 	&:hover {
 		color: $color-wp-link;
@@ -20,5 +26,6 @@
 		font-size: $font-size-medium;
 		width: 16px;
 		height: 16px;
+		display: block;
 	}
 }

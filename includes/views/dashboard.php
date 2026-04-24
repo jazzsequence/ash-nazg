@@ -217,7 +217,79 @@ if ( ! defined( 'ABSPATH' ) ) {
 								?>
 							</td>
 						</tr>
-					<?php endif; ?>
+						<?php if ( $user_organizations ) : ?>
+							<?php
+							// Determine display org: stored preference → site owner org → first in list.
+							$display_org_id   = $primary_org_id;
+							$display_org_name = $primary_org_name;
+							if ( ! $display_org_id ) {
+								$site_org_id = $site_info['organization'] ?? null;
+								if ( $site_org_id ) {
+									foreach ( $user_organizations as $membership ) {
+										if ( ( $membership['organization']['id'] ?? '' ) === $site_org_id ) {
+											$display_org_id   = $site_org_id;
+											$display_org_name = $membership['organization']['profile']['name'] ?? '';
+											break;
+										}
+									}
+								}
+							}
+							if ( ! $display_org_id && ! empty( $user_organizations[0]['organization']['id'] ) ) {
+								$display_org_id   = $user_organizations[0]['organization']['id'];
+								$display_org_name = $user_organizations[0]['organization']['profile']['name'] ?? '';
+							}
+							?>
+						<tr>
+							<th><?php esc_html_e( 'Organization', 'ash-nazg' ); ?></th>
+							<td>
+								<span id="ash-nazg-org-display" class="ash-nazg-editable">
+									<span><?php echo esc_html( $display_org_name ); ?></span>
+									<?php if ( count( $user_organizations ) > 1 ) : ?>
+										<a href="#" id="ash-nazg-org-edit" class="ash-nazg-edit-link" title="<?php esc_attr_e( 'Change organization', 'ash-nazg' ); ?>">
+											<span class="dashicons dashicons-edit" aria-hidden="true"></span>
+										</a>
+									<?php endif; ?>
+								</span>
+								<?php if ( count( $user_organizations ) > 1 ) : ?>
+								<span id="ash-nazg-org-select-wrap" class="ash-nazg-hidden">
+									<select id="ash-nazg-org-select" aria-label="<?php esc_attr_e( 'Select organization', 'ash-nazg' ); ?>">
+										<?php foreach ( $user_organizations as $membership ) : ?>
+											<?php
+											$org_id   = $membership['organization']['id'] ?? '';
+											$org_name = $membership['organization']['profile']['name'] ?? '';
+											?>
+											<option value="<?php echo esc_attr( $org_id ); ?>" data-name="<?php echo esc_attr( $org_name ); ?>"
+												<?php selected( $org_id, $display_org_id ); ?>>
+												<?php echo esc_html( $org_name ); ?>
+											</option>
+										<?php endforeach; ?>
+									</select>
+									<button type="button" id="ash-nazg-org-save" class="button button-primary button-small"
+										data-nonce="<?php echo esc_attr( wp_create_nonce( 'ash_nazg_save_primary_org' ) ); ?>">
+										<?php esc_html_e( 'Save', 'ash-nazg' ); ?>
+									</button>
+									<button type="button" id="ash-nazg-org-cancel" class="button button-secondary button-small">
+										<?php esc_html_e( 'Cancel', 'ash-nazg' ); ?>
+									</button>
+								</span>
+								<?php endif; ?>
+							</td>
+						</tr>
+					<?php endif; // user_organizations. ?>
+					<tr>
+						<th><?php esc_html_e( 'Machine Token', 'ash-nazg' ); ?></th>
+						<td>
+							<button type="button" id="ash-nazg-copy-token" class="button button-small"
+								data-nonce="<?php echo esc_attr( wp_create_nonce( 'ash_nazg_copy_machine_token' ) ); ?>">
+								<span class="dashicons dashicons-clipboard" aria-hidden="true"></span>
+								<?php esc_html_e( 'Copy token', 'ash-nazg' ); ?>
+							</button>
+							<span id="ash-nazg-copy-token-feedback" class="ash-nazg-text-muted" hidden>
+								<?php esc_html_e( 'Copied!', 'ash-nazg' ); ?>
+							</span>
+						</td>
+					</tr>
+				<?php endif; // pantheon_user. ?>
 					<tr>
 						<th><?php esc_html_e( 'WordPress', 'ash-nazg' ); ?></th>
 						<td><code><?php echo esc_html( get_bloginfo( 'version' ) ); ?></code></td>
@@ -289,8 +361,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<tr>
 								<th><?php esc_html_e( 'Site Label', 'ash-nazg' ); ?></th>
 								<td>
-									<span id="ash-nazg-site-label-display">
-										<?php echo esc_html( $site_label ); ?>
+									<span id="ash-nazg-site-label-display" class="ash-nazg-editable">
+										<span><?php echo esc_html( $site_label ); ?></span>
 										<a href="#" id="ash-nazg-edit-site-label" class="ash-nazg-edit-link" title="<?php esc_attr_e( 'Edit site label', 'ash-nazg' ); ?>">
 											<span class="dashicons dashicons-edit"></span>
 										</a>

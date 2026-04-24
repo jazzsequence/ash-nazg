@@ -164,7 +164,7 @@ jQuery(document).ready(function($) {
 				$loading.hide();
 				if (response.success) {
 					// Update the displayed label.
-					$('#ash-nazg-site-label-display').html(response.data.label + ' <a href="#" id="ash-nazg-edit-site-label" class="ash-nazg-edit-link" title="Edit site label"><span class="dashicons dashicons-edit"></span></a>');
+					$('#ash-nazg-site-label-display').html('<span>' + response.data.label + '</span><a href="#" id="ash-nazg-edit-site-label" class="ash-nazg-edit-link" title="Edit site label"><span class="dashicons dashicons-edit"></span></a>');
 					$('#ash-nazg-site-label-form').hide();
 					$('#ash-nazg-site-label-display').show();
 					$('.wrap h1').first().after('<div class="notice notice-success is-dismissible"><p>' + response.data.message + '</p></div>');
@@ -207,5 +207,94 @@ jQuery(document).ready(function($) {
 		if (e.which === 27) {
 			$('#ash-nazg-cancel-site-label').click();
 		}
+	});
+
+	// ── Organization selector ────────────────────────────────────────────────
+
+	$('#ash-nazg-org-edit').on('click', function(e) {
+		e.preventDefault();
+		$('#ash-nazg-org-display').hide();
+		$('#ash-nazg-org-select-wrap').show();
+		$('#ash-nazg-org-select').trigger('focus');
+	});
+
+	$('#ash-nazg-org-cancel').on('click', function() {
+		$('#ash-nazg-org-select-wrap').hide();
+		$('#ash-nazg-org-display').show();
+	});
+
+	$('#ash-nazg-org-save').on('click', function() {
+		var $btn    = $(this);
+		var $select = $('#ash-nazg-org-select');
+		var orgId   = $select.val();
+		var orgName = $select.find('option:selected').data('name');
+		var nonce   = $btn.data('nonce');
+
+		$btn.prop('disabled', true);
+
+		$.ajax({
+			url: ashNazgDashboard.ajaxUrl,
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				action:   'ash_nazg_save_primary_org',
+				nonce:    nonce,
+				org_id:   orgId,
+				org_name: orgName
+			},
+			success: function(response) {
+				if (response.success) {
+					$('#ash-nazg-org-display span:first').text(orgName);
+					$('#ash-nazg-org-select-wrap').hide();
+					$('#ash-nazg-org-display').show();
+				} else {
+					window.alert(response.data && response.data.message ? response.data.message : ashNazgDashboard.i18n.saveOrgError);
+				}
+			},
+			error: function() {
+				window.alert(ashNazgDashboard.i18n.saveOrgError);
+			},
+			complete: function() {
+				$btn.prop('disabled', false);
+			}
+		});
+	});
+
+	// ── Machine token copy ───────────────────────────────────────────────────
+
+	$('#ash-nazg-copy-token').on('click', function() {
+		var $btn      = $(this);
+		var $feedback = $('#ash-nazg-copy-token-feedback');
+		var nonce     = $btn.data('nonce');
+
+		$btn.prop('disabled', true);
+
+		$.ajax({
+			url: ashNazgDashboard.ajaxUrl,
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				action: 'ash_nazg_copy_machine_token',
+				nonce:  nonce
+			},
+			success: function(response) {
+				if (response.success && response.data && response.data.token) {
+					navigator.clipboard.writeText(response.data.token).then(function() {
+						$feedback.removeAttr('hidden');
+						setTimeout(function() { $feedback.attr('hidden', true); }, 2500);
+					}).catch(function() {
+						window.alert(ashNazgDashboard.i18n.clipboardError);
+					});
+				} else {
+					window.alert(response.data && response.data.message ? response.data.message : ashNazgDashboard.i18n.copyTokenError);
+				}
+			},
+			error: function() {
+				window.alert(ashNazgDashboard.i18n.copyTokenError);
+			},
+			complete: function() {
+				$btn.prop('disabled', false);
+			}
+		});
 	});
 });
