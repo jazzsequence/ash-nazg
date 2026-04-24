@@ -55,6 +55,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<table class="form-table" role="presentation">
 				<tbody>
 					<?php foreach ( $addons as $addon ) : ?>
+						<?php if ( in_array( $addon['id'] ?? '', $hidden_addons, true ) ) : ?>
+							<?php continue; ?>
+					<?php endif; ?>
 						<?php
 						$addon_id = isset( $addon['id'] ) ? $addon['id'] : '';
 						$addon_name = isset( $addon['name'] ) ? $addon['name'] : $addon_id;
@@ -91,14 +94,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 							</td>
 						</tr>
 					<?php endforeach; ?>
+					<?php if ( ! in_array( 'elasticsearch', $hidden_addons, true ) ) : ?>
+						<tr>
+							<th scope="row">
+								<?php esc_html_e( 'Elasticsearch', 'ash-nazg' ); ?>
+							</th>
+							<td>
+								<span class="ash-nazg-badge ash-nazg-badge-multidev">
+									<?php esc_html_e( 'Coming Soon', 'ash-nazg' ); ?>
+								</span>
+								<p class="description">
+									<?php esc_html_e( 'Elasticsearch support is not yet available via the Pantheon Public API. Check back in a future release.', 'ash-nazg' ); ?>
+								</p>
+							</td>
+						</tr>
+					<?php endif; ?>
 				</tbody>
 			</table>
 
 			<p class="submit">
 				<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php esc_attr_e( 'Save Changes', 'ash-nazg' ); ?>">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=ash-nazg' ) ); ?>" class="button">
-					<?php esc_html_e( 'Back to Dashboard', 'ash-nazg' ); ?>
-				</a>
 			</p>
 		</form>
 	<?php endif; ?>

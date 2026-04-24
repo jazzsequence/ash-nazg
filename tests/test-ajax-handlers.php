@@ -269,6 +269,69 @@ class Test_AJAX_Handlers extends TestCase {
 	}
 
 	/**
+	 * Test that addons screen options hook is registered.
+	 */
+	public function test_addons_screen_options_registered() {
+		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+		$this->assertStringContainsString(
+			'load-ash-nazg_page_ash-nazg-addons',
+			$admin_file_contents,
+			'Addons screen options hook should be registered'
+		);
+	}
+
+	/**
+	 * Test that addons screen settings filter covers known addon names.
+	 */
+	public function test_addons_screen_settings_covers_known_addons() {
+		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+		$this->assertStringContainsString( 'redis', $admin_file_contents, 'Addons screen options should include Redis' );
+		$this->assertStringContainsString( 'solr', $admin_file_contents, 'Addons screen options should include Solr' );
+		$this->assertStringContainsString( 'elasticsearch', $admin_file_contents, 'Addons screen options should include Elasticsearch' );
+	}
+
+	/**
+	 * Test that handle_screen_options_submission handles the addons page.
+	 */
+	public function test_screen_options_handles_addons_page() {
+		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+		$this->assertMatchesRegularExpression(
+			'/ash-nazg-addons.*ash_nazg_hidden_addons|ash_nazg_hidden_addons.*ash-nazg-addons/s',
+			$admin_file_contents,
+			'handle_screen_options_submission should handle ash-nazg-addons page'
+		);
+	}
+
+	/**
+	 * Test that saving all-hidden state is prevented (at least one addon must remain visible).
+	 */
+	public function test_addons_screen_options_prevents_all_hidden() {
+		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+		$this->assertMatchesRegularExpression(
+			'/ash-nazg-addons.*empty.*visible_addons|visible_addons.*empty/s',
+			$admin_file_contents,
+			'Saving with all addons hidden should be prevented'
+		);
+	}
+
+	/**
+	 * Test that Elasticsearch coming soon placeholder is referenced in the addons view.
+	 */
+	public function test_addons_elasticsearch_coming_soon() {
+		$view_contents = file_get_contents( __DIR__ . '/../includes/views/addons.php' );
+		$this->assertStringContainsString(
+			'elasticsearch',
+			strtolower( $view_contents ),
+			'Addons view should reference Elasticsearch'
+		);
+		$this->assertMatchesRegularExpression(
+			'/coming.soon/i',
+			$view_contents,
+			'Addons view should show a "Coming Soon" indicator for Elasticsearch'
+		);
+	}
+
+	/**
 	 * Test that dashboard screen options hook is registered.
 	 */
 	public function test_dashboard_screen_options_registered() {

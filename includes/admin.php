@@ -51,6 +51,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_save_primary_org', __NAMESPACE__ . '\\ajax_save_primary_org' );
 	add_action( 'wp_ajax_ash_nazg_copy_machine_token', __NAMESPACE__ . '\\ajax_copy_machine_token' );
 	add_action( 'load-toplevel_page_ash-nazg', __NAMESPACE__ . '\\dashboard_screen_options' );
+	add_action( 'load-ash-nazg_page_ash-nazg-addons', __NAMESPACE__ . '\\addons_screen_options' );
 	add_filter( 'screen_settings', __NAMESPACE__ . '\\dashboard_screen_settings', 10, 2 );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
@@ -807,6 +808,10 @@ function render_addons_page() {
 		}
 	}
 
+	// Read addon visibility preferences.
+	$hidden_addons = get_user_meta( get_current_user_id(), 'ash_nazg_hidden_addons', true );
+	$hidden_addons = $hidden_addons ? array_filter( explode( ',', $hidden_addons ) ) : [];
+
 	require ASH_NAZG_PLUGIN_DIR . 'includes/views/addons.php';
 }
 
@@ -1138,6 +1143,26 @@ function handle_screen_options_submission() {
 			$all_groups     = array_map( 'sanitize_text_field', explode( ',', sanitize_text_field( $_POST['ash_nazg_all_endpoint_groups'] ) ) );
 			$hidden_groups  = array_values( array_diff( $all_groups, $visible ) );
 			update_user_meta( $user_id, 'ash_nazg_dashboard_hidden_groups', implode( ',', $hidden_groups ) );
+		}
+	}
+
+	if ( 'ash-nazg-addons' === $page ) {
+		$visible_addons = isset( $_POST['ash_nazg_visible_addons'] )
+			? array_map( 'sanitize_text_field', (array) $_POST['ash_nazg_visible_addons'] )
+			: [];
+
+		/*
+		 * Guard: at least one addon must remain visible.
+		 * If all are unchecked, revert to previous state.
+		 */
+		if ( empty( $visible_addons ) ) {
+			return;
+		}
+
+		if ( isset( $_POST['ash_nazg_all_known_addons'] ) ) {
+			$all_known     = array_map( 'sanitize_text_field', explode( ',', sanitize_text_field( $_POST['ash_nazg_all_known_addons'] ) ) );
+			$hidden_addons = array_values( array_diff( $all_known, $visible_addons ) );
+			update_user_meta( $user_id, 'ash_nazg_hidden_addons', implode( ',', $hidden_addons ) );
 		}
 	}
 // phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended
@@ -2255,6 +2280,57 @@ function dashboard_screen_settings( $settings, $screen ) {
 	$settings .= ob_get_clean();
 
 	return $settings;
+}
+
+/**
+ * Register Screen Options for the Addons page.
+ *
+ * Known addons are hardcoded because their API endpoints are named
+ * (redis, solr, elasticsearch). Elasticsearch is included now so the
+ * option is ready when the API endpoint becomes available.
+ *
+ * @return void
+ */
+function addons_screen_options() {
+	$screen = get_current_screen();
+	if ( ! is_object( $screen ) || 'ash-nazg_page_ash-nazg-addons' !== $screen->id ) {
+		return;
+	}
+
+	add_filter( 'screen_settings', function ( $settings, $screen_obj ) {
+		if ( 'ash-nazg_page_ash-nazg-addons' !== $screen_obj->id ) {
+			return $settings;
+		}
+
+		$user_id      = get_current_user_id();
+		$hidden       = get_user_meta( $user_id, 'ash_nazg_hidden_addons', true );
+		$hidden       = $hidden ? array_filter( explode( ',', $hidden ) ) : [];
+
+		$known_addons = [
+			'redis'         => __( 'Redis', 'ash-nazg' ),
+			'solr'          => __( 'Solr (Apache Solr)', 'ash-nazg' ),
+			'elasticsearch' => __( 'Elasticsearch', 'ash-nazg' ),
+		];
+
+		ob_start();
+		?>
+		<fieldset class="screen-options">
+			<legend><?php esc_html_e( 'Show Addons', 'ash-nazg' ); ?></legend>
+			<?php foreach ( $known_addons as $id => $label ) : ?>
+				<label>
+					<input type="checkbox" name="ash_nazg_visible_addons[]" value="<?php echo esc_attr( $id ); ?>"
+						<?php checked( ! in_array( $id, $hidden, true ), true ); ?> />
+					<?php echo esc_html( $label ); ?>
+				</label>
+			<?php endforeach; ?>
+			<input type="hidden" name="ash_nazg_all_known_addons" value="<?php echo esc_attr( implode( ',', array_keys( $known_addons ) ) ); ?>" />
+			<?php submit_button( __( 'Apply', 'ash-nazg' ), 'primary', 'screen-options-apply', false ); ?>
+		</fieldset>
+		<?php
+		$settings .= ob_get_clean();
+
+		return $settings;
+	}, 10, 2 );
 }
 
 /**
