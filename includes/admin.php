@@ -57,6 +57,7 @@ function init() {
 	add_filter( 'screen_settings', __NAMESPACE__ . '\\dashboard_screen_settings', 10, 2 );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
+	add_action( 'wp_dashboard_setup', __NAMESPACE__ . '\\register_dashboard_widget' );
 }
 
 /**
@@ -225,6 +226,45 @@ function enqueue_assets( $hook ) {
 			$is_ash_nazg_page = true;
 			break;
 		}
+	}
+
+	// Enqueue dashboard widget assets on the WP admin dashboard.
+	if ( 'index.php' === $hook && current_user_can( 'manage_options' ) && API\get_pantheon_site_id() ) {
+		wp_enqueue_script(
+			'chartjs',
+			ASH_NAZG_PLUGIN_URL . 'assets/js/libs/chart.umd.js',
+			[],
+			'4.4.1',
+			true
+		);
+		wp_enqueue_script(
+			'ash-nazg-dashboard-widget',
+			ASH_NAZG_PLUGIN_URL . 'assets/js/dashboard-widget.js',
+			[ 'jquery', 'chartjs' ],
+			ASH_NAZG_VERSION,
+			true
+		);
+		wp_localize_script(
+			'ash-nazg-dashboard-widget',
+			'ashNazgWidget',
+			[
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce' => wp_create_nonce( 'ash_nazg_get_metrics' ),
+				'environment' => API\get_effective_environment( API\get_pantheon_site_id() ),
+				'i18n' => [
+					'cacheHitRatio' => __( 'Cache Hit Ratio', 'ash-nazg' ),
+					'loading' => __( 'Loading metrics…', 'ash-nazg' ),
+					'error' => __( 'Could not load metrics.', 'ash-nazg' ),
+				],
+			]
+		);
+		// Widget-only CSS — no PDS styles on the WP admin dashboard.
+		wp_enqueue_style(
+			'ash-nazg-dashboard-widget',
+			ASH_NAZG_PLUGIN_URL . 'assets/css/dashboard-widget.css',
+			[],
+			ASH_NAZG_VERSION
+		);
 	}
 
 	if ( ! $is_ash_nazg_page ) {
@@ -549,6 +589,79 @@ function render_pantheon_header( $title ) {
 			<img src="<?php echo esc_url( ASH_NAZG_PLUGIN_URL . 'assets/images/pantheon-logo-light-mode.png' ); ?>" alt="<?php esc_attr_e( 'Pantheon', 'ash-nazg' ); ?>">
 		</div>
 		<h1><?php echo esc_html( $title ); ?></h1>
+	</div>
+	<?php
+}
+
+/**
+ * Register the Pantheon metrics dashboard widget.
+ *
+ * @return void
+ */
+function register_dashboard_widget() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	if ( ! API\get_pantheon_site_id() ) {
+		return;
+	}
+
+	wp_add_dashboard_widget(
+		'ash_nazg_metrics_widget',
+		__( 'Pantheon Cache Performance', 'ash-nazg' ),
+		__NAMESPACE__ . '\\render_dashboard_widget'
+	);
+}
+
+/**
+ * Render the Pantheon metrics dashboard widget.
+ *
+ * @return void
+ */
+function render_dashboard_widget() {
+	$metrics_url = admin_url( 'admin.php?page=ash-nazg-metrics' );
+	$logo_url = ASH_NAZG_PLUGIN_URL . 'assets/images/pantheon-logo-light-mode.png';
+	?>
+	<div class="ash-nazg-widget">
+		<div class="ash-nazg-widget-header">
+			<img
+				src="<?php echo esc_url( $logo_url ); ?>"
+				alt="<?php esc_attr_e( 'Pantheon', 'ash-nazg' ); ?>"
+				class="ash-nazg-widget-logo"
+			/>
+		</div>
+
+		<div id="ash-nazg-widget-loading" class="ash-nazg-widget-loading">
+			<p><?php esc_html_e( 'Loading metrics…', 'ash-nazg' ); ?></p>
+		</div>
+
+		<div id="ash-nazg-widget-error" class="ash-nazg-hidden">
+			<p class="ash-nazg-text-muted"><?php esc_html_e( 'Could not load metrics data.', 'ash-nazg' ); ?></p>
+		</div>
+
+		<div id="ash-nazg-widget-content" class="ash-nazg-hidden">
+			<div class="ash-nazg-widget-chart-wrap">
+				<canvas id="ash-nazg-widget-chart"></canvas>
+			</div>
+
+			<div class="ash-nazg-widget-stats">
+				<div class="ash-nazg-widget-stat">
+					<span class="ash-nazg-widget-stat-label"><?php esc_html_e( 'Avg Cache Hit Ratio (28d)', 'ash-nazg' ); ?></span>
+					<span id="ash-nazg-widget-ratio" class="ash-nazg-widget-stat-value">-</span>
+				</div>
+				<div class="ash-nazg-widget-stat">
+					<span class="ash-nazg-widget-stat-label"><?php esc_html_e( 'Pages Served (28d)', 'ash-nazg' ); ?></span>
+					<span id="ash-nazg-widget-pages" class="ash-nazg-widget-stat-value">-</span>
+				</div>
+			</div>
+		</div>
+
+		<p class="ash-nazg-widget-footer">
+			<a href="<?php echo esc_url( $metrics_url ); ?>">
+				<?php esc_html_e( 'View detailed metrics →', 'ash-nazg' ); ?>
+			</a>
+		</p>
 	</div>
 	<?php
 }
