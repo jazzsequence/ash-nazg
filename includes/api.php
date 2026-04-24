@@ -1227,7 +1227,7 @@ function get_addon_env_variables( $site_id = null, $env = null ) {
 	$api_env = map_local_env_to_dev( $env );
 
 	// On Pantheon (non-local), $_ENV is always current — no API call needed.
-	if ( ! is_local_environment( $env ) ) {
+	if ( ! Helpers\is_local_environment( $env ) ) {
 		return [
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- used only as truthiness check, never rendered
 			'CACHE_BINDING_ID' => sanitize_text_field( wp_unslash( $_ENV['CACHE_BINDING_ID'] ?? '' ) ),
@@ -1332,18 +1332,7 @@ function get_site_addons( $site_id = null ) {
 		return $site_id;
 	}
 
-	// Check cache first.
-	$cache_key = sprintf( 'ash_nazg_site_addons_%s', $site_id );
-	$cached = get_transient( $cache_key );
-	if ( false !== $cached ) {
-		// Handle both old and new cache formats.
-		if ( is_array( $cached ) && isset( $cached['data'] ) ) {
-			return $cached['data'];
-		}
-		return $cached;
-	}
-
-	// Get live addon status from environment variables.
+	// get_addon_env_variables() handles its own caching — no outer transient needed.
 	$env_vars = get_addon_env_variables( $site_id );
 	$use_live = ! is_wp_error( $env_vars );
 
@@ -1381,7 +1370,6 @@ function get_site_addons( $site_id = null ) {
 		$addon = $addon_meta;
 
 		if ( $use_live ) {
-			// Determine live status from environment variables.
 			if ( 'redis' === $addon_id ) {
 				$addon['enabled'] = ! empty( $env_vars['CACHE_BINDING_ID'] );
 			} elseif ( 'solr' === $addon_id ) {
@@ -1390,19 +1378,11 @@ function get_site_addons( $site_id = null ) {
 				$addon['enabled'] = isset( $stored_states[ $addon_id ] ) ? (bool) $stored_states[ $addon_id ] : false;
 			}
 		} else {
-			// Fall back to stored state when live check fails.
 			$addon['enabled'] = isset( $stored_states[ $addon_id ] ) ? (bool) $stored_states[ $addon_id ] : false;
 		}
 
 		$addons[] = $addon;
 	}
-
-	// Cache for 1 hour — addon status can change.
-	$cached_data = [
-		'data' => $addons,
-		'cached_at' => time(),
-	];
-	set_transient( $cache_key, $cached_data, HOUR_IN_SECONDS );
 
 	return $addons;
 }
@@ -1466,11 +1446,16 @@ function update_site_addon( $site_id, $addon_id, $enabled ) {
 /**
  * Clear site addons cache.
  *
+ * Clears the addon env variables transient so the next page load re-fetches
+ * live status rather than serving a cached pre-toggle value.
+ *
  * @param string $site_id Site UUID.
  * @return void
  */
 function clear_addons_cache( $site_id ) {
-	$cache_key = sprintf( 'ash_nazg_site_addons_%s', $site_id );
+	$env = get_pantheon_environment();
+	$api_env = map_local_env_to_dev( $env );
+	$cache_key = sprintf( 'ash_nazg_addon_env_vars_%s_%s', $site_id, $api_env );
 	delete_transient( $cache_key );
 }
 

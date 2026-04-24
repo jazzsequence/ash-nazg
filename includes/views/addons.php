@@ -20,11 +20,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php esc_html_e( 'Manage site addons such as Redis, Solr, and other available services.', 'ash-nazg' ); ?>
 	</p>
 
-	<p class="description">
-		<strong><?php esc_html_e( 'Note:', 'ash-nazg' ); ?></strong>
-		<?php esc_html_e( 'Addon status shown reflects the last known state from this plugin. If addons are enabled/disabled via the Pantheon Dashboard, those changes will not be reflected here until you toggle them again.', 'ash-nazg' ); ?>
-	</p>
-
 	<?php if ( $message ) : ?>
 		<div class="notice notice-success is-dismissible">
 			<p><?php echo esc_html( $message ); ?></p>
