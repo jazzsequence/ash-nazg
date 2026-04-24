@@ -2044,6 +2044,12 @@ function render_development_page() {
 	$hidden_sections_raw = get_user_meta( get_current_user_id(), 'ash_nazg_dev_hidden_sections', true );
 	$hidden_sections = $hidden_sections_raw ? array_filter( explode( ',', $hidden_sections_raw ) ) : [];
 
+	// Mapped current env (local envs map to dev for comparison purposes).
+	$selected_env = API\map_local_env_to_dev( $environment );
+
+	// Site name for constructing environment admin URLs.
+	$site_name = API\get_env( 'PANTHEON_SITE_NAME' ) ?: '';
+
 	// Include the view.
 	require_once ASH_NAZG_PLUGIN_DIR . '/includes/views/development.php';
 }

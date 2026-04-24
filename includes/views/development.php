@@ -12,6 +12,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Pantheon\AshNazg\API;
 use Pantheon\AshNazg\Helpers;
+
+// Canonical dev-to-production order: dev, multidevs (sorted), test, live.
+$std_envs = [ 'test', 'live' ];
+$env_multidevs = [];
+if ( $environments && is_array( $environments ) ) {
+	foreach ( $environments as $env_id => $env_data ) {
+		if ( ! in_array( $env_id, array_merge( [ 'dev' ], $std_envs ), true ) ) {
+			$env_multidevs[] = $env_id;
+		}
+	}
+	sort( $env_multidevs );
+}
+// dev, multidevs (sorted), test, live.
+$ordered_envs = array_filter(
+	array_merge( [ 'dev' ], $env_multidevs, $std_envs ),
+	function ( $id ) use ( $environments ) {
+		return isset( $environments[ $id ] );
+	}
+);
 ?>
 
 <div class="wrap">
@@ -581,10 +600,13 @@ use Pantheon\AshNazg\Helpers;
 						<tr>
 							<th class="ash-nazg-th-30"><?php esc_html_e( 'Name', 'ash-nazg' ); ?></th>
 							<th class="ash-nazg-th-20"><?php esc_html_e( 'Mode', 'ash-nazg' ); ?></th>
+							<th><?php esc_html_e( 'Actions', 'ash-nazg' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ( $environments as $env_id => $env_data ) : ?>
+						<?php foreach ( $ordered_envs as $env_id ) : ?>
+							<?php $env_data = $environments[ $env_id ]; ?>
+							<?php $is_current_env = ( $env_id === $selected_env ); ?>
 							<tr>
 								<td><strong><?php echo esc_html( $env_id ); ?></strong></td>
 								<td>
@@ -592,6 +614,16 @@ use Pantheon\AshNazg\Helpers;
 										<span class="ash-nazg-badge <?php echo 'sftp' === $env_data['connection_mode'] ? 'ash-nazg-badge-sftp' : 'ash-nazg-badge-git'; ?>">
 											<?php echo 'sftp' === $env_data['connection_mode'] ? esc_html__( 'SFTP', 'ash-nazg' ) : esc_html__( 'Git', 'ash-nazg' ); ?>
 										</span>
+									<?php endif; ?>
+								</td>
+								<td>
+									<?php if ( ! $is_current_env && $site_name ) : ?>
+										<a
+											href="<?php echo esc_url( 'https://' . $env_id . '-' . $site_name . '.pantheonsite.io/wp-admin/' ); ?>"
+											target="_blank"
+											rel="noopener noreferrer"
+											class="button button-small"
+										><?php esc_html_e( 'WP Admin', 'ash-nazg' ); ?></a>
 									<?php endif; ?>
 								</td>
 							</tr>
@@ -636,14 +668,11 @@ use Pantheon\AshNazg\Helpers;
 								<strong><?php esc_html_e( 'Clone From:', 'ash-nazg' ); ?></strong>
 							</label>
 							<select name="source_env" id="source_env">
-								<option value="dev"><?php esc_html_e( 'Dev', 'ash-nazg' ); ?></option>
-								<?php if ( $environments && is_array( $environments ) ) : ?>
-									<?php foreach ( $environments as $env_id => $env_data ) : ?>
-										<?php if ( ! in_array( $env_id, [ 'dev', 'test', 'live' ], true ) ) : ?>
-											<option value="<?php echo esc_attr( $env_id ); ?>"><?php echo esc_html( ucfirst( $env_id ) ); ?></option>
-										<?php endif; ?>
-									<?php endforeach; ?>
-								<?php endif; ?>
+								<?php
+								foreach ( $ordered_envs as $env_id ) :
+									?>
+									<option value="<?php echo esc_attr( $env_id ); ?>"><?php echo esc_html( ucfirst( $env_id ) ); ?></option>
+								<?php endforeach; ?>
 							</select>
 						</div>
 						<button type="submit" class="button button-primary"><?php esc_html_e( 'Create Multidev', 'ash-nazg' ); ?></button>
