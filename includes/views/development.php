@@ -510,10 +510,10 @@ use Pantheon\AshNazg\Helpers;
 				<table class="widefat">
 					<thead>
 						<tr>
-							<th><?php esc_html_e( 'Hash', 'ash-nazg' ); ?></th>
-							<th><?php esc_html_e( 'Author', 'ash-nazg' ); ?></th>
+							<th class="ash-nazg-th-10"><?php esc_html_e( 'Hash', 'ash-nazg' ); ?></th>
+							<th class="ash-nazg-th-20"><?php esc_html_e( 'Author', 'ash-nazg' ); ?></th>
 							<th><?php esc_html_e( 'Message', 'ash-nazg' ); ?></th>
-							<th><?php esc_html_e( 'Date', 'ash-nazg' ); ?></th>
+							<th class="ash-nazg-th-15"><?php esc_html_e( 'Date', 'ash-nazg' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -565,9 +565,10 @@ use Pantheon\AshNazg\Helpers;
 		<!-- Grid container for side-by-side cards -->
 		<div class="ash-nazg-dashboard">
 			<!-- Environments -->
+			<?php if ( ! in_array( 'environments', $hidden_sections, true ) ) : ?>
 			<div class="ash-nazg-card ash-nazg-card-1-col">
 			<h2><?php esc_html_e( 'Environments', 'ash-nazg' ); ?></h2>
-			<?php if ( is_wp_error( $environments ) ) : ?>
+				<?php if ( is_wp_error( $environments ) ) : ?>
 				<div class="notice notice-error">
 					<p>
 						<strong><?php esc_html_e( 'Error:', 'ash-nazg' ); ?></strong>
@@ -606,10 +607,11 @@ use Pantheon\AshNazg\Helpers;
 			<?php else : ?>
 				<p><?php esc_html_e( 'No environments found.', 'ash-nazg' ); ?></p>
 			<?php endif; ?>
-		</div>
-
+			</div>
+			<?php endif; ?>
 
 			<!-- Multidev Management -->
+			<?php if ( ! in_array( 'multidevs', $hidden_sections, true ) ) : ?>
 			<div class="ash-nazg-card ash-nazg-card-2-col">
 			<h2><?php esc_html_e( 'Multidev Management', 'ash-nazg' ); ?></h2>
 
@@ -650,18 +652,18 @@ use Pantheon\AshNazg\Helpers;
 			</div>
 
 			<!-- Existing Multidevs -->
-			<?php
-			$multidevs = [];
-			if ( $environments && is_array( $environments ) ) {
-				foreach ( $environments as $env_id => $env_data ) {
-					if ( ! in_array( $env_id, [ 'dev', 'test', 'live' ], true ) ) {
-						$multidevs[ $env_id ] = $env_data;
+				<?php
+				$multidevs = [];
+				if ( $environments && is_array( $environments ) ) {
+					foreach ( $environments as $env_id => $env_data ) {
+						if ( ! in_array( $env_id, [ 'dev', 'test', 'live' ], true ) ) {
+							$multidevs[ $env_id ] = $env_data;
+						}
 					}
 				}
-			}
-			?>
+				?>
 
-			<?php if ( ! empty( $multidevs ) ) : ?>
+				<?php if ( ! empty( $multidevs ) ) : ?>
 				<h3><?php esc_html_e( 'Existing Multidevs', 'ash-nazg' ); ?></h3>
 				<table class="widefat">
 					<thead>
@@ -742,7 +744,8 @@ use Pantheon\AshNazg\Helpers;
 			<?php else : ?>
 				<p><?php esc_html_e( 'No multidev environments found.', 'ash-nazg' ); ?></p>
 			<?php endif; ?>
-		</div>
+			</div>
+			<?php endif; ?>
 		</div><!-- .ash-nazg-dashboard -->
 
 	<?php endif; ?>

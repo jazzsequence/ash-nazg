@@ -1018,6 +1018,16 @@
   padding: 12px 0 0 0;
 }
 
+/* Stack checkboxes and apply button vertically in all screen option panels */
+#screen-options-wrap fieldset.screen-options label {
+  display: block;
+  margin-bottom: 6px;
+}
+#screen-options-wrap fieldset.screen-options input[type=submit] {
+  display: block;
+  margin-top: 10px;
+}
+
 /* Code Deployment */
 .ash-nazg-deploy-container {
   display: grid;

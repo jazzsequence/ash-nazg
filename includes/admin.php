@@ -1128,6 +1128,16 @@ function handle_screen_options_submission() {
 			$value = min( absint( $_POST['ash_nazg_commits_per_page'] ), 50 );
 			update_user_meta( $user_id, 'ash_nazg_commits_per_page', $value );
 		}
+
+		// Save visible/hidden sections.
+		if ( isset( $_POST['ash_nazg_dev_all_sections'] ) ) {
+			$all = array_map( 'sanitize_text_field', explode( ',', sanitize_text_field( $_POST['ash_nazg_dev_all_sections'] ) ) );
+			$visible = isset( $_POST['ash_nazg_dev_visible_sections'] )
+				? array_map( 'sanitize_text_field', (array) $_POST['ash_nazg_dev_visible_sections'] )
+				: [];
+			$hidden = array_values( array_diff( $all, $visible ) );
+			update_user_meta( $user_id, 'ash_nazg_dev_hidden_sections', implode( ',', $hidden ) );
+		}
 	}
 
 	if ( 'ash-nazg' === $page ) {
@@ -2030,6 +2040,10 @@ function render_development_page() {
 	$test_initialized = Helpers\is_environment_initialized( $site_id, 'test' );
 	$live_initialized = Helpers\is_environment_initialized( $site_id, 'live' );
 
+	// Read hidden sections from screen options.
+	$hidden_sections_raw = get_user_meta( get_current_user_id(), 'ash_nazg_dev_hidden_sections', true );
+	$hidden_sections = $hidden_sections_raw ? array_filter( explode( ',', $hidden_sections_raw ) ) : [];
+
 	// Include the view.
 	require_once ASH_NAZG_PLUGIN_DIR . '/includes/views/development.php';
 }
@@ -2483,6 +2497,14 @@ function development_screen_options() {
 		$per_page = get_user_meta( $user_id, 'ash_nazg_commits_per_page', true );
 		$per_page = $per_page ? absint( $per_page ) : 50;
 
+		$hidden_sections = get_user_meta( $user_id, 'ash_nazg_dev_hidden_sections', true );
+		$hidden_sections = $hidden_sections ? array_filter( explode( ',', $hidden_sections ) ) : [];
+
+		$sections = [
+			'environments' => __( 'Environments', 'ash-nazg' ),
+			'multidevs' => __( 'Multidev Management', 'ash-nazg' ),
+		];
+
 		ob_start();
 		?>
 		<fieldset class="screen-options">
@@ -2492,6 +2514,17 @@ function development_screen_options() {
 			<input type="number" step="1" min="1" max="50" name="ash_nazg_commits_per_page" id="ash_nazg_commits_per_page" value="<?php echo esc_attr( $per_page ); ?>" class="screen-per-page" />
 		</label>
 		<p class="ash-nazg-screen-options-note"><em><?php esc_html_e( 'Note: The Pantheon API returns a maximum of 50 commits.', 'ash-nazg' ); ?></em></p>
+		</fieldset>
+		<fieldset class="screen-options">
+		<legend><?php esc_html_e( 'Show Sections', 'ash-nazg' ); ?></legend>
+		<?php foreach ( $sections as $id => $label ) : ?>
+			<label>
+				<input type="checkbox" name="ash_nazg_dev_visible_sections[]" value="<?php echo esc_attr( $id ); ?>"
+					<?php checked( ! in_array( $id, $hidden_sections, true ), true ); ?> />
+				<?php echo esc_html( $label ); ?>
+			</label>
+		<?php endforeach; ?>
+		<input type="hidden" name="ash_nazg_dev_all_sections" value="<?php echo esc_attr( implode( ',', array_keys( $sections ) ) ); ?>" />
 		<?php submit_button( __( 'Apply', 'ash-nazg' ), 'primary', 'screen-options-apply', false ); ?>
 		</fieldset>
 		<?php
