@@ -18,12 +18,38 @@ use Pantheon\AshNazg\Admin;
 
 	<p><?php esc_html_e( 'View environment performance metrics including traffic, visitors, and cache performance.', 'ash-nazg' ); ?></p>
 
+	<?php
+	$all_charts = [ 'pages_served', 'unique_visits', 'cache_performance' ];
+	$all_hidden = ! array_diff( $all_charts, $hidden_charts );
+	?>
+
 	<?php if ( ! $site_id ) : ?>
 		<div class="notice notice-warning">
 			<p><?php esc_html_e( 'Not running on Pantheon. Metrics features are not available.', 'ash-nazg' ); ?></p>
 		</div>
 	<?php else : ?>
 
+		<!-- Summary Statistics (always visible; values populated by JS after load) -->
+		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
+			<h2><?php esc_html_e( 'Summary Statistics', 'ash-nazg' ); ?></h2>
+			<div class="ash-nazg-metrics-summary">
+				<div class="ash-nazg-metric-stat">
+					<span class="ash-nazg-stat-label"><?php esc_html_e( 'Total Pages Served:', 'ash-nazg' ); ?></span>
+					<span id="total-pages-served" class="ash-nazg-stat-value">-</span>
+				</div>
+				<div class="ash-nazg-metric-stat">
+					<span class="ash-nazg-stat-label"><?php esc_html_e( 'Total Unique Visits:', 'ash-nazg' ); ?></span>
+					<span id="total-unique-visits" class="ash-nazg-stat-value">-</span>
+				</div>
+				<div class="ash-nazg-metric-stat">
+					<span class="ash-nazg-stat-label"><?php esc_html_e( 'Avg Cache Hit Ratio:', 'ash-nazg' ); ?></span>
+					<span id="avg-cache-ratio" class="ash-nazg-stat-value">-</span>
+				</div>
+			</div>
+		</div>
+
+		<?php if ( ! $all_hidden ) : ?>
+		<!-- Metrics Filters — hidden when all charts are hidden via Screen Options -->
 		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
 			<h2><?php esc_html_e( 'Metrics Filters', 'ash-nazg' ); ?></h2>
 
@@ -72,60 +98,44 @@ use Pantheon\AshNazg\Admin;
 				<button id="refresh-metrics" class="button button-secondary"><?php esc_html_e( 'Refresh', 'ash-nazg' ); ?></button>
 			</div>
 
-			<div id="metrics-loading" class="ash-nazg-loading" style="display: none;">
+			<div id="metrics-loading" class="ash-nazg-loading ash-nazg-hidden">
 				<p><?php esc_html_e( 'Loading metrics data...', 'ash-nazg' ); ?></p>
 			</div>
 
-			<div id="metrics-error" class="notice notice-error" style="display: none;">
+			<div id="metrics-error" class="notice notice-error ash-nazg-hidden">
 				<p></p>
 			</div>
 		</div>
+		<?php endif; ?>
 
-		<!-- Raw API Response (Debug) -->
-		<div id="metrics-raw-data" class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20" style="display: none;">
+		<?php if ( $debug_mode ) : ?>
+		<!-- Raw API Response (Debug) — only visible with ?debug=1 -->
+		<div id="metrics-raw-data" class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20 ash-nazg-hidden">
 			<details>
-				<summary style="cursor: pointer; padding: 10px; background: #f6f7f7; font-weight: 600;">
+				<summary class="ash-nazg-details-summary">
 					<?php esc_html_e( 'API Request Details (Debug)', 'ash-nazg' ); ?>
 				</summary>
-				<div style="padding: 10px 0;">
+				<div class="ash-nazg-details-body">
 					<h3><?php esc_html_e( 'API Endpoint:', 'ash-nazg' ); ?></h3>
-					<pre id="api-endpoint" class="ash-nazg-code-block" style="background: #f6f7f7; padding: 10px; overflow-x: auto; margin: 10px 0;"></pre>
+					<pre id="api-endpoint" class="ash-nazg-code-block"></pre>
 				</div>
 			</details>
 
-			<details style="margin-top: 10px;">
-				<summary style="cursor: pointer; padding: 10px; background: #f6f7f7; font-weight: 600;">
+			<details class="ash-nazg-mt-10">
+				<summary class="ash-nazg-details-summary">
 					<?php esc_html_e( 'API Response Data (Debug)', 'ash-nazg' ); ?>
 				</summary>
-				<div style="padding: 10px 0;">
+				<div class="ash-nazg-details-body">
 					<p class="description"><?php esc_html_e( 'This shows the raw JSON data returned from the Pantheon API.', 'ash-nazg' ); ?></p>
-					<pre id="api-response" class="ash-nazg-code-block" style="background: #f6f7f7; padding: 10px; overflow-x: auto; max-height: 400px; margin: 10px 0;"></pre>
+					<pre id="api-response" class="ash-nazg-code-block ash-nazg-code-block--scrollable"></pre>
 				</div>
 			</details>
 		</div>
+		<?php endif; ?>
 
-		<!-- Charts Section -->
-		<div id="metrics-charts" style="display: none;">
-			<!-- Summary Stats -->
-			<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
-				<h2><?php esc_html_e( 'Summary Statistics', 'ash-nazg' ); ?></h2>
-				<div class="ash-nazg-metrics-summary">
-					<div class="ash-nazg-metric-stat">
-						<span class="ash-nazg-stat-label"><?php esc_html_e( 'Total Pages Served:', 'ash-nazg' ); ?></span>
-						<span id="total-pages-served" class="ash-nazg-stat-value">-</span>
-					</div>
-					<div class="ash-nazg-metric-stat">
-						<span class="ash-nazg-stat-label"><?php esc_html_e( 'Total Unique Visits:', 'ash-nazg' ); ?></span>
-						<span id="total-unique-visits" class="ash-nazg-stat-value">-</span>
-					</div>
-					<div class="ash-nazg-metric-stat">
-						<span class="ash-nazg-stat-label"><?php esc_html_e( 'Avg Cache Hit Ratio:', 'ash-nazg' ); ?></span>
-						<span id="avg-cache-ratio" class="ash-nazg-stat-value">-</span>
-					</div>
-				</div>
-			</div>
-
-			<!-- Pages Served Chart -->
+		<!-- Charts -->
+		<div id="metrics-charts">
+			<?php if ( ! in_array( 'pages_served', $hidden_charts, true ) ) : ?>
 			<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
 				<h2><?php esc_html_e( 'Pages Served', 'ash-nazg' ); ?></h2>
 				<canvas id="pages-served-chart"></canvas>
@@ -137,8 +147,9 @@ use Pantheon\AshNazg\Admin;
 					</p>
 				</div>
 			</div>
+			<?php endif; ?>
 
-			<!-- Unique Visits Chart -->
+			<?php if ( ! in_array( 'unique_visits', $hidden_charts, true ) ) : ?>
 			<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
 				<h2><?php esc_html_e( 'Unique Visits', 'ash-nazg' ); ?></h2>
 				<canvas id="unique-visits-chart"></canvas>
@@ -150,8 +161,9 @@ use Pantheon\AshNazg\Admin;
 					</p>
 				</div>
 			</div>
+			<?php endif; ?>
 
-			<!-- Cache Performance Chart -->
+			<?php if ( ! in_array( 'cache_performance', $hidden_charts, true ) ) : ?>
 			<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
 				<h2><?php esc_html_e( 'Cache Performance', 'ash-nazg' ); ?></h2>
 				<canvas id="cache-performance-chart"></canvas>
@@ -163,6 +175,7 @@ use Pantheon\AshNazg\Admin;
 					</p>
 				</div>
 			</div>
+			<?php endif; ?>
 		</div>
 
 	<?php endif; ?>

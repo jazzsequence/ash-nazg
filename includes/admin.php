@@ -53,6 +53,7 @@ function init() {
 	add_action( 'load-toplevel_page_ash-nazg', __NAMESPACE__ . '\\dashboard_screen_options' );
 	add_action( 'load-ash-nazg_page_ash-nazg-addons', __NAMESPACE__ . '\\addons_screen_options' );
 	add_action( 'load-ash-nazg_page_ash-nazg-backups', __NAMESPACE__ . '\\backups_screen_options' );
+	add_action( 'load-ash-nazg_page_ash-nazg-metrics', __NAMESPACE__ . '\\metrics_screen_options' );
 	add_filter( 'screen_settings', __NAMESPACE__ . '\\dashboard_screen_settings', 10, 2 );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
@@ -1147,6 +1148,18 @@ function handle_screen_options_submission() {
 		}
 	}
 
+	if ( 'ash-nazg-metrics' === $page ) {
+		$visible = isset( $_POST['ash_nazg_metrics_visible_charts'] )
+			? array_map( 'sanitize_text_field', (array) $_POST['ash_nazg_metrics_visible_charts'] )
+			: [];
+
+		if ( isset( $_POST['ash_nazg_metrics_all_charts'] ) ) {
+			$all_charts = array_map( 'sanitize_text_field', explode( ',', sanitize_text_field( $_POST['ash_nazg_metrics_all_charts'] ) ) );
+			$hidden = array_values( array_diff( $all_charts, $visible ) );
+			update_user_meta( $user_id, 'ash_nazg_metrics_hidden_charts', implode( ',', $hidden ) );
+		}
+	}
+
 	if ( 'ash-nazg-backups' === $page ) {
 		$max_age = isset( $_POST['ash_nazg_backups_max_age'] ) ? absint( $_POST['ash_nazg_backups_max_age'] ) : 0;
 		$valid = [ 0, 7, 30, 365 ];
@@ -2098,6 +2111,14 @@ function render_metrics_page() {
 	// Default to 28 days.
 	$selected_duration = '28d';
 
+	// Debug mode: show raw API details only when ?debug=1 is present.
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display toggle, no mutations.
+	$debug_mode = isset( $_GET['debug'] ) && '1' === $_GET['debug'];
+
+	// Read screen options for chart visibility.
+	$hidden_charts = get_user_meta( get_current_user_id(), 'ash_nazg_metrics_hidden_charts', true );
+	$hidden_charts = $hidden_charts ? array_filter( explode( ',', $hidden_charts ) ) : [];
+
 	require ASH_NAZG_PLUGIN_DIR . 'includes/views/metrics.php';
 }
 
@@ -2384,6 +2405,53 @@ function backups_screen_options() {
 					<?php echo esc_html( $label ); ?>
 				</label>
 			<?php endforeach; ?>
+			<?php submit_button( __( 'Apply', 'ash-nazg' ), 'primary', 'screen-options-apply', false ); ?>
+		</fieldset>
+		<?php
+		$settings .= ob_get_clean();
+
+		return $settings;
+	}, 10, 2 );
+}
+
+/**
+ * Register Screen Options for the Metrics page (chart visibility).
+ *
+ * @return void
+ */
+function metrics_screen_options() {
+	$screen = get_current_screen();
+	if ( ! is_object( $screen ) || 'ash-nazg_page_ash-nazg-metrics' !== $screen->id ) {
+		return;
+	}
+
+	add_filter( 'screen_settings', function ( $settings, $screen_obj ) {
+		if ( 'ash-nazg_page_ash-nazg-metrics' !== $screen_obj->id ) {
+			return $settings;
+		}
+
+		$user_id = get_current_user_id();
+		$hidden = get_user_meta( $user_id, 'ash_nazg_metrics_hidden_charts', true );
+		$hidden = $hidden ? array_filter( explode( ',', $hidden ) ) : [];
+
+		$charts = [
+			'pages_served' => __( 'Pages Served', 'ash-nazg' ),
+			'unique_visits' => __( 'Unique Visits', 'ash-nazg' ),
+			'cache_performance' => __( 'Cache Performance', 'ash-nazg' ),
+		];
+
+		ob_start();
+		?>
+		<fieldset class="screen-options">
+			<legend><?php esc_html_e( 'Show Charts', 'ash-nazg' ); ?></legend>
+			<?php foreach ( $charts as $id => $label ) : ?>
+				<label>
+					<input type="checkbox" name="ash_nazg_metrics_visible_charts[]" value="<?php echo esc_attr( $id ); ?>"
+						<?php checked( ! in_array( $id, $hidden, true ), true ); ?> />
+					<?php echo esc_html( $label ); ?>
+				</label>
+			<?php endforeach; ?>
+			<input type="hidden" name="ash_nazg_metrics_all_charts" value="<?php echo esc_attr( implode( ',', array_keys( $charts ) ) ); ?>" />
 			<?php submit_button( __( 'Apply', 'ash-nazg' ), 'primary', 'screen-options-apply', false ); ?>
 		</fieldset>
 		<?php
