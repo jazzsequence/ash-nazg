@@ -30,7 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Clone From dropdown in Create Multidev now lists all environments (dev, all multidevs, test, live) instead of dev and multidevs only
 - Consistent environment ordering throughout: dev → multidevs (sorted alphabetically) → test → live
 - Commit table column widths standardized: Hash 10%, Author 20%, Date 15%, Message takes remainder
-- Debug sections (Raw API Response) hidden by default; shown only with `?debug=1`
+- Debug sections (Raw API Response) hidden by default
 
 **Addons Page**
 - Screen Options: show/hide Redis, Solr, and Elasticsearch addon sections independently
@@ -47,7 +47,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Screen Options: show/hide Pages Served, Unique Visits, and Cache Performance charts independently
 - Chart filter controls automatically hidden when all charts are hidden via Screen Options
 - Environment and duration selections persisted in `localStorage` and restored on page load
-- API request and response debug panels gated behind `?debug=1` (were previously always visible)
+- API request and response debug panels hidden by default (were previously always visible)
 
 **WP Admin Dashboard Widget**
 - New "Cache Performance" widget on the main WordPress admin dashboard
@@ -82,7 +82,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Metrics debug panels (API request/response) no longer render on every page load; now gated behind `?debug=1` to reduce noise during normal use
+- Metrics debug panels (API request/response) no longer render on every page load
 - Backups catalog no longer collapses all environments into one scrollable section; tab-based navigation makes individual environment catalogs accessible without scrolling past unrelated data
 
 ---

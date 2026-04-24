@@ -90,7 +90,7 @@ Manage code deployment, upstream updates, multidev environments, and uncommitted
 - Show/hide Multidev Management card
 
 **Debug:**
-- Raw API response sections hidden by default; reveal with `?debug=1`
+- Raw API response sections hidden by default
 
 ### Metrics
 
@@ -104,7 +104,7 @@ View traffic and cache performance analytics for any Pantheon environment from a
 - Screen Options: show/hide individual charts independently; filters auto-hide when all charts hidden
 - Refresh button to clear cache and reload data
 - 1-hour cache TTL for metrics data
-- API request/response debug panels gated behind `?debug=1`
+- API request/response debug panels hidden by default
 
 ### Backups
 
@@ -213,7 +213,7 @@ Configure machine token authentication, view/clear session tokens, and manage pl
 
 ### Delete Site (Debug Mode Only)
 
-Demonstration feature showing full Pantheon API capabilities. Only visible when `?debug=1` query parameter is present.
+Demonstration feature showing full Pantheon API capabilities.
 
 ![Delete site page - big red delete button enabled after typing DELETE](screenshots/ash-nazg-delete-1.png)
 
@@ -465,7 +465,7 @@ Named after Tolkien's One Ring inscription: "Ash nazg durbatulûk, ash nazg gimb
 - **Screen Options**: Show/hide controls across Dashboard, Development, Addons, Backups, and Metrics pages
 - **WP Updates Page Integration**: Pantheon upstream updates surfaced on native WP Admin > Updates page with progress modal
 - **Development Enhancements**: Local uncommitted changes, unpushed commits, Refresh on Recent Commits, WP Admin links in environments table
-- **Metrics Improvements**: Summary Statistics above filters, localStorage persistence, per-chart Screen Options, debug behind `?debug=1`
+- **Metrics Improvements**: Summary Statistics above filters, localStorage persistence, per-chart Screen Options
 - **Backups Tabs**: dev/test/live tabbed UI (JS-driven); age filter via Screen Options stored per user
 - **Addons**: Elasticsearch "Coming Soon" badge, live status detection, per-addon Screen Options
 - **WP Admin Dashboard Widget**: Cache hit ratio line chart over 28 days with link to Metrics page

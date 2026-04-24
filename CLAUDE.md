@@ -152,7 +152,7 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
    - ✅ WP Admin links in Environments table for non-current environments
    - ✅ Screen Options: show/hide Environments card and Multidev Management card
    - ✅ Environment ordering: dev → multidevs (sorted) → test → live throughout
-   - ✅ Debug sections (Raw API Response) gated behind `?debug=1`
+   - ✅ Debug sections (Raw API Response) hidden by default
    - ✅ Commit table column widths: Hash 10%, Author 20%, Date 15%, Message remainder
 
 7. **Backups Page**
@@ -174,7 +174,7 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 
 9. **Delete Site** (Debug Mode Only)
    - ✅ Full site deletion via API
-   - ✅ Only visible with `?debug=1` query parameter
+   - ✅ Only visible in debug mode
    - ✅ Multiple confirmation dialogs
    - ✅ Type "DELETE" to enable button
    - ✅ Demonstration feature showing API capabilities
@@ -188,7 +188,7 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
     - ✅ Summary statistics with totals and cache hit ratio
     - ✅ Per-chart breakdowns with descriptions
     - ✅ Refresh button to clear cache and reload data
-    - ✅ Debug sections (API request/response) gated behind `?debug=1`
+    - ✅ Debug sections (API request/response) hidden by default
     - ✅ Screen Options: show/hide Pages Served, Unique Visits, Cache Performance independently
     - ✅ Filters hidden automatically when all charts hidden via Screen Options
     - ✅ Environment and duration selections persisted in localStorage
@@ -241,7 +241,7 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
   - Clone - clone database and/or files between environments
   - Logs - debug log viewer with fetch/clear functionality and auto-mode switching
   - Settings - machine token configuration, session token management
-  - Delete Site (debug mode only) - site deletion demonstration feature (visible only with `?debug=1`)
+  - Delete Site (debug mode only) - site deletion demonstration feature
 
 **UI Implementation:**
 - Traditional WordPress admin HTML/CSS (no React)
@@ -643,7 +643,7 @@ This is a Hackathon 2026 project that demonstrates the full capabilities of the 
 - ✅ Backups page tabbed UI (dev/test/live) with age filter via Screen Options
 - ✅ Development page: local uncommitted changes, unpushed commits, refresh on Recent Commits
 - ✅ Addons: Elasticsearch placeholder, live status detection, per-addon Screen Options
-- ✅ Metrics: debug behind `?debug=1`, Summary Statistics above filters, localStorage persistence, per-chart Screen Options
+- ✅ Metrics: Summary Statistics above filters, localStorage persistence, per-chart Screen Options
 - ✅ WP admin dashboard widget showing cache hit ratio (28-day chart)
 - ✅ Release pipeline: GitHub Actions release workflow, build-dist.sh, .distignore, dependabot
 - ✅ SCSS component files for code blocks and dashboard widget

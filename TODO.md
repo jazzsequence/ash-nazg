@@ -1,90 +1,35 @@
 # Ash-Nazg TODO List
 
-## Current Work-in-Progress
-
-No active work in progress.
-
-## Phase 3: Build Pipeline & Design
-
-### Design Review & Refactoring
-- [x] PDS integration: fonts, design tokens, foundations, and branded header
-- [x] Review all cards and interfaces for full PDS component compliance
-- [x] Review and optimize responsive breakpoints
-- [ ] Accessibility audit (WCAG compliance)
-- [ ] Add JavaScript bundling and minification
-- [x] Configure watch mode for development (npm run watch)
-
-## Code Quality
-
-### Testing
-- [ ] Add Playwright E2E tests (as mentioned in CLAUDE.md Phase 3)
-- [ ] Increase test coverage for git-related functions
-
 ## Planned Features
 
 ### UI/UX Improvements
-- [x] More screen options integration — Dashboard, Development, Addons, Backups, Metrics all have Screen Options now
 - [ ] Accessibility audit (WCAG compliance)
+- [ ] Add JavaScript bundling and minification
 
-### Analytics & Metrics
-- [x] Environment metrics visualization (Pages Served, Unique Visits, Cache Performance)
-- [x] Summary Statistics above Metrics Filters
-- [x] Per-chart Screen Options (show/hide individual charts)
-- [x] Filters auto-hide when all charts hidden
-- [x] Environment and duration selection persisted in localStorage
-- [x] Debug panels gated behind ?debug=1
-
-### Dashboard Widget
-- [x] WP admin dashboard widget showing cache hit ratio (28-day Chart.js line chart, links to Metrics page)
-
-### Dashboard Enhancements
-- [x] 50/50 two-column card layout
-- [x] Environment card: Pantheon user info, org selector with inline editing, machine token copy
-- [x] Screen Options for API endpoint groups (individual + master toggle)
-- [x] Standardized .ash-nazg-editable flex class for inline edit UIs
-
-### Development Page
-- [x] Show uncommitted local git changes (git status --porcelain)
-- [x] Show unpushed local commits (git log @{u}..)
-- [x] Refresh button on Recent Commits card
-- [x] Screen Options: Environments card and Multidev Management card
-- [x] WP Admin links in Environments table for non-current environments
-- [x] Clone From includes all environments (not just dev)
-- [x] Consistent environment ordering: dev → multidevs (sorted) → test → live
-- [x] Debug sections behind ?debug=1
-
-### Backups Page
-- [x] dev/test/live tabs (JS-driven); default tab is current environment
-- [x] Screen Options: age filter stored in user meta
-- [x] Element column widened; filenames truncated with ellipsis
-
-### Addons Page
-- [x] Screen Options: show/hide Redis, Solr, Elasticsearch independently
-- [x] Elasticsearch "Coming Soon" badge
-- [x] Live addon status detection
-
-### WP Updates Integration
-- [x] Pantheon upstream updates surfaced on update-core.php
-- [x] "Apply Updates" button with progress modal
-
-### Release Pipeline
-- [x] .github/workflows/release.yml
-- [x] bin/build-dist.sh + .distignore
-- [x] npm run build:dist
-- [x] .github/dependabot.yml
-
-## Documentation
-- [x] Update README with concise feature descriptions
-- [x] Add screenshot placeholders to README
-- [x] Update CLAUDE.md with latest patterns and standards (v0.6.0)
-- [x] Write CHANGELOG.md (v0.6.0)
-- [x] Document build process and SASS usage (npm scripts in package.json)
+### Testing
+- [ ] Add Playwright E2E tests
+- [ ] Increase test coverage for git-related functions
 
 ---
 
 ## ✅ Completed Features
 
-### Phase 1 & 2 Complete
+### v0.6.0
+
+- ✅ WP admin dashboard widget: cache hit ratio line chart, links to Metrics page
+- ✅ Dashboard: 50/50 two-column layout, Environment card (Pantheon user, org selector, machine token copy), Screen Options for endpoint groups
+- ✅ WP Updates page: Pantheon upstream updates surfaced on update-core.php with progress modal
+- ✅ Development page: uncommitted local changes, unpushed commits, Refresh button, Screen Options (Environments/Multidev), WP Admin links per env, all-envs Clone From, canonical env ordering
+- ✅ Addons page: Screen Options (Redis/Solr/Elasticsearch), Elasticsearch Coming Soon, live status detection via \$_ENV / Terminus API
+- ✅ Backups page: tabbed dev/test/live UI, Screen Options age filter, wider Element column
+- ✅ Metrics page: Summary Stats above filters, per-chart Screen Options, localStorage persistence
+- ✅ Menu reorder: Metrics, Development, Addons, Workflows, Backups, Clone, Logs, Settings
+- ✅ Release pipeline: GitHub Actions release workflow, build:dist script, .distignore, dependabot
+- ✅ CSS: _code-blocks.scss, _dashboard-widget.scss, standalone dashboard-widget.css entry point
+- ✅ Documentation: CHANGELOG.md, updated CLAUDE.md and README.md for v0.6.0
+
+### Phase 1–3 & v0.1.0–v0.5.0
+
 - ✅ Plugin bootstrap and activation
 - ✅ Composer setup with dependencies
 - ✅ API client with authentication (session token exchange and caching)
@@ -105,119 +50,18 @@ No active work in progress.
 - ✅ Recent commits display
 - ✅ Workflow status monitoring with polling
 - ✅ Apply upstream updates button with workflow monitoring
-- ✅ Merge Dev into Multidev functionality with conditional display
-- ✅ Merge from Dev button in multidev management table
+- ✅ Merge Dev into Multidev and from Dev button in multidev table
 - ✅ Auto-clear invalid session tokens on 401/403 errors
 - ✅ Manual session token clearing on Settings page
 - ✅ Upstream cache invalidation after applying updates
-- ✅ Helper functions and refactoring for code quality:
-  - `debug_log()` - WP_DEBUG logging wrapper (80 uses throughout codebase)
-  - `verify_ajax_request()` - AJAX nonce and capability verification
-  - `ensure_site_id()` - Auto-detect site ID or return WP_Error (refactored 6 API functions)
-  - `ensure_environment()` - Auto-detect environment or return WP_Error (refactored 6 API functions)
-  - `is_local_environment()` - Detect local dev environments
-  - `is_multidev_environment()` - Detect Pantheon multidev environments
-  - `dev_has_changes_for_env()` - Compare commits between dev and target env
-  - `filter_upstream_updates_for_env()` - Filter upstream updates per environment
-  - `get_cache_timestamp()` - Get cache timestamp for "Last checked" displays
+- ✅ Helper functions: debug_log(), verify_ajax_request(), ensure_site_id(), ensure_environment(), is_local_environment(), is_multidev_environment(), dev_has_changes_for_env(), filter_upstream_updates_for_env(), get_cache_timestamp()
 - ✅ Local URL override for Lando and Pantheon multidev environments (MU-plugin)
-- ✅ Per-environment upstream updates filtering (no longer shows updates already applied)
-- ✅ Code deployment workflow (deploy to test/live environments)
-  - Master control panel approach: both deploy buttons visible from any environment
-  - Side-by-side layout with panel-based interaction
-  - Change detection: buttons disabled when environments are in sync
-  - Deployment notes with larger textareas
-  - Optional "sync content from live" for test→live deployments
-  - Workflow monitoring with progress modals
-  - Cache clearing after successful deployment
-- ✅ Build Pipeline & Pantheon Design System Integration
-  - npm package.json with build scripts
-  - SASS/SCSS support with organized file structure
-  - CSS compilation from SASS sources
-  - Pantheon Design System (pds-core) integration
-    - Imports design tokens from local ~/git/pds-core copy
-    - Copies PDS foundations, utilities, and Pantheon logos during build
-    - PDS fonts (Poppins, Aleo, Source Code Pro) loaded via Google Fonts
-    - PDS design tokens and foundations imported in compiled CSS
-    - Pantheon branded header with logo above page title
-    - PDS badge styles (success/error) using PDS color tokens
-    - Organized SASS structure: _base, _components, _pages, _utilities, _typography
-    - Build command: `npm run build` (compiles SASS → CSS)
-    - Watch mode: `npm run watch` (auto-compiles SASS on file changes)
-- ✅ Backup Management
-  - Backups admin page with create/list/download/restore UI
-  - Master control center pattern: operate on any environment from anywhere
-    - Environment dropdown selector for backup creation
-    - Display backups from all environments with clear labels
-    - Environment-specific sections with visual separation
-  - List available backups: GET /v0/sites/{site_id}/environments/{env}/backups/catalog
-  - Create backups: POST /v0/sites/{site_id}/environments/{env}/backups
-    - Supports all, code, database, or files elements
-    - Configurable retention period (keep_for parameter)
-  - Restore backups: POST /v0/sites/{site_id}/environments/{env}/backups/{backup_id}/restore
-    - Confirmation dialogs for destructive operations
-    - Workflow monitoring with progress modals
-  - Download backups: POST /v0/sites/{site_id}/environments/{env}/backups/{backup_id}/{element}/download-url
-    - Generates signed URLs for secure downloads
-  - Backup catalog grouped by backup set (timestamp)
-  - Individual element management (code/database/files)
-  - Collapsible backup set UI to reduce vertical space
-  - Cache management with 5-minute TTL
-  - Full PHPUnit test coverage
-  - Tested end-to-end on properly initialized Pantheon environments
-- ✅ Clone Content
-  - Clone admin page for copying database and/or files between environments
-  - Dropdown selectors for source and target environment selection
-  - Checkboxes to select database only, files only, or both
-  - Database clone: POST /v0/sites/{site_id}/environments/{env}/database/clone
-    - Automatic URL search-replace for WordPress (from_url / to_url detection)
-    - Optional cache clearing and database updates
-  - Files clone: POST /v0/sites/{site_id}/environments/{env}/files/clone
-    - Simple file copy from source to target environment
-  - Environment validation:
-    - Prevents cloning from/to uninitialized environments
-    - Prevents same source and target selection
-    - Validates at least one option (DB or files) is selected
-  - Destructive operation warnings with confirmation dialogs
-  - Multi-workflow monitoring (polls both DB and files workflows simultaneously)
-  - Cache clearing after successful clone operations
-  - Full PHPUnit test coverage
-  - Security: nonce verification, capability checks, initialization validation
-- ✅ Delete Site (Destructive Operation - Debug Mode Only)
-  - Delete Site admin page with big red button (demonstration feature)
-  - Only visible when `?debug=1` query parameter is present
-  - Red menu text: "⚠️ DO NOT CLICK"
-  - 500px circular red button with embossed text and diagonal shadow
-  - Type "DELETE" to enable button
-  - First confirmation: Modal with danger warnings and "I Understand the Risk" button
-  - Second confirmation: JavaScript alert for final chance to cancel
-  - "Whew! That was a close one!" message on cancellation
-  - Fully functional - actually deletes site via `DELETE /v0/sites/{site_id}`
-  - Redirects to Pantheon sites dashboard after deletion
-  - Full PHPUnit test coverage (9 tests)
-  - Referer-based access control for navigation
-- ✅ Domain Management for WordPress Multisite
-  - Automatic domain addition when new multisite subsites are created
-  - Hooks: `wp_initialize_site` (WP 5.1+) and `wpmu_new_blog` (legacy)
-  - Skips local environments (Lando, etc.) using `is_local_environment()`
-  - Adds domains to Pantheon live environment via API
-  - Synchronous operation (no workflow polling needed)
-  - Admin notices for success/failure feedback via transients
-  - API functions: `get_domains()`, `add_domain()`, `delete_domain()`
-  - Endpoints: GET/POST/DELETE `/v0/sites/{site_id}/environments/{env_id}/domains`
-  - Full PHPUnit test coverage (13 tests)
-  - Multisite integration module: `includes/multisite.php`
-- ✅ Per-User Machine Token Storage (v0.4.0)
-  - User-scoped tokens: each admin with `manage_options` has their own machine token
-  - Pantheon Secrets with user ID suffix: `ash_nazg_machine_token_{user_id}`
-  - Database storage: encrypted with AES-256-CBC using WordPress AUTH_SALT
-  - Per-user session token caching: separate transients per user
-  - Token encryption/decryption functions: `encrypt_token()`, `decrypt_token()`
-  - Token retrieval: `get_user_machine_token()` with 4-tier fallback chain
-  - Migration system: backward-compatible migration from global tokens
-  - Migration UI: admin notice with progressive nag (1 week → 24 hours)
-  - Settings page migration button for global token users
-  - User ID display in settings for Pantheon Secrets setup
-  - Better security: individual token revocation per user
-  - Better audit trails: track API actions by user
-  - Full PHPUnit test coverage (12 tests)
+- ✅ Per-environment upstream updates filtering
+- ✅ Code deployment workflow (deploy to test/live, side-by-side layout, workflow monitoring)
+- ✅ Build Pipeline & Pantheon Design System integration (SASS, PDS tokens, branded header)
+- ✅ Backup management (create, list, restore, download across all environments)
+- ✅ Clone content between environments (database and/or files)
+- ✅ Domain management for WordPress multisite
+- ✅ Delete site (debug mode only, demonstration feature)
+- ✅ Per-user machine token storage with Pantheon Secrets and AES-256-CBC encryption
+- ✅ Environment metrics visualization with Chart.js (Pages Served, Unique Visits, Cache Performance)
