@@ -220,6 +220,42 @@ class Test_API extends TestCase {
 	}
 
 	/**
+	 * Test get_user_id parses Pantheon UUID from per-user session token.
+	 */
+	public function test_get_user_id_parses_session_token() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+		$this->assertMatchesRegularExpression(
+			'/function get_user_id.*ash_nazg_session_token_%d/s',
+			$file_contents,
+			'get_user_id should read the per-user session token transient'
+		);
+	}
+
+	/**
+	 * Test get_user_id validates UUID format from session token.
+	 */
+	public function test_get_user_id_validates_uuid_format() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+		$this->assertMatchesRegularExpression(
+			'/function get_user_id.*preg_match.*\[0-9a-f\]/s',
+			$file_contents,
+			'get_user_id should validate UUID format before trusting parsed value'
+		);
+	}
+
+	/**
+	 * Test get_user_id retains fallback to legacy ash_nazg_user_id transient.
+	 */
+	public function test_get_user_id_has_legacy_fallback() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+		$this->assertMatchesRegularExpression(
+			'/function get_user_id.*ash_nazg_user_id/s',
+			$file_contents,
+			'get_user_id should fall back to the ash_nazg_user_id transient'
+		);
+	}
+
+	/**
 	 * Test that get_current_pantheon_user uses the correct endpoint.
 	 */
 	public function test_get_current_pantheon_user_endpoint() {

@@ -1044,43 +1044,36 @@ function clear_cache() {
  * @return string|false User ID or false if not available.
  */
 function get_user_id() {
-	$token = get_api_token();
-	if ( is_wp_error( $token ) ) {
-		return false;
+	$wp_user_id = get_current_user_id();
+
+	/*
+	 * Primary: parse the Pantheon user UUID from the cached session token
+	 * (format: "{uuid}:{session_uuid}:{token}") — works on every request.
+	 */
+	$session_token = get_transient( sprintf( 'ash_nazg_session_token_%d', $wp_user_id ) );
+	if ( $session_token && is_string( $session_token ) ) {
+		$segments = explode( ':', $session_token, 2 );
+		if ( ! empty( $segments[0] ) && preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $segments[0] ) ) {
+			return $segments[0];
+		}
 	}
 
-	// Try to get from cached session token response.
+	// Fallback: legacy global transient set during token exchange.
 	$cached_user_id = get_transient( 'ash_nazg_user_id' );
 	if ( false !== $cached_user_id ) {
 		return $cached_user_id;
 	}
 
-	// Get from fresh auth to extract user_id.
-	delete_transient( 'ash_nazg_session_token' );
-	$machine_token = get_machine_token();
-	if ( ! $machine_token ) {
+	// Last resort: trigger auth to populate the token and try again.
+	$token = get_api_token();
+	if ( is_wp_error( $token ) ) {
 		return false;
 	}
-
-	$response = wp_remote_post(
-		'https://api.pantheon.io/v0/authorize/machine-token',
-		[
-			'headers' => [ 'Content-Type' => 'application/json' ],
-			'body'    => wp_json_encode(
-				[
-					'machine_token' => $machine_token,
-					'client'        => 'ash-nazg',
-				]
-			),
-			'timeout' => 15,
-		]
-	);
-
-	if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
-		$body = json_decode( wp_remote_retrieve_body( $response ), true );
-		if ( ! empty( $body['user_id'] ) ) {
-			set_transient( 'ash_nazg_user_id', $body['user_id'], HOUR_IN_SECONDS );
-			return $body['user_id'];
+	$session_token = get_transient( sprintf( 'ash_nazg_session_token_%d', $wp_user_id ) );
+	if ( $session_token && is_string( $session_token ) ) {
+		$segments = explode( ':', $session_token, 2 );
+		if ( ! empty( $segments[0] ) && preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $segments[0] ) ) {
+			return $segments[0];
 		}
 	}
 
