@@ -56,11 +56,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<div class="workflows-container">
 			<h2><?php esc_html_e( 'Available Workflows', 'ash-nazg' ); ?></h2>
 
-			<p class="description">
-				<strong><?php esc_html_e( 'Current Environment:', 'ash-nazg' ); ?></strong>
-				<?php echo esc_html( $environment ); ?>
-			</p>
-
 			<?php foreach ( $workflows as $workflow ) : ?>
 				<?php
 				$workflow_id = isset( $workflow['id'] ) ? $workflow['id'] : '';
