@@ -497,9 +497,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 							</span>
 						<?php endif; ?>
 					</h2>
-					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&refresh_cache=1' ), 'ash_nazg_refresh_cache' ) ); ?>" class="button button-secondary">
+					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&refresh_cache=1' ), 'ash_nazg_refresh_cache' ) ); ?>" class="button button-secondary ash-nazg-editable">
 						<span class="dashicons dashicons-update"></span>
-						<?php esc_html_e( 'Refresh Data', 'ash-nazg' ); ?>
+						<span><?php esc_html_e( 'Refresh Data', 'ash-nazg' ); ?></span>
 					</a>
 				</div>
 
