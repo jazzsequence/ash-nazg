@@ -209,6 +209,12 @@ jQuery(document).ready(function($) {
 		}
 	});
 
+	// ── Screen Options: endpoint visibility master toggle ───────────────────────
+	// Unchecking the master toggle unchecks all group checkboxes; re-checking restores all.
+	$('#ash_nazg_dashboard_show_endpoints').on('change', function() {
+		$('input[name="ash_nazg_dashboard_visible_group[]"]').prop('checked', $(this).is(':checked'));
+	});
+
 	// ── Organization selector ────────────────────────────────────────────────
 
 	$('#ash-nazg-org-edit').on('click', function(e) {
