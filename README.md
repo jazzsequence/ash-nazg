@@ -4,7 +4,7 @@
 
 ![One Ring](https://static.wikia.nocookie.net/lotr/images/0/0d/The_One_Ring_on_a_map_of_Middle-earth.jpg)
 
-Ash Nazg integrates the Pantheon Public API into your WordPress admin dashboard. Toggle between SFTP and Git mode, view debug logs, manage addons, trigger workflows, and monitor your Pantheon environment—all without leaving WordPress.
+Ash Nazg integrates the Pantheon Public API into your WordPress admin dashboard. Toggle between SFTP and Git mode, view debug logs, manage addons, trigger workflows, monitor metrics, and manage your Pantheon environment—all without leaving WordPress.
 
 ## Why "Ash Nazg"?
 
@@ -23,8 +23,30 @@ View your Pantheon environment status, site information, and connection mode at 
 - Real-time API endpoint testing with status indicators (green checkmarks, red X's)
 - Site and environment information from Pantheon API
 - SFTP/Git mode toggle with automatic polling verification
-- Inline site label editing with pencil icon
+- Inline site label and organization editing with pencil icon
+- Pantheon user info and machine token copy button in environment card
+- 50/50 two-column layout with environment and site info cards
+- Screen Options to show/hide individual API endpoint groups (with master toggle)
 - Smart caching with "last checked" timestamps and one-click refresh
+
+### WP Admin Dashboard Widget
+
+A "Cache Performance" widget on the main WordPress admin dashboard shows your Pantheon site's cache hit ratio at a glance—no need to navigate to the Metrics page for a quick status check.
+
+**Features:**
+- Line chart of cache hit ratio % over the last 28 days
+- Summary stats: average cache hit ratio and pages served
+- Link to the full Metrics page
+- Only shown to `manage_options` users on Pantheon sites
+
+### Upstream Updates (WP Updates Page)
+
+Pantheon upstream updates are now surfaced on the native WordPress Updates page (`update-core.php`) alongside core, plugin, and theme updates—so you don't have to remember to check the Development page separately.
+
+**Features:**
+- Shows available upstream updates directly on WP Admin > Updates
+- "Apply Updates" button opens the same progress modal used on the Development page
+- Polls workflow status until complete, then refreshes the page
 
 ### Development
 
@@ -46,18 +68,43 @@ Manage code deployment, upstream updates, multidev environments, and uncommitted
 - Per-environment filtering (only shows updates not yet applied)
 - One-click apply with workflow monitoring
 - Automatic cache invalidation after updates
+- Also surfaced on WP Admin > Updates page (see above)
 
 **Multidev Management:**
-- Create new multidev environments from dev
+- Create new multidev environments cloned from any existing environment (not just dev)
 - Merge multidev into dev or merge dev into multidev
 - Delete multidev environments with confirmation
 - Environment status and branch information display
+- WP Admin links for all non-current environments
+- Consistent environment ordering: dev → multidevs (sorted alphabetically) → test → live
 
 **Uncommitted Changes:**
-- View git diffstat in SFTP mode
+- View uncommitted local file changes (git status --porcelain)
+- View unpushed local commits (git log @{u}..)
 - Commit SFTP changes with commit message
 - File count and change type display
-- Recent commits history
+- Recent commits history with Refresh button
+
+**Screen Options:**
+- Show/hide Environments card
+- Show/hide Multidev Management card
+
+**Debug:**
+- Raw API response sections hidden by default; reveal with `?debug=1`
+
+### Metrics
+
+View traffic and cache performance analytics for any Pantheon environment from a dedicated Metrics page. Also available as a dashboard widget.
+
+**Features:**
+- Three interactive line charts: Pages Served, Unique Visits, Cache Performance (hits vs. misses)
+- Summary Statistics card displayed above chart filters for quick reference
+- Duration selector: 7 days, 28 days, 12 weeks, 12 months
+- Environment and duration selections persisted in localStorage
+- Screen Options: show/hide individual charts independently; filters auto-hide when all charts hidden
+- Refresh button to clear cache and reload data
+- 1-hour cache TTL for metrics data
+- API request/response debug panels gated behind `?debug=1`
 
 ### Backups
 
@@ -71,7 +118,9 @@ Create, restore, and download backups for any environment. Manage backups across
 - Environment dropdown selector for backup creation
 - Create backups: all, code only, database only, or files only
 - Configurable retention period (1-365 days)
-- List backups from all environments with visual separation
+- Tabbed dev/test/live backup catalog (JS-driven tabs); default tab is current environment
+- Backup filenames displayed on one line with ellipsis truncation
+- Screen Options: age filter (all / last 7 days / 30 days / 1 year) stored per user
 - Restore backups with destructive operation warnings
 - Download backups via signed URLs (code/database/files)
 - Collapsible backup sets to reduce vertical space
@@ -115,6 +164,9 @@ Enable or disable Pantheon site addons (Redis object caching, Apache Solr search
 **Features:**
 - Toggle Redis object cache addon
 - Toggle Apache Solr search addon
+- Elasticsearch shown with "Coming Soon" badge (not yet available via API)
+- Live status detection: reads `$_ENV` on Pantheon, queries Terminus internal API on local
+- Screen Options: show/hide Redis, Solr, and Elasticsearch sections independently
 - Persistent state tracking in WordPress options
 - Automatic cache clearing after changes
 
@@ -408,7 +460,20 @@ Named after Tolkien's One Ring inscription: "Ash nazg durbatulûk, ash nazg gimb
 
 ## Changelog
 
-### 0.5.0 - Current Release
+### 0.6.0 - Current Release
+- **Dashboard Redesign**: 50/50 two-column layout with environment card showing user info, org selector, and machine token copy button
+- **Screen Options**: Show/hide controls across Dashboard, Development, Addons, Backups, and Metrics pages
+- **WP Updates Page Integration**: Pantheon upstream updates surfaced on native WP Admin > Updates page with progress modal
+- **Development Enhancements**: Local uncommitted changes, unpushed commits, Refresh on Recent Commits, WP Admin links in environments table
+- **Metrics Improvements**: Summary Statistics above filters, localStorage persistence, per-chart Screen Options, debug behind `?debug=1`
+- **Backups Tabs**: dev/test/live tabbed UI (JS-driven); age filter via Screen Options stored per user
+- **Addons**: Elasticsearch "Coming Soon" badge, live status detection, per-addon Screen Options
+- **WP Admin Dashboard Widget**: Cache hit ratio line chart over 28 days with link to Metrics page
+- **Release Pipeline**: GitHub Actions release workflow, build-dist.sh, .distignore, Dependabot config
+- **Menu Reorder**: Ash Nazg → Metrics → Development → Addons → Workflows → Backups → Clone → Logs → Settings
+- **SCSS Components**: `_code-blocks.scss` for debug panels, `_dashboard-widget.scss` for widget styles
+
+### 0.5.0
 - **Environment Metrics Visualization**: New "Metrics" admin page showing traffic and performance analytics
 - **Chart.js Integration**: Interactive line charts with Pantheon Design System colors and styling
 - **Multiple Time Periods**: View metrics for 7 days, 28 days, 12 weeks, or 12 months

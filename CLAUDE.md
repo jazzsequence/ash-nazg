@@ -99,20 +99,33 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
    - ⛔ Show launch check status information (not available via API - Terminus only)
 
 2. **Site Information Management**
-   - ✅ Inline editing of site label via dashboard
+   - ✅ Inline editing of site label via dashboard (standardized `.ash-nazg-editable` flex UI)
+   - ✅ Inline editing of organization name via dashboard
+   - ✅ Organization selector with inline editing
    - ✅ Real-time updates using AJAX with nonce verification
    - ✅ Pencil icon edit link with keyboard support (Enter to save, Escape to cancel)
+   - ✅ Machine token copy button in environment card
+   - ✅ Pantheon user info display in environment card
    - ✅ API endpoint: PUT /v0/sites/{site_id}/label
    - ✅ Automatic cache invalidation after label update
 
-3. **Site Addons Management**
+3. **Dashboard Layout & Screen Options**
+   - ✅ 50/50 two-column card layout on dashboard
+   - ✅ Screen Options panel to show/hide API endpoint sections and individual endpoint groups
+   - ✅ Master toggle for all endpoint groups
+   - ✅ Wider Path column in endpoint table
+   - ✅ Standardized `.ash-nazg-editable` flex class for all inline edit UIs
+
+4. **Site Addons Management**
    - ✅ Enable/disable Redis addon via API (PUT to enable, DELETE to disable)
    - ✅ Enable/disable Apache Solr addon via API
-   - ✅ Local state tracking in WordPress options (API doesn't provide GET endpoint)
+   - ✅ Elasticsearch "Coming Soon" badge (no API endpoint available yet)
+   - ✅ Live addon status detection: reads `$_ENV` on Pantheon, Terminus internal API on local
+   - ✅ Screen Options: show/hide Redis, Solr, Elasticsearch sections independently
    - ✅ Toggle switches with save button interface
    - ✅ Auto-cache clearing on addon changes
 
-4. **Workflows Integration**
+5. **Workflows Integration**
    - ✅ Trigger `scaffold_extensions` workflow type
    - ✅ Object Cache Pro installation workflow (`install_ocp` job)
    - ✅ Environment validation (workflows only on dev/multidev/lando)
@@ -120,33 +133,36 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
    - ✅ Workflow monitoring/polling for long-running operations
    - ⏳ Additional workflow types beyond scaffold_extensions (to be discovered)
 
-5. **Development Workflow**
+6. **Development Workflow**
    - ✅ Toggle between SFTP mode and Git mode with AJAX interface
    - ✅ Polling verification to ensure mode changes complete before updating UI
    - ✅ Automatic state synchronization after mode changes
    - ✅ Loading indicators during mode switching operations
    - ✅ Detect available upstream updates with per-environment filtering
    - ✅ Apply upstream updates from WP admin
+   - ✅ Apply upstream updates from native WP Updates page (update-core.php) with progress modal
    - ✅ Push code to test/live environments (code deployment)
-   - ✅ Create multidev environments
+   - ✅ Create multidev environments (Clone From includes all environments, not just dev)
    - ✅ Merge multidev to dev and dev to multidev
    - ✅ Delete multidev environments
    - ✅ Commit SFTP changes with commit message
-   - ✅ View uncommitted changes (diffstat)
-   - ✅ Recent commits display
+   - ✅ View uncommitted local git changes (git status --porcelain with safe.directory)
+   - ✅ View unpushed local commits (git log @{u}..)
+   - ✅ Recent commits display with Refresh button
+   - ✅ WP Admin links in Environments table for non-current environments
+   - ✅ Screen Options: show/hide Environments card and Multidev Management card
+   - ✅ Environment ordering: dev → multidevs (sorted) → test → live throughout
+   - ✅ Debug sections (Raw API Response) gated behind `?debug=1`
+   - ✅ Commit table column widths: Hash 10%, Author 20%, Date 15%, Message remainder
 
-6. **Domain Management** (Multisite)
-   - ✅ Hook into WordPress multisite subdomain creation
-   - ✅ Automatically add new subdomains to Pantheon via API
-   - ✅ Hooks: `wp_initialize_site` (WP 5.1+) and `wpmu_new_blog` (legacy)
-   - ✅ Skip local environments automatically
-
-7. **Backup Operations**
+7. **Backups Page**
    - ✅ Backup creation (all, code, database, files)
-   - ✅ Backup listing (catalog across all environments)
+   - ✅ Backup listing with dev/test/live tabs (JS-driven); default tab is current environment
    - ✅ Backup restore operations
    - ✅ Backup download via signed URLs
    - ✅ Configurable retention period (keep_for parameter)
+   - ✅ Screen Options: age filter (all / last 7d / 30d / 1y) stored in user meta
+   - ✅ Element column widened to 55%; filenames truncated with text-overflow: ellipsis
    - ⛔ Backup scheduling (not available via API)
 
 8. **Clone Content**
@@ -164,17 +180,42 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
    - ✅ Demonstration feature showing API capabilities
 
 10. **Environment Metrics Visualization**
-   - ✅ API endpoint: GET /v0/sites/{site_id}/environments/{env_id}/metrics
-   - ✅ Duration parameters: 7d, 28d, 12w, 12m
-   - ✅ Chart.js integration with Pantheon Design System colors
-   - ✅ Three interactive line charts: Pages Served, Unique Visits, Cache Performance
-   - ✅ Summary statistics with totals and cache hit ratio
-   - ✅ Per-chart breakdowns with descriptions
-   - ✅ Refresh button to clear cache and reload data
-   - ✅ Expandable debug panels for API requests/responses
-   - ✅ 1-hour cache TTL for metrics data
-   - ✅ Chart.js stored in assets/js/libs/ directory
-   - ✅ Responsive design with smooth curves and hover interactions
+    - ✅ API endpoint: GET /v0/sites/{site_id}/environments/{env_id}/metrics
+    - ✅ Duration parameters: 7d, 28d, 12w, 12m
+    - ✅ Chart.js integration with Pantheon Design System colors
+    - ✅ Three interactive line charts: Pages Served, Unique Visits, Cache Performance
+    - ✅ Summary Statistics card moved above Metrics Filters
+    - ✅ Summary statistics with totals and cache hit ratio
+    - ✅ Per-chart breakdowns with descriptions
+    - ✅ Refresh button to clear cache and reload data
+    - ✅ Debug sections (API request/response) gated behind `?debug=1`
+    - ✅ Screen Options: show/hide Pages Served, Unique Visits, Cache Performance independently
+    - ✅ Filters hidden automatically when all charts hidden via Screen Options
+    - ✅ Environment and duration selections persisted in localStorage
+    - ✅ 1-hour cache TTL for metrics data
+    - ✅ Chart.js stored in assets/js/libs/ directory
+    - ✅ Responsive design with smooth curves and hover interactions
+
+11. **WP Admin Dashboard Widget**
+    - ✅ "Cache Performance" widget on the main WP admin dashboard
+    - ✅ Pantheon logo + line chart of cache hit ratio % over 28 days (Chart.js)
+    - ✅ Summary stats: avg cache hit ratio, pages served
+    - ✅ Link to plugin Metrics page
+    - ✅ Standalone dashboard-widget.css (no PDS styles on WP dashboard)
+    - ✅ Only shown to manage_options users on Pantheon sites
+
+12. **Domain Management** (Multisite)
+    - ✅ Hook into WordPress multisite subdomain creation
+    - ✅ Automatically add new subdomains to Pantheon via API
+    - ✅ Hooks: `wp_initialize_site` (WP 5.1+) and `wpmu_new_blog` (legacy)
+    - ✅ Skip local environments automatically
+
+13. **Release Pipeline**
+    - ✅ `.github/workflows/release.yml`: triggers on release published, runs build:dist, attaches zip
+    - ✅ `bin/build-dist.sh`: rsync + zip using .distignore for clean artifact
+    - ✅ `.distignore`: excludes dev files (sass source, tests, docs, configs, etc.)
+    - ✅ `npm run build:dist` script
+    - ✅ `.github/dependabot.yml`: weekly updates for composer, npm, github-actions
 
 **Explicitly Excluded:**
 - Cache management (handled by Pantheon Advanced Page Cache and Pantheon mu-plugin)
@@ -188,14 +229,15 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 #### Admin Pages
 **File:** `includes/admin.php` (namespace: `Pantheon\AshNazg\Admin`)
 
-**Menu Structure:**
+**Menu Structure (order as of v0.6.0):**
 - Top-level menu: "Ash Nazg" (slug: ash-nazg)
-- Implemented submenu pages:
-  - Dashboard - environment status, site/environment info, connection mode toggle, comprehensive API endpoints testing, inline site label editing
-  - Addons - enable/disable site addons (Redis, Apache Solr)
+- Implemented submenu pages (in menu order):
+  - Dashboard - 50/50 two-column layout; environment status, user/org info, machine token copy, API endpoints testing with Screen Options, inline label/org editing
+  - Metrics - traffic and cache performance charts with Screen Options per chart; localStorage persistence
+  - Development - code deployment, upstream updates, multidev management, uncommitted changes, commit SFTP changes; Screen Options for Environments and Multidev cards
+  - Addons - enable/disable site addons (Redis, Apache Solr, Elasticsearch coming soon); Screen Options per addon; live status detection
   - Workflows - trigger workflows (Object Cache Pro installation via scaffold_extensions)
-  - Development - code deployment, upstream updates, multidev management, uncommitted changes, commit SFTP changes
-  - Backups - create, restore, download backups across all environments
+  - Backups - create, restore, download backups; tabbed dev/test/live UI; Screen Options age filter
   - Clone - clone database and/or files between environments
   - Logs - debug log viewer with fetch/clear functionality and auto-mode switching
   - Settings - machine token configuration, session token management
@@ -376,12 +418,18 @@ ash-nazg/
 
 **CRITICAL: All CSS must follow this structure. Never use inline styles.**
 
-**File Location:** `assets/css/admin.css`
+**File Locations:**
+- `assets/css/admin.css` — compiled from `assets/sass/admin.scss` (PDS styles included)
+- `assets/css/dashboard-widget.css` — compiled from `assets/sass/dashboard-widget.scss` (standalone, no PDS)
 
-**Required Structure** (in this exact order):
+**SASS component files (`assets/sass/_components/`):**
+- `_code-blocks.scss` — reusable debug `<details>`/`<pre>` styles
+- `_dashboard-widget.scss` — widget-specific styles (used by dashboard-widget.scss entry point)
+
+**Required Structure for admin.css** (in this exact order):
 
 1. **Base Layout** - Grid systems, card layouts, fundamental page structure
-   - Dashboard grid
+   - Dashboard grid (50/50 two-column layout)
    - Card containers
    - Full-width elements
 
@@ -395,6 +443,7 @@ ash-nazg/
    - Notices (WordPress admin notices)
    - Workflow cards
    - Addon toggle switches
+   - Inline editable fields (`.ash-nazg-editable` flex class)
 
 4. **Tables** - Table-specific styling
    - Table spacing and padding
@@ -404,25 +453,29 @@ ash-nazg/
 5. **Page-specific Sections** - Styles for individual admin pages
    - Dashboard (connection mode toggle, mode loading)
    - Logs page (log contents, loading, buttons)
+   - Backups (tabbed layout, element column)
    - Other page-specific elements
 
-6. **Utility Classes** - Single-purpose helper classes
+6. **Screen Options** - Stacked label layout for screen options checkboxes
+
+7. **Utility Classes** - Single-purpose helper classes
    - Display (inline-block, hidden, flex, flex-between)
    - Spacing (m-0, ml-10, mt-20, mb-10, mb-20, my-10)
    - Alignment (text-center)
 
-7. **Responsive Styles** - Mobile/tablet breakpoints
+8. **Responsive Styles** - Mobile/tablet breakpoints
    - Media queries for screen size adjustments
    - Mobile-specific overrides
 
 **Rules:**
 - **NO inline styles** (`style=""` attributes) allowed in PHP view files
-- All styling must use CSS classes from admin.css
+- All styling must use CSS classes from admin.css or dashboard-widget.css
 - New CSS classes must be added to the appropriate section
 - Class naming: Use `ash-nazg-` prefix for all custom classes
 - Class naming convention: Use descriptive, hyphenated names (e.g., `ash-nazg-card`, `ash-nazg-text-success`)
 - Utility classes should be single-purpose (e.g., `ash-nazg-mb-10` only sets margin-bottom)
 - Page-specific classes should be prefixed with purpose (e.g., `ash-nazg-logs-container`)
+- Screen options labels must be stacked vertically (not inline) — use the screen options section in admin.css
 
 **Example:**
 ```css
@@ -435,9 +488,11 @@ ash-nazg/
 
 **Adding New Styles:**
 1. Determine which section the style belongs to (Base Layout, Typography, etc.)
-2. Add the class definition to that section in admin.css
-3. Use the class in your PHP view file
-4. Never add inline styles - always use classes
+2. For reusable debug blocks, use `_components/_code-blocks.scss`
+3. For widget-only styles, use `_components/_dashboard-widget.scss`
+4. Add the class definition to that section in admin.css or the appropriate SCSS component
+5. Use the class in your PHP view file
+6. Never add inline styles - always use classes
 
 #### Dependency Management
 - Use Composer for all dependencies
@@ -581,11 +636,23 @@ This is a Hackathon 2026 project that demonstrates the full capabilities of the 
 - ✅ Domain management for WordPress multisite (automatic domain addition on subsite creation)
 - ✅ Delete site functionality (debug mode only, demonstration feature)
 
+**Phase 5: Polish & Extensibility (v0.6.0 — Complete)**
+- ✅ Dashboard 50/50 two-column layout with environment card (user info, org selector, token copy)
+- ✅ Screen Options across Dashboard, Development, Addons, Backups, and Metrics pages
+- ✅ WP Updates page (update-core.php) integration showing Pantheon upstream updates
+- ✅ Backups page tabbed UI (dev/test/live) with age filter via Screen Options
+- ✅ Development page: local uncommitted changes, unpushed commits, refresh on Recent Commits
+- ✅ Addons: Elasticsearch placeholder, live status detection, per-addon Screen Options
+- ✅ Metrics: debug behind `?debug=1`, Summary Statistics above filters, localStorage persistence, per-chart Screen Options
+- ✅ WP admin dashboard widget showing cache hit ratio (28-day chart)
+- ✅ Release pipeline: GitHub Actions release workflow, build-dist.sh, .distignore, dependabot
+- ✅ SCSS component files for code blocks and dashboard widget
+- ✅ Menu reorder: Ash Nazg → Metrics → Development → Addons → Workflows → Backups → Clone → Logs → Settings
+
 **Future Enhancements:**
 - Accessibility audit (WCAG compliance)
 - JavaScript bundling and minification
 - Playwright E2E tests
-- More screen options integration
 
 ## API Reference
 

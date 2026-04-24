@@ -23,34 +23,61 @@ No active work in progress.
 ## Planned Features
 
 ### UI/UX Improvements
-- [ ] More screen options integration
-  - Expand screen options to more admin pages beyond Development
-  - Allow users to customize column visibility, items per page, etc.
-
-### Dashboard Widgets
-- [ ] WP admin dashboard widget showing cache hit ratio (from metrics API), linking to the plugin's Metrics page
+- [x] More screen options integration — Dashboard, Development, Addons, Backups, Metrics all have Screen Options now
+- [ ] Accessibility audit (WCAG compliance)
 
 ### Analytics & Metrics
-- [x] Environment metrics visualization
-  - API endpoint: GET /v0/sites/{site_id}/environments/{env_id}/metrics with duration parameter (7d, 28d, 12w, 12m)
-  - New "Metrics" admin page with environment and time period selectors
-  - Chart.js 4.4.1 integration (stored in assets/js/libs/) for three interactive charts:
-    - Pages Served (traffic volume over time)
-    - Unique Visits (visitor count over time)
-    - Cache Performance (hits vs misses over time)
-  - Pantheon Design System colors and styling (blue, yellow, green, red)
-  - Summary statistics with totals and average cache hit ratio
-  - Per-chart breakdowns with descriptive explanations
-  - Refresh button to clear cache and reload current data
-  - Expandable debug panels for API request/response troubleshooting
-  - Responsive design with smooth curves (tension 0.4) and hover interactions
-  - 1-hour cache TTL for metrics data
-  - Comprehensive PHPUnit test coverage (24 tests)
+- [x] Environment metrics visualization (Pages Served, Unique Visits, Cache Performance)
+- [x] Summary Statistics above Metrics Filters
+- [x] Per-chart Screen Options (show/hide individual charts)
+- [x] Filters auto-hide when all charts hidden
+- [x] Environment and duration selection persisted in localStorage
+- [x] Debug panels gated behind ?debug=1
+
+### Dashboard Widget
+- [x] WP admin dashboard widget showing cache hit ratio (28-day Chart.js line chart, links to Metrics page)
+
+### Dashboard Enhancements
+- [x] 50/50 two-column card layout
+- [x] Environment card: Pantheon user info, org selector with inline editing, machine token copy
+- [x] Screen Options for API endpoint groups (individual + master toggle)
+- [x] Standardized .ash-nazg-editable flex class for inline edit UIs
+
+### Development Page
+- [x] Show uncommitted local git changes (git status --porcelain)
+- [x] Show unpushed local commits (git log @{u}..)
+- [x] Refresh button on Recent Commits card
+- [x] Screen Options: Environments card and Multidev Management card
+- [x] WP Admin links in Environments table for non-current environments
+- [x] Clone From includes all environments (not just dev)
+- [x] Consistent environment ordering: dev → multidevs (sorted) → test → live
+- [x] Debug sections behind ?debug=1
+
+### Backups Page
+- [x] dev/test/live tabs (JS-driven); default tab is current environment
+- [x] Screen Options: age filter stored in user meta
+- [x] Element column widened; filenames truncated with ellipsis
+
+### Addons Page
+- [x] Screen Options: show/hide Redis, Solr, Elasticsearch independently
+- [x] Elasticsearch "Coming Soon" badge
+- [x] Live addon status detection
+
+### WP Updates Integration
+- [x] Pantheon upstream updates surfaced on update-core.php
+- [x] "Apply Updates" button with progress modal
+
+### Release Pipeline
+- [x] .github/workflows/release.yml
+- [x] bin/build-dist.sh + .distignore
+- [x] npm run build:dist
+- [x] .github/dependabot.yml
 
 ## Documentation
 - [x] Update README with concise feature descriptions
 - [x] Add screenshot placeholders to README
-- [ ] Update CLAUDE.md with latest patterns and standards
+- [x] Update CLAUDE.md with latest patterns and standards (v0.6.0)
+- [x] Write CHANGELOG.md (v0.6.0)
 - [x] Document build process and SASS usage (npm scripts in package.json)
 
 ---
