@@ -570,8 +570,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<tr>
 								<th class="ash-nazg-th-icon"></th>
 								<th class="ash-nazg-th-20"><?php esc_html_e( 'Endpoint', 'ash-nazg' ); ?></th>
-								<th class="ash-nazg-th-30"><?php esc_html_e( 'Path', 'ash-nazg' ); ?></th>
-								<th class="ash-nazg-th-15"><?php esc_html_e( 'Last Checked', 'ash-nazg' ); ?></th>
+								<th class="ash-nazg-th-45"><?php esc_html_e( 'Path', 'ash-nazg' ); ?></th>
+								<th class="ash-nazg-th-10"><?php esc_html_e( 'Last Checked', 'ash-nazg' ); ?></th>
 								<th><?php esc_html_e( 'Status / Data', 'ash-nazg' ); ?></th>
 							</tr>
 						</thead>
