@@ -508,19 +508,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 				$site_tab_visible = ! empty( array_diff( array_keys( $endpoints_site ), $hidden_groups ) );
 				$user_tab_visible = ! empty( array_diff( array_keys( $endpoints_user ), $hidden_groups ) );
 
-				// If the active tab has no visible content, fall back to first available.
-				if ( 'site' === $active_tab && ! $site_tab_visible ) {
-					$active_tab = $user_tab_visible ? 'user' : 'all';
-				} elseif ( 'user' === $active_tab && ! $user_tab_visible ) {
+				// Fall back the active tab if its bucket has no visible content.
+				if ( 'user' === $active_tab && ! $user_tab_visible ) {
 					$active_tab = $site_tab_visible ? 'site' : 'all';
 				}
 				?>
 				<h2 class="nav-tab-wrapper">
-					<?php if ( $site_tab_visible ) : ?>
 					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=site#endpoints' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'site' === $active_tab ? 'nav-tab-active' : ''; ?>">
 						<?php esc_html_e( 'Site Endpoints', 'ash-nazg' ); ?>
 					</a>
-					<?php endif; ?>
 					<?php if ( $user_tab_visible ) : ?>
 					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=user#endpoints' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'user' === $active_tab ? 'nav-tab-active' : ''; ?>">
 						<?php esc_html_e( 'User Endpoints', 'ash-nazg' ); ?>
@@ -538,7 +534,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<p><?php esc_html_e( 'Endpoints for the current user (authenticated via machine token).', 'ash-nazg' ); ?></p>
 					<?php $endpoints_status = $endpoints_user; ?>
 				<?php else : ?>
-					<p><?php esc_html_e( 'All available Pantheon API endpoints accessible from this plugin.', 'ash-nazg' ); ?></p>
+					<p><?php esc_html_e( 'All available Pantheon API endpoints — shown in full regardless of Screen Options filters.', 'ash-nazg' ); ?></p>
 					<?php $endpoints_status = $endpoints_all; ?>
 				<?php endif; ?>
 
@@ -548,6 +544,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 				$unavailable = 0;
 				$endpoint_errors = 0;
 				foreach ( $endpoints_status as $category => $endpoints ) {
+					if ( 'all' !== $active_tab && in_array( $category, $hidden_groups, true ) ) {
+						continue;
+					}
 					foreach ( $endpoints as $endpoint ) {
 						++$total_endpoints;
 						if ( 'success' === $endpoint['status'] ) {
@@ -575,7 +574,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</p>
 
 				<?php foreach ( $endpoints_status as $category => $endpoints ) : ?>
-					<?php if ( ! in_array( $category, $hidden_groups, true ) ) : ?>
+					<?php if ( 'all' === $active_tab || ! in_array( $category, $hidden_groups, true ) ) : ?>
 					<h3 class="ash-nazg-section-header">
 						<?php echo esc_html( $category ); ?>
 						<span class="ash-nazg-label-text">
