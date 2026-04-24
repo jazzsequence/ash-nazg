@@ -52,6 +52,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_copy_machine_token', __NAMESPACE__ . '\\ajax_copy_machine_token' );
 	add_action( 'load-toplevel_page_ash-nazg', __NAMESPACE__ . '\\dashboard_screen_options' );
 	add_action( 'load-ash-nazg_page_ash-nazg-addons', __NAMESPACE__ . '\\addons_screen_options' );
+	add_action( 'load-ash-nazg_page_ash-nazg-backups', __NAMESPACE__ . '\\backups_screen_options' );
 	add_filter( 'screen_settings', __NAMESPACE__ . '\\dashboard_screen_settings', 10, 2 );
 	add_action( 'load-ash-nazg_page_ash-nazg-development', __NAMESPACE__ . '\\development_screen_options' );
 	add_filter( 'set-screen-option', __NAMESPACE__ . '\\set_screen_option', 10, 3 );
@@ -1146,6 +1147,14 @@ function handle_screen_options_submission() {
 		}
 	}
 
+	if ( 'ash-nazg-backups' === $page ) {
+		$max_age = isset( $_POST['ash_nazg_backups_max_age'] ) ? absint( $_POST['ash_nazg_backups_max_age'] ) : 0;
+		$valid = [ 0, 7, 30, 365 ];
+		if ( in_array( $max_age, $valid, true ) ) {
+			update_user_meta( $user_id, 'ash_nazg_backups_max_age', $max_age );
+		}
+	}
+
 	if ( 'ash-nazg-addons' === $page ) {
 		$visible_addons = isset( $_POST['ash_nazg_visible_addons'] )
 			? array_map( 'sanitize_text_field', (array) $_POST['ash_nazg_visible_addons'] )
@@ -2053,6 +2062,10 @@ function render_backups_page() {
 		}
 	}
 
+	// Read screen options age filter.
+	$max_age = get_user_meta( get_current_user_id(), 'ash_nazg_backups_max_age', true );
+	$max_age = $max_age ? absint( $max_age ) : 0;
+
 	// Include the view.
 	require_once ASH_NAZG_PLUGIN_DIR . '/includes/views/backups.php';
 }
@@ -2324,6 +2337,53 @@ function addons_screen_options() {
 				</label>
 			<?php endforeach; ?>
 			<input type="hidden" name="ash_nazg_all_known_addons" value="<?php echo esc_attr( implode( ',', array_keys( $known_addons ) ) ); ?>" />
+			<?php submit_button( __( 'Apply', 'ash-nazg' ), 'primary', 'screen-options-apply', false ); ?>
+		</fieldset>
+		<?php
+		$settings .= ob_get_clean();
+
+		return $settings;
+	}, 10, 2 );
+}
+
+/**
+ * Register Screen Options for the Backups page (age filter).
+ *
+ * @return void
+ */
+function backups_screen_options() {
+	$screen = get_current_screen();
+	if ( ! is_object( $screen ) || 'ash-nazg_page_ash-nazg-backups' !== $screen->id ) {
+		return;
+	}
+
+	add_filter( 'screen_settings', function ( $settings, $screen_obj ) {
+		if ( 'ash-nazg_page_ash-nazg-backups' !== $screen_obj->id ) {
+			return $settings;
+		}
+
+		$user_id = get_current_user_id();
+		$max_age = get_user_meta( $user_id, 'ash_nazg_backups_max_age', true );
+		$max_age = $max_age ? absint( $max_age ) : 0;
+
+		$age_options = [
+			0   => __( 'All backups', 'ash-nazg' ),
+			7   => __( 'Last 7 days', 'ash-nazg' ),
+			30  => __( 'Last 30 days', 'ash-nazg' ),
+			365 => __( 'Last year', 'ash-nazg' ),
+		];
+
+		ob_start();
+		?>
+		<fieldset class="screen-options">
+			<legend><?php esc_html_e( 'Backup Age Filter', 'ash-nazg' ); ?></legend>
+			<?php foreach ( $age_options as $days => $label ) : ?>
+				<label>
+					<input type="radio" name="ash_nazg_backups_max_age" value="<?php echo esc_attr( $days ); ?>"
+						<?php checked( $max_age, $days ); ?> />
+					<?php echo esc_html( $label ); ?>
+				</label>
+			<?php endforeach; ?>
 			<?php submit_button( __( 'Apply', 'ash-nazg' ), 'primary', 'screen-options-apply', false ); ?>
 		</fieldset>
 		<?php

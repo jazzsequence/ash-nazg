@@ -12,6 +12,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Pantheon\AshNazg\API;
 use Pantheon\AshNazg\Helpers;
+
+// Canonical environment ordering — shared by tabs and form dropdown.
+$env_order = [ 'dev', 'test', 'live' ];
+
+// Build ordered list of environments that have backups.
+$all_env_ids = is_array( $all_backups ) ? array_keys( $all_backups ) : [];
+$multidevs = array_diff( $all_env_ids, $env_order );
+sort( $multidevs );
+$ordered_envs = array_merge(
+	array_intersect( $env_order, $all_env_ids ),
+	$multidevs
+);
+
+// Cutoff timestamp for age filter (0 = show all).
+$cutoff = ( $max_age > 0 ) ? ( time() - ( $max_age * DAY_IN_SECONDS ) ) : 0;
+
+// Default active tab: mapped current env, or first available.
+$default_tab = $selected_env;
+if ( ! in_array( $default_tab, $ordered_envs, true ) && ! empty( $ordered_envs ) ) {
+	$default_tab = $ordered_envs[0];
+}
 ?>
 
 <div class="wrap">
@@ -53,28 +74,17 @@ use Pantheon\AshNazg\Helpers;
 							<td>
 								<select name="environment" id="backup-environment" required>
 									<?php
-									// Define environment order.
-									$env_order = [ 'dev', 'test', 'live' ];
-									$multidevs = [];
+									// Reuse $env_order from top of file; build ordered list from all environments.
+									$form_multidevs = array_diff( array_keys( $environments ), $env_order );
+									sort( $form_multidevs );
+									$form_all_envs = array_merge( $env_order, $form_multidevs );
 
-									// Separate standard envs and multidevs.
-									foreach ( $environments as $env_id => $env_data ) {
-										if ( ! in_array( $env_id, $env_order, true ) ) {
-											$multidevs[] = $env_id;
-										}
-									}
-									sort( $multidevs );
-
-									// Combine in display order.
-									$all_envs = array_merge( $env_order, $multidevs );
-
-									foreach ( $all_envs as $env_id ) :
+									foreach ( $form_all_envs as $env_id ) :
 										if ( ! isset( $environments[ $env_id ] ) ) {
 											continue;
 										}
-										$is_selected = ( $env_id === $selected_env );
 										?>
-										<option value="<?php echo esc_attr( $env_id ); ?>" <?php selected( $is_selected ); ?>>
+										<option value="<?php echo esc_attr( $env_id ); ?>" <?php selected( $env_id === $selected_env ); ?>>
 											<?php echo esc_html( strtoupper( $env_id ) ); ?>
 										</option>
 									<?php endforeach; ?>
@@ -131,197 +141,198 @@ use Pantheon\AshNazg\Helpers;
 			<?php if ( empty( $all_backups ) ) : ?>
 				<p><?php esc_html_e( 'No backups found.', 'ash-nazg' ); ?></p>
 			<?php else : ?>
-				<?php
-				/*
-				 * Display backups organized by environment.
-				 * Loop through each environment and show its backups.
-				 */
-				$env_order = [ 'dev', 'test', 'live' ];
-				$all_env_ids = array_keys( $all_backups );
 
-				// Separate standard envs and multidevs.
-				$multidevs = array_diff( $all_env_ids, $env_order );
-				sort( $multidevs );
+				<!-- Environment tabs -->
+				<h2 class="nav-tab-wrapper ash-nazg-backup-tabs">
+					<?php foreach ( $ordered_envs as $env_id ) : ?>
+						<a
+						href="#ash-nazg-backup-env-<?php echo esc_attr( $env_id ); ?>"
+						class="nav-tab ash-nazg-backup-env-tab <?php echo $env_id === $default_tab ? 'nav-tab-active' : ''; ?>"
+						data-env="<?php echo esc_attr( $env_id ); ?>">
+							<?php echo esc_html( strtoupper( $env_id ) ); ?>
+						</a>
+					<?php endforeach; ?>
+				</h2>
 
-				// Combine in display order.
-				$ordered_envs = array_merge(
-					array_intersect( $env_order, $all_env_ids ),
-					$multidevs
-				);
+				<?php foreach ( $ordered_envs as $env_id ) : ?>
+					<?php $backups = $all_backups[ $env_id ]; ?>
 
-				foreach ( $ordered_envs as $env_id ) :
-					$backups = $all_backups[ $env_id ];
+					<div
+						id="ash-nazg-backup-env-<?php echo esc_attr( $env_id ); ?>"
+						class="ash-nazg-backup-env-panel <?php echo $env_id !== $default_tab ? 'hidden' : ''; ?>">
 
-					// Skip if no backups for this environment.
-					if ( empty( $backups ) ) {
-						continue;
-					}
-					?>
-
-					<!-- Environment Header -->
-					<h3 class="ash-nazg-backup-environment-header">
 						<?php
-						/* translators: %s: environment name (e.g., DEV, TEST, LIVE) */
-						printf( esc_html__( '%s Environment Backups', 'ash-nazg' ), esc_html( strtoupper( $env_id ) ) );
-						?>
-					</h3>
+						// Group backups by folder (backup set).
+						$backup_sets = [];
+						foreach ( $backups as $backup_id => $backup ) {
+							$folder = isset( $backup['folder'] ) ? $backup['folder'] : $backup_id;
+							$ts = isset( $backup['timestamp'] ) ? $backup['timestamp'] : ( isset( $backup['finish_time'] ) ? $backup['finish_time'] : 0 );
 
-					<?php
-					// Group backups by folder (which represents a backup set).
-					$backup_sets = [];
-					foreach ( $backups as $backup_id => $backup ) {
-						$folder = isset( $backup['folder'] ) ? $backup['folder'] : $backup_id;
-						if ( ! isset( $backup_sets[ $folder ] ) ) {
-							$backup_sets[ $folder ] = [
-								'timestamp' => isset( $backup['timestamp'] ) ? $backup['timestamp'] : ( isset( $backup['finish_time'] ) ? $backup['finish_time'] : 0 ),
-								'backups' => [],
+							if ( ! isset( $backup_sets[ $folder ] ) ) {
+								$backup_sets[ $folder ] = [
+									'timestamp' => $ts,
+									'backups'   => [],
+								];
+							}
+
+							$element = 'unknown';
+							if ( isset( $backup['filename'] ) ) {
+								if ( strpos( $backup['filename'], '_code.tar.gz' ) !== false ) {
+									$element = 'code';
+								} elseif ( strpos( $backup['filename'], '_database.sql.gz' ) !== false ) {
+									$element = 'database';
+								} elseif ( strpos( $backup['filename'], '_files.tar.gz' ) !== false ) {
+									$element = 'files';
+								}
+							}
+
+							$backup_sets[ $folder ]['backups'][ $element ] = [
+								'id'       => $backup_id,
+								'filename' => isset( $backup['filename'] ) ? $backup['filename'] : '',
+								'size'     => isset( $backup['size'] ) ? $backup['size'] : 0,
+								'ttl'      => isset( $backup['ttl'] ) ? $backup['ttl'] : 0,
 							];
 						}
 
-						// Determine element type from filename or backup_id.
-						$element = 'unknown';
-						if ( isset( $backup['filename'] ) ) {
-							if ( strpos( $backup['filename'], '_code.tar.gz' ) !== false ) {
-								$element = 'code';
-							} elseif ( strpos( $backup['filename'], '_database.sql.gz' ) !== false ) {
-								$element = 'database';
-							} elseif ( strpos( $backup['filename'], '_files.tar.gz' ) !== false ) {
-								$element = 'files';
+						// Sort newest first.
+						uasort(
+							$backup_sets,
+							function ( $a, $b ) {
+								return $b['timestamp'] - $a['timestamp'];
 							}
+						);
+
+						// Apply age filter ($max_age > 0 means hide older than cutoff).
+						if ( $cutoff > 0 ) {
+							$backup_sets = array_filter(
+								$backup_sets,
+								function ( $set ) use ( $cutoff ) {
+									return $set['timestamp'] >= $cutoff;
+								}
+							);
 						}
+						?>
 
-						$backup_sets[ $folder ]['backups'][ $element ] = [
-							'id' => $backup_id,
-							'filename' => isset( $backup['filename'] ) ? $backup['filename'] : '',
-							'size' => isset( $backup['size'] ) ? $backup['size'] : 0,
-							'ttl' => isset( $backup['ttl'] ) ? $backup['ttl'] : 0,
-						];
-					}
+						<?php if ( empty( $backup_sets ) ) : ?>
+							<p class="ash-nazg-text-muted">
+								<?php esc_html_e( 'No backups match the current age filter.', 'ash-nazg' ); ?>
+							</p>
+						<?php else : ?>
+							<div class="ash-nazg-backups-list">
+								<?php foreach ( $backup_sets as $folder => $backup_set ) : ?>
+									<div class="ash-nazg-backup-set ash-nazg-mb-20">
+										<div class="ash-nazg-backup-set-header ash-nazg-backup-toggle" role="button" tabindex="0">
+											<div class="ash-nazg-backup-set-title">
+												<span class="ash-nazg-backup-toggle-icon">▶</span>
+												<h3>
+													<?php
+													$date = $backup_set['timestamp'] ? gmdate( 'F j, Y g:i A', $backup_set['timestamp'] ) : esc_html__( 'Unknown date', 'ash-nazg' );
+													echo esc_html( $date );
+													?>
+												</h3>
+											</div>
+											<span class="ash-nazg-text-meta">
+												<?php
+												$relative_time = $backup_set['timestamp'] ? human_time_diff( $backup_set['timestamp'], time() ) : '';
+												if ( $relative_time ) {
+													/* translators: %s: relative time (e.g., "2 days") */
+													printf( esc_html__( '%s ago', 'ash-nazg' ), esc_html( $relative_time ) );
+												}
+												?>
+											</span>
+										</div>
 
-					// Sort backup sets by timestamp (newest first).
-					uasort(
-						$backup_sets,
-						function ( $a, $b ) {
-							return $b['timestamp'] - $a['timestamp'];
-						}
-					);
-					?>
-
-				<div class="ash-nazg-backups-list">
-					<?php foreach ( $backup_sets as $folder => $backup_set ) : ?>
-						<div class="ash-nazg-backup-set ash-nazg-mb-20">
-							<div class="ash-nazg-backup-set-header ash-nazg-backup-toggle" role="button" tabindex="0">
-								<div class="ash-nazg-backup-set-title">
-									<span class="ash-nazg-backup-toggle-icon">▶</span>
-									<h3>
-										<?php
-										$date = $backup_set['timestamp'] ? gmdate( 'F j, Y g:i A', $backup_set['timestamp'] ) : esc_html__( 'Unknown date', 'ash-nazg' );
-										echo esc_html( $date );
-										?>
-									</h3>
-								</div>
-								<span class="ash-nazg-text-meta">
-									<?php
-									$relative_time = $backup_set['timestamp'] ? human_time_diff( $backup_set['timestamp'], time() ) : '';
-									if ( $relative_time ) {
-										/* translators: %s: relative time (e.g., "2 days") */
-										printf( esc_html__( '%s ago', 'ash-nazg' ), esc_html( $relative_time ) );
-									}
-									?>
-								</span>
-							</div>
-
-							<table class="widefat striped ash-nazg-backup-elements-table ash-nazg-backup-table-collapsed">
-								<thead>
-									<tr>
-										<th><?php esc_html_e( 'Element', 'ash-nazg' ); ?></th>
-										<th><?php esc_html_e( 'Size', 'ash-nazg' ); ?></th>
-										<th><?php esc_html_e( 'Expires', 'ash-nazg' ); ?></th>
-										<th><?php esc_html_e( 'Actions', 'ash-nazg' ); ?></th>
-									</tr>
-								</thead>
-								<tbody>
-									<?php foreach ( [ 'code', 'database', 'files' ] as $element ) : ?>
-										<?php if ( isset( $backup_set['backups'][ $element ] ) ) : ?>
-											<?php $backup = $backup_set['backups'][ $element ]; ?>
-											<tr>
-												<td>
-													<strong><?php echo esc_html( ucfirst( $element ) ); ?></strong>
-													<?php if ( $backup['filename'] ) : ?>
-														<br />
-														<span class="ash-nazg-text-meta"><?php echo esc_html( $backup['filename'] ); ?></span>
+										<table class="widefat striped ash-nazg-backup-elements-table ash-nazg-backup-table-collapsed">
+											<thead>
+												<tr>
+													<th class="ash-nazg-backup-element-col"><?php esc_html_e( 'Element', 'ash-nazg' ); ?></th>
+													<th><?php esc_html_e( 'Size', 'ash-nazg' ); ?></th>
+													<th><?php esc_html_e( 'Expires', 'ash-nazg' ); ?></th>
+													<th><?php esc_html_e( 'Actions', 'ash-nazg' ); ?></th>
+												</tr>
+											</thead>
+											<tbody>
+												<?php foreach ( [ 'code', 'database', 'files' ] as $element ) : ?>
+													<?php if ( isset( $backup_set['backups'][ $element ] ) ) : ?>
+														<?php $backup = $backup_set['backups'][ $element ]; ?>
+														<tr>
+															<td>
+																<strong><?php echo esc_html( ucfirst( $element ) ); ?></strong>
+																<?php if ( $backup['filename'] ) : ?>
+																	<br />
+																	<span class="ash-nazg-text-meta ash-nazg-backup-filename"><?php echo esc_html( $backup['filename'] ); ?></span>
+																<?php endif; ?>
+															</td>
+															<td class="ash-nazg-backup-size-col">
+																<?php
+																$size = $backup['size'];
+																if ( $size > 0 ) {
+																	echo esc_html( size_format( $size, 2 ) );
+																} else {
+																	esc_html_e( 'Unknown', 'ash-nazg' );
+																}
+																?>
+															</td>
+															<td class="ash-nazg-backup-expires-col">
+																<?php
+																$ttl = $backup['ttl'];
+																if ( $ttl > 0 ) {
+																	$expires = $backup_set['timestamp'] + $ttl;
+																	$days_left = round( ( $expires - time() ) / DAY_IN_SECONDS );
+																	if ( $days_left > 0 ) {
+																		/* translators: %d: number of days */
+																		printf( esc_html__( 'In %d days', 'ash-nazg' ), absint( $days_left ) );
+																	} else {
+																		esc_html_e( 'Expired', 'ash-nazg' );
+																	}
+																} else {
+																	esc_html_e( 'Unknown', 'ash-nazg' );
+																}
+																?>
+															</td>
+															<td class="ash-nazg-backup-actions-col">
+																<button
+																	type="button"
+																	class="button button-small ash-nazg-download-backup"
+																	data-backup-id="<?php echo esc_attr( $folder ); ?>"
+																	data-element="<?php echo esc_attr( $element ); ?>"
+																	data-environment="<?php echo esc_attr( $env_id ); ?>"
+																	data-nonce="<?php echo esc_attr( wp_create_nonce( 'ash_nazg_download_backup' ) ); ?>"
+																>
+																	<?php esc_html_e( 'Download', 'ash-nazg' ); ?>
+																</button>
+																<button
+																	type="button"
+																	class="button button-small ash-nazg-restore-backup"
+																	data-backup-id="<?php echo esc_attr( $folder ); ?>"
+																	data-element="<?php echo esc_attr( $element ); ?>"
+																	data-environment="<?php echo esc_attr( $env_id ); ?>"
+																	data-nonce="<?php echo esc_attr( wp_create_nonce( 'ash_nazg_restore_backup' ) ); ?>"
+																>
+																	<?php esc_html_e( 'Restore', 'ash-nazg' ); ?>
+																</button>
+															</td>
+														</tr>
 													<?php endif; ?>
-												</td>
-												<td>
-													<?php
-													$size = $backup['size'];
-													if ( $size > 0 ) {
-														echo esc_html( size_format( $size, 2 ) );
-													} else {
-														esc_html_e( 'Unknown', 'ash-nazg' );
-													}
-													?>
-												</td>
-												<td>
-													<?php
-													$ttl = $backup['ttl'];
-													if ( $ttl > 0 ) {
-														$expires = $backup_set['timestamp'] + $ttl;
-														$days_left = round( ( $expires - time() ) / DAY_IN_SECONDS );
-														if ( $days_left > 0 ) {
-															/* translators: %d: number of days */
-															printf( esc_html__( 'In %d days', 'ash-nazg' ), absint( $days_left ) );
-														} else {
-															esc_html_e( 'Expired', 'ash-nazg' );
-														}
-													} else {
-														esc_html_e( 'Unknown', 'ash-nazg' );
-													}
-													?>
-												</td>
-												<td>
-													<button
-														type="button"
-														class="button button-small ash-nazg-download-backup"
-														data-backup-id="<?php echo esc_attr( $folder ); ?>"
-														data-element="<?php echo esc_attr( $element ); ?>"
-														data-environment="<?php echo esc_attr( $env_id ); ?>"
-														data-nonce="<?php echo esc_attr( wp_create_nonce( 'ash_nazg_download_backup' ) ); ?>"
-													>
-														<?php esc_html_e( 'Download', 'ash-nazg' ); ?>
-													</button>
-													<button
-														type="button"
-														class="button button-small ash-nazg-restore-backup"
-														data-backup-id="<?php echo esc_attr( $folder ); ?>"
-														data-element="<?php echo esc_attr( $element ); ?>"
-														data-environment="<?php echo esc_attr( $env_id ); ?>"
-														data-nonce="<?php echo esc_attr( wp_create_nonce( 'ash_nazg_restore_backup' ) ); ?>"
-													>
-														<?php esc_html_e( 'Restore', 'ash-nazg' ); ?>
-													</button>
-												</td>
-											</tr>
-										<?php endif; ?>
-									<?php endforeach; ?>
-								</tbody>
-							</table>
-						</div>
-					<?php endforeach; ?>
+												<?php endforeach; ?>
+											</tbody>
+										</table>
+									</div>
+								<?php endforeach; ?>
+							</div>
+						<?php endif; ?>
+					</div>
 
-					<!-- Add visual separation between environments -->
-					<div class="ash-nazg-backup-environment-separator"></div>
+				<?php endforeach; ?>
 
-				<?php endforeach; // End environment loop. ?>
-			</div>
-		<?php endif; ?>
+			<?php endif; ?>
 		</div>
 
 	<?php endif; ?>
 </div>
 
 <!-- Progress Modal (reused from development.js pattern) -->
-<div id="ash-nazg-backup-progress-modal" class="ash-nazg-modal" style="display: none;">
+<div id="ash-nazg-backup-progress-modal" class="ash-nazg-modal ash-nazg-hidden">
 	<div class="ash-nazg-modal-content">
 		<h2 id="ash-nazg-backup-progress-title"><?php esc_html_e( 'Processing...', 'ash-nazg' ); ?></h2>
 		<div class="ash-nazg-progress-bar">
