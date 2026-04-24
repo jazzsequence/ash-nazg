@@ -108,11 +108,5 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</div>
 			<?php endforeach; ?>
 		</div>
-
-		<p class="submit">
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=ash-nazg' ) ); ?>" class="button">
-				<?php esc_html_e( 'Back to Dashboard', 'ash-nazg' ); ?>
-			</a>
-		</p>
 	<?php endif; ?>
 </div>
