@@ -33,17 +33,39 @@ fi
 
 API="https://api.pantheon.io/v0"
 SITE_ID="$PANTHEON_SITE_UUID"
+TMPFILE=$(mktemp)
+trap 'rm -f "$TMPFILE"' EXIT
+
+# ── Helper: curl with status + body capture ───────────────────────────────────
+# Usage: api_call STATUS_VAR BODY_VAR METHOD URL [extra curl args...]
+api_call() {
+  local -n _status="$1"
+  local -n _body="$2"
+  local method="$3"
+  local url="$4"
+  shift 4
+
+  _status=$(curl -s -o "$TMPFILE" -w "%{http_code}" \
+    -X "$method" "$url" "$@")
+  _body=$(cat "$TMPFILE")
+}
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
 
 echo "Authenticating with Pantheon API..."
-SESSION_TOKEN=$(curl -sf -X POST "${API}/authorize/machine-token" \
+STATUS="" BODY=""
+api_call STATUS BODY POST "${API}/authorize/machine-token" \
   -H "Content-Type: application/json" \
-  -d "{\"machine_token\": \"${PANTHEON_MACHINE_TOKEN}\", \"client\": \"ash-nazg-ci\"}" \
-  | jq -r '.session')
+  -d "{\"machine_token\": \"${PANTHEON_MACHINE_TOKEN}\", \"client\": \"ash-nazg-ci\"}"
 
+if [ "$STATUS" != "200" ]; then
+  echo "Error: Auth failed (HTTP ${STATUS}): ${BODY}" >&2
+  exit 1
+fi
+
+SESSION_TOKEN=$(echo "$BODY" | jq -r '.session')
 if [ -z "$SESSION_TOKEN" ] || [ "$SESSION_TOKEN" = "null" ]; then
-  echo "Error: Failed to obtain session token." >&2
+  echo "Error: No session token in auth response: ${BODY}" >&2
   exit 1
 fi
 
@@ -59,15 +81,21 @@ poll_workflow() {
   echo "Polling workflow ${workflow_id}..."
   while [ "$attempt" -lt "$max_attempts" ]; do
     attempt=$((attempt + 1))
-    local result
-    result=$(curl -sf "${API}/sites/${SITE_ID}/workflows/${workflow_id}" \
-      "${AUTH[@]}" | jq -r '.result // "running"')
+    STATUS="" BODY=""
+    api_call STATUS BODY GET "${API}/sites/${SITE_ID}/workflows/${workflow_id}" \
+      "${AUTH[@]}"
 
+    local result
+    result=$(echo "$BODY" | jq -r '.result // "running"')
     echo "  Attempt ${attempt}: ${result}"
 
     case "$result" in
       succeeded) echo "Workflow succeeded."; return 0 ;;
-      failed)    echo "Error: Workflow failed." >&2; return 1 ;;
+      failed)
+        echo "Error: Workflow failed." >&2
+        echo "  Response: ${BODY}" >&2
+        return 1
+        ;;
     esac
 
     sleep 10
@@ -77,27 +105,41 @@ poll_workflow() {
   return 1
 }
 
+# ── Check if multidev exists ──────────────────────────────────────────────────
+
+multidev_exists() {
+  STATUS="" BODY=""
+  api_call STATUS BODY GET \
+    "${API}/sites/${SITE_ID}/environments/${ENV_NAME}" \
+    "${AUTH[@]}"
+  [ "$STATUS" = "200" ]
+}
+
 # ── Create ────────────────────────────────────────────────────────────────────
 
 if [ "$ACTION" = "create" ]; then
-  HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
-    "${API}/sites/${SITE_ID}/environments/${ENV_NAME}" \
-    "${AUTH[@]}" 2>/dev/null || echo "000")
-
-  if [ "$HTTP_CODE" = "200" ]; then
+  if multidev_exists; then
     echo "Multidev '${ENV_NAME}' already exists — skipping creation."
     exit 0
   fi
 
   echo "Creating multidev '${ENV_NAME}' cloned from dev..."
-  WORKFLOW_ID=$(curl -sf -X POST "${API}/sites/${SITE_ID}/environments" \
+  STATUS="" BODY=""
+  api_call STATUS BODY POST "${API}/sites/${SITE_ID}/environments" \
     "${AUTH[@]}" \
     -H "Content-Type: application/json" \
-    -d "{\"name\": \"${ENV_NAME}\", \"clone_env\": \"dev\"}" \
-    | jq -r '.id')
+    -d "{\"name\": \"${ENV_NAME}\", \"clone_env\": \"dev\"}"
 
-  if [ -z "$WORKFLOW_ID" ] || [ "$WORKFLOW_ID" = "null" ]; then
-    echo "Error: Multidev creation returned no workflow ID." >&2
+  if [ "$STATUS" != "200" ] && [ "$STATUS" != "201" ] && [ "$STATUS" != "202" ]; then
+    echo "Error: Multidev creation failed (HTTP ${STATUS})." >&2
+    echo "  Response: ${BODY}" >&2
+    exit 1
+  fi
+
+  WORKFLOW_ID=$(echo "$BODY" | jq -r '.id // .workflow_id // empty')
+  if [ -z "$WORKFLOW_ID" ]; then
+    echo "Error: No workflow ID in creation response." >&2
+    echo "  Response: ${BODY}" >&2
     exit 1
   fi
 
@@ -109,22 +151,27 @@ fi
 # ── Delete ────────────────────────────────────────────────────────────────────
 
 if [ "$ACTION" = "delete" ]; then
-  HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
-    "${API}/sites/${SITE_ID}/environments/${ENV_NAME}" \
-    "${AUTH[@]}" 2>/dev/null || echo "000")
-
-  if [ "$HTTP_CODE" != "200" ]; then
+  if ! multidev_exists; then
     echo "Multidev '${ENV_NAME}' does not exist — nothing to delete."
     exit 0
   fi
 
   echo "Deleting multidev '${ENV_NAME}'..."
-  WORKFLOW_ID=$(curl -sf -X DELETE \
+  STATUS="" BODY=""
+  api_call STATUS BODY DELETE \
     "${API}/sites/${SITE_ID}/environments/${ENV_NAME}" \
-    "${AUTH[@]}" | jq -r '.id')
+    "${AUTH[@]}"
 
-  if [ -z "$WORKFLOW_ID" ] || [ "$WORKFLOW_ID" = "null" ]; then
-    echo "Error: Multidev deletion returned no workflow ID." >&2
+  if [ "$STATUS" != "200" ] && [ "$STATUS" != "201" ] && [ "$STATUS" != "202" ]; then
+    echo "Error: Multidev deletion failed (HTTP ${STATUS})." >&2
+    echo "  Response: ${BODY}" >&2
+    exit 1
+  fi
+
+  WORKFLOW_ID=$(echo "$BODY" | jq -r '.id // .workflow_id // empty')
+  if [ -z "$WORKFLOW_ID" ]; then
+    echo "Error: No workflow ID in deletion response." >&2
+    echo "  Response: ${BODY}" >&2
     exit 1
   fi
 
