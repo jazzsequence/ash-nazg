@@ -6,9 +6,15 @@
 - [ ] Accessibility audit (WCAG compliance)
 - [ ] Add JavaScript bundling and minification
 
+### Site Selection
+- [ ] Allow users to manually set/override the Pantheon site ID from the plugin dashboard — enables non-Pantheon-hosted sites (e.g. decoupled frontends, local installs) to connect to and manage a Pantheon site via the plugin
+
 ### Testing
 - [ ] Add Playwright E2E tests
 - [ ] Increase test coverage for git-related functions
+
+### Tooling
+- [ ] Update claude-code-reviewer config to verify it correctly skips the test suite for text/markdown-only changes
 
 ---
 
