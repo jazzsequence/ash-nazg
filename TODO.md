@@ -14,7 +14,7 @@
 - [ ] Increase test coverage for git-related functions
 
 ### Tooling
-- [ ] Update claude-code-reviewer config to verify it correctly skips the test suite for text/markdown-only changes
+- [x] Update claude-code-reviewer config to verify it correctly skips the test suite for text/markdown-only changes — confirmed working, no changes needed
 
 ---
 
