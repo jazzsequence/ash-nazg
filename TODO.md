@@ -9,9 +9,20 @@
 ### Site Selection
 - [ ] Allow users to manually set/override the Pantheon site ID from the plugin dashboard — enables non-Pantheon-hosted sites (e.g. decoupled frontends, local installs) to connect to and manage a Pantheon site via the plugin
 
-### Testing
-- [x] Add Playwright E2E tests — scaffolded with a11y (axe-core WCAG 2.1 AA) and functional tests; WP Playground + real cxr-ash-nazg.dev data in CI
-- [ ] Increase test coverage for git-related functions
+### Testing — E2E (follow-on after PR merge)
+- [x] Add Playwright E2E tests — scaffolded with a11y (axe-core WCAG 2.1 AA) and functional tests
+- [x] Multidev lifecycle: create e2e-{pr} on PR open, delete on PR close via Pantheon API
+- [ ] Full user-journey coverage: destructive/slow operations (apply upstream updates, deploy code, clone content, multidev create/delete, SFTP commit) — stub tests exist, need actual trigger + assertion
+- [ ] E2E error-state coverage: invalid token, API failure, uninitialized environment
+
+### Testing — PHPUnit (follow-on work, scoped separately)
+- [ ] PHPUnit coverage for all API functions (currently structural/pattern tests only — no integration coverage of actual return values, error paths, or data transformation)
+- [ ] Tests for addon status detection logic (get_addon_env_variables, live vs fallback path)
+- [ ] Tests for git functions: effective environment resolution, multidev branch detection
+- [ ] Tests for environment state management: update, get, migration from old option format
+- [ ] Tests for token encryption/decryption round-trip
+- [ ] Tests for all AJAX handler response shapes (success and error)
+- [ ] Increase git API test coverage (parse_git_porcelain_lines edge cases, upstream filtering)
 
 ### Tooling
 - [x] Update claude-code-reviewer config to verify it correctly skips the test suite for text/markdown-only changes — confirmed working, no changes needed
