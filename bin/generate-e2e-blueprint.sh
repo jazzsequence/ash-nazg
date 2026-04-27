@@ -3,7 +3,7 @@
 # The machine token is base64-encoded before substitution so any special
 # characters (quotes, backslashes, etc.) cannot break the JSON string.
 #
-# Required env vars: PANTHEON_MACHINE_TOKEN, PANTHEON_SITE_UUID
+# Required env vars: PANTHEON_MACHINE_TOKEN, PANTHEON_SITE_UUID, PANTHEON_ENV_NAME
 #
 # Usage (CI): bash bin/generate-e2e-blueprint.sh
 # Output: tests/e2e/blueprint.generated.json (gitignored)
@@ -24,14 +24,16 @@ if [ -z "${PANTHEON_SITE_UUID:-}" ]; then
   exit 1
 fi
 
+# Default to dev if no specific env is provided (e.g. local runs).
+export PANTHEON_ENV_NAME="${PANTHEON_ENV_NAME:-dev}"
+
 # Base64-encode the token so any special characters cannot break the JSON string.
 # PHP decodes it at runtime via base64_decode().
 export PANTHEON_MACHINE_TOKEN_B64
 PANTHEON_MACHINE_TOKEN_B64="$(printf '%s' "$PANTHEON_MACHINE_TOKEN" | base64 | tr -d '\n')"
 
-# PANTHEON_SITE_UUID is a UUID (hex + hyphens) — safe to substitute directly.
 # The restricted variable list prevents substitution of other ${...} in the JSON.
-envsubst '${PANTHEON_MACHINE_TOKEN_B64} ${PANTHEON_SITE_UUID}' \
+envsubst '${PANTHEON_MACHINE_TOKEN_B64} ${PANTHEON_SITE_UUID} ${PANTHEON_ENV_NAME}' \
   < "$TEMPLATE" > "$OUTPUT"
 
-echo "Blueprint generated: ${OUTPUT}"
+echo "Blueprint generated: ${OUTPUT} (env: ${PANTHEON_ENV_NAME})"

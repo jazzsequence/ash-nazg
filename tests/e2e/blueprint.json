@@ -14,7 +14,7 @@
   "steps": [
     {
       "step": "runPhpCode",
-      "code": "<?php putenv('PANTHEON_SITE=${PANTHEON_SITE_UUID}'); putenv('PANTHEON_ENVIRONMENT=dev'); putenv('PANTHEON_SITE_NAME=cxr-ash-nazg'); $_ENV['PANTHEON_SITE'] = '${PANTHEON_SITE_UUID}'; $_ENV['PANTHEON_ENVIRONMENT'] = 'dev'; $_ENV['PANTHEON_SITE_NAME'] = 'cxr-ash-nazg';"
+      "code": "<?php putenv('PANTHEON_SITE=${PANTHEON_SITE_UUID}'); putenv('PANTHEON_ENVIRONMENT=${PANTHEON_ENV_NAME}'); putenv('PANTHEON_SITE_NAME=cxr-ash-nazg'); $_ENV['PANTHEON_SITE'] = '${PANTHEON_SITE_UUID}'; $_ENV['PANTHEON_ENVIRONMENT'] = '${PANTHEON_ENV_NAME}'; $_ENV['PANTHEON_SITE_NAME'] = 'cxr-ash-nazg';"
     },
     {
       "step": "runPhpCode",

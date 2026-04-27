@@ -1,34 +1,59 @@
 name: E2E & Accessibility Tests
 
 # GitHub Pages Setup Required:
-# 1. Go to repository Settings → Pages
-# 2. Set Source to "Deploy from a branch"
-# 3. Select branch "gh-pages" and folder "/ (root)"
-# 4. Save — reports available at:
-#    https://jazzsequence.github.io/ash-nazg/reports/{run_id}
+# 1. Repository Settings → Pages → Deploy from branch → gh-pages / root
+# 2. Reports published at: https://jazzsequence.github.io/ash-nazg/reports/{run_id}
 #
-# IMPORTANT: PANTHEON_MACHINE_TOKEN must be a dedicated CI-only machine
-# token scoped to cxr-ash-nazg. Rotate it if ever exposed.
-# Store as GitHub Actions secrets: PANTHEON_MACHINE_TOKEN, PANTHEON_SITE_UUID
+# Required secrets: PANTHEON_MACHINE_TOKEN, PANTHEON_SITE_UUID
+# The machine token must have permission to create and delete multidevs.
+# Rotate it if ever exposed.
+#
+# Multidev lifecycle:
+#   PR open/sync/reopen → create e2e-{pr} multidev, run tests
+#   PR close            → delete e2e-{pr} multidev
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
+    inputs:
+      env_name:
+        description: 'Pantheon environment to test against (default: dev)'
+        required: false
+        default: 'dev'
 
 permissions:
-  contents: write  # Required for gh-pages deployment
+  contents: write
   pages: write
   id-token: write
 
+env:
+  # Multidev name: e2e-{pr_number}, max 11 chars. Falls back to dev for
+  # manual workflow_dispatch runs without a PR.
+  E2E_ENV_NAME: ${{ github.event_name == 'pull_request' && format('e2e-{0}', github.event.pull_request.number) || inputs.env_name || 'dev' }}
+
 jobs:
+  # ── Delete multidev on PR close ──────────────────────────────────────────────
+  cleanup:
+    name: Delete E2E multidev
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Delete multidev
+        env:
+          PANTHEON_MACHINE_TOKEN: ${{ secrets.PANTHEON_MACHINE_TOKEN }}
+          PANTHEON_SITE_UUID: ${{ secrets.PANTHEON_SITE_UUID }}
+        run: bash bin/manage-e2e-multidev.sh delete "${{ env.E2E_ENV_NAME }}"
+
+  # ── Create multidev + run tests ──────────────────────────────────────────────
   playwright:
     name: Playwright (a11y + functional)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
+    if: github.event.action != 'closed'
 
     steps:
       - name: Checkout code
@@ -45,10 +70,18 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium firefox
 
-      - name: Generate E2E blueprint with CI secrets
+      - name: Create E2E multidev
+        if: github.event_name == 'pull_request'
         env:
           PANTHEON_MACHINE_TOKEN: ${{ secrets.PANTHEON_MACHINE_TOKEN }}
           PANTHEON_SITE_UUID: ${{ secrets.PANTHEON_SITE_UUID }}
+        run: bash bin/manage-e2e-multidev.sh create "${{ env.E2E_ENV_NAME }}"
+
+      - name: Generate E2E blueprint
+        env:
+          PANTHEON_MACHINE_TOKEN: ${{ secrets.PANTHEON_MACHINE_TOKEN }}
+          PANTHEON_SITE_UUID: ${{ secrets.PANTHEON_SITE_UUID }}
+          PANTHEON_ENV_NAME: ${{ env.E2E_ENV_NAME }}
         run: bash bin/generate-e2e-blueprint.sh
 
       - name: Run Playwright tests
@@ -77,10 +110,10 @@ jobs:
         if: always()
         run: |
           REPORT_URL="https://jazzsequence.github.io/ash-nazg/reports/${{ github.run_id }}"
-
           echo "### E2E & A11y Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **E2E + A11y Tests:** ${{ steps.e2e-tests.outcome == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** \`${{ env.E2E_ENV_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tests:** ${{ steps.e2e-tests.outcome == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📊 [View Playwright Report](${REPORT_URL})" >> $GITHUB_STEP_SUMMARY
 
