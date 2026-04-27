@@ -10,7 +10,7 @@
 - [ ] Allow users to manually set/override the Pantheon site ID from the plugin dashboard — enables non-Pantheon-hosted sites (e.g. decoupled frontends, local installs) to connect to and manage a Pantheon site via the plugin
 
 ### Testing
-- [ ] Add Playwright E2E tests
+- [x] Add Playwright E2E tests — scaffolded with a11y (axe-core WCAG 2.1 AA) and functional tests; WP Playground + real cxr-ash-nazg.dev data in CI
 - [ ] Increase test coverage for git-related functions
 
 ### Tooling

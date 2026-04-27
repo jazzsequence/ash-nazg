@@ -11,7 +11,11 @@
     "watch:css": "npm run copy:pds && npm run copy:chartjs && sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css assets/sass/dashboard-widget.scss assets/css/dashboard-widget.css --watch --style=expanded",
     "watch": "npm run watch:css",
     "build": "npm run build:css",
-    "build:dist": "bash bin/build-dist.sh"
+    "build:dist": "bash bin/build-dist.sh",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report tests/e2e/report",
+    "test:e2e:a11y": "playwright test tests/e2e/a11y.spec.js"
   },
   "keywords": [
     "wordpress",
@@ -21,6 +25,9 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.50.0",
+    "@wp-playground/cli": "^0.9.0",
     "sass": "^1.83.4"
   },
   "dependencies": {

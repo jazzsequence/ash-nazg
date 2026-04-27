@@ -28,6 +28,8 @@ package-lock.json
 package.json
 phpcs.xml.dist
 phpunit.xml.dist
+playwright.config.js
 screenshots
+test-results
 tests
 vendor

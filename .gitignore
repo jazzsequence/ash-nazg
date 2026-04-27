@@ -47,3 +47,10 @@ Thumbs.db
 
 # claude-code-reviewer approval flag
 reviewer-approved
+
+# E2E / Playwright
+tests/e2e/.auth/admin.json
+tests/e2e/blueprint.generated.json
+tests/e2e/report/
+tests/e2e/results.xml
+test-results/
