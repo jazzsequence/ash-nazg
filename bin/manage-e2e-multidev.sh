@@ -77,6 +77,7 @@ poll_workflow() {
   local workflow_id="$1"
   local max_attempts=60   # 10 minutes
   local attempt=0
+  local start_time=$SECONDS
 
   echo "Polling workflow ${workflow_id}..."
   while [ "$attempt" -lt "$max_attempts" ]; do
@@ -85,14 +86,21 @@ poll_workflow() {
     api_call STATUS BODY GET "${API}/sites/${SITE_ID}/workflows/${workflow_id}" \
       "${AUTH[@]}"
 
-    local result
+    local result description elapsed
     result=$(echo "$BODY" | jq -r '.result // "running"')
-    echo "  Attempt ${attempt}: ${result}"
+    description=$(echo "$BODY" | jq -r '.active_description // ""')
+    elapsed=$(( SECONDS - start_time ))
+
+    if [ -n "$description" ]; then
+      printf "  [%3ds] %s — %s\n" "$elapsed" "$result" "$description"
+    else
+      printf "  [%3ds] %s\n" "$elapsed" "$result"
+    fi
 
     case "$result" in
-      succeeded) echo "Workflow succeeded."; return 0 ;;
+      succeeded) echo "Done in ${elapsed}s."; return 0 ;;
       failed)
-        echo "Error: Workflow failed." >&2
+        echo "Error: Workflow failed after ${elapsed}s." >&2
         echo "  Response: ${BODY}" >&2
         return 1
         ;;
