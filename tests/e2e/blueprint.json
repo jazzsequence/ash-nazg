@@ -1,0 +1,28 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "preferredVersions": {
+    "wp": "latest",
+    "php": "8.3"
+  },
+  "features": {
+    "networking": true
+  },
+  "login": {
+    "username": "admin",
+    "password": "password"
+  },
+  "steps": [
+    {
+      "step": "runPhpCode",
+      "code": "<?php putenv('PANTHEON_SITE=${PANTHEON_SITE_UUID}'); putenv('PANTHEON_ENVIRONMENT=dev'); putenv('PANTHEON_SITE_NAME=cxr-ash-nazg'); $_ENV['PANTHEON_SITE'] = '${PANTHEON_SITE_UUID}'; $_ENV['PANTHEON_ENVIRONMENT'] = 'dev'; $_ENV['PANTHEON_SITE_NAME'] = 'cxr-ash-nazg';"
+    },
+    {
+      "step": "runPhpCode",
+      "code": "<?php update_option('ash_nazg_machine_token', '${PANTHEON_MACHINE_TOKEN}');"
+    },
+    {
+      "step": "runPhpCode",
+      "code": "<?php update_option('blogname', 'Ash-Nazg E2E Test'); update_option('admin_email', 'test@example.com');"
+    }
+  ]
+}

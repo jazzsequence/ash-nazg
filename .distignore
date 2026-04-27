@@ -29,6 +29,7 @@ package.json
 phpcs.xml.dist
 phpunit.xml.dist
 playwright.config.js
+playwright-report
 screenshots
 test-results
 tests

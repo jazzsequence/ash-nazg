@@ -1,0 +1,90 @@
+name: E2E & Accessibility Tests
+
+# GitHub Pages Setup Required:
+# 1. Go to repository Settings → Pages
+# 2. Set Source to "Deploy from a branch"
+# 3. Select branch "gh-pages" and folder "/ (root)"
+# 4. Save — reports available at:
+#    https://jazzsequence.github.io/ash-nazg/reports/{run_id}
+#
+# IMPORTANT: PANTHEON_MACHINE_TOKEN must be a dedicated CI-only machine
+# token scoped to cxr-ash-nazg. Rotate it if ever exposed.
+# Store as GitHub Actions secrets: PANTHEON_MACHINE_TOKEN, PANTHEON_SITE_UUID
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: write  # Required for gh-pages deployment
+  pages: write
+  id-token: write
+
+jobs:
+  playwright:
+    name: Playwright (a11y + functional)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox
+
+      - name: Generate E2E blueprint with CI secrets
+        env:
+          PANTHEON_MACHINE_TOKEN: ${{ secrets.PANTHEON_MACHINE_TOKEN }}
+          PANTHEON_SITE_UUID: ${{ secrets.PANTHEON_SITE_UUID }}
+        run: bash bin/generate-e2e-blueprint.sh
+
+      - name: Run Playwright tests
+        id: e2e-tests
+        continue-on-error: true
+        env:
+          CI: true
+        run: npx playwright test
+
+      - name: Remove generated blueprint
+        if: always()
+        run: rm -f tests/e2e/blueprint.generated.json
+
+      - name: Deploy Playwright report to GitHub Pages
+        if: always()
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./playwright-report
+          destination_dir: reports/${{ github.run_id }}
+          keep_files: true
+          force_push: true
+
+      - name: Report status
+        if: always()
+        run: |
+          REPORT_URL="https://jazzsequence.github.io/ash-nazg/reports/${{ github.run_id }}"
+
+          echo "### E2E & A11y Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **E2E + A11y Tests:** ${{ steps.e2e-tests.outcome == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 [View Playwright Report](${REPORT_URL})" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail workflow if tests failed
+        if: steps.e2e-tests.outcome != 'success'
+        run: exit 1
