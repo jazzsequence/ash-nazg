@@ -32,7 +32,9 @@ export PANTHEON_ENV_NAME="${PANTHEON_ENV_NAME:-dev}"
 export PANTHEON_MACHINE_TOKEN_B64
 PANTHEON_MACHINE_TOKEN_B64="$(printf '%s' "$PANTHEON_MACHINE_TOKEN" | base64 | tr -d '\n')"
 
-# The restricted variable list prevents substitution of other ${...} in the JSON.
+# Single quotes are intentional: envsubst receives literal variable name strings,
+# not shell-expanded values. SC2016 suppressed for this reason.
+# shellcheck disable=SC2016
 envsubst '${PANTHEON_MACHINE_TOKEN_B64} ${PANTHEON_SITE_UUID} ${PANTHEON_ENV_NAME}' \
   < "$TEMPLATE" > "$OUTPUT"
 

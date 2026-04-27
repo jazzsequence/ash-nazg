@@ -136,7 +136,7 @@ if [ "$ACTION" = "create" ]; then
   api_call STATUS BODY POST "${API}/sites/${SITE_ID}/environments" \
     "${AUTH[@]}" \
     -H "Content-Type: application/json" \
-    -d "{\"name\": \"${ENV_NAME}\", \"clone_env\": \"dev\"}"
+    -d "{\"environment_name\": \"${ENV_NAME}\", \"from_environment\": \"dev\"}"
 
   if [ "$STATUS" != "200" ] && [ "$STATUS" != "201" ] && [ "$STATUS" != "202" ]; then
     echo "Error: Multidev creation failed (HTTP ${STATUS})." >&2
