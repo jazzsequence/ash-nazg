@@ -18,7 +18,7 @@
     },
     {
       "step": "runPhpCode",
-      "code": "<?php update_option('ash_nazg_machine_token', '${PANTHEON_MACHINE_TOKEN}');"
+      "code": "<?php update_option('ash_nazg_machine_token', base64_decode('${PANTHEON_MACHINE_TOKEN_B64}'));"
     },
     {
       "step": "runPhpCode",

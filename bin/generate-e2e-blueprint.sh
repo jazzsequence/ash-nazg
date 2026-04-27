@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Generate E2E test blueprint by substituting CI secrets into the template.
-# Uses envsubst so secrets are never exposed in the process list (ps aux).
+# The machine token is base64-encoded before substitution so any special
+# characters (quotes, backslashes, etc.) cannot break the JSON string.
 #
 # Required env vars: PANTHEON_MACHINE_TOKEN, PANTHEON_SITE_UUID
 #
@@ -23,10 +24,14 @@ if [ -z "${PANTHEON_SITE_UUID:-}" ]; then
   exit 1
 fi
 
-# envsubst reads secrets from the environment — they never appear in argv.
-# The quoted list restricts substitution to only these two variables,
-# preventing accidental expansion of other ${...} expressions in the JSON.
-envsubst '${PANTHEON_MACHINE_TOKEN} ${PANTHEON_SITE_UUID}' \
+# Base64-encode the token so any special characters cannot break the JSON string.
+# PHP decodes it at runtime via base64_decode().
+export PANTHEON_MACHINE_TOKEN_B64
+PANTHEON_MACHINE_TOKEN_B64="$(printf '%s' "$PANTHEON_MACHINE_TOKEN" | base64 | tr -d '\n')"
+
+# PANTHEON_SITE_UUID is a UUID (hex + hyphens) — safe to substitute directly.
+# The restricted variable list prevents substitution of other ${...} in the JSON.
+envsubst '${PANTHEON_MACHINE_TOKEN_B64} ${PANTHEON_SITE_UUID}' \
   < "$TEMPLATE" > "$OUTPUT"
 
 echo "Blueprint generated: ${OUTPUT}"
