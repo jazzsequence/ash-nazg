@@ -14,8 +14,8 @@ module.exports = defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: 1, // single WP Playground instance
   reporter: [
-    ['html', { outputFolder: 'tests/e2e/report', open: 'never' }],
-    ['junit', { outputFile: 'tests/e2e/results.xml' }],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['junit', { outputFile: 'playwright-report/results.xml' }],
     ['list'],
   ],
 
