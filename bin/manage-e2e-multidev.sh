@@ -99,6 +99,8 @@ poll_workflow() {
 
     case "$result" in
       succeeded) echo "Done in ${elapsed}s."; return 0 ;;
+      # aborted on create means the multidev already exists — still a success.
+      aborted)   echo "Workflow aborted after ${elapsed}s (environment already exists)."; return 0 ;;
       failed)
         echo "Error: Workflow failed after ${elapsed}s." >&2
         echo "  Response: ${BODY}" >&2
@@ -114,13 +116,19 @@ poll_workflow() {
 }
 
 # ── Check if multidev exists ──────────────────────────────────────────────────
+# Uses the environments list (GET /environments) since there is no single-env
+# GET endpoint in the public API. Checks for the env name as a key in the map.
 
 multidev_exists() {
   STATUS="" BODY=""
-  api_call STATUS BODY GET \
-    "${API}/sites/${SITE_ID}/environments/${ENV_NAME}" \
-    "${AUTH[@]}"
-  [ "$STATUS" = "200" ]
+  api_call STATUS BODY GET "${API}/sites/${SITE_ID}/environments" "${AUTH[@]}"
+
+  if [ "$STATUS" != "200" ]; then
+    echo "Warning: Could not list environments (HTTP ${STATUS}) — assuming not exists." >&2
+    return 1
+  fi
+
+  echo "$BODY" | jq -e "has(\"${ENV_NAME}\")" > /dev/null 2>&1
 }
 
 # ── Create ────────────────────────────────────────────────────────────────────
