@@ -32,13 +32,10 @@ test.describe('Development', () => {
   });
 
   test('refresh button on recent commits is clickable', async ({ page }) => {
-    // Refresh button is only rendered when recent commits are loaded.
-    const refreshBtn = page.locator('button').filter({ hasText: /refresh/i });
-    if (await refreshBtn.count() > 0) {
-      await expect(refreshBtn.first()).toBeEnabled();
-    } else {
-      test.skip();
-    }
+    // Refresh is a link-button (<a class="button">) inside the Recent Commits card.
+    await expect(page.locator('.ash-nazg-card').filter({ hasText: /recent commits/i })).toBeVisible({ timeout: 15_000 });
+    const refreshBtn = page.locator('a.button, button').filter({ hasText: /refresh/i });
+    await expect(refreshBtn.first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('code deployment section renders', async ({ page }) => {

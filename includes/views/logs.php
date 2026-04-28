@@ -66,7 +66,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<div id="ash-nazg-logs-container">
 				<?php if ( $logs ) : ?>
 					<h3><?php esc_html_e( 'Log Contents', 'ash-nazg' ); ?></h3>
-					<div class="ash-nazg-log-contents">
+					<div class="ash-nazg-log-contents" tabindex="0" role="region" aria-label="<?php esc_attr_e( 'Log contents', 'ash-nazg' ); ?>">
 						<pre><?php echo esc_html( $logs ); ?></pre>
 					</div>
 				<?php elseif ( false !== $logs ) : ?>

@@ -12,7 +12,10 @@ async function goToPluginPage(page, slug) {
     ? `/wp-admin/admin.php?page=${slug}`
     : '/wp-admin/admin.php?page=ash-nazg';
   await page.goto(url);
-  await page.waitForLoadState('networkidle');
+  // 'load' waits for all scripts to execute (unlike domcontentloaded) but
+  // doesn't require all network requests to finish (unlike networkidle).
+  // networkidle can hang indefinitely on Pantheon when long-polling AJAX runs.
+  await page.waitForLoadState('load');
 }
 
 /**
@@ -21,9 +24,11 @@ async function goToPluginPage(page, slug) {
  */
 async function runAxe(page) {
   return new AxeBuilder({ page })
-    .exclude('#wpadminbar')    // WP admin bar — not our code
-    .exclude('#adminmenumain') // WP sidebar menu — not our code
-    .exclude('#wpfooter')      // WP admin footer — not our code
+    .exclude('#wpadminbar')        // WP admin bar — not our code
+    .exclude('#adminmenumain')     // WP sidebar menu — not our code
+    .exclude('#wpfooter')          // WP admin footer — not our code
+    .exclude('#community-events')           // WP core Events and News widget — not our code
+    .exclude('.community-events-footer')    // WP core events widget footer — not our code
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'])
     .analyze();
 }

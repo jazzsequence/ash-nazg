@@ -64,12 +64,16 @@ test.describe('Backups — create and download', () => {
   });
 
   test('download button generates a signed URL', async ({ page }) => {
-    await page.waitForTimeout(2000);
+    const activePanel = page.locator('.ash-nazg-backup-env-panel:not(.hidden)');
+    await expect(activePanel).toBeVisible({ timeout: 10_000 });
 
-    const downloadBtn = page.locator('.ash-nazg-download-backup').first();
-    if (!(await downloadBtn.isVisible())) {
-      test.skip('No backups available to test download URL generation');
-    }
+    // Backup sets are collapsed by default — expand the first one.
+    const firstToggle = activePanel.locator('.ash-nazg-backup-toggle').first();
+    await expect(firstToggle).toBeVisible({ timeout: 10_000 });
+    await firstToggle.click();
+
+    const downloadBtn = activePanel.locator('.ash-nazg-download-backup').first();
+    await expect(downloadBtn).toBeVisible({ timeout: 5_000 });
 
     // Listen for the AJAX response that returns the signed URL.
     const responsePromise = page.waitForResponse(
