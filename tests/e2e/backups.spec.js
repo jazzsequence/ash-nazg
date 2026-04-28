@@ -43,8 +43,8 @@ test.describe('Backups', () => {
   });
 
   test('existing backups section loads', async ({ page }) => {
-    // Should show backup sets or a "no backups" message; not an error.
-    const content = page.locator('.ash-nazg-backups-list, .ash-nazg-backup-env-panel p');
+    // Check the active (visible) tab panel for backup sets or an empty message.
+    const content = page.locator('.ash-nazg-backup-env-panel:not(.hidden)');
     await expect(content.first()).toBeVisible({ timeout: 15_000 });
   });
 });
