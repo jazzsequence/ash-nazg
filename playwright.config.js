@@ -1,12 +1,13 @@
 // @ts-check
 const { defineConfig, devices } = require('@playwright/test');
 
-// WP Playground must be running before tests execute.
-// Locally:  npm run e2e:server   (starts WP Playground on port 9400)
-//           npm run test:e2e     (in a second terminal)
-// CI: the e2e.yml workflow starts WP Playground as a dedicated step
-//     and passes PLAYWRIGHT_BASE_URL.
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:9400';
+// Tests run against the Pantheon multidev environment directly.
+// Required env vars:
+//   PLAYWRIGHT_BASE_URL  — e.g. https://e2e-3-cxr-ash-nazg.pantheonsite.io
+//   E2E_WP_PASSWORD      — admin password set by CI via Terminus
+//
+// For local runs: set both vars and point at any Pantheon environment.
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://dev-cxr-ash-nazg.pantheonsite.io';
 
 module.exports = defineConfig({
   testDir: './tests/e2e',
