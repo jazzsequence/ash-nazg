@@ -1,0 +1,72 @@
+name: Deploy to Pantheon Dev
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Sync plugin code to Pantheon dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Configure SSH for Pantheon hosts
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          cat >> ~/.ssh/config <<'EOF'
+          Host *.pantheon.io *.drush.in *.getpantheon.com *.panth.io
+            StrictHostKeyChecking no
+            HostKeyAlgorithms +ssh-rsa
+          EOF
+
+      - name: Clone Pantheon dev repository
+        env:
+          PANTHEON_SITE_UUID: ${{ secrets.PANTHEON_SITE_UUID }}
+        run: |
+          git clone --depth=1 \
+            "ssh://codeserver.dev.${PANTHEON_SITE_UUID}@codeserver.dev.${PANTHEON_SITE_UUID}.drush.in:2222/~/repository.git" \
+            /tmp/pantheon-site
+
+      - name: Sync plugin code into Pantheon repo
+        run: |
+          rsync -rlI --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='vendor' \
+            --exclude='tests' \
+            --exclude='dist' \
+            --exclude='assets/sass' \
+            --exclude='assets/pds' \
+            --exclude='assets/pds-design-tokens' \
+            ./ \
+            /tmp/pantheon-site/wp-content/plugins/ash-nazg/
+
+      - name: Commit and push to Pantheon dev
+        run: |
+          cd /tmp/pantheon-site
+
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+
+          git add wp-content/plugins/ash-nazg/
+
+          # Only commit if there are changes
+          if git diff --cached --quiet; then
+            echo "No plugin changes to deploy."
+          else
+            COMMIT_SHA="${{ github.sha }}"
+            git commit -m "Deploy ash-nazg from ${COMMIT_SHA::8} (GitHub Actions)"
+            git push origin master
+            echo "Deployed to Pantheon dev."
+          fi

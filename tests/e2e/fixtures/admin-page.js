@@ -21,8 +21,9 @@ async function goToPluginPage(page, slug) {
  */
 async function runAxe(page) {
   return new AxeBuilder({ page })
-    .exclude('#wpadminbar')       // WP admin bar — not our code
-    .exclude('#adminmenumain')    // WP sidebar menu — not our code
+    .exclude('#wpadminbar')    // WP admin bar — not our code
+    .exclude('#adminmenumain') // WP sidebar menu — not our code
+    .exclude('#wpfooter')      // WP admin footer — not our code
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'])
     .analyze();
 }

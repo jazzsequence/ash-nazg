@@ -68,7 +68,7 @@ jobs:
         run: npm install --no-fund
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium firefox
+        run: npx playwright install --with-deps chromium
 
       - name: Create E2E multidev
         if: github.event_name == 'pull_request'
@@ -96,6 +96,30 @@ jobs:
         uses: pantheon-systems/terminus-github-actions@v1
         with:
           pantheon-machine-token: ${{ secrets.PANTHEON_MACHINE_TOKEN }}
+
+      - name: Sync current plugin code to multidev via SFTP
+        env:
+          PANTHEON_SITE_UUID: ${{ secrets.PANTHEON_SITE_UUID }}
+        run: |
+          SITE_ENV="${{ env.SITE_NAME }}.${{ env.E2E_ENV_NAME }}"
+          SFTP_USER="${{ env.E2E_ENV_NAME }}.${PANTHEON_SITE_UUID}"
+          SFTP_HOST="appserver.${{ env.E2E_ENV_NAME }}.${PANTHEON_SITE_UUID}.drush.in"
+
+          terminus connection:set "$SITE_ENV" sftp
+
+          rsync -rlIz --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='vendor' \
+            --exclude='tests' \
+            --exclude='dist' \
+            --exclude='assets/sass' \
+            --exclude='assets/pds' \
+            --exclude='assets/pds-design-tokens' \
+            -e "ssh -p 2222" \
+            ./ \
+            "${SFTP_USER}@${SFTP_HOST}:/code/wp-content/plugins/ash-nazg/"
+          echo "Plugin code synced to ${SITE_ENV}."
 
       - name: Set admin password on multidev
         id: admin

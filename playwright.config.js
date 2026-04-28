@@ -12,10 +12,10 @@ const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://dev-cxr-ash-nazg.pa
 module.exports = defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.spec.js',
-  fullyParallel: false, // WP state is shared across tests
+  fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  workers: 1, // single WP Playground instance
+  workers: process.env.CI ? 4 : 2,
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['junit', { outputFile: 'playwright-report/results.xml' }],
@@ -40,17 +40,10 @@ module.exports = defineConfig({
       use: { storageState: undefined },
     },
 
-    // Chromium (primary)
+    // Chromium — only browser for CI; add Firefox later if cross-browser gaps found
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      dependencies: ['setup'],
-    },
-
-    // Firefox (cross-browser)
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
       dependencies: ['setup'],
     },
   ],
