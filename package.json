@@ -12,8 +12,6 @@
     "watch": "npm run watch:css",
     "build": "npm run build:css",
     "build:dist": "bash bin/build-dist.sh",
-    "e2e:server": "npx @wp-playground/cli@latest server --auto-mount --blueprint=tests/e2e/blueprint.json --port=9400",
-    "e2e:server:generated": "npx @wp-playground/cli@latest server --auto-mount --blueprint=tests/e2e/blueprint.generated.json --port=9400",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report playwright-report",
@@ -29,7 +27,6 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",
     "@playwright/test": "^1.50.0",
-    "@wp-playground/cli": "^0.9.0",
     "sass": "^1.83.4"
   },
   "dependencies": {

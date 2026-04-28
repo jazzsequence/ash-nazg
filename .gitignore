@@ -50,6 +50,5 @@ reviewer-approved
 
 # E2E / Playwright
 tests/e2e/.auth/admin.json
-tests/e2e/blueprint.generated.json
 playwright-report/
 test-results/
