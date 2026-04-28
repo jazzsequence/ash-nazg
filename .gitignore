@@ -42,8 +42,14 @@ Thumbs.db
 /bin/install-wp-tests.sh
 /bin/phpunit-test.sh
 .phpunit.result.cache
+test-results/
 # Pantheon API helper — generated docs
 .pantheonapi-docs/
 
 # claude-code-reviewer approval flag
 reviewer-approved
+
+# E2E / Playwright
+tests/e2e/.auth/admin.json
+playwright-report/
+test-results/

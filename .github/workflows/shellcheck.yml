@@ -1,0 +1,26 @@
+name: ShellCheck
+
+on:
+  push:
+    paths:
+      - '**.sh'
+  pull_request:
+    paths:
+      - '**.sh'
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run ShellCheck
+        run: |
+          find . -name '*.sh' \
+            -not -path './vendor/*' \
+            -not -path './node_modules/*' \
+            -not -path './.codacy/*' \
+            | xargs -r shellcheck

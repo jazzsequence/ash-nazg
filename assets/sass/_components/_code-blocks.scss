@@ -27,3 +27,13 @@
 .ash-nazg-details-body {
 	padding: $spacing-sm 0;
 }
+
+// Inline code used to display the WordPress user ID in settings.
+code.ash-nazg-user-id {
+	background: #f6f7f7;
+	padding: 2px 6px;
+	border-radius: 3px;
+	font-family: monospace;
+	font-size: 13px;
+	user-select: all;
+}

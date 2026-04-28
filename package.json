@@ -1,6 +1,6 @@
 {
   "name": "ash-nazg",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "WordPress plugin that integrates Pantheon Public API into the WordPress admin dashboard",
   "scripts": {
     "copy:pds": "mkdir -p assets/pds assets/pds-design-tokens assets/images && cp -r ../pds-core/src/foundations assets/pds/ && cp -r ../pds-core/src/utilities assets/pds/ && cp ../pds-core/public/design-tokens/pds-design-tokens-light-mode.css assets/pds-design-tokens/ && cp ../pds-core/public/pantheon-logo-light-mode.png assets/images/ && cp ../pds-core/public/pantheon-logo-dark-mode.png assets/images/",
@@ -11,7 +11,12 @@
     "watch:css": "npm run copy:pds && npm run copy:chartjs && sass --load-path=assets/sass assets/sass/admin.scss assets/css/admin.css assets/sass/dashboard-widget.scss assets/css/dashboard-widget.css --watch --style=expanded",
     "watch": "npm run watch:css",
     "build": "npm run build:css",
-    "build:dist": "bash bin/build-dist.sh"
+    "build:dist": "bash bin/build-dist.sh",
+    "test:e2e": "playwright test",
+    "test:e2e:clean": "rm -rf test-results playwright-report",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report playwright-report",
+    "test:e2e:a11y": "playwright test tests/e2e/a11y.spec.js"
   },
   "keywords": [
     "wordpress",
@@ -21,6 +26,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.50.0",
     "sass": "^1.83.4"
   },
   "dependencies": {

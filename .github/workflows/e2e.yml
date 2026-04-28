@@ -1,0 +1,184 @@
+name: E2E & Accessibility Tests
+
+# GitHub Pages Setup Required:
+# 1. Repository Settings → Pages → Deploy from branch → gh-pages / root
+# 2. Reports published at: https://jazzsequence.github.io/ash-nazg/reports/{run_id}
+#
+# Required secrets:
+#   PANTHEON_MACHINE_TOKEN  — Pantheon machine token with multidev permissions
+#   PANTHEON_SITE_UUID      — cxr-ash-nazg site UUID
+#   E2E_WP_PASSWORD         — throwaway WP admin password set on the test multidev
+#
+# Multidev lifecycle:
+#   PR open/sync/reopen → create e2e-{pr} multidev, run tests against it
+#   PR close            → delete e2e-{pr} multidev
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:
+    inputs:
+      env_name:
+        description: 'Pantheon environment to test against (default: dev)'
+        required: false
+        default: 'dev'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+env:
+  SITE_NAME: cxr-ash-nazg
+  E2E_ENV_NAME: ${{ github.event_name == 'pull_request' && format('e2e-{0}', github.event.pull_request.number) || inputs.env_name || 'dev' }}
+
+jobs:
+  # ── Delete multidev on PR close ──────────────────────────────────────────────
+  cleanup:
+    name: Delete E2E multidev
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Delete multidev
+        env:
+          PANTHEON_MACHINE_TOKEN: ${{ secrets.PANTHEON_MACHINE_TOKEN }}
+          PANTHEON_SITE_UUID: ${{ secrets.PANTHEON_SITE_UUID }}
+        run: bash bin/manage-e2e-multidev.sh delete "${{ env.E2E_ENV_NAME }}"
+
+  # ── Create multidev + run tests ──────────────────────────────────────────────
+  playwright:
+    name: Playwright (a11y + functional)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    if: github.event.action != 'closed'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Node dependencies
+        run: npm install --no-fund
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Create E2E multidev
+        if: github.event_name == 'pull_request'
+        env:
+          PANTHEON_MACHINE_TOKEN: ${{ secrets.PANTHEON_MACHINE_TOKEN }}
+          PANTHEON_SITE_UUID: ${{ secrets.PANTHEON_SITE_UUID }}
+        run: bash bin/manage-e2e-multidev.sh create "${{ env.E2E_ENV_NAME }}"
+
+      - name: Set up SSH key for Terminus
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Configure SSH for Pantheon hosts
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          cat >> ~/.ssh/config <<'EOF'
+          Host *.pantheon.io *.drush.in *.getpantheon.com *.panth.io
+            StrictHostKeyChecking no
+            HostKeyAlgorithms +ssh-rsa
+          EOF
+
+      - name: Install and authenticate Terminus
+        uses: pantheon-systems/terminus-github-actions@v1
+        with:
+          pantheon-machine-token: ${{ secrets.PANTHEON_MACHINE_TOKEN }}
+
+      - name: Sync current plugin code to multidev via SFTP
+        env:
+          PANTHEON_SITE_UUID: ${{ secrets.PANTHEON_SITE_UUID }}
+        run: |
+          SITE_ENV="${{ env.SITE_NAME }}.${{ env.E2E_ENV_NAME }}"
+          SFTP_USER="${{ env.E2E_ENV_NAME }}.${PANTHEON_SITE_UUID}"
+          SFTP_HOST="appserver.${{ env.E2E_ENV_NAME }}.${PANTHEON_SITE_UUID}.drush.in"
+
+          terminus connection:set "$SITE_ENV" sftp
+
+          rsync -rlIz --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='vendor' \
+            --exclude='tests' \
+            --exclude='dist' \
+            --exclude='assets/sass' \
+            --exclude='assets/pds' \
+            --exclude='assets/pds-design-tokens' \
+            -e "ssh -p 2222" \
+            ./ \
+            "${SFTP_USER}@${SFTP_HOST}:/code/wp-content/plugins/ash-nazg/"
+          echo "Plugin code synced to ${SITE_ENV}."
+
+      - name: Set admin password on multidev
+        id: admin
+        env:
+          E2E_WP_PASSWORD: ${{ secrets.E2E_WP_PASSWORD }}
+        run: |
+          SITE_ENV="${{ env.SITE_NAME }}.${{ env.E2E_ENV_NAME }}"
+          USERNAME=$(terminus wp "$SITE_ENV" \
+            -- user list --role=administrator --format=csv --fields=user_login \
+            | tail -1)
+          echo "username=${USERNAME}" >> "$GITHUB_OUTPUT"
+          terminus wp "$SITE_ENV" \
+            -- user update "$USERNAME" --user_pass="$E2E_WP_PASSWORD"
+
+      - name: Wait for multidev to be reachable
+        run: |
+          BASE_URL="https://${{ env.E2E_ENV_NAME }}-${{ env.SITE_NAME }}.pantheonsite.io"
+          echo "Waiting for ${BASE_URL}..."
+          timeout 120 bash -c \
+            "until curl -sf ${BASE_URL}/wp-login.php -o /dev/null; do sleep 5; done"
+          echo "Multidev is reachable."
+
+      - name: Prepare Playwright auth directory
+        run: |
+          mkdir -p tests/e2e/.auth
+          echo '{"cookies":[],"origins":[]}' > tests/e2e/.auth/admin.json
+
+      - name: Run Playwright tests
+        id: e2e-tests
+        continue-on-error: true
+        env:
+          CI: true
+          PLAYWRIGHT_BASE_URL: https://${{ env.E2E_ENV_NAME }}-${{ env.SITE_NAME }}.pantheonsite.io
+          E2E_WP_USERNAME: ${{ steps.admin.outputs.username }}
+          E2E_WP_PASSWORD: ${{ secrets.E2E_WP_PASSWORD }}
+        run: npx playwright test
+
+      - name: Deploy Playwright report to GitHub Pages
+        if: always()
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./playwright-report
+          destination_dir: reports/${{ github.run_id }}
+          keep_files: true
+          force_push: true
+
+      - name: Report status
+        if: always()
+        run: |
+          REPORT_URL="https://jazzsequence.github.io/ash-nazg/reports/${{ github.run_id }}"
+          echo "### E2E & A11y Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** \`${{ env.E2E_ENV_NAME }}\` — https://${{ env.E2E_ENV_NAME }}-${{ env.SITE_NAME }}.pantheonsite.io" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tests:** ${{ steps.e2e-tests.outcome == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 [View Playwright Report](${REPORT_URL})" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail workflow if tests failed
+        if: steps.e2e-tests.outcome != 'success'
+        run: exit 1
