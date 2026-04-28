@@ -122,8 +122,9 @@
 					reject(false);
 				});
 
-				// Show modal
+				// Show modal and move focus inside (WCAG 2.1 SC 2.4.3).
 				$overlay.addClass('active');
+				$confirm[0].focus();
 			});
 		},
 
@@ -189,8 +190,9 @@
 					resolve(true);
 				});
 
-				// Show modal
+				// Show modal and move focus inside (WCAG 2.1 SC 2.4.3).
 				$overlay.addClass('active');
+				$confirm[0].focus();
 			});
 		},
 
