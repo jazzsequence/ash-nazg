@@ -12,9 +12,11 @@
     "watch": "npm run watch:css",
     "build": "npm run build:css",
     "build:dist": "bash bin/build-dist.sh",
+    "e2e:server": "npx @wp-playground/cli@latest server --auto-mount --blueprint=tests/e2e/blueprint.json --port=9400",
+    "e2e:server:generated": "npx @wp-playground/cli@latest server --auto-mount --blueprint=tests/e2e/blueprint.generated.json --port=9400",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:report": "playwright show-report tests/e2e/report",
+    "test:e2e:report": "playwright show-report playwright-report",
     "test:e2e:a11y": "playwright test tests/e2e/a11y.spec.js"
   },
   "keywords": [
