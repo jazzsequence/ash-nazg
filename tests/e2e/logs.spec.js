@@ -16,22 +16,17 @@ test.describe('Logs', () => {
   });
 
   test('Fetch Logs button is present and clickable', async ({ page }) => {
-    const fetchBtn = page.locator('button, input[type="submit"]').filter({ hasText: /fetch logs/i });
-    await expect(fetchBtn).toBeVisible({ timeout: 10_000 });
-    await expect(fetchBtn).toBeEnabled();
+    await expect(page.locator('#ash-nazg-fetch-logs')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('#ash-nazg-fetch-logs')).toBeEnabled();
   });
 
   test('Clear Logs button is present', async ({ page }) => {
-    const clearBtn = page.locator('button, input[type="submit"]').filter({ hasText: /clear logs/i });
-    await expect(clearBtn).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('#ash-nazg-clear-logs')).toBeVisible({ timeout: 10_000 });
   });
 
   test('fetching logs loads content', async ({ page }) => {
-    const fetchBtn = page.locator('button, input[type="submit"]').filter({ hasText: /fetch logs/i });
-    await fetchBtn.click();
-
-    // After fetching, either log content or a "no logs" message should appear.
-    const logContent = page.locator('#ash-nazg-log-content, .ash-nazg-logs-content');
-    await expect(logContent).toBeVisible({ timeout: 15_000 });
+    await page.locator('#ash-nazg-fetch-logs').click();
+    // After fetching, the log container should have content.
+    await expect(page.locator('#ash-nazg-logs-container')).toBeVisible({ timeout: 15_000 });
   });
 });

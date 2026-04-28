@@ -36,11 +36,15 @@ test.describe('Dashboard', () => {
     }
   });
 
-  test('connection mode toggle button is present', async ({ page }) => {
+  test('connection mode toggle is present with a valid mode', async ({ page }) => {
+    // Toggle only renders on Pantheon environments in SFTP or Git mode.
     const toggle = page.locator('#ash-nazg-toggle-mode');
-    if (await toggle.isVisible()) {
-      await expect(toggle).toBeEnabled();
+    if (await toggle.count() === 0) {
+      test.skip();
     }
+    await expect(toggle).toBeVisible({ timeout: 10_000 });
+    const mode = await toggle.getAttribute('data-mode');
+    expect(['sftp', 'git']).toContain(mode);
   });
 });
 

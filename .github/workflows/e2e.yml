@@ -179,6 +179,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📊 [View Playwright Report](${REPORT_URL})" >> $GITHUB_STEP_SUMMARY
 
+      - name: Clean up test artifacts
+        if: always()
+        run: rm -rf test-results playwright-report
+
       - name: Fail workflow if tests failed
         if: steps.e2e-tests.outcome != 'success'
         run: exit 1
