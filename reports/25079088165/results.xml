@@ -1,0 +1,464 @@
+<testsuites id="" name="" tests="114" failures="2" skipped="0" errors="0" time="159.889508">
+<testsuite name="global.setup.js" timestamp="2026-04-28T21:40:29.323Z" hostname="setup" tests="1" failures="0" skipped="0" time="2.737" errors="0">
+<testcase name="authenticate as admin" classname="global.setup.js" time="2.737">
+</testcase>
+</testsuite>
+<testsuite name="a11y.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="12" failures="0" skipped="0" time="108.478" errors="0">
+<testcase name="Dashboard page has no critical/serious a11y violations" classname="a11y.spec.js" time="10.678">
+</testcase>
+<testcase name="Metrics page has no critical/serious a11y violations" classname="a11y.spec.js" time="9.178">
+</testcase>
+<testcase name="Development page has no critical/serious a11y violations" classname="a11y.spec.js" time="12.7">
+</testcase>
+<testcase name="Addons page has no critical/serious a11y violations" classname="a11y.spec.js" time="8.122">
+</testcase>
+<testcase name="Workflows page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.164">
+</testcase>
+<testcase name="Backups page has no critical/serious a11y violations" classname="a11y.spec.js" time="9.155">
+</testcase>
+<testcase name="Clone page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.894">
+</testcase>
+<testcase name="Logs page has no critical/serious a11y violations" classname="a11y.spec.js" time="8.604">
+</testcase>
+<testcase name="Settings page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.615">
+</testcase>
+<testcase name="Dashboard widget on WP admin index has no a11y violations" classname="a11y.spec.js" time="9.374">
+</testcase>
+<testcase name="Backups page tab switching maintains a11y" classname="a11y.spec.js" time="9.573">
+</testcase>
+<testcase name="Metrics page with data loaded has no a11y violations" classname="a11y.spec.js" time="8.421">
+</testcase>
+</testsuite>
+<testsuite name="addons.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="6" failures="0" skipped="0" time="21.347" errors="0">
+<testcase name="Addons › page renders without errors" classname="addons.spec.js" time="2.79">
+</testcase>
+<testcase name="Addons › Redis addon toggle is present" classname="addons.spec.js" time="2.735">
+</testcase>
+<testcase name="Addons › Solr addon toggle is present" classname="addons.spec.js" time="4.438">
+</testcase>
+<testcase name="Addons › Elasticsearch shows Coming Soon badge" classname="addons.spec.js" time="3.283">
+</testcase>
+<testcase name="Addons › Redis status reflects live environment state" classname="addons.spec.js" time="4.486">
+</testcase>
+<testcase name="Addons › save button is present and enabled" classname="addons.spec.js" time="3.615">
+</testcase>
+</testsuite>
+<testsuite name="aria.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="13" failures="0" skipped="0" time="50.715" errors="0">
+<testcase name="ARIA — Dashboard › page has a meaningful document title" classname="aria.spec.js" time="4.198">
+</testcase>
+<testcase name="ARIA — Dashboard › plugin header has an img with alt text" classname="aria.spec.js" time="3.797">
+</testcase>
+<testcase name="ARIA — Dashboard › main heading is present and non-empty" classname="aria.spec.js" time="3.63">
+</testcase>
+<testcase name="ARIA — Dashboard › environment card has accessible structure" classname="aria.spec.js" time="3.1">
+</testcase>
+<testcase name="ARIA — Modals › backup confirmation modal has correct ARIA structure" classname="aria.spec.js" time="4.284">
+</testcase>
+<testcase name="ARIA — Modals › progress modal heading exists in DOM" classname="aria.spec.js" time="3.378">
+</testcase>
+<testcase name="ARIA — Live regions › log contents region is reachable and labeled" classname="aria.spec.js" time="3.328">
+</testcase>
+<testcase name="ARIA — Live regions › metrics summary stats have accessible labels" classname="aria.spec.js" time="3.911">
+</testcase>
+<testcase name="ARIA — Forms › settings form inputs have associated labels" classname="aria.spec.js" time="4.89">
+</testcase>
+<testcase name="ARIA — Forms › backup form selects have visible labels" classname="aria.spec.js" time="3.889">
+</testcase>
+<testcase name="ARIA — Forms › addons form checkboxes have associated labels" classname="aria.spec.js" time="4.408">
+</testcase>
+<testcase name="ARIA — Landmark regions › plugin pages use heading hierarchy correctly" classname="aria.spec.js" time="3.781">
+</testcase>
+<testcase name="ARIA — Landmark regions › tables have captions or headers" classname="aria.spec.js" time="4.121">
+</testcase>
+</testsuite>
+<testsuite name="backups-actions.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="4" failures="0" skipped="0" time="18.942" errors="0">
+<testcase name="Backups — create and download › backup type selector has all expected options" classname="backups-actions.spec.js" time="4.476">
+</testcase>
+<testcase name="Backups — create and download › retention period field accepts a value" classname="backups-actions.spec.js" time="3.651">
+</testcase>
+<testcase name="Backups — create and download › create database backup and verify it appears in the list" classname="backups-actions.spec.js" time="7.256">
+</testcase>
+<testcase name="Backups — create and download › download button generates a signed URL" classname="backups-actions.spec.js" time="3.559">
+</testcase>
+</testsuite>
+<testsuite name="backups.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="5" failures="0" skipped="0" time="24.772" errors="0">
+<testcase name="Backups › page renders with tabbed environment UI" classname="backups.spec.js" time="4.803">
+</testcase>
+<testcase name="Backups › default tab is visible and active" classname="backups.spec.js" time="4.785">
+</testcase>
+<testcase name="Backups › tab switching shows the correct panel" classname="backups.spec.js" time="5.384">
+</testcase>
+<testcase name="Backups › backup creation form renders" classname="backups.spec.js" time="5.065">
+</testcase>
+<testcase name="Backups › existing backups section loads" classname="backups.spec.js" time="4.735">
+</testcase>
+</testsuite>
+<testsuite name="clone.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="5" failures="0" skipped="0" time="14.896" errors="0">
+<testcase name="Clone › page renders without errors" classname="clone.spec.js" time="1.807">
+</testcase>
+<testcase name="Clone › source environment selector is present" classname="clone.spec.js" time="3.343">
+</testcase>
+<testcase name="Clone › target environment selector is present" classname="clone.spec.js" time="2.91">
+</testcase>
+<testcase name="Clone › database and files checkboxes are present" classname="clone.spec.js" time="3.663">
+</testcase>
+<testcase name="Clone › clone button is present" classname="clone.spec.js" time="3.173">
+</testcase>
+</testsuite>
+<testsuite name="connection-mode.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="2" failures="0" skipped="0" time="26.645" errors="0">
+<testcase name="Connection Mode Toggle › toggle is present and shows current mode" classname="connection-mode.spec.js" time="5.665">
+</testcase>
+<testcase name="Connection Mode Toggle › toggling mode updates the badge" classname="connection-mode.spec.js" time="20.98">
+</testcase>
+</testsuite>
+<testsuite name="dashboard.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="9" failures="0" skipped="0" time="29.757" errors="0">
+<testcase name="Dashboard › renders the Pantheon branded header" classname="dashboard.spec.js" time="2.586">
+</testcase>
+<testcase name="Dashboard › shows the 50/50 two-column layout" classname="dashboard.spec.js" time="2.566">
+</testcase>
+<testcase name="Dashboard › environment card shows Pantheon site info" classname="dashboard.spec.js" time="2.838">
+</testcase>
+<testcase name="Dashboard › API endpoint testing table renders" classname="dashboard.spec.js" time="2.803">
+</testcase>
+<testcase name="Dashboard › inline site label editing is accessible" classname="dashboard.spec.js" time="3.604">
+</testcase>
+<testcase name="Dashboard › connection mode toggle is present with a valid mode" classname="dashboard.spec.js" time="3.239">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget renders on wp-admin index" classname="dashboard.spec.js" time="4.477">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget chart renders after data loads" classname="dashboard.spec.js" time="3.924">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget links to Metrics page" classname="dashboard.spec.js" time="3.72">
+</testcase>
+</testsuite>
+<testsuite name="development.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="6" failures="0" skipped="0" time="26.738" errors="0">
+<testcase name="Development › page renders without errors" classname="development.spec.js" time="4.868">
+</testcase>
+<testcase name="Development › upstream updates section renders" classname="development.spec.js" time="4.451">
+</testcase>
+<testcase name="Development › recent commits card renders" classname="development.spec.js" time="4.356">
+</testcase>
+<testcase name="Development › environments card renders with environment list" classname="development.spec.js" time="3.986">
+</testcase>
+<testcase name="Development › refresh button on recent commits is clickable" classname="development.spec.js" time="4.444">
+</testcase>
+<testcase name="Development › code deployment section renders" classname="development.spec.js" time="4.633">
+</testcase>
+</testsuite>
+<testsuite name="error-states.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="5" failures="0" skipped="0" time="35.126" errors="0">
+<testcase name="Error States — API failure handling › metrics page shows error when API call fails" classname="error-states.spec.js" time="6.083">
+</testcase>
+<testcase name="Error States — API failure handling › dashboard widget shows error when metrics API fails" classname="error-states.spec.js" time="7.631">
+</testcase>
+<testcase name="Error States — API failure handling › logs page shows error when fetch fails" classname="error-states.spec.js" time="6.183">
+</testcase>
+<testcase name="Error States — API failure handling › connection mode toggle shows error when API fails" classname="error-states.spec.js" time="7.637">
+</testcase>
+<testcase name="Error States — AJAX network failure › backup creation handles network failure gracefully" classname="error-states.spec.js" time="7.592">
+</testcase>
+</testsuite>
+<testsuite name="inline-editing.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="6" failures="0" skipped="0" time="21.134" errors="0">
+<testcase name="Inline Site Label Editing › can open the inline editor" classname="inline-editing.spec.js" time="2.14">
+</testcase>
+<testcase name="Inline Site Label Editing › cancel restores the original label" classname="inline-editing.spec.js" time="2.618">
+</testcase>
+<testcase name="Inline Site Label Editing › saves a new label and displays it" classname="inline-editing.spec.js" time="5.128">
+</testcase>
+<testcase name="Inline Site Label Editing › Enter key submits the inline label form" classname="inline-editing.spec.js" time="5.066">
+</testcase>
+<testcase name="Inline Organization Selector › org edit button opens the selector" classname="inline-editing.spec.js" time="2.541">
+</testcase>
+<testcase name="Inline Organization Selector › org cancel hides the selector" classname="inline-editing.spec.js" time="3.641">
+</testcase>
+</testsuite>
+<testsuite name="keyboard.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="9" failures="2" skipped="0" time="48.954" errors="0">
+<testcase name="Keyboard — Dashboard › all interactive elements in .wrap are reachable via Tab" classname="keyboard.spec.js" time="3.763">
+</testcase>
+<testcase name="Keyboard — Dashboard › inline site label edit is keyboard operable" classname="keyboard.spec.js" time="3.688">
+</testcase>
+<testcase name="Keyboard — Dashboard › connection mode toggle responds to Enter" classname="keyboard.spec.js" time="4.313">
+</testcase>
+<testcase name="Keyboard — Backups tabs › environment tabs are keyboard navigable" classname="keyboard.spec.js" time="3.639">
+</testcase>
+<testcase name="Keyboard — Backups tabs › backup set toggle is keyboard operable" classname="keyboard.spec.js" time="14.423">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(locator).toBeVisible() failed" type="expect.toBeVisible">
+<![CDATA[  [chromium] › keyboard.spec.js:104:3 › Keyboard — Backups tabs › backup set toggle is keyboard operable 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  locator('.ash-nazg-backup-elements-table').first()
+    Expected: visible
+    Received: hidden
+    Timeout:  3000ms
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('.ash-nazg-backup-elements-table').first()
+        7 × locator resolved to <table class="widefat striped ash-nazg-backup-elements-table ash-nazg-backup-table-collapsed">…</table>
+          - unexpected value "hidden"
+
+
+      109 |     await page.keyboard.press('Space');
+      110 |     const table = page.locator('.ash-nazg-backup-elements-table').first();
+    > 111 |     await expect(table).toBeVisible({ timeout: 3_000 });
+          |                         ^
+      112 |   });
+      113 | });
+      114 |
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/keyboard.spec.js:111:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  locator('.ash-nazg-backup-elements-table').first()
+    Expected: visible
+    Received: hidden
+    Timeout:  3000ms
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('.ash-nazg-backup-elements-table').first()
+        7 × locator resolved to <table class="widefat striped ash-nazg-backup-elements-table ash-nazg-backup-table-collapsed">…</table>
+          - unexpected value "hidden"
+
+
+      109 |     await page.keyboard.press('Space');
+      110 |     const table = page.locator('.ash-nazg-backup-elements-table').first();
+    > 111 |     await expect(table).toBeVisible({ timeout: 3_000 });
+          |                         ^
+      112 |   });
+      113 | });
+      114 |
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/keyboard.spec.js:111:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/keyboard-Keyboard-—-Backup-b07ea-toggle-is-keyboard-operable-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+<testcase name="Keyboard — Metrics filters › environment and duration selects are keyboard operable" classname="keyboard.spec.js" time="3.522">
+</testcase>
+<testcase name="Keyboard — Modal focus trapping › confirmation modal traps focus when open" classname="keyboard.spec.js" time="8.073">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(received).toBe(expected) // Object.is equality" type="expect.toBe">
+<![CDATA[  [chromium] › keyboard.spec.js:139:3 › Keyboard — Modal focus trapping › confirmation modal traps focus when open 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      152 |              document.activeElement === confirm;
+      153 |     });
+    > 154 |     expect(focusedInModal).toBe(true);
+          |                            ^
+      155 |
+      156 |     // Cancel the modal.
+      157 |     await modal.locator('button').filter({ hasText: 'Cancel' }).click();
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/keyboard.spec.js:154:28
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      152 |              document.activeElement === confirm;
+      153 |     });
+    > 154 |     expect(focusedInModal).toBe(true);
+          |                            ^
+      155 |
+      156 |     // Cancel the modal.
+      157 |     await modal.locator('button').filter({ hasText: 'Cancel' }).click();
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/keyboard.spec.js:154:28
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+<testcase name="Keyboard — Addons toggles › Redis and Solr checkboxes are keyboard operable" classname="keyboard.spec.js" time="2.62">
+</testcase>
+<testcase name="Keyboard — Development page › all deploy buttons are keyboard reachable" classname="keyboard.spec.js" time="4.913">
+</testcase>
+</testsuite>
+<testsuite name="logs.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="4" failures="0" skipped="0" time="13.347" errors="0">
+<testcase name="Logs › page renders without errors" classname="logs.spec.js" time="2.974">
+</testcase>
+<testcase name="Logs › Fetch Logs button is present and clickable" classname="logs.spec.js" time="3.421">
+</testcase>
+<testcase name="Logs › Clear Logs button is present" classname="logs.spec.js" time="3.478">
+</testcase>
+<testcase name="Logs › fetching logs loads content" classname="logs.spec.js" time="3.474">
+</testcase>
+</testsuite>
+<testsuite name="metrics-interactions.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="7" failures="0" skipped="0" time="61.68" errors="0">
+<testcase name="Metrics — All time periods load data › loads data for 7 days" classname="metrics-interactions.spec.js" time="9.118">
+</testcase>
+<testcase name="Metrics — All time periods load data › loads data for 28 days" classname="metrics-interactions.spec.js" time="10.789">
+</testcase>
+<testcase name="Metrics — All time periods load data › loads data for 12 weeks" classname="metrics-interactions.spec.js" time="11.57">
+</testcase>
+<testcase name="Metrics — All time periods load data › loads data for 12 months" classname="metrics-interactions.spec.js" time="10.954">
+</testcase>
+<testcase name="Metrics — Environment switching › switching environment loads data for that environment" classname="metrics-interactions.spec.js" time="8.501">
+</testcase>
+<testcase name="Metrics — Refresh clears cache › Refresh button clears cache and reloads" classname="metrics-interactions.spec.js" time="8.326">
+</testcase>
+<testcase name="Metrics — Chart visibility via Screen Options › hidden chart canvas is absent from the DOM" classname="metrics-interactions.spec.js" time="2.422">
+</testcase>
+</testsuite>
+<testsuite name="metrics.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="6" failures="0" skipped="0" time="34.896" errors="0">
+<testcase name="Metrics › page renders summary statistics above filters" classname="metrics.spec.js" time="3.499">
+</testcase>
+<testcase name="Metrics › Load Metrics button fetches real API data" classname="metrics.spec.js" time="8.833">
+</testcase>
+<testcase name="Metrics › environment selector contains expected options" classname="metrics.spec.js" time="3.943">
+</testcase>
+<testcase name="Metrics › duration selector has all time period options" classname="metrics.spec.js" time="3.143">
+</testcase>
+<testcase name="Metrics › summary stats update after data loads" classname="metrics.spec.js" time="9.285">
+</testcase>
+<testcase name="Metrics › filter persistence: selections survive page reload" classname="metrics.spec.js" time="6.193">
+</testcase>
+</testsuite>
+<testsuite name="screen-options.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="6" failures="0" skipped="0" time="32.35" errors="0">
+<testcase name="Screen Options — Dashboard endpoint groups › can open Screen Options panel" classname="screen-options.spec.js" time="2.189">
+</testcase>
+<testcase name="Screen Options — Dashboard endpoint groups › master toggle hides all endpoint groups" classname="screen-options.spec.js" time="4.601">
+</testcase>
+<testcase name="Screen Options — Development sections › can hide and restore Environments card" classname="screen-options.spec.js" time="7.72">
+</testcase>
+<testcase name="Screen Options — Backups age filter › age filter options are present" classname="screen-options.spec.js" time="3.455">
+</testcase>
+<testcase name="Screen Options — Backups age filter › selecting 7-day filter and applying restricts backup list" classname="screen-options.spec.js" time="6.765">
+</testcase>
+<testcase name="Screen Options — Metrics charts › hiding all charts also hides the filters section" classname="screen-options.spec.js" time="7.62">
+</testcase>
+</testsuite>
+<testsuite name="settings.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="4" failures="0" skipped="0" time="15.15" errors="0">
+<testcase name="Settings › settings page renders without errors" classname="settings.spec.js" time="4.572">
+</testcase>
+<testcase name="Settings › machine token section is present" classname="settings.spec.js" time="3.7">
+</testcase>
+<testcase name="Settings › session token section renders" classname="settings.spec.js" time="3.256">
+</testcase>
+<testcase name="Settings › per-user token documentation is visible" classname="settings.spec.js" time="3.622">
+</testcase>
+</testsuite>
+<testsuite name="workflows.spec.js" timestamp="2026-04-28T21:40:29.323Z" hostname="chromium" tests="4" failures="0" skipped="0" time="13.018" errors="0">
+<testcase name="Workflows › page renders without errors" classname="workflows.spec.js" time="3.548">
+</testcase>
+<testcase name="Workflows › available workflows section renders" classname="workflows.spec.js" time="3.279">
+</testcase>
+<testcase name="Workflows › Object Cache Pro workflow card is present" classname="workflows.spec.js" time="3.131">
+</testcase>
+<testcase name="Workflows › trigger workflow button is present" classname="workflows.spec.js" time="3.06">
+</testcase>
+</testsuite>
+</testsuites>
