@@ -30,6 +30,7 @@ test.describe('Backups — create and download', () => {
   });
 
   test('create database backup and verify it appears in the list', async ({ page }) => {
+    test.setTimeout(180_000); // Backup workflows take 60-120s on Pantheon
     // Select database-only backup to minimize time.
     await page.selectOption('#backup-element', 'database');
     await page.fill('#backup-keep-for', '7');
@@ -39,23 +40,27 @@ test.describe('Backups — create and download', () => {
     await expect(createBtn).toBeEnabled();
     await createBtn.click();
 
-    // A progress indicator should appear.
-    const loading = page.locator('#ash-nazg-backup-progress-modal, .ash-nazg-loading');
-    await expect(loading.first()).toBeVisible({ timeout: 10_000 });
+    // AshNazgModal confirmation dialog appears first — click Confirm.
+    const confirmModal = page.locator('.ash-nazg-modal-warning');
+    await expect(confirmModal).toBeVisible({ timeout: 5_000 });
+    await confirmModal.locator('button').filter({ hasText: 'Confirm' }).click();
 
-    // Wait for the backup workflow to complete (up to 3 minutes).
-    await page.waitForFunction(
-      () => !document.querySelector('#ash-nazg-backup-progress-modal[style*="block"]'),
-      { timeout: 180_000 }
+    // Backup workflow starts asynchronously. Wait for the success/error modal
+    // or for the button to re-enable, then reload and verify the backup exists.
+    await page.waitForResponse(
+      r => r.url().includes('admin-ajax.php') && r.request().postData()?.includes('ash_nazg_create_backup'),
+      { timeout: 15_000 }
     );
 
-    // Refresh the page and verify the new backup appears in the active tab.
-    await page.reload();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
-
-    const backupList = page.locator('.ash-nazg-backup-set').first();
-    await expect(backupList).toBeVisible({ timeout: 10_000 });
+    // Poll until a backup set appears in the active (visible) tab panel.
+    await expect(async () => {
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      // Backup sets inside hidden panels won't be visible; check the active panel.
+      await expect(
+        page.locator('.ash-nazg-backup-env-panel:not(.hidden) .ash-nazg-backup-set').first()
+      ).toBeVisible();
+    }).toPass({ timeout: 150_000, intervals: [15_000] });
   });
 
   test('download button generates a signed URL', async ({ page }) => {

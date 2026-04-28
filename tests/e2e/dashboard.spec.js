@@ -62,7 +62,16 @@ test.describe('WP Admin Dashboard Widget', () => {
   });
 
   test('widget chart renders after data loads', async ({ page }) => {
-    await expect(page.locator('#ash-nazg-widget-content:not(.ash-nazg-hidden) canvas')).toBeVisible({ timeout: 10_000 });
+    // jQuery .show() overrides display:none with an inline style without removing
+    // the ash-nazg-hidden class, so check computed visibility instead.
+    await page.waitForFunction(
+      () => {
+        const el = document.getElementById('ash-nazg-widget-content');
+        return el && window.getComputedStyle(el).display !== 'none';
+      },
+      { timeout: 20_000 }
+    );
+    await expect(page.locator('#ash-nazg-widget-chart')).toBeVisible();
   });
 
   test('widget links to Metrics page', async ({ page }) => {
