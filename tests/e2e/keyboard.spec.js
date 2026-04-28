@@ -105,9 +105,10 @@ test.describe('Keyboard — Backups tabs', () => {
     const toggle = page.locator('.ash-nazg-backup-toggle').first();
     if (await toggle.count() === 0) test.skip();
     await toggle.focus();
-    await page.keyboard.press('Enter');
+    // Space activates role="button" elements (keydown handler in backups.js).
+    await page.keyboard.press('Space');
     const table = page.locator('.ash-nazg-backup-elements-table').first();
-    await expect(table).toBeVisible();
+    await expect(table).toBeVisible({ timeout: 3_000 });
   });
 });
 

@@ -124,7 +124,7 @@
 
 				// Show modal and move focus inside (WCAG 2.1 SC 2.4.3).
 				$overlay.addClass('active');
-				$confirm.trigger('focus');
+				$confirm[0].focus();
 			});
 		},
 
@@ -192,7 +192,7 @@
 
 				// Show modal and move focus inside (WCAG 2.1 SC 2.4.3).
 				$overlay.addClass('active');
-				$confirm.trigger('focus');
+				$confirm[0].focus();
 			});
 		},
 

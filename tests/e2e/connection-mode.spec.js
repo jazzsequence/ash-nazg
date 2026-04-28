@@ -45,9 +45,10 @@ test.describe('Connection Mode Toggle', () => {
     const expectedMode = initialMode === 'git' ? 'SFTP' : 'Git';
     expect(newBadgeText?.toUpperCase()).toContain(expectedMode.toUpperCase());
 
-    // Toggle back to restore original mode.
+    // Toggle back to restore original mode — wait for button to be enabled first.
     const toggleAgain = page.locator('#ash-nazg-toggle-mode');
     if (await toggleAgain.count() > 0) {
+      await expect(toggleAgain).toBeEnabled({ timeout: 30_000 });
       await toggleAgain.click();
       await page.waitForLoadState('load', { timeout: 60_000 });
     }

@@ -30,9 +30,13 @@ test.describe('Screen Options — Dashboard endpoint groups', () => {
   });
 
   test('can open Screen Options panel', async ({ page }) => {
+    // openScreenOptions clicks the toggle and waits for the panel to be visible.
+    // #screen-options only exists on pages that use add_screen_option(); our
+    // plugin uses the screen_settings filter so the content is in #screen-options-wrap.
     const opened = await openScreenOptions(page);
     if (!opened) test.skip();
-    await expect(page.locator('#screen-options')).toBeVisible();
+    // If we got here, openScreenOptions confirmed the panel is visible.
+    await expect(page.locator('#screen-options-wrap')).toBeVisible();
   });
 
   test('master toggle hides all endpoint groups', async ({ page }) => {
