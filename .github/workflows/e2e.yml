@@ -91,11 +91,14 @@ jobs:
 
       - name: Start WP Playground
         run: |
+          # Note: the worker count warning ("fewer than 6 workers") is expected
+          # on standard GitHub Actions runners (4 CPUs → 3 workers). It is
+          # informational only — Playwright runs sequentially (workers: 1) so
+          # there is no concurrent load that would trigger file-lock deadlock.
           npx @wp-playground/cli@latest server \
             --auto-mount \
             --blueprint=tests/e2e/blueprint.generated.json \
-            --port=9400 \
-            --experimental-multi-worker=false &
+            --port=9400 &
 
           echo "Waiting for WP Playground to be ready..."
           timeout 120 bash -c \
