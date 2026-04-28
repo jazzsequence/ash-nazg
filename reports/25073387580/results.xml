@@ -1,0 +1,158 @@
+<testsuites id="" name="" tests="66" failures="0" skipped="0" errors="0" time="77.94792600000001">
+<testsuite name="global.setup.js" timestamp="2026-04-28T19:32:15.769Z" hostname="setup" tests="1" failures="0" skipped="0" time="3.416" errors="0">
+<testcase name="authenticate as admin" classname="global.setup.js" time="3.416">
+</testcase>
+</testsuite>
+<testsuite name="a11y.spec.js" timestamp="2026-04-28T19:32:15.769Z" hostname="chromium" tests="12" failures="0" skipped="0" time="98.014" errors="0">
+<testcase name="Dashboard page has no critical/serious a11y violations" classname="a11y.spec.js" time="8.678">
+</testcase>
+<testcase name="Metrics page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.995">
+</testcase>
+<testcase name="Development page has no critical/serious a11y violations" classname="a11y.spec.js" time="11.224">
+</testcase>
+<testcase name="Addons page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.739">
+</testcase>
+<testcase name="Workflows page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.126">
+</testcase>
+<testcase name="Backups page has no critical/serious a11y violations" classname="a11y.spec.js" time="9.348">
+</testcase>
+<testcase name="Clone page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.938">
+</testcase>
+<testcase name="Logs page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.597">
+</testcase>
+<testcase name="Settings page has no critical/serious a11y violations" classname="a11y.spec.js" time="6.929">
+</testcase>
+<testcase name="Dashboard widget on WP admin index has no a11y violations" classname="a11y.spec.js" time="7.221">
+</testcase>
+<testcase name="Backups page tab switching maintains a11y" classname="a11y.spec.js" time="8.63">
+</testcase>
+<testcase name="Metrics page with data loaded has no a11y violations" classname="a11y.spec.js" time="7.589">
+</testcase>
+</testsuite>
+<testsuite name="addons.spec.js" timestamp="2026-04-28T19:32:15.769Z" hostname="chromium" tests="6" failures="0" skipped="0" time="16.821" errors="0">
+<testcase name="Addons › page renders without errors" classname="addons.spec.js" time="2.275">
+</testcase>
+<testcase name="Addons › Redis addon toggle is present" classname="addons.spec.js" time="2.923">
+</testcase>
+<testcase name="Addons › Solr addon toggle is present" classname="addons.spec.js" time="2.942">
+</testcase>
+<testcase name="Addons › Elasticsearch shows Coming Soon badge" classname="addons.spec.js" time="2.761">
+</testcase>
+<testcase name="Addons › Redis status reflects live environment state" classname="addons.spec.js" time="2.874">
+</testcase>
+<testcase name="Addons › save button is present and enabled" classname="addons.spec.js" time="3.046">
+</testcase>
+</testsuite>
+<testsuite name="backups-actions.spec.js" timestamp="2026-04-28T19:32:15.769Z" hostname="chromium" tests="4" failures="0" skipped="0" time="16.245" errors="0">
+<testcase name="Backups — create and download › backup type selector has all expected options" classname="backups-actions.spec.js" time="2.851">
+</testcase>
+<testcase name="Backups — create and download › retention period field accepts a value" classname="backups-actions.spec.js" time="2.805">
+</testcase>
+<testcase name="Backups — create and download › create database backup and verify it appears in the list" classname="backups-actions.spec.js" time="7.25">
+</testcase>
+<testcase name="Backups — create and download › download button generates a signed URL" classname="backups-actions.spec.js" time="3.339">
+</testcase>
+</testsuite>
+<testsuite name="backups.spec.js" timestamp="2026-04-28T19:32:15.769Z" hostname="chromium" tests="5" failures="0" skipped="0" time="21.156" errors="0">
+<testcase name="Backups › page renders with tabbed environment UI" classname="backups.spec.js" time="4.353">
+</testcase>
+<testcase name="Backups › default tab is visible and active" classname="backups.spec.js" time="4.003">
+</testcase>
+<testcase name="Backups › tab switching shows the correct panel" classname="backups.spec.js" time="4.328">
+</testcase>
+<testcase name="Backups › backup creation form renders" classname="backups.spec.js" time="4.239">
+</testcase>
+<testcase name="Backups › existing backups section loads" classname="backups.spec.js" time="4.233">
+</testcase>
+</testsuite>
+<testsuite name="clone.spec.js" timestamp="2026-04-28T19:32:15.769Z" hostname="chromium" tests="5" failures="0" skipped="0" time="13.736" errors="0">
+<testcase name="Clone › page renders without errors" classname="clone.spec.js" time="2.53">
+</testcase>
+<testcase name="Clone › source environment selector is present" classname="clone.spec.js" time="2.545">
+</testcase>
+<testcase name="Clone › target environment selector is present" classname="clone.spec.js" time="2.822">
+</testcase>
+<testcase name="Clone › database and files checkboxes are present" classname="clone.spec.js" time="2.969">
+</testcase>
+<testcase name="Clone › clone button is present" classname="clone.spec.js" time="2.87">
+</testcase>
+</testsuite>
+<testsuite name="dashboard.spec.js" timestamp="2026-04-28T19:32:15.769Z" hostname="chromium" tests="9" failures="0" skipped="0" time="29.021" errors="0">
+<testcase name="Dashboard › renders the Pantheon branded header" classname="dashboard.spec.js" time="2.47">
+</testcase>
+<testcase name="Dashboard › shows the 50/50 two-column layout" classname="dashboard.spec.js" time="2.49">
+</testcase>
+<testcase name="Dashboard › environment card shows Pantheon site info" classname="dashboard.spec.js" time="2.781">
+</testcase>
+<testcase name="Dashboard › API endpoint testing table renders" classname="dashboard.spec.js" time="2.911">
+</testcase>
+<testcase name="Dashboard › inline site label editing is accessible" classname="dashboard.spec.js" time="2.984">
+</testcase>
+<testcase name="Dashboard › connection mode toggle is present with a valid mode" classname="dashboard.spec.js" time="3.335">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget renders on wp-admin index" classname="dashboard.spec.js" time="3.972">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget chart renders after data loads" classname="dashboard.spec.js" time="3.819">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget links to Metrics page" classname="dashboard.spec.js" time="4.259">
+</testcase>
+</testsuite>
+<testsuite name="development.spec.js" timestamp="2026-04-28T19:32:15.769Z" hostname="chromium" tests="6" failures="0" skipped="0" time="25.444" errors="0">
+<testcase name="Development › page renders without errors" classname="development.spec.js" time="4.758">
+</testcase>
+<testcase name="Development › upstream updates section renders" classname="development.spec.js" time="4.446">
+</testcase>
+<testcase name="Development › recent commits card renders" classname="development.spec.js" time="4.083">
+</testcase>
+<testcase name="Development › environments card renders with environment list" classname="development.spec.js" time="3.943">
+</testcase>
+<testcase name="Development › refresh button on recent commits is clickable" classname="development.spec.js" time="3.681">
+</testcase>
+<testcase name="Development › code deployment section renders" classname="development.spec.js" time="4.533">
+</testcase>
+</testsuite>
+<testsuite name="logs.spec.js" timestamp="2026-04-28T19:32:15.769Z" hostname="chromium" tests="4" failures="0" skipped="0" time="10.655" errors="0">
+<testcase name="Logs › page renders without errors" classname="logs.spec.js" time="2.387">
+</testcase>
+<testcase name="Logs › Fetch Logs button is present and clickable" classname="logs.spec.js" time="2.485">
+</testcase>
+<testcase name="Logs › Clear Logs button is present" classname="logs.spec.js" time="2.612">
+</testcase>
+<testcase name="Logs › fetching logs loads content" classname="logs.spec.js" time="3.171">
+</testcase>
+</testsuite>
+<testsuite name="metrics.spec.js" timestamp="2026-04-28T19:32:15.769Z" hostname="chromium" tests="6" failures="0" skipped="0" time="32.072" errors="0">
+<testcase name="Metrics › page renders summary statistics above filters" classname="metrics.spec.js" time="2.575">
+</testcase>
+<testcase name="Metrics › Load Metrics button fetches real API data" classname="metrics.spec.js" time="8.762">
+</testcase>
+<testcase name="Metrics › environment selector contains expected options" classname="metrics.spec.js" time="2.902">
+</testcase>
+<testcase name="Metrics › duration selector has all time period options" classname="metrics.spec.js" time="3.12">
+</testcase>
+<testcase name="Metrics › summary stats update after data loads" classname="metrics.spec.js" time="8.312">
+</testcase>
+<testcase name="Metrics › filter persistence: selections survive page reload" classname="metrics.spec.js" time="6.401">
+</testcase>
+</testsuite>
+<testsuite name="settings.spec.js" timestamp="2026-04-28T19:32:15.769Z" hostname="chromium" tests="4" failures="0" skipped="0" time="7.957" errors="0">
+<testcase name="Settings › settings page renders without errors" classname="settings.spec.js" time="1.678">
+</testcase>
+<testcase name="Settings › machine token section is present" classname="settings.spec.js" time="1.358">
+</testcase>
+<testcase name="Settings › session token section renders" classname="settings.spec.js" time="2.05">
+</testcase>
+<testcase name="Settings › per-user token documentation is visible" classname="settings.spec.js" time="2.871">
+</testcase>
+</testsuite>
+<testsuite name="workflows.spec.js" timestamp="2026-04-28T19:32:15.769Z" hostname="chromium" tests="4" failures="0" skipped="0" time="11.565" errors="0">
+<testcase name="Workflows › page renders without errors" classname="workflows.spec.js" time="3.135">
+</testcase>
+<testcase name="Workflows › available workflows section renders" classname="workflows.spec.js" time="3.163">
+</testcase>
+<testcase name="Workflows › Object Cache Pro workflow card is present" classname="workflows.spec.js" time="2.95">
+</testcase>
+<testcase name="Workflows › trigger workflow button is present" classname="workflows.spec.js" time="2.317">
+</testcase>
+</testsuite>
+</testsuites>
