@@ -1,10 +1,12 @@
 // @ts-check
 const { defineConfig, devices } = require('@playwright/test');
 
+// WP Playground must be running before tests execute.
+// Locally:  npm run e2e:server   (starts WP Playground on port 9400)
+//           npm run test:e2e     (in a second terminal)
+// CI: the e2e.yml workflow starts WP Playground as a dedicated step
+//     and passes PLAYWRIGHT_BASE_URL.
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:9400';
-const BLUEPRINT = process.env.CI
-  ? 'tests/e2e/blueprint.generated.json'
-  : 'tests/e2e/blueprint.json';
 
 module.exports = defineConfig({
   testDir: './tests/e2e',
@@ -51,20 +53,4 @@ module.exports = defineConfig({
       dependencies: ['setup'],
     },
   ],
-
-  // Spin up WP Playground before tests; reuse an existing instance locally.
-  webServer: {
-    command: [
-      'npx @wp-playground/cli@latest server',
-      '--auto-mount',
-      `--blueprint=${BLUEPRINT}`,
-      '--port=9400',
-      '--blueprint-may-read-adjacent-files',
-    ].join(' '),
-    url: `${BASE_URL}/wp-login.php`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
 });

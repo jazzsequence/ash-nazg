@@ -14,17 +14,19 @@ test.describe('Settings', () => {
     await expect(page.locator('.notice-error')).toHaveCount(0);
   });
 
-  test('machine token field is present', async ({ page }) => {
-    const tokenForm = page.locator('form').filter({ hasText: /machine token/i });
-    await expect(tokenForm).toBeVisible();
+  test('machine token section is present', async ({ page }) => {
+    // Token may be configured (showing status) or unconfigured (showing form).
+    await expect(page.locator('text=/machine token/i').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('session token section renders', async ({ page }) => {
-    await expect(page.locator('text=session token')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=/session token/i').first()).toBeVisible({ timeout: 5000 });
   });
 
-  test('user ID for Pantheon Secrets is displayed', async ({ page }) => {
-    const userIdSection = page.locator('text=/user id|your user id/i');
-    await expect(userIdSection).toBeVisible({ timeout: 5000 });
+  test('per-user token documentation is visible', async ({ page }) => {
+    // When a global token is present the migration UI shows; when per-user
+    // token is set it shows the user ID for Pantheon Secrets setup.
+    // Either way, per-user token content appears on the page.
+    await expect(page.locator('text=/per-user|user id/i').first()).toBeVisible({ timeout: 5000 });
   });
 });

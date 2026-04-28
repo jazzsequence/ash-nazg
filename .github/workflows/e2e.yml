@@ -84,11 +84,24 @@ jobs:
           PANTHEON_ENV_NAME: ${{ env.E2E_ENV_NAME }}
         run: bash bin/generate-e2e-blueprint.sh
 
+      - name: Start WP Playground
+        run: |
+          npx @wp-playground/cli@latest server \
+            --auto-mount \
+            --blueprint=tests/e2e/blueprint.generated.json \
+            --port=9400 &
+
+          echo "Waiting for WP Playground to be ready..."
+          timeout 120 bash -c \
+            'until curl -sf http://localhost:9400/wp-login.php -o /dev/null; do sleep 3; done'
+          echo "WP Playground is ready."
+
       - name: Run Playwright tests
         id: e2e-tests
         continue-on-error: true
         env:
           CI: true
+          PLAYWRIGHT_BASE_URL: http://localhost:9400
         run: npx playwright test
 
       - name: Remove generated blueprint

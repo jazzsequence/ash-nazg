@@ -13,16 +13,12 @@
   },
   "steps": [
     {
-      "step": "runPhpCode",
-      "code": "<?php putenv('PANTHEON_SITE=${PANTHEON_SITE_UUID}'); putenv('PANTHEON_ENVIRONMENT=${PANTHEON_ENV_NAME}'); putenv('PANTHEON_SITE_NAME=cxr-ash-nazg'); $_ENV['PANTHEON_SITE'] = '${PANTHEON_SITE_UUID}'; $_ENV['PANTHEON_ENVIRONMENT'] = '${PANTHEON_ENV_NAME}'; $_ENV['PANTHEON_SITE_NAME'] = 'cxr-ash-nazg';"
+      "step": "runPHP",
+      "code": "<?php $_ENV['PANTHEON_SITE'] = '${PANTHEON_SITE_UUID}'; $_ENV['PANTHEON_ENVIRONMENT'] = '${PANTHEON_ENV_NAME}'; $_ENV['PANTHEON_SITE_NAME'] = 'cxr-ash-nazg';"
     },
     {
-      "step": "runPhpCode",
-      "code": "<?php update_option('ash_nazg_machine_token', base64_decode('${PANTHEON_MACHINE_TOKEN_B64}'));"
-    },
-    {
-      "step": "runPhpCode",
-      "code": "<?php update_option('blogname', 'Ash-Nazg E2E Test'); update_option('admin_email', 'test@example.com');"
+      "step": "runPHP",
+      "code": "<?php require('/wordpress/wp-load.php'); wp_set_password('password', 1); update_option('ash_nazg_machine_token', base64_decode('${PANTHEON_MACHINE_TOKEN_B64}')); update_option('blogname', 'Ash-Nazg E2E Test'); update_option('admin_email', 'test@example.com');"
     }
   ]
 }
