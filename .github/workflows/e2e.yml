@@ -98,11 +98,17 @@ jobs:
           pantheon-machine-token: ${{ secrets.PANTHEON_MACHINE_TOKEN }}
 
       - name: Set admin password on multidev
+        id: admin
         env:
           E2E_WP_PASSWORD: ${{ secrets.E2E_WP_PASSWORD }}
         run: |
-          terminus wp "${{ env.SITE_NAME }}.${{ env.E2E_ENV_NAME }}" \
-            -- user update 1 --user_pass="$E2E_WP_PASSWORD"
+          SITE_ENV="${{ env.SITE_NAME }}.${{ env.E2E_ENV_NAME }}"
+          USERNAME=$(terminus wp "$SITE_ENV" \
+            -- user list --role=administrator --format=csv --fields=user_login \
+            | tail -1)
+          echo "username=${USERNAME}" >> "$GITHUB_OUTPUT"
+          terminus wp "$SITE_ENV" \
+            -- user update "$USERNAME" --user_pass="$E2E_WP_PASSWORD"
 
       - name: Wait for multidev to be reachable
         run: |
@@ -123,6 +129,7 @@ jobs:
         env:
           CI: true
           PLAYWRIGHT_BASE_URL: https://${{ env.E2E_ENV_NAME }}-${{ env.SITE_NAME }}.pantheonsite.io
+          E2E_WP_USERNAME: ${{ steps.admin.outputs.username }}
           E2E_WP_PASSWORD: ${{ secrets.E2E_WP_PASSWORD }}
         run: npx playwright test
 

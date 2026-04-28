@@ -20,7 +20,12 @@ setup('authenticate as admin', async ({ page }) => {
   }
 
   await page.goto('/wp-login.php');
-  await page.fill('#user_login', 'admin');
+  const username = process.env.E2E_WP_USERNAME;
+  if (!username) {
+    throw new Error('E2E_WP_USERNAME environment variable is not set.');
+  }
+
+  await page.fill('#user_login', username);
   await page.fill('#user_pass', password);
   await page.click('#wp-submit');
 
