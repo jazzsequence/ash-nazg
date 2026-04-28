@@ -1,0 +1,1386 @@
+<testsuites id="" name="" tests="114" failures="11" skipped="0" errors="0" time="220.93218299999998">
+<testsuite name="global.setup.js" timestamp="2026-04-28T20:27:36.416Z" hostname="setup" tests="1" failures="0" skipped="0" time="7.347" errors="0">
+<testcase name="authenticate as admin" classname="global.setup.js" time="7.347">
+</testcase>
+</testsuite>
+<testsuite name="a11y.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="12" failures="0" skipped="0" time="119.152" errors="0">
+<testcase name="Dashboard page has no critical/serious a11y violations" classname="a11y.spec.js" time="24.925">
+</testcase>
+<testcase name="Metrics page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.833">
+</testcase>
+<testcase name="Development page has no critical/serious a11y violations" classname="a11y.spec.js" time="11.957">
+</testcase>
+<testcase name="Addons page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.786">
+</testcase>
+<testcase name="Workflows page has no critical/serious a11y violations" classname="a11y.spec.js" time="6.972">
+</testcase>
+<testcase name="Backups page has no critical/serious a11y violations" classname="a11y.spec.js" time="9.756">
+</testcase>
+<testcase name="Clone page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.526">
+</testcase>
+<testcase name="Logs page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.739">
+</testcase>
+<testcase name="Settings page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.636">
+</testcase>
+<testcase name="Dashboard widget on WP admin index has no a11y violations" classname="a11y.spec.js" time="9.273">
+</testcase>
+<testcase name="Backups page tab switching maintains a11y" classname="a11y.spec.js" time="8.244">
+</testcase>
+<testcase name="Metrics page with data loaded has no a11y violations" classname="a11y.spec.js" time="9.505">
+</testcase>
+</testsuite>
+<testsuite name="addons.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="6" failures="0" skipped="0" time="18.561" errors="0">
+<testcase name="Addons › page renders without errors" classname="addons.spec.js" time="2.911">
+</testcase>
+<testcase name="Addons › Redis addon toggle is present" classname="addons.spec.js" time="2.742">
+</testcase>
+<testcase name="Addons › Solr addon toggle is present" classname="addons.spec.js" time="2.814">
+</testcase>
+<testcase name="Addons › Elasticsearch shows Coming Soon badge" classname="addons.spec.js" time="3.507">
+</testcase>
+<testcase name="Addons › Redis status reflects live environment state" classname="addons.spec.js" time="3.429">
+</testcase>
+<testcase name="Addons › save button is present and enabled" classname="addons.spec.js" time="3.158">
+</testcase>
+</testsuite>
+<testsuite name="aria.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="13" failures="2" skipped="0" time="67.052" errors="0">
+<testcase name="ARIA — Dashboard › page has a meaningful document title" classname="aria.spec.js" time="8.6">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(received).toContain(expected) // indexOf" type="expect.toContain">
+<![CDATA[  [chromium] › aria.spec.js:17:3 › ARIA — Dashboard › page has a meaningful document title ─────────
+
+    Error: expect(received).toContain(expected) // indexOf
+
+    Expected substring: "Ash Nazg"
+    Received string:    "Pantheon Dashboard ‹ cxr-ash-nazg — WordPress"
+
+      17 |   test('page has a meaningful document title', async ({ page }) => {
+      18 |     const title = await page.title();
+    > 19 |     expect(title).toContain('Ash Nazg');
+         |                   ^
+      20 |   });
+      21 |
+      22 |   test('plugin header has an img with alt text', async ({ page }) => {
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/aria.spec.js:19:19
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toContain(expected) // indexOf
+
+    Expected substring: "Ash Nazg"
+    Received string:    "Pantheon Dashboard ‹ cxr-ash-nazg — WordPress"
+
+      17 |   test('page has a meaningful document title', async ({ page }) => {
+      18 |     const title = await page.title();
+    > 19 |     expect(title).toContain('Ash Nazg');
+         |                   ^
+      20 |   });
+      21 |
+      22 |   test('plugin header has an img with alt text', async ({ page }) => {
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/aria.spec.js:19:19
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/aria-ARIA-—-Dashboard-page-has-a-meaningful-document-title-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+<testcase name="ARIA — Dashboard › plugin header has an img with alt text" classname="aria.spec.js" time="3.49">
+</testcase>
+<testcase name="ARIA — Dashboard › main heading is present and non-empty" classname="aria.spec.js" time="3.758">
+</testcase>
+<testcase name="ARIA — Dashboard › environment card has accessible structure" classname="aria.spec.js" time="3.708">
+</testcase>
+<testcase name="ARIA — Modals › backup confirmation modal has correct ARIA structure" classname="aria.spec.js" time="3.995">
+</testcase>
+<testcase name="ARIA — Modals › progress modal heading exists in DOM" classname="aria.spec.js" time="3.335">
+</testcase>
+<testcase name="ARIA — Live regions › log contents region is reachable and labeled" classname="aria.spec.js" time="3.483">
+</testcase>
+<testcase name="ARIA — Live regions › metrics summary stats have accessible labels" classname="aria.spec.js" time="4.284">
+</testcase>
+<testcase name="ARIA — Forms › settings form inputs have associated labels" classname="aria.spec.js" time="3.757">
+</testcase>
+<testcase name="ARIA — Forms › backup form selects have visible labels" classname="aria.spec.js" time="3.5">
+</testcase>
+<testcase name="ARIA — Forms › addons form checkboxes have associated labels" classname="aria.spec.js" time="3.228">
+</testcase>
+<testcase name="ARIA — Landmark regions › plugin pages use heading hierarchy correctly" classname="aria.spec.js" time="17.473">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(locator).toBeVisible() failed" type="expect.toBeVisible">
+<![CDATA[  [chromium] › aria.spec.js:147:3 › ARIA — Landmark regions › plugin pages use heading hierarchy correctly 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('.wrap > h1, .wrap > h2').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('.wrap > h1, .wrap > h2').first()
+
+
+      151 |     // h1 or h2 at page level, h3 within cards.
+      152 |     const pageHeadings = page.locator('.wrap > h1, .wrap > h2');
+    > 153 |     await expect(pageHeadings.first()).toBeVisible();
+          |                                        ^
+      154 |   });
+      155 |
+      156 |   test('tables have captions or headers', async ({ page }) => {
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/aria.spec.js:153:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('.wrap > h1, .wrap > h2').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('.wrap > h1, .wrap > h2').first()
+
+
+      151 |     // h1 or h2 at page level, h3 within cards.
+      152 |     const pageHeadings = page.locator('.wrap > h1, .wrap > h2');
+    > 153 |     await expect(pageHeadings.first()).toBeVisible();
+          |                                        ^
+      154 |   });
+      155 |
+      156 |   test('tables have captions or headers', async ({ page }) => {
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/aria.spec.js:153:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/aria-ARIA-—-Landmark-regio-8138b-heading-hierarchy-correctly-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+<testcase name="ARIA — Landmark regions › tables have captions or headers" classname="aria.spec.js" time="4.441">
+</testcase>
+</testsuite>
+<testsuite name="backups-actions.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="4" failures="0" skipped="0" time="17.803" errors="0">
+<testcase name="Backups — create and download › backup type selector has all expected options" classname="backups-actions.spec.js" time="3.56">
+</testcase>
+<testcase name="Backups — create and download › retention period field accepts a value" classname="backups-actions.spec.js" time="2.792">
+</testcase>
+<testcase name="Backups — create and download › create database backup and verify it appears in the list" classname="backups-actions.spec.js" time="7.994">
+</testcase>
+<testcase name="Backups — create and download › download button generates a signed URL" classname="backups-actions.spec.js" time="3.457">
+</testcase>
+</testsuite>
+<testsuite name="backups.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="5" failures="0" skipped="0" time="23.904" errors="0">
+<testcase name="Backups › page renders with tabbed environment UI" classname="backups.spec.js" time="4.956">
+</testcase>
+<testcase name="Backups › default tab is visible and active" classname="backups.spec.js" time="5.242">
+</testcase>
+<testcase name="Backups › tab switching shows the correct panel" classname="backups.spec.js" time="4.911">
+</testcase>
+<testcase name="Backups › backup creation form renders" classname="backups.spec.js" time="4.381">
+</testcase>
+<testcase name="Backups › existing backups section loads" classname="backups.spec.js" time="4.414">
+</testcase>
+</testsuite>
+<testsuite name="clone.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="5" failures="0" skipped="0" time="47.584" errors="0">
+<testcase name="Clone › page renders without errors" classname="clone.spec.js" time="2.604">
+</testcase>
+<testcase name="Clone › source environment selector is present" classname="clone.spec.js" time="36.109">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/clone-Clone-source-environment-selector-is-present-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/clone-Clone-source-environment-selector-is-present-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/clone-Clone-source-environment-selector-is-present-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/clone-Clone-source-environment-selector-is-present-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Clone › target environment selector is present" classname="clone.spec.js" time="3.037">
+</testcase>
+<testcase name="Clone › database and files checkboxes are present" classname="clone.spec.js" time="3.059">
+</testcase>
+<testcase name="Clone › clone button is present" classname="clone.spec.js" time="2.775">
+</testcase>
+</testsuite>
+<testsuite name="connection-mode.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="2" failures="0" skipped="0" time="25.101" errors="0">
+<testcase name="Connection Mode Toggle › toggle is present and shows current mode" classname="connection-mode.spec.js" time="4.622">
+</testcase>
+<testcase name="Connection Mode Toggle › toggling mode updates the badge" classname="connection-mode.spec.js" time="20.479">
+</testcase>
+</testsuite>
+<testsuite name="dashboard.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="9" failures="0" skipped="0" time="22.426" errors="0">
+<testcase name="Dashboard › renders the Pantheon branded header" classname="dashboard.spec.js" time="1.828">
+</testcase>
+<testcase name="Dashboard › shows the 50/50 two-column layout" classname="dashboard.spec.js" time="2.304">
+</testcase>
+<testcase name="Dashboard › environment card shows Pantheon site info" classname="dashboard.spec.js" time="2.319">
+</testcase>
+<testcase name="Dashboard › API endpoint testing table renders" classname="dashboard.spec.js" time="2.451">
+</testcase>
+<testcase name="Dashboard › inline site label editing is accessible" classname="dashboard.spec.js" time="2.236">
+</testcase>
+<testcase name="Dashboard › connection mode toggle is present with a valid mode" classname="dashboard.spec.js" time="2.421">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget renders on wp-admin index" classname="dashboard.spec.js" time="3.064">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget chart renders after data loads" classname="dashboard.spec.js" time="2.918">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget links to Metrics page" classname="dashboard.spec.js" time="2.885">
+</testcase>
+</testsuite>
+<testsuite name="development.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="6" failures="0" skipped="0" time="27.111" errors="0">
+<testcase name="Development › page renders without errors" classname="development.spec.js" time="4.598">
+</testcase>
+<testcase name="Development › upstream updates section renders" classname="development.spec.js" time="4.178">
+</testcase>
+<testcase name="Development › recent commits card renders" classname="development.spec.js" time="4.464">
+</testcase>
+<testcase name="Development › environments card renders with environment list" classname="development.spec.js" time="4.504">
+</testcase>
+<testcase name="Development › refresh button on recent commits is clickable" classname="development.spec.js" time="4.355">
+</testcase>
+<testcase name="Development › code deployment section renders" classname="development.spec.js" time="5.012">
+</testcase>
+</testsuite>
+<testsuite name="error-states.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="5" failures="1" skipped="0" time="54.072" errors="0">
+<testcase name="Error States — API failure handling › metrics page shows error when API call fails" classname="error-states.spec.js" time="6.597">
+</testcase>
+<testcase name="Error States — API failure handling › dashboard widget shows error when metrics API fails" classname="error-states.spec.js" time="7.496">
+</testcase>
+<testcase name="Error States — API failure handling › logs page shows error when fetch fails" classname="error-states.spec.js" time="23.523">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(locator).toHaveCount(expected) failed" type="expect.toHaveCount">
+<![CDATA[  [chromium] › error-states.spec.js:65:3 › Error States — API failure handling › logs page shows error when fetch fails 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.notice-error')
+    Expected: 0
+    Received: 1
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 5000ms
+      - waiting for locator('.notice-error')
+        9 × locator resolved to 1 element
+          - unexpected value "1"
+
+
+      85 |     // Page should not crash — either shows an error notice or stays functional.
+      86 |     await expect(page.locator('.wrap')).toBeVisible();
+    > 87 |     await expect(page.locator('.notice-error')).toHaveCount(0); // Plugin shouldn't show a PHP error
+         |                                                 ^
+      88 |   });
+      89 |
+      90 |   test('connection mode toggle shows error when API fails', async ({ page }) => {
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/error-states.spec.js:87:49
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.notice-error')
+    Expected: 0
+    Received: 1
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 5000ms
+      - waiting for locator('.notice-error')
+        9 × locator resolved to 1 element
+          - unexpected value "1"
+
+
+      85 |     // Page should not crash — either shows an error notice or stays functional.
+      86 |     await expect(page.locator('.wrap')).toBeVisible();
+    > 87 |     await expect(page.locator('.notice-error')).toHaveCount(0); // Plugin shouldn't show a PHP error
+         |                                                 ^
+      88 |   });
+      89 |
+      90 |   test('connection mode toggle shows error when API fails', async ({ page }) => {
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/error-states.spec.js:87:49
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/error-states-Error-States--933d9-hows-error-when-fetch-fails-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+<testcase name="Error States — API failure handling › connection mode toggle shows error when API fails" classname="error-states.spec.js" time="7.853">
+</testcase>
+<testcase name="Error States — AJAX network failure › backup creation handles network failure gracefully" classname="error-states.spec.js" time="8.603">
+</testcase>
+</testsuite>
+<testsuite name="inline-editing.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="6" failures="0" skipped="0" time="21.539" errors="0">
+<testcase name="Inline Site Label Editing › can open the inline editor" classname="inline-editing.spec.js" time="2.896">
+</testcase>
+<testcase name="Inline Site Label Editing › cancel restores the original label" classname="inline-editing.spec.js" time="2.039">
+</testcase>
+<testcase name="Inline Site Label Editing › saves a new label and displays it" classname="inline-editing.spec.js" time="5.203">
+</testcase>
+<testcase name="Inline Site Label Editing › Enter key submits the inline label form" classname="inline-editing.spec.js" time="4.794">
+</testcase>
+<testcase name="Inline Organization Selector › org edit button opens the selector" classname="inline-editing.spec.js" time="2.921">
+</testcase>
+<testcase name="Inline Organization Selector › org cancel hides the selector" classname="inline-editing.spec.js" time="3.686">
+</testcase>
+</testsuite>
+<testsuite name="keyboard.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="9" failures="2" skipped="0" time="44.555" errors="0">
+<testcase name="Keyboard — Dashboard › all interactive elements in .wrap are reachable via Tab" classname="keyboard.spec.js" time="9.979">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(received).toBe(expected) // Object.is equality" type="expect.toBe">
+<![CDATA[  [chromium] › keyboard.spec.js:46:3 › Keyboard — Dashboard › all interactive elements in .wrap are reachable via Tab 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      51 |       await page.keyboard.press('Tab');
+      52 |       const focused = await page.evaluate(() => document.activeElement !== document.body);
+    > 53 |       expect(focused).toBe(true);
+         |                       ^
+      54 |     }
+      55 |   });
+      56 |
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/keyboard.spec.js:53:23
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      51 |       await page.keyboard.press('Tab');
+      52 |       const focused = await page.evaluate(() => document.activeElement !== document.body);
+    > 53 |       expect(focused).toBe(true);
+         |                       ^
+      54 |     }
+      55 |   });
+      56 |
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/keyboard.spec.js:53:23
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/keyboard-Keyboard-—-Dashbo-233c1--wrap-are-reachable-via-Tab-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+<testcase name="Keyboard — Dashboard › inline site label edit is keyboard operable" classname="keyboard.spec.js" time="3.602">
+</testcase>
+<testcase name="Keyboard — Dashboard › connection mode toggle responds to Enter" classname="keyboard.spec.js" time="2.943">
+</testcase>
+<testcase name="Keyboard — Backups tabs › environment tabs are keyboard navigable" classname="keyboard.spec.js" time="2.618">
+</testcase>
+<testcase name="Keyboard — Backups tabs › backup set toggle is keyboard operable" classname="keyboard.spec.js" time="3.718">
+</testcase>
+<testcase name="Keyboard — Metrics filters › environment and duration selects are keyboard operable" classname="keyboard.spec.js" time="4.345">
+</testcase>
+<testcase name="Keyboard — Modal focus trapping › confirmation modal traps focus when open" classname="keyboard.spec.js" time="8.076">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(received).toBe(expected) // Object.is equality" type="expect.toBe">
+<![CDATA[  [chromium] › keyboard.spec.js:130:3 › Keyboard — Modal focus trapping › confirmation modal traps focus when open 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      139 |       return modal && modal.contains(document.activeElement);
+      140 |     });
+    > 141 |     expect(focusedInModal).toBe(true);
+          |                            ^
+      142 |
+      143 |     // Cancel the modal.
+      144 |     await modal.locator('button').filter({ hasText: 'Cancel' }).click();
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/keyboard.spec.js:141:28
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      139 |       return modal && modal.contains(document.activeElement);
+      140 |     });
+    > 141 |     expect(focusedInModal).toBe(true);
+          |                            ^
+      142 |
+      143 |     // Cancel the modal.
+      144 |     await modal.locator('button').filter({ hasText: 'Cancel' }).click();
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/keyboard.spec.js:141:28
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/keyboard-Keyboard-—-Modal--22ca9-modal-traps-focus-when-open-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+<testcase name="Keyboard — Addons toggles › Redis and Solr checkboxes are keyboard operable" classname="keyboard.spec.js" time="3.305">
+</testcase>
+<testcase name="Keyboard — Development page › all deploy buttons are keyboard reachable" classname="keyboard.spec.js" time="5.969">
+</testcase>
+</testsuite>
+<testsuite name="logs.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="4" failures="0" skipped="0" time="14.756" errors="0">
+<testcase name="Logs › page renders without errors" classname="logs.spec.js" time="3.344">
+</testcase>
+<testcase name="Logs › Fetch Logs button is present and clickable" classname="logs.spec.js" time="3.854">
+</testcase>
+<testcase name="Logs › Clear Logs button is present" classname="logs.spec.js" time="3.787">
+</testcase>
+<testcase name="Logs › fetching logs loads content" classname="logs.spec.js" time="3.771">
+</testcase>
+</testsuite>
+<testsuite name="metrics-interactions.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="7" failures="0" skipped="0" time="65.995" errors="0">
+<testcase name="Metrics — All time periods load data › loads data for 7 days" classname="metrics-interactions.spec.js" time="9.752">
+</testcase>
+<testcase name="Metrics — All time periods load data › loads data for 28 days" classname="metrics-interactions.spec.js" time="10.733">
+</testcase>
+<testcase name="Metrics — All time periods load data › loads data for 12 weeks" classname="metrics-interactions.spec.js" time="10.164">
+</testcase>
+<testcase name="Metrics — All time periods load data › loads data for 12 months" classname="metrics-interactions.spec.js" time="10.48">
+</testcase>
+<testcase name="Metrics — Environment switching › switching environment loads data for that environment" classname="metrics-interactions.spec.js" time="7.508">
+</testcase>
+<testcase name="Metrics — Refresh clears cache › Refresh button clears cache and reloads" classname="metrics-interactions.spec.js" time="14.162">
+</testcase>
+<testcase name="Metrics — Chart visibility via Screen Options › hidden chart canvas is absent from the DOM" classname="metrics-interactions.spec.js" time="3.196">
+</testcase>
+</testsuite>
+<testsuite name="metrics.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="6" failures="0" skipped="0" time="60.57" errors="0">
+<testcase name="Metrics › page renders summary statistics above filters" classname="metrics.spec.js" time="5.227">
+</testcase>
+<testcase name="Metrics › Load Metrics button fetches real API data" classname="metrics.spec.js" time="10.755">
+</testcase>
+<testcase name="Metrics › environment selector contains expected options" classname="metrics.spec.js" time="8.767">
+</testcase>
+<testcase name="Metrics › duration selector has all time period options" classname="metrics.spec.js" time="6.536">
+</testcase>
+<testcase name="Metrics › summary stats update after data loads" classname="metrics.spec.js" time="10.076">
+</testcase>
+<testcase name="Metrics › filter persistence: selections survive page reload" classname="metrics.spec.js" time="19.209">
+</testcase>
+</testsuite>
+<testsuite name="screen-options.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="6" failures="6" skipped="0" time="118.752" errors="0">
+<testcase name="Screen Options — Dashboard endpoint groups › can open Screen Options panel" classname="screen-options.spec.js" time="21.591">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(locator).toBeVisible() failed" type="expect.toBeVisible">
+<![CDATA[  [chromium] › screen-options.spec.js:28:3 › Screen Options — Dashboard endpoint groups › can open Screen Options panel 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('#screen-options')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('#screen-options')
+
+
+      12 |   if (await btn.count() === 0) return false;
+      13 |   await btn.click();
+    > 14 |   await expect(page.locator('#screen-options')).toBeVisible({ timeout: 3_000 });
+         |                                                 ^
+      15 |   return true;
+      16 | }
+      17 |
+        at openScreenOptions (/home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:14:49)
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:29:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('#screen-options')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('#screen-options')
+
+
+      12 |   if (await btn.count() === 0) return false;
+      13 |   await btn.click();
+    > 14 |   await expect(page.locator('#screen-options')).toBeVisible({ timeout: 3_000 });
+         |                                                 ^
+      15 |   return true;
+      16 | }
+      17 |
+        at openScreenOptions (/home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:14:49)
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:29:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/screen-options-Screen-Opti-e2808-n-open-Screen-Options-panel-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+<testcase name="Screen Options — Dashboard endpoint groups › master toggle hides all endpoint groups" classname="screen-options.spec.js" time="20.342">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(locator).toBeVisible() failed" type="expect.toBeVisible">
+<![CDATA[  [chromium] › screen-options.spec.js:34:3 › Screen Options — Dashboard endpoint groups › master toggle hides all endpoint groups 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('#screen-options')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('#screen-options')
+
+
+      12 |   if (await btn.count() === 0) return false;
+      13 |   await btn.click();
+    > 14 |   await expect(page.locator('#screen-options')).toBeVisible({ timeout: 3_000 });
+         |                                                 ^
+      15 |   return true;
+      16 | }
+      17 |
+        at openScreenOptions (/home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:14:49)
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:35:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('#screen-options')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('#screen-options')
+
+
+      12 |   if (await btn.count() === 0) return false;
+      13 |   await btn.click();
+    > 14 |   await expect(page.locator('#screen-options')).toBeVisible({ timeout: 3_000 });
+         |                                                 ^
+      15 |   return true;
+      16 | }
+      17 |
+        at openScreenOptions (/home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:14:49)
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:35:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/screen-options-Screen-Opti-3b5a2-e-hides-all-endpoint-groups-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+<testcase name="Screen Options — Development sections › can hide and restore Environments card" classname="screen-options.spec.js" time="21.859">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(locator).toBeVisible() failed" type="expect.toBeVisible">
+<![CDATA[  [chromium] › screen-options.spec.js:65:3 › Screen Options — Development sections › can hide and restore Environments card 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('#screen-options')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('#screen-options')
+
+
+      12 |   if (await btn.count() === 0) return false;
+      13 |   await btn.click();
+    > 14 |   await expect(page.locator('#screen-options')).toBeVisible({ timeout: 3_000 });
+         |                                                 ^
+      15 |   return true;
+      16 | }
+      17 |
+        at openScreenOptions (/home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:14:49)
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:66:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('#screen-options')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('#screen-options')
+
+
+      12 |   if (await btn.count() === 0) return false;
+      13 |   await btn.click();
+    > 14 |   await expect(page.locator('#screen-options')).toBeVisible({ timeout: 3_000 });
+         |                                                 ^
+      15 |   return true;
+      16 | }
+      17 |
+        at openScreenOptions (/home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:14:49)
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:66:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/screen-options-Screen-Opti-e2023-d-restore-Environments-card-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+<testcase name="Screen Options — Backups age filter › age filter options are present" classname="screen-options.spec.js" time="17.48">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(locator).toBeVisible() failed" type="expect.toBeVisible">
+<![CDATA[  [chromium] › screen-options.spec.js:96:3 › Screen Options — Backups age filter › age filter options are present 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('#screen-options')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('#screen-options')
+
+
+      12 |   if (await btn.count() === 0) return false;
+      13 |   await btn.click();
+    > 14 |   await expect(page.locator('#screen-options')).toBeVisible({ timeout: 3_000 });
+         |                                                 ^
+      15 |   return true;
+      16 | }
+      17 |
+        at openScreenOptions (/home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:14:49)
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:97:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('#screen-options')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('#screen-options')
+
+
+      12 |   if (await btn.count() === 0) return false;
+      13 |   await btn.click();
+    > 14 |   await expect(page.locator('#screen-options')).toBeVisible({ timeout: 3_000 });
+         |                                                 ^
+      15 |   return true;
+      16 | }
+      17 |
+        at openScreenOptions (/home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:14:49)
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:97:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/screen-options-Screen-Opti-c0c86--filter-options-are-present-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+<testcase name="Screen Options — Backups age filter › selecting 7-day filter and applying restricts backup list" classname="screen-options.spec.js" time="16.495">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(locator).toBeVisible() failed" type="expect.toBeVisible">
+<![CDATA[  [chromium] › screen-options.spec.js:107:3 › Screen Options — Backups age filter › selecting 7-day filter and applying restricts backup list 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('#screen-options')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('#screen-options')
+
+
+      12 |   if (await btn.count() === 0) return false;
+      13 |   await btn.click();
+    > 14 |   await expect(page.locator('#screen-options')).toBeVisible({ timeout: 3_000 });
+         |                                                 ^
+      15 |   return true;
+      16 | }
+      17 |
+        at openScreenOptions (/home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:14:49)
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:108:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('#screen-options')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('#screen-options')
+
+
+      12 |   if (await btn.count() === 0) return false;
+      13 |   await btn.click();
+    > 14 |   await expect(page.locator('#screen-options')).toBeVisible({ timeout: 3_000 });
+         |                                                 ^
+      15 |   return true;
+      16 | }
+      17 |
+        at openScreenOptions (/home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:14:49)
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:108:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/screen-options-Screen-Opti-27692-lying-restricts-backup-list-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+<testcase name="Screen Options — Metrics charts › hiding all charts also hides the filters section" classname="screen-options.spec.js" time="20.985">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(locator).toBeVisible() failed" type="expect.toBeVisible">
+<![CDATA[  [chromium] › screen-options.spec.js:132:3 › Screen Options — Metrics charts › hiding all charts also hides the filters section 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('#screen-options')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('#screen-options')
+
+
+      12 |   if (await btn.count() === 0) return false;
+      13 |   await btn.click();
+    > 14 |   await expect(page.locator('#screen-options')).toBeVisible({ timeout: 3_000 });
+         |                                                 ^
+      15 |   return true;
+      16 | }
+      17 |
+        at openScreenOptions (/home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:14:49)
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:133:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('#screen-options')
+    Expected: visible
+    Timeout: 3000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 3000ms
+      - waiting for locator('#screen-options')
+
+
+      12 |   if (await btn.count() === 0) return false;
+      13 |   await btn.click();
+    > 14 |   await expect(page.locator('#screen-options')).toBeVisible({ timeout: 3_000 });
+         |                                                 ^
+      15 |   return true;
+      16 | }
+      17 |
+        at openScreenOptions (/home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:14:49)
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/screen-options.spec.js:133:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/screen-options-Screen-Opti-9337d-o-hides-the-filters-section-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="settings.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="4" failures="0" skipped="0" time="20.431" errors="0">
+<testcase name="Settings › settings page renders without errors" classname="settings.spec.js" time="3.958">
+</testcase>
+<testcase name="Settings › machine token section is present" classname="settings.spec.js" time="6.111">
+</testcase>
+<testcase name="Settings › session token section renders" classname="settings.spec.js" time="5.521">
+</testcase>
+<testcase name="Settings › per-user token documentation is visible" classname="settings.spec.js" time="4.841">
+</testcase>
+</testsuite>
+<testsuite name="workflows.spec.js" timestamp="2026-04-28T20:27:36.416Z" hostname="chromium" tests="4" failures="0" skipped="0" time="18.342" errors="0">
+<testcase name="Workflows › page renders without errors" classname="workflows.spec.js" time="6.305">
+</testcase>
+<testcase name="Workflows › available workflows section renders" classname="workflows.spec.js" time="4.768">
+</testcase>
+<testcase name="Workflows › Object Cache Pro workflow card is present" classname="workflows.spec.js" time="3.667">
+</testcase>
+<testcase name="Workflows › trigger workflow button is present" classname="workflows.spec.js" time="3.602">
+</testcase>
+</testsuite>
+</testsuites>
