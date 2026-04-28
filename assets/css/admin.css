@@ -708,6 +708,15 @@
   padding: 8px 0;
 }
 
+code.ash-nazg-user-id {
+  background: #f6f7f7;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 13px;
+  user-select: all;
+}
+
 /**
  * Admin styles for Ash-Nazg plugin.
  *

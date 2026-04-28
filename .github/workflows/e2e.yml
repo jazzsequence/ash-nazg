@@ -84,12 +84,18 @@ jobs:
           PANTHEON_ENV_NAME: ${{ env.E2E_ENV_NAME }}
         run: bash bin/generate-e2e-blueprint.sh
 
+      - name: Prepare Playwright auth directory
+        run: |
+          mkdir -p tests/e2e/.auth
+          echo '{"cookies":[],"origins":[]}' > tests/e2e/.auth/admin.json
+
       - name: Start WP Playground
         run: |
           npx @wp-playground/cli@latest server \
             --auto-mount \
             --blueprint=tests/e2e/blueprint.generated.json \
-            --port=9400 &
+            --port=9400 \
+            --experimental-multi-worker=false &
 
           echo "Waiting for WP Playground to be ready..."
           timeout 120 bash -c \
