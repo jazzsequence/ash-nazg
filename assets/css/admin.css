@@ -452,7 +452,12 @@
 .workflow-card.workflow-disabled {
   background: var(--pds-color-background-default-secondary);
   border-color: var(--pds-color-neutral-300);
-  opacity: 0.7;
+  color: #50575e;
+}
+.workflow-card.workflow-disabled p,
+.workflow-card.workflow-disabled h3,
+.workflow-card.workflow-disabled .description {
+  color: #50575e;
 }
 .workflow-card .submit {
   margin-bottom: 0;

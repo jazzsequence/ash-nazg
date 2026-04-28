@@ -24,9 +24,17 @@
 	}
 
 	&.workflow-disabled {
+		// Use specific muted colors instead of opacity — opacity reduces effective
+		// contrast below the WCAG AA 4.5:1 threshold for contained text.
 		background: $color-bg-light;
 		border-color: $color-border-light;
-		opacity: 0.7;
+		color: #50575e; // darker than #646970 to maintain contrast without opacity
+
+		p,
+		h3,
+		.description {
+			color: #50575e;
+		}
 	}
 
 	.submit {
