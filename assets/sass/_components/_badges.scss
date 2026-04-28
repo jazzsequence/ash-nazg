@@ -65,9 +65,11 @@
 }
 
 .ash-nazg-badge-success {
-	background: var(--pds-color-badge-indicator-success-background, #166534);
-	color: var(--pds-color-badge-indicator-success-foreground, #ffffff);
-	border: 1px solid var(--pds-color-badge-indicator-success-background, #166534);
+	// PDS badge indicator success (#218c5f) fails WCAG AA against white (4.1:1).
+	// Hardcode a darker green that meets the 4.5:1 threshold.
+	background: #166534;
+	color: #ffffff;
+	border: 1px solid #166534;
 }
 
 .ash-nazg-badge-error {
