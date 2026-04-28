@@ -155,15 +155,15 @@
 
 /* Text Colors */
 .ash-nazg-text-success {
-  color: var(--pds-color-semantic-success-foreground);
+  color: #166534;
 }
 
 .ash-nazg-text-error {
-  color: var(--pds-color-semantic-critical-foreground);
+  color: #991b1b;
 }
 
 .ash-nazg-text-warning {
-  color: var(--pds-color-semantic-warning-foreground);
+  color: #92400e;
 }
 
 .ash-nazg-text-muted {
@@ -200,23 +200,23 @@
  * Icon colors and styling
  */
 .ash-nazg-icon-success {
-  color: var(--pds-color-semantic-success-foreground);
+  color: #166534;
 }
 
 .ash-nazg-icon-error {
-  color: var(--pds-color-semantic-critical-foreground);
+  color: #991b1b;
 }
 
 .ash-nazg-icon-warning {
-  color: var(--pds-color-semantic-warning-foreground);
+  color: #92400e;
 }
 
 .ash-nazg-icon-locked {
-  color: var(--pds-color-semantic-critical-foreground);
+  color: #991b1b;
 }
 
 .ash-nazg-icon-unlocked {
-  color: var(--pds-color-semantic-success-foreground);
+  color: #166534;
 }
 
 /**
@@ -316,8 +316,8 @@
 
 .ash-nazg-badge-multidev {
   background: #f3e8ff;
-  color: #8250df;
-  border: 1px solid #8250df;
+  color: #4a1d96;
+  border: 1px solid #6b21a8;
 }
 
 .ash-nazg-badge-sftp {
@@ -345,9 +345,9 @@
 }
 
 .ash-nazg-badge-success {
-  background: var(--pds-color-badge-indicator-success-background, #218c5f);
+  background: var(--pds-color-badge-indicator-success-background, #166534);
   color: var(--pds-color-badge-indicator-success-foreground, #ffffff);
-  border: 1px solid var(--pds-color-badge-indicator-success-background, #218c5f);
+  border: 1px solid var(--pds-color-badge-indicator-success-background, #166534);
 }
 
 .ash-nazg-badge-error {
