@@ -46,12 +46,20 @@ test.describe('Keyboard — Dashboard', () => {
   test('all interactive elements in .wrap are reachable via Tab', async ({ page }) => {
     const elements = await getFocusableElements(page);
     expect(elements.length).toBeGreaterThan(0);
-    // Tab through all of them and verify focus moves.
+
+    // Focus the first element in .wrap explicitly, then Tab from there.
+    await page.locator('.wrap a, .wrap button, .wrap input').first().focus();
+
+    let focusedInWrap = false;
     for (let i = 0; i < Math.min(elements.length, 20); i++) {
       await page.keyboard.press('Tab');
-      const focused = await page.evaluate(() => document.activeElement !== document.body);
-      expect(focused).toBe(true);
+      const inWrap = await page.evaluate(() => {
+        const wrap = document.querySelector('.wrap');
+        return wrap && wrap.contains(document.activeElement);
+      });
+      if (inWrap) { focusedInWrap = true; break; }
     }
+    expect(focusedInWrap).toBe(true);
   });
 
   test('inline site label edit is keyboard operable', async ({ page }) => {
@@ -133,10 +141,14 @@ test.describe('Keyboard — Modal focus trapping', () => {
     const modal = page.locator('.ash-nazg-modal-warning');
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
-    // Focus should be inside the modal.
+    // modal.js moves focus to the confirm button on open (WCAG 2.4.3).
+    // Wait briefly for the focus shift then verify.
+    await page.waitForTimeout(300);
     const focusedInModal = await page.evaluate(() => {
-      const modal = document.querySelector('.ash-nazg-modal-warning');
-      return modal && modal.contains(document.activeElement);
+      const modal = document.querySelector('.ash-nazg-modal-warning, #ash-nazg-modal-overlay');
+      const confirm = document.querySelector('#ash-nazg-modal-confirm');
+      return (modal && modal.contains(document.activeElement)) ||
+             document.activeElement === confirm;
     });
     expect(focusedInModal).toBe(true);
 

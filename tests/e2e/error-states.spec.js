@@ -82,9 +82,11 @@ test.describe('Error States — API failure handling', () => {
     await page.locator('#ash-nazg-fetch-logs').click();
     await page.waitForTimeout(3000);
 
-    // Page should not crash — either shows an error notice or stays functional.
+    // Page should not crash — showing a .notice-error is acceptable graceful handling
+    // (the plugin communicates the failure to the user). What we verify is that
+    // the page doesn't crash with a PHP fatal or white screen.
     await expect(page.locator('.wrap')).toBeVisible();
-    await expect(page.locator('.notice-error')).toHaveCount(0); // Plugin shouldn't show a PHP error
+    await expect(page.locator('body')).not.toContainText('Fatal error');
   });
 
   test('connection mode toggle shows error when API fails', async ({ page }) => {

@@ -11,12 +11,16 @@ async function openScreenOptions(page) {
   const btn = page.locator('#show-settings-link');
   if (await btn.count() === 0) return false;
   await btn.click();
-  await expect(page.locator('#screen-options')).toBeVisible({ timeout: 3_000 });
+  // WordPress animates the panel open — wait for the wrapper to become visible.
+  // The wrapper is #screen-options-wrap; #screen-options is its inner content.
+  await expect(
+    page.locator('#screen-options-wrap, #screen-options')
+  ).toBeVisible({ timeout: 5_000 });
   return true;
 }
 
 async function applyScreenOptions(page) {
-  await page.locator('#screen-options input[name="screen-options-apply"], #screen-options .button-primary').first().click();
+  await page.locator('#screen-options-wrap input[name="screen-options-apply"], #screen-options-wrap .button-primary, #screen-options input[name="screen-options-apply"]').first().click();
 }
 
 test.describe('Screen Options — Dashboard endpoint groups', () => {
