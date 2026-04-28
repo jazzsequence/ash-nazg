@@ -27,8 +27,10 @@ function init() {
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_token_migration' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_global_secret_cleanup_dismissal' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\handle_delete_global_token' );
+	add_action( 'admin_init', __NAMESPACE__ . '\\handle_delete_redundant_user_meta_token' );
 	add_action( 'admin_notices', __NAMESPACE__ . '\\display_token_migration_notice' );
 	add_action( 'admin_notices', __NAMESPACE__ . '\\display_global_secret_cleanup_notice' );
+	add_action( 'admin_notices', __NAMESPACE__ . '\\display_redundant_user_meta_notice' );
 	add_action( 'wp_ajax_ash_nazg_fetch_logs', __NAMESPACE__ . '\\ajax_fetch_logs' );
 	add_action( 'wp_ajax_ash_nazg_clear_logs', __NAMESPACE__ . '\\ajax_clear_logs' );
 	add_action( 'wp_ajax_ash_nazg_get_workflow_status', __NAMESPACE__ . '\\ajax_get_workflow_status' );
@@ -3330,6 +3332,112 @@ function display_global_secret_cleanup_notice() {
 		</p>
 	</div>
 	<?php
+}
+
+/**
+ * Display notice when per-user Pantheon Secret and user meta token both exist.
+ *
+ * The secret takes priority in the fallback chain, making the user meta copy
+ * redundant. Offer a one-click button to delete the database copy.
+ * Only shown when pantheon_get_secret() is available (Pantheon environment).
+ *
+ * @return void
+ */
+function display_redundant_user_meta_notice() {
+	// Only on Ash Nazg pages.
+	$screen = get_current_screen();
+	if ( ! $screen || false === strpos( $screen->id, 'ash-nazg' ) ) {
+		return;
+	}
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	// Requires Pantheon Secrets API — not applicable outside Pantheon environments.
+	if ( ! function_exists( 'pantheon_get_secret' ) ) {
+		return;
+	}
+
+	$user_id = get_current_user_id();
+
+	// Only show if the per-user Pantheon Secret is present and accessible.
+	$secret_key = sprintf( 'ash_nazg_machine_token_%d', $user_id );
+	$user_secret = pantheon_get_secret( $secret_key );
+	if ( empty( $user_secret ) ) {
+		return;
+	}
+
+	// Only show if user meta token also exists (redundant copy).
+	$user_meta_token = get_user_meta( $user_id, 'ash_nazg_user_machine_token', true );
+	if ( empty( $user_meta_token ) ) {
+		return;
+	}
+
+	?>
+	<div class="notice notice-warning is-dismissible">
+		<p>
+			<strong><?php esc_html_e( 'Redundant Token Storage Detected:', 'ash-nazg' ); ?></strong>
+			<?php esc_html_e( 'Your machine token is stored in both a Pantheon Secret and the WordPress database. The Pantheon Secret takes priority and is the recommended storage method. The database copy is no longer needed and can be safely removed.', 'ash-nazg' ); ?>
+		</p>
+		<p>
+			<a
+				href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg-settings&ash_nazg_delete_user_meta_token=1' ), 'ash_nazg_delete_user_meta_token' ) ); ?>"
+				class="button button-primary"
+			>
+				<?php esc_html_e( 'Delete Database Copy', 'ash-nazg' ); ?>
+			</a>
+		</p>
+	</div>
+	<?php
+}
+
+/**
+ * Handle deletion of the redundant user meta token.
+ *
+ * Fires when user clicks "Delete Database Copy" in the redundant token notice.
+ *
+ * @return void
+ */
+function handle_delete_redundant_user_meta_token() {
+	if ( ! isset( $_GET['ash_nazg_delete_user_meta_token'], $_GET['_wpnonce'] ) ) {
+		return;
+	}
+
+	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'ash_nazg_delete_user_meta_token' ) ) {
+		wp_die( esc_html__( 'Invalid nonce.', 'ash-nazg' ) );
+	}
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( esc_html__( 'Permission denied.', 'ash-nazg' ) );
+	}
+
+	if ( ! function_exists( 'pantheon_get_secret' ) ) {
+		wp_die( esc_html__( 'Pantheon Secrets API not available.', 'ash-nazg' ) );
+	}
+
+	$user_id = get_current_user_id();
+
+	// Confirm the per-user secret still exists before deleting the meta fallback.
+	$secret_key = sprintf( 'ash_nazg_machine_token_%d', $user_id );
+	$user_secret = pantheon_get_secret( $secret_key );
+	if ( empty( $user_secret ) ) {
+		wp_die( esc_html__( 'Cannot delete database token: Pantheon Secret is not accessible. Aborting to prevent lockout.', 'ash-nazg' ) );
+	}
+
+	delete_user_meta( $user_id, 'ash_nazg_user_machine_token' );
+	API\clear_user_session_token( $user_id );
+
+	Helpers\debug_log( sprintf( 'User %d deleted redundant user meta token (Pantheon Secret is primary)', $user_id ) );
+
+	set_transient(
+		sprintf( 'ash_nazg_migration_success_%d', $user_id ),
+		__( 'Database token deleted. Your Pantheon Secret is now the sole token source.', 'ash-nazg' ),
+		30
+	);
+
+	wp_safe_redirect( admin_url( 'admin.php?page=ash-nazg-settings' ) );
+	exit;
 }
 
 /**

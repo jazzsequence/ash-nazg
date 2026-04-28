@@ -386,4 +386,95 @@ class Test_User_Tokens extends TestCase {
 			'CSS should include code block styling'
 		);
 	}
+
+	/**
+	 * Test that redundant user meta token notice function exists.
+	 */
+	public function test_redundant_user_meta_notice_function_exists() {
+		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/admin.php';
+
+		$this->assertTrue(
+			function_exists( 'Pantheon\AshNazg\Admin\display_redundant_user_meta_notice' ),
+			'display_redundant_user_meta_notice should exist'
+		);
+	}
+
+	/**
+	 * Test that redundant user meta token handler function exists.
+	 */
+	public function test_redundant_user_meta_handler_function_exists() {
+		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/admin.php';
+
+		$this->assertTrue(
+			function_exists( 'Pantheon\AshNazg\Admin\handle_delete_redundant_user_meta_token' ),
+			'handle_delete_redundant_user_meta_token should exist'
+		);
+	}
+
+	/**
+	 * Test that both hooks are registered.
+	 */
+	public function test_redundant_user_meta_hooks_registered() {
+		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$this->assertStringContainsString(
+			'handle_delete_redundant_user_meta_token',
+			$admin_contents,
+			'handle_delete_redundant_user_meta_token should be registered'
+		);
+		$this->assertStringContainsString(
+			'display_redundant_user_meta_notice',
+			$admin_contents,
+			'display_redundant_user_meta_notice should be registered'
+		);
+	}
+
+	/**
+	 * Test that the handler verifies nonce and capability.
+	 */
+	public function test_redundant_user_meta_handler_security() {
+		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$this->assertMatchesRegularExpression(
+			'/function handle_delete_redundant_user_meta_token.*wp_verify_nonce/s',
+			$admin_contents,
+			'handler must verify nonce'
+		);
+		$this->assertMatchesRegularExpression(
+			'/function handle_delete_redundant_user_meta_token.*current_user_can/s',
+			$admin_contents,
+			'handler must check capabilities'
+		);
+	}
+
+	/**
+	 * Test that the handler is gated on pantheon_get_secret availability.
+	 */
+	public function test_redundant_user_meta_handler_secret_gate() {
+		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$this->assertMatchesRegularExpression(
+			'/function handle_delete_redundant_user_meta_token.*function_exists.*pantheon_get_secret/s',
+			$admin_contents,
+			'handler must check function_exists(pantheon_get_secret)'
+		);
+	}
+
+	/**
+	 * Test that the handler verifies secret still accessible before deleting meta.
+	 */
+	public function test_redundant_user_meta_handler_safety_check() {
+		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$this->assertMatchesRegularExpression(
+			'/function handle_delete_redundant_user_meta_token.*delete_user_meta/s',
+			$admin_contents,
+			'handler must call delete_user_meta'
+		);
+		$this->assertMatchesRegularExpression(
+			'/function handle_delete_redundant_user_meta_token.*pantheon_get_secret.*delete_user_meta/s',
+			$admin_contents,
+			'handler must check secret is accessible before deleting meta'
+		);
+	}
 }
