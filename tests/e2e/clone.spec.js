@@ -9,7 +9,6 @@ const { test, goToPluginPage } = require('./fixtures/admin-page');
 test.describe('Clone', () => {
   test.beforeEach(async ({ page }) => {
     await goToPluginPage(page, 'ash-nazg-clone');
-    await page.waitForLoadState('networkidle');
   });
 
   test('page renders without errors', async ({ page }) => {
