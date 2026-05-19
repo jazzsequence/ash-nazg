@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.2] - 2026-04-28
+
+### Fixed
+
+- **Version constant missing from 0.6.1**: The plugin header and `ASH_NAZG_VERSION` constant were not bumped for the 0.6.1 patch release, so WordPress could not surface the update to existing installs and CSS cache-busting continued using the stale `0.6.0` query string.
+- **Release process documented**: Added an explicit Release Process checklist to CLAUDE.md so version bumping, CHANGELOG updates, and build steps are not missed in future releases.
+
+---
+
 ## [0.6.1] - 2026-04-28
 
 ### Fixed
