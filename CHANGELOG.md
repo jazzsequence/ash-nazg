@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.1] - 2026-04-28
+
+### Fixed
+
+- **Pantheon logos missing from fresh installs**: `assets/images/` was gitignored so the Pantheon logo PNGs (used in the plugin header and dashboard widget) were absent from release artifacts and any clean checkout. The two logo files are now tracked in git.
+- **Icon colors missing from fresh installs**: Checkmark and X status icons used PDS CSS custom properties that were not defined in the compiled stylesheet. Icon colors are now hardcoded with WCAG AA-safe values.
+
+---
+
 ## [0.6.0] - 2026-04-24
 
 ### Added
