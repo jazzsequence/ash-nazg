@@ -643,6 +643,46 @@ This workflow prevents errors from incorrect parameter names, missing required f
 - Add proper plugin headers
 - File will auto-load from mu-plugins directory
 
+## Release Process
+
+**Every release requires ALL of these steps in order. Do not skip any.**
+
+### Pre-release checklist
+1. **Bump the version** in BOTH places — missing either breaks WordPress update detection and CSS cache-busting:
+   - `ash-nazg.php` plugin header: `* Version: X.Y.Z`
+   - `ash-nazg.php` constant: `define( 'ASH_NAZG_VERSION', 'X.Y.Z' );`
+   - `package.json`: `"version": "X.Y.Z"`
+2. **Update CHANGELOG.md** — add a new `## [X.Y.Z] - YYYY-MM-DD` section with Added/Changed/Fixed entries
+3. **Run `composer check`** — all tests and lint must pass
+4. **Run `npm run build`** — rebuild compiled CSS (commit `assets/css/admin.css`)
+5. **Commit and push to main**
+
+### Cutting the release
+```bash
+# Extract release notes for the new version
+python3 -c "
+content = open('CHANGELOG.md').read()
+start = content.find('## [X.Y.Z]')
+end = content.find('## [', start + 1)
+print(content[start:end].strip())
+" > /tmp/release-notes.txt
+
+# Create the GitHub release (no v prefix on the tag)
+gh release create X.Y.Z --title "X.Y.Z" --notes-file /tmp/release-notes.txt
+```
+
+The `release.yml` workflow attaches the clean plugin zip automatically.
+
+### Version numbering
+- **Patch** (X.Y.Z+1): bug fixes, no new features
+- **Minor** (X.Y+1.0): new features, backward compatible
+- **Major** (X+1.0.0): breaking changes
+
+### Common mistakes that have burned us
+- Tagging without bumping the version → WordPress can't surface the update; CSS cache-busting is broken
+- Forgetting `npm run build` → compiled CSS in the release artifact is stale
+- Using `v` prefix on the tag → breaks `build-dist.sh` which uses the tag as the zip filename
+
 ## Common Development Tasks
 
 ### Adding a New API Endpoint Integration
