@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.3] - 2026-05-20
+
+### Fixed
+
+- **PDS design tokens not included in release artifact**: `admin.css` contained `@import url()` references to `pds-design-tokens-light-mode.css` and `pds/foundations/index.css`, both of which are excluded from the release via `.distignore`. All `var(--pds-*)` SASS variables in `_variables.scss` are now hardcoded to their PDS light-mode token values, and the two local `@import url()` lines are removed from `admin.scss`. The compiled `admin.css` is now fully self-contained — no runtime CSS dependencies on files that aren't in the release artifact. Five remaining `var(--pds-*)` references in component SCSS files are preserved because they already have hardcoded CSS fallback values.
+
+---
+
 ## [0.6.2] - 2026-04-28
 
 ### Fixed
