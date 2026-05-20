@@ -11,17 +11,15 @@
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
    ========================================================================== */
 /* ==========================================================================
-   IMPORTS (PDS FONTS, TOKENS, AND FOUNDATIONS)
+   IMPORTS (GOOGLE FONTS)
    ========================================================================== */
 @import url("https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap");
-@import url("../pds-design-tokens/pds-design-tokens-light-mode.css");
-@import url("../pds/foundations/index.css");
 /**
  * Variables
  * Color palette and spacing values using PDS design tokens where available
@@ -39,7 +37,7 @@
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -59,11 +57,11 @@
 }
 
 .ash-nazg-card {
-  background: var(--pds-color-background-default);
-  border: 1px solid var(--pds-color-border-default);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.11);
   border-radius: 4px;
   padding: 20px;
-  box-shadow: var(--pds-elevation-raised);
+  box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.08), 0px 2px 2px 0px rgba(0, 0, 0, 0.04), 0px 8px 8px -8px rgba(0, 0, 0, 0.04);
 }
 
 .ash-nazg-card-full {
@@ -82,7 +80,7 @@
   margin-top: 0;
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--pds-color-neutral-300);
+  border-bottom: 1px solid #cfcfd3;
   font-size: 18px;
 }
 
@@ -107,7 +105,7 @@
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -129,14 +127,14 @@
   margin-top: 20px;
   margin-bottom: 10px;
   font-size: 16px;
-  border-bottom: 1px solid var(--pds-color-neutral-300);
+  border-bottom: 1px solid #cfcfd3;
   padding-bottom: 5px;
 }
 
 .ash-nazg-meta-text {
   font-size: 12px;
   font-weight: normal;
-  color: var(--pds-color-neutral-400);
+  color: #6d6d78;
 }
 
 .ash-nazg-small-text {
@@ -150,7 +148,7 @@
 .ash-nazg-label-text {
   font-size: 13px;
   font-weight: normal;
-  color: var(--pds-color-text-default-secondary);
+  color: #6d6d78;
 }
 
 /* Text Colors */
@@ -167,7 +165,7 @@
 }
 
 .ash-nazg-text-muted {
-  color: var(--pds-color-text-default-secondary);
+  color: #6d6d78;
 }
 
 .ash-nazg-text-light {
@@ -175,7 +173,7 @@
 }
 
 .ash-nazg-text-meta {
-  color: var(--pds-color-neutral-400);
+  color: #6d6d78;
 }
 
 /**
@@ -190,7 +188,7 @@
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -276,7 +274,7 @@
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -379,7 +377,7 @@
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -397,7 +395,7 @@
 
 .ash-nazg-edit-link {
   text-decoration: none;
-  color: var(--pds-color-neutral-400);
+  color: #6d6d78;
   line-height: 1;
   flex-shrink: 0;
 }
@@ -423,7 +421,7 @@
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -437,12 +435,12 @@
 }
 
 .workflow-card {
-  background: var(--pds-color-background-default);
-  border: 1px solid var(--pds-color-border-default);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.11);
   border-radius: 4px;
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: var(--pds-elevation-raised);
+  box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.08), 0px 2px 2px 0px rgba(0, 0, 0, 0.04), 0px 8px 8px -8px rgba(0, 0, 0, 0.04);
 }
 .workflow-card h3 {
   margin-top: 0;
@@ -450,8 +448,8 @@
   font-size: 16px;
 }
 .workflow-card.workflow-disabled {
-  background: var(--pds-color-background-default-secondary);
-  border-color: var(--pds-color-neutral-300);
+  background: #f8f8f8;
+  border-color: #cfcfd3;
   color: #50575e;
 }
 .workflow-card.workflow-disabled p,
@@ -476,7 +474,7 @@
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -575,7 +573,7 @@
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -633,7 +631,7 @@
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -646,28 +644,28 @@
  * This file adds PDS design-token color overrides for ash-nazg plugin pages.
  */
 .ash-nazg-modal {
-  background: var(--pds-color-background-default);
-  box-shadow: var(--pds-elevation-overlay);
+  background: #ffffff;
+  box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.08), 0px 1px 1px 0px rgba(0, 0, 0, 0.02), 0px 8px 16px -4px rgba(0, 0, 0, 0.04), 0px 24px 32px -8px rgba(0, 0, 0, 0.06);
 }
 
 .ash-nazg-modal-header {
-  border-bottom-color: var(--pds-color-border-default);
+  border-bottom-color: rgba(0, 0, 0, 0.11);
 }
 .ash-nazg-modal-header h2 {
-  color: var(--pds-color-foreground-default);
+  color: #23232d;
 }
 
 .ash-nazg-modal-body p {
-  color: var(--pds-color-text-default);
+  color: #23232d;
 }
 
 .ash-nazg-modal-footer {
-  border-top-color: var(--pds-color-border-default);
+  border-top-color: rgba(0, 0, 0, 0.11);
 }
 
 .ash-nazg-modal-info .ash-nazg-modal-header {
-  background: var(--pds-color-background-default-secondary);
-  border-bottom-color: var(--pds-color-border-default);
+  background: #f8f8f8;
+  border-bottom-color: rgba(0, 0, 0, 0.11);
 }
 
 /**
@@ -682,7 +680,7 @@
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -734,7 +732,7 @@ code.ash-nazg-user-id {
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -831,7 +829,7 @@ code.ash-nazg-user-id {
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -860,10 +858,10 @@ code.ash-nazg-user-id {
 }
 .ash-nazg-card .widefat thead th {
   font-weight: 600;
-  background: var(--pds-color-background-default-secondary);
+  background: #f8f8f8;
 }
 .ash-nazg-card .widefat tbody tr:hover {
-  background: var(--pds-color-background-default-secondary);
+  background: #f8f8f8;
 }
 .ash-nazg-card .widefat td .dashicons {
   font-size: 20px;
@@ -871,7 +869,7 @@ code.ash-nazg-user-id {
   height: 20px;
 }
 .ash-nazg-card .widefat td code {
-  background: var(--pds-color-background-default-secondary);
+  background: #f8f8f8;
   padding: 2px 6px;
   border-radius: 3px;
   font-family: "Courier New", Courier, monospace;
@@ -941,7 +939,7 @@ code.ash-nazg-user-id {
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -970,7 +968,7 @@ code.ash-nazg-user-id {
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -1061,7 +1059,7 @@ code.ash-nazg-user-id {
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -1088,7 +1086,7 @@ code.ash-nazg-user-id {
 }
 
 .ash-nazg-log-contents {
-  background: var(--pds-color-neutral-200);
+  background: #f1f1f1;
   border: 1px solid #ddd;
   padding: 15px;
   border-radius: 4px;
@@ -1104,7 +1102,7 @@ code.ash-nazg-user-id {
 }
 
 .ash-nazg-log-empty {
-  color: var(--pds-color-text-default-secondary);
+  color: #6d6d78;
 }
 
 .ash-nazg-clear-button {
@@ -1340,7 +1338,7 @@ code.ash-nazg-user-id {
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -1470,7 +1468,7 @@ canvas {
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -1501,26 +1499,26 @@ canvas {
 }
 
 .ash-nazg-progress-content {
-  background: var(--pds-color-background-default);
+  background: #ffffff;
   border-radius: 4px;
   padding: 30px;
   min-width: 400px;
-  box-shadow: var(--pds-elevation-overlay);
+  box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.08), 0px 1px 1px 0px rgba(0, 0, 0, 0.02), 0px 8px 16px -4px rgba(0, 0, 0, 0.04), 0px 24px 32px -8px rgba(0, 0, 0, 0.06);
 }
 .ash-nazg-progress-content h2 {
   margin-top: 0;
   margin-bottom: 15px;
   font-size: 20px;
-  color: var(--pds-color-foreground-default);
+  color: #23232d;
 }
 
 .ash-nazg-progress-message {
   margin-bottom: 20px;
-  color: var(--pds-color-text-default-secondary);
+  color: #6d6d78;
 }
 
 .ash-nazg-progress-bar {
-  background: var(--pds-color-neutral-200);
+  background: #f1f1f1;
   border-radius: 4px;
   height: 30px;
   overflow: hidden;
@@ -1538,14 +1536,14 @@ canvas {
   text-align: center;
   font-weight: 600;
   font-size: 18px;
-  color: var(--pds-color-foreground-default);
+  color: #23232d;
   margin: 10px 0;
 }
 
 .ash-nazg-progress-status {
   text-align: center;
   font-size: 13px;
-  color: var(--pds-color-text-default-secondary);
+  color: #6d6d78;
   min-height: 20px;
   font-style: italic;
 }
@@ -1584,7 +1582,7 @@ canvas {
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -1641,7 +1639,7 @@ canvas {
  * 6. Page-specific Sections
  * 7. Utility Classes
  * 8. Responsive Styles
- * 9. PDS Fonts, Tokens, and Foundations (loaded via @import after @use)
+ * 9. Google Fonts (loaded via @import after @use)
  */
 /* ==========================================================================
    ALL @USE RULES MUST COME FIRST
@@ -1676,7 +1674,7 @@ canvas {
   .ash-nazg-card td {
     padding-top: 4px;
     padding-bottom: 12px;
-    border-bottom: 1px solid var(--pds-color-neutral-200);
+    border-bottom: 1px solid #f1f1f1;
   }
   .addon-toggle-wrapper {
     flex-direction: column;

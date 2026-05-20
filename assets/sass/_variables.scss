@@ -11,28 +11,28 @@ $color-success: #166534; // 7.5:1 on white
 $color-error: #991b1b;   // 7.5:1 on white
 $color-warning: #92400e; // 7:1 on white
 
-// Colors - Text (use PDS neutral colors)
-$color-text-default: var(--pds-color-text-default);
-$color-text-muted: var(--pds-color-text-default-secondary);
+// Colors - Text (PDS light-mode token values, hardcoded for dist self-containment)
+$color-text-default: #23232d;
+$color-text-muted: #6d6d78;
 $color-text-light: #999; // Custom for light text
-$color-text-meta: var(--pds-color-neutral-400);
-$color-text-dark: var(--pds-color-foreground-default);
+$color-text-meta: #6d6d78;
+$color-text-dark: #23232d;
 
-// Colors - Borders (use PDS border tokens)
-$color-border: var(--pds-color-border-default);
-$color-border-light: var(--pds-color-neutral-300);
-$color-border-subtle: var(--pds-color-neutral-200);
+// Colors - Borders (PDS light-mode token values)
+$color-border: rgba(0, 0, 0, 0.11);
+$color-border-light: #cfcfd3;
+$color-border-subtle: #f1f1f1;
 
-// Colors - Backgrounds (use PDS background tokens)
-$color-bg-white: var(--pds-color-background-default);
-$color-bg-light: var(--pds-color-background-default-secondary);
-$color-bg-muted: var(--pds-color-neutral-200);
+// Colors - Backgrounds (PDS light-mode token values)
+$color-bg-white: #ffffff;
+$color-bg-light: #f8f8f8;
+$color-bg-muted: #f1f1f1;
 
-// Colors - Interactive (use PDS interactive tokens)
-$color-interactive-primary: var(--pds-color-button-primary-background-default);
-$color-interactive-primary-hover: var(--pds-color-button-primary-background-hover);
-$color-interactive-link: var(--pds-color-interactive-link-default);
-$color-interactive-link-hover: var(--pds-color-interactive-link-hover);
+// Colors - Interactive (PDS light-mode token values, unused but kept for reference)
+$color-interactive-primary: #3017a1;
+$color-interactive-primary-hover: #5e45cf;
+$color-interactive-link: #0f62fe;
+$color-interactive-link-hover: #5e45cf;
 
 // Colors - WordPress Admin compatibility
 $color-wp-blue: #2271b1;
@@ -80,10 +80,10 @@ $border-radius-sm: 3px;
 $border-radius-md: 4px;
 $border-radius-full: 50%;
 
-// Shadows (use PDS elevation tokens where possible)
-$shadow-light: var(--pds-elevation-raised);
+// Shadows (PDS light-mode elevation token values)
+$shadow-light: 0px 0px 0px 1px rgba(0, 0, 0, 0.08), 0px 2px 2px 0px rgba(0, 0, 0, 0.04), 0px 8px 8px -8px rgba(0, 0, 0, 0.04);
 $shadow-medium: 0 1px 3px rgba(0, 0, 0, 0.2);
-$shadow-dark: var(--pds-elevation-overlay);
+$shadow-dark: 0px 0px 0px 1px rgba(0, 0, 0, 0.08), 0px 1px 1px 0px rgba(0, 0, 0, 0.02), 0px 8px 16px -4px rgba(0, 0, 0, 0.04), 0px 24px 32px -8px rgba(0, 0, 0, 0.06);
 
 // Transitions
 $transition-fast: 0.2s ease;
