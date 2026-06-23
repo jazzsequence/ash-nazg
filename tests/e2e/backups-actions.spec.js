@@ -8,7 +8,6 @@ const { test, goToPluginPage } = require('./fixtures/admin-page');
 test.describe('Backups — create and download', () => {
   test.beforeEach(async ({ page }) => {
     await goToPluginPage(page, 'ash-nazg-backups');
-    await page.waitForLoadState('networkidle');
   });
 
   test('backup type selector has all expected options', async ({ page }) => {
@@ -55,7 +54,7 @@ test.describe('Backups — create and download', () => {
     // Poll until a backup set appears in the active (visible) tab panel.
     await expect(async () => {
       await page.reload();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('load');
       // Backup sets inside hidden panels won't be visible; check the active panel.
       await expect(
         page.locator('.ash-nazg-backup-env-panel:not(.hidden) .ash-nazg-backup-set').first()

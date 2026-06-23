@@ -17,7 +17,9 @@ test.describe('Development', () => {
   });
 
   test('upstream updates section renders', async ({ page }) => {
-    const upstreamSection = page.locator('.ash-nazg-card').filter({ hasText: /upstream updates/i });
+    const upstreamSection = page.locator('.ash-nazg-card').filter({
+      has: page.locator('h2, h3').filter({ hasText: /^upstream updates$/i }),
+    });
     await expect(upstreamSection).toBeVisible({ timeout: 15_000 });
   });
 

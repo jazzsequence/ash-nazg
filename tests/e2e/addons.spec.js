@@ -7,7 +7,6 @@ const { test, goToPluginPage } = require('./fixtures/admin-page');
 test.describe('Addons', () => {
   test.beforeEach(async ({ page }) => {
     await goToPluginPage(page, 'ash-nazg-addons');
-    await page.waitForLoadState('networkidle');
   });
 
   test('page renders without errors', async ({ page }) => {
