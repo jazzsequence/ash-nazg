@@ -67,6 +67,6 @@ jobs:
           else
             COMMIT_SHA="${{ github.sha }}"
             git commit -m "Deploy ash-nazg from ${COMMIT_SHA::8} (GitHub Actions)"
-            git push origin master
+            git push --force origin master
             echo "Deployed to Pantheon dev."
           fi
