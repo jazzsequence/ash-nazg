@@ -14,6 +14,9 @@ name: E2E & Accessibility Tests
 #   PR close            → delete e2e-{pr} multidev
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
@@ -98,6 +101,7 @@ jobs:
           pantheon-machine-token: ${{ secrets.PANTHEON_MACHINE_TOKEN }}
 
       - name: Sync current plugin code to multidev via SFTP
+        if: github.event_name == 'pull_request'
         env:
           PANTHEON_SITE_UUID: ${{ secrets.PANTHEON_SITE_UUID }}
         run: |
