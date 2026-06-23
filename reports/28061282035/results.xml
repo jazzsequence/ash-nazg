@@ -1,0 +1,274 @@
+<testsuites id="" name="" tests="66" failures="1" skipped="0" errors="0" time="95.940947">
+<testsuite name="global.setup.js" timestamp="2026-06-23T22:26:57.817Z" hostname="setup" tests="1" failures="0" skipped="0" time="2.502" errors="0">
+<testcase name="authenticate as admin" classname="global.setup.js" time="2.502">
+</testcase>
+</testsuite>
+<testsuite name="a11y.spec.js" timestamp="2026-06-23T22:26:57.817Z" hostname="chromium" tests="12" failures="0" skipped="0" time="117.989" errors="0">
+<testcase name="Dashboard page has no critical/serious a11y violations" classname="a11y.spec.js" time="11.33">
+</testcase>
+<testcase name="Metrics page has no critical/serious a11y violations" classname="a11y.spec.js" time="9.73">
+</testcase>
+<testcase name="Development page has no critical/serious a11y violations" classname="a11y.spec.js" time="15.338">
+</testcase>
+<testcase name="Addons page has no critical/serious a11y violations" classname="a11y.spec.js" time="8.997">
+</testcase>
+<testcase name="Workflows page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.589">
+</testcase>
+<testcase name="Backups page has no critical/serious a11y violations" classname="a11y.spec.js" time="18.472">
+</testcase>
+<testcase name="Clone page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.485">
+</testcase>
+<testcase name="Logs page has no critical/serious a11y violations" classname="a11y.spec.js" time="6.979">
+</testcase>
+<testcase name="Settings page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.358">
+</testcase>
+<testcase name="Dashboard widget on WP admin index has no a11y violations" classname="a11y.spec.js" time="7.818">
+</testcase>
+<testcase name="Backups page tab switching maintains a11y" classname="a11y.spec.js" time="8.102">
+</testcase>
+<testcase name="Metrics page with data loaded has no a11y violations" classname="a11y.spec.js" time="8.791">
+</testcase>
+</testsuite>
+<testsuite name="addons.spec.js" timestamp="2026-06-23T22:26:57.817Z" hostname="chromium" tests="6" failures="0" skipped="0" time="52.514" errors="0">
+<testcase name="Addons › page renders without errors" classname="addons.spec.js" time="2.609">
+</testcase>
+<testcase name="Addons › Redis addon toggle is present" classname="addons.spec.js" time="2.976">
+</testcase>
+<testcase name="Addons › Solr addon toggle is present" classname="addons.spec.js" time="3.392">
+</testcase>
+<testcase name="Addons › Elasticsearch shows Coming Soon badge" classname="addons.spec.js" time="3.722">
+</testcase>
+<testcase name="Addons › Redis status reflects live environment state" classname="addons.spec.js" time="36.364">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/addons-Addons-Redis-status-reflects-live-environment-state-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/addons-Addons-Redis-status-reflects-live-environment-state-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/addons-Addons-Redis-status-reflects-live-environment-state-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/addons-Addons-Redis-status-reflects-live-environment-state-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Addons › save button is present and enabled" classname="addons.spec.js" time="3.451">
+</testcase>
+</testsuite>
+<testsuite name="backups-actions.spec.js" timestamp="2026-06-23T22:26:57.817Z" hostname="chromium" tests="4" failures="0" skipped="0" time="19.068" errors="0">
+<testcase name="Backups — create and download › backup type selector has all expected options" classname="backups-actions.spec.js" time="3.243">
+</testcase>
+<testcase name="Backups — create and download › retention period field accepts a value" classname="backups-actions.spec.js" time="3.188">
+</testcase>
+<testcase name="Backups — create and download › create database backup and verify it appears in the list" classname="backups-actions.spec.js" time="9.021">
+</testcase>
+<testcase name="Backups — create and download › download button generates a signed URL" classname="backups-actions.spec.js" time="3.616">
+</testcase>
+</testsuite>
+<testsuite name="backups.spec.js" timestamp="2026-06-23T22:26:57.817Z" hostname="chromium" tests="5" failures="0" skipped="0" time="20.476" errors="0">
+<testcase name="Backups › page renders with tabbed environment UI" classname="backups.spec.js" time="4.216">
+</testcase>
+<testcase name="Backups › default tab is visible and active" classname="backups.spec.js" time="3.79">
+</testcase>
+<testcase name="Backups › tab switching shows the correct panel" classname="backups.spec.js" time="4.156">
+</testcase>
+<testcase name="Backups › backup creation form renders" classname="backups.spec.js" time="4.043">
+</testcase>
+<testcase name="Backups › existing backups section loads" classname="backups.spec.js" time="4.271">
+</testcase>
+</testsuite>
+<testsuite name="clone.spec.js" timestamp="2026-06-23T22:26:57.817Z" hostname="chromium" tests="5" failures="0" skipped="0" time="12.98" errors="0">
+<testcase name="Clone › page renders without errors" classname="clone.spec.js" time="2.348">
+</testcase>
+<testcase name="Clone › source environment selector is present" classname="clone.spec.js" time="2.496">
+</testcase>
+<testcase name="Clone › target environment selector is present" classname="clone.spec.js" time="2.487">
+</testcase>
+<testcase name="Clone › database and files checkboxes are present" classname="clone.spec.js" time="2.618">
+</testcase>
+<testcase name="Clone › clone button is present" classname="clone.spec.js" time="3.031">
+</testcase>
+</testsuite>
+<testsuite name="dashboard.spec.js" timestamp="2026-06-23T22:26:57.817Z" hostname="chromium" tests="9" failures="0" skipped="0" time="25.569" errors="0">
+<testcase name="Dashboard › renders the Pantheon branded header" classname="dashboard.spec.js" time="2.552">
+</testcase>
+<testcase name="Dashboard › shows the 50/50 two-column layout" classname="dashboard.spec.js" time="2.623">
+</testcase>
+<testcase name="Dashboard › environment card shows Pantheon site info" classname="dashboard.spec.js" time="2.473">
+</testcase>
+<testcase name="Dashboard › API endpoint testing table renders" classname="dashboard.spec.js" time="2.762">
+</testcase>
+<testcase name="Dashboard › inline site label editing is accessible" classname="dashboard.spec.js" time="2.876">
+</testcase>
+<testcase name="Dashboard › connection mode toggle is present with a valid mode" classname="dashboard.spec.js" time="2.565">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget renders on wp-admin index" classname="dashboard.spec.js" time="3.425">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget chart renders after data loads" classname="dashboard.spec.js" time="3.217">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget links to Metrics page" classname="dashboard.spec.js" time="3.076">
+</testcase>
+</testsuite>
+<testsuite name="development.spec.js" timestamp="2026-06-23T22:26:57.817Z" hostname="chromium" tests="6" failures="1" skipped="0" time="33.273" errors="0">
+<testcase name="Development › page renders without errors" classname="development.spec.js" time="4.584">
+</testcase>
+<testcase name="Development › upstream updates section renders" classname="development.spec.js" time="10.448">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/development-Development-upstream-updates-section-renders-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/development-Development-upstream-updates-section-renders-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/development-Development-upstream-updates-section-renders-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/development-Development-upstream-updates-section-renders-chromium/trace.zip]]
+
+[[ATTACHMENT|../test-results/development-Development-upstream-updates-section-renders-chromium-retry1/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/development-Development-upstream-updates-section-renders-chromium-retry1/video.webm]]
+
+[[ATTACHMENT|../test-results/development-Development-upstream-updates-section-renders-chromium-retry1/error-context.md]]
+
+[[ATTACHMENT|../test-results/development-Development-upstream-updates-section-renders-chromium-retry1/trace.zip]]
+]]>
+</system-out>
+<failure message="expect(locator).toBeVisible() failed" type="expect.toBeVisible">
+<![CDATA[  [chromium] › development.spec.js:19:3 › Development › upstream updates section renders ───────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('.ash-nazg-card').filter({ hasText: /upstream updates/i })
+    Expected: visible
+    Error: strict mode violation: locator('.ash-nazg-card').filter({ hasText: /upstream updates/i }) resolved to 2 elements:
+        1) <div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">…</div> aka getByText('Upstream Updates 3 upstream')
+        2) <div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">…</div> aka getByText('Recent Commits Refresh Showing the last 50 commits: Hash Author Message Date')
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for locator('.ash-nazg-card').filter({ hasText: /upstream updates/i })
+
+
+      19 |   test('upstream updates section renders', async ({ page }) => {
+      20 |     const upstreamSection = page.locator('.ash-nazg-card').filter({ hasText: /upstream updates/i });
+    > 21 |     await expect(upstreamSection).toBeVisible({ timeout: 15_000 });
+         |                                   ^
+      22 |   });
+      23 |
+      24 |   test('recent commits card renders', async ({ page }) => {
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/development.spec.js:21:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/development-Development-upstream-updates-section-renders-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/development-Development-upstream-updates-section-renders-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/development-Development-upstream-updates-section-renders-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/development-Development-upstream-updates-section-renders-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/development-Development-upstream-updates-section-renders-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('.ash-nazg-card').filter({ hasText: /upstream updates/i })
+    Expected: visible
+    Error: strict mode violation: locator('.ash-nazg-card').filter({ hasText: /upstream updates/i }) resolved to 2 elements:
+        1) <div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">…</div> aka getByText('Upstream Updates 3 upstream')
+        2) <div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">…</div> aka getByText('Recent Commits Refresh Showing the last 50 commits: Hash Author Message Date')
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for locator('.ash-nazg-card').filter({ hasText: /upstream updates/i })
+
+
+      19 |   test('upstream updates section renders', async ({ page }) => {
+      20 |     const upstreamSection = page.locator('.ash-nazg-card').filter({ hasText: /upstream updates/i });
+    > 21 |     await expect(upstreamSection).toBeVisible({ timeout: 15_000 });
+         |                                   ^
+      22 |   });
+      23 |
+      24 |   test('recent commits card renders', async ({ page }) => {
+        at /home/runner/work/ash-nazg/ash-nazg/tests/e2e/development.spec.js:21:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/development-Development-upstream-updates-section-renders-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/development-Development-upstream-updates-section-renders-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/development-Development-upstream-updates-section-renders-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/development-Development-upstream-updates-section-renders-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/development-Development-upstream-updates-section-renders-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+</testcase>
+<testcase name="Development › recent commits card renders" classname="development.spec.js" time="4.948">
+</testcase>
+<testcase name="Development › environments card renders with environment list" classname="development.spec.js" time="4.121">
+</testcase>
+<testcase name="Development › refresh button on recent commits is clickable" classname="development.spec.js" time="4.482">
+</testcase>
+<testcase name="Development › code deployment section renders" classname="development.spec.js" time="4.69">
+</testcase>
+</testsuite>
+<testsuite name="logs.spec.js" timestamp="2026-06-23T22:26:57.817Z" hostname="chromium" tests="4" failures="0" skipped="0" time="10.88" errors="0">
+<testcase name="Logs › page renders without errors" classname="logs.spec.js" time="2.135">
+</testcase>
+<testcase name="Logs › Fetch Logs button is present and clickable" classname="logs.spec.js" time="2.664">
+</testcase>
+<testcase name="Logs › Clear Logs button is present" classname="logs.spec.js" time="2.474">
+</testcase>
+<testcase name="Logs › fetching logs loads content" classname="logs.spec.js" time="3.607">
+</testcase>
+</testsuite>
+<testsuite name="metrics.spec.js" timestamp="2026-06-23T22:26:57.817Z" hostname="chromium" tests="6" failures="0" skipped="0" time="37.953" errors="0">
+<testcase name="Metrics › page renders summary statistics above filters" classname="metrics.spec.js" time="4.424">
+</testcase>
+<testcase name="Metrics › Load Metrics button fetches real API data" classname="metrics.spec.js" time="9.591">
+</testcase>
+<testcase name="Metrics › environment selector contains expected options" classname="metrics.spec.js" time="3.549">
+</testcase>
+<testcase name="Metrics › duration selector has all time period options" classname="metrics.spec.js" time="3.624">
+</testcase>
+<testcase name="Metrics › summary stats update after data loads" classname="metrics.spec.js" time="9.359">
+</testcase>
+<testcase name="Metrics › filter persistence: selections survive page reload" classname="metrics.spec.js" time="7.406">
+</testcase>
+</testsuite>
+<testsuite name="settings.spec.js" timestamp="2026-06-23T22:26:57.817Z" hostname="chromium" tests="4" failures="0" skipped="0" time="9.864" errors="0">
+<testcase name="Settings › settings page renders without errors" classname="settings.spec.js" time="2.012">
+</testcase>
+<testcase name="Settings › machine token section is present" classname="settings.spec.js" time="1.769">
+</testcase>
+<testcase name="Settings › session token section renders" classname="settings.spec.js" time="2.723">
+</testcase>
+<testcase name="Settings › per-user token documentation is visible" classname="settings.spec.js" time="3.36">
+</testcase>
+</testsuite>
+<testsuite name="workflows.spec.js" timestamp="2026-06-23T22:26:57.817Z" hostname="chromium" tests="4" failures="0" skipped="0" time="12.628" errors="0">
+<testcase name="Workflows › page renders without errors" classname="workflows.spec.js" time="3.702">
+</testcase>
+<testcase name="Workflows › available workflows section renders" classname="workflows.spec.js" time="3.138">
+</testcase>
+<testcase name="Workflows › Object Cache Pro workflow card is present" classname="workflows.spec.js" time="3.306">
+</testcase>
+<testcase name="Workflows › trigger workflow button is present" classname="workflows.spec.js" time="2.482">
+</testcase>
+</testsuite>
+</testsuites>
