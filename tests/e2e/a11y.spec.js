@@ -32,7 +32,7 @@ for (const { slug, label } of PLUGIN_PAGES) {
 
 test('Dashboard widget on WP admin index has no a11y violations', async ({ page }, testInfo) => {
   await page.goto('/wp-admin/index.php');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('load');
   await page.waitForTimeout(3000);
   await assertNoA11yViolations(page, testInfo);
 });

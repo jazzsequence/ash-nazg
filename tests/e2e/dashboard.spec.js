@@ -51,7 +51,7 @@ test.describe('Dashboard', () => {
 test.describe('WP Admin Dashboard Widget', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/wp-admin/index.php');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     // Widget only registers when the plugin has a valid Pantheon site ID.
     const present = await page.locator('#ash_nazg_metrics_widget').count() > 0;
     if (!present) test.skip();

@@ -68,7 +68,7 @@ test.describe('Metrics', () => {
 
     // Reload.
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     // Duration should be restored from localStorage.
     const selected = await page.locator('#metrics-duration').inputValue();
