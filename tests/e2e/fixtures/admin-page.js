@@ -29,7 +29,7 @@ async function runAxe(page) {
     .exclude('#wpfooter')          // WP admin footer — not our code
     .exclude('#community-events')           // WP core Events and News widget — not our code
     .exclude('.community-events-footer')    // WP core events widget footer — not our code
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'])
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'])
     .analyze();
 }
 
