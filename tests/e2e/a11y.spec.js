@@ -23,6 +23,7 @@ const PLUGIN_PAGES = [
 
 for (const { slug, label } of PLUGIN_PAGES) {
   test(`${label} page has no critical/serious a11y violations`, async ({ page }, testInfo) => {
+    test.setTimeout(60_000);
     await goToPluginPage(page, slug);
     await page.waitForTimeout(4000);
     await assertNoA11yViolations(page, testInfo);

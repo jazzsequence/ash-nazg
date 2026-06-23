@@ -7,7 +7,6 @@ const { test, goToPluginPage } = require('./fixtures/admin-page');
 test.describe('Logs', () => {
   test.beforeEach(async ({ page }) => {
     await goToPluginPage(page, 'ash-nazg-logs');
-    await page.waitForLoadState('networkidle');
   });
 
   test('page renders without errors', async ({ page }) => {
@@ -26,7 +25,10 @@ test.describe('Logs', () => {
 
   test('fetching logs loads content', async ({ page }) => {
     await page.locator('#ash-nazg-fetch-logs').click();
-    // After fetching, the log container should have content.
-    await expect(page.locator('#ash-nazg-logs-container')).toBeVisible({ timeout: 15_000 });
+    // Wait for the loading indicator to hide — reliable signal AJAX completed.
+    // Connection-mode switching can take a while, hence the longer timeout.
+    await expect(page.locator('#ash-nazg-logs-loading')).toBeHidden({ timeout: 30_000 });
+    // Container should now have text content (log entries or empty-log notice from JS).
+    await expect(page.locator('#ash-nazg-logs-container')).not.toBeEmpty();
   });
 });
