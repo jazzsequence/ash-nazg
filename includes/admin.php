@@ -202,6 +202,31 @@ function add_delete_site_menu() {
 }
 
 /**
+ * Version string for a plugin-owned asset, used as the enqueue cache-buster.
+ *
+ * In development (WP_DEBUG or a local environment), returns the file's
+ * modification time so CSS/JS changes bust the browser AND Pantheon edge cache
+ * immediately — no version bump required, and a changed query string is the only
+ * thing that reliably invalidates a Varnish-cached asset. In production, returns
+ * the stable plugin version for long-lived caching.
+ *
+ * @param string $relative_path Asset path relative to the plugin root (e.g. 'assets/css/admin.css').
+ * @return string Version string.
+ */
+function asset_version( $relative_path ) {
+	$is_dev = ( defined( 'WP_DEBUG' ) && WP_DEBUG ) || Helpers\is_local_environment( API\get_pantheon_environment() );
+
+	if ( $is_dev ) {
+		$file = ASH_NAZG_PLUGIN_DIR . ltrim( $relative_path, '/' );
+		if ( file_exists( $file ) ) {
+			return (string) filemtime( $file );
+		}
+	}
+
+	return ASH_NAZG_VERSION;
+}
+
+/**
  * Enqueue admin assets.
  *
  * @param string $hook Current admin page hook.
@@ -243,7 +268,7 @@ function enqueue_assets( $hook ) {
 			'ash-nazg-dashboard-widget',
 			ASH_NAZG_PLUGIN_URL . 'assets/js/dashboard-widget.js',
 			[ 'jquery', 'chartjs' ],
-			ASH_NAZG_VERSION,
+			asset_version( 'assets/js/dashboard-widget.js' ),
 			true
 		);
 		wp_localize_script(
@@ -265,7 +290,7 @@ function enqueue_assets( $hook ) {
 			'ash-nazg-dashboard-widget',
 			ASH_NAZG_PLUGIN_URL . 'assets/css/dashboard-widget.css',
 			[],
-			ASH_NAZG_VERSION
+			asset_version( 'assets/css/dashboard-widget.css' )
 		);
 	}
 
@@ -278,13 +303,13 @@ function enqueue_assets( $hook ) {
 		'ash-nazg-modal',
 		ASH_NAZG_PLUGIN_URL . 'assets/css/modal.css',
 		[],
-		ASH_NAZG_VERSION
+		asset_version( 'assets/css/modal.css' )
 	);
 	wp_enqueue_style(
 		'ash-nazg-admin',
 		ASH_NAZG_PLUGIN_URL . 'assets/css/admin.css',
 		[ 'ash-nazg-modal' ],
-		ASH_NAZG_VERSION
+		asset_version( 'assets/css/admin.css' )
 	);
 
 	// Enqueue modal utility script on all ash-nazg pages.
@@ -292,7 +317,7 @@ function enqueue_assets( $hook ) {
 		'ash-nazg-modal',
 		ASH_NAZG_PLUGIN_URL . 'assets/js/modal.js',
 		[ 'jquery' ],
-		ASH_NAZG_VERSION,
+		asset_version( 'assets/js/modal.js' ),
 		true
 	);
 
@@ -302,7 +327,7 @@ function enqueue_assets( $hook ) {
 			'ash-nazg-dashboard',
 			ASH_NAZG_PLUGIN_URL . 'assets/js/dashboard.js',
 			[ 'jquery' ],
-			ASH_NAZG_VERSION,
+			asset_version( 'assets/js/dashboard.js' ),
 			true
 		);
 
@@ -335,7 +360,7 @@ function enqueue_assets( $hook ) {
 			'ash-nazg-development',
 			ASH_NAZG_PLUGIN_URL . 'assets/js/development.js',
 			[ 'jquery' ],
-			ASH_NAZG_VERSION,
+			asset_version( 'assets/js/development.js' ),
 			true
 		);
 
@@ -374,7 +399,7 @@ function enqueue_assets( $hook ) {
 			'ash-nazg-multidev',
 			ASH_NAZG_PLUGIN_URL . 'assets/js/multidev.js',
 			[ 'jquery' ],
-			ASH_NAZG_VERSION,
+			asset_version( 'assets/js/multidev.js' ),
 			true
 		);
 
@@ -408,7 +433,7 @@ function enqueue_assets( $hook ) {
 			'ash-nazg-backups',
 			ASH_NAZG_PLUGIN_URL . 'assets/js/backups.js',
 			[ 'jquery' ],
-			ASH_NAZG_VERSION,
+			asset_version( 'assets/js/backups.js' ),
 			true
 		);
 
@@ -446,7 +471,7 @@ function enqueue_assets( $hook ) {
 			'ash-nazg-clone',
 			ASH_NAZG_PLUGIN_URL . 'assets/js/clone.js',
 			[ 'jquery' ],
-			ASH_NAZG_VERSION,
+			asset_version( 'assets/js/clone.js' ),
 			true
 		);
 
@@ -481,7 +506,7 @@ function enqueue_assets( $hook ) {
 			'ash-nazg-delete-site',
 			ASH_NAZG_PLUGIN_URL . 'assets/js/delete-site.js',
 			[ 'jquery' ],
-			ASH_NAZG_VERSION,
+			asset_version( 'assets/js/delete-site.js' ),
 			true
 		);
 
@@ -518,7 +543,7 @@ function enqueue_assets( $hook ) {
 			'ash-nazg-metrics',
 			ASH_NAZG_PLUGIN_URL . 'assets/js/metrics.js',
 			[ 'jquery', 'chartjs' ],
-			ASH_NAZG_VERSION,
+			asset_version( 'assets/js/metrics.js' ),
 			true
 		);
 
@@ -546,7 +571,7 @@ function enqueue_assets( $hook ) {
 			'ash-nazg-logs',
 			ASH_NAZG_PLUGIN_URL . 'assets/js/logs.js',
 			[ 'jquery' ],
-			ASH_NAZG_VERSION,
+			asset_version( 'assets/js/logs.js' ),
 			true
 		);
 
@@ -2130,6 +2155,10 @@ function render_development_page() {
 		$upstream_updates = \Pantheon\AshNazg\Helpers\filter_upstream_updates_for_env( $upstream_updates_raw, $site_id, $environment );
 
 		$environments = API\get_environments( $site_id );
+		// Normalize API failures to null so the view can render without treating a WP_Error as an array.
+		if ( is_wp_error( $environments ) ) {
+			$environments = null;
+		}
 
 		// Get connection mode from environment info.
 		if ( $environment_info && isset( $environment_info['on_server_development'] ) ) {
