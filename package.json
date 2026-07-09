@@ -25,7 +25,7 @@
     "api"
   ],
   "author": "",
-  "license": "MIT",
+  "license": "GPL-2.0-or-later",
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",
     "@pantheon-systems/pds-design-tokens": "1.2.0",
