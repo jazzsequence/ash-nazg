@@ -48,12 +48,5 @@
 	margin-left: $spacing-md;
 }
 
-/* Fix icon alignment for logs page buttons */
-#ash-nazg-fetch-logs .dashicons,
-#ash-nazg-clear-logs .dashicons {
-	font-size: 16px;
-	width: 16px;
-	height: 16px;
-	vertical-align: middle;
-	margin-top: -2px;
-}
+/* Icon alignment for logs page buttons is handled by the shared flexbox rule
+   on .wp-core-ui .button in _components/_buttons.scss. */

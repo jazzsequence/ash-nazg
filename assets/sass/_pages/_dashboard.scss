@@ -36,23 +36,13 @@
 	}
 }
 
-
-/* Buttons with dashicons — sized to balance with button text */
-.button .dashicons {
-	vertical-align: middle;
-	margin-right: $spacing-xs;
-	font-size: 16px;
-	width: 16px;
-	height: 16px;
+/* Site Label inline-edit input: WP's .regular-text (~25em) is wider than the
+   field needs — constrain it so the input matches the content it edits. */
+#ash-nazg-site-label-input {
+	width: 20em;
+	max-width: 100%;
 }
 
-/* Buttons in card headers need explicit vertical padding so icons center properly */
-.ash-nazg-flex-between .button {
-	padding-top: 4px;
-	padding-bottom: 4px;
-	line-height: 1.4;
-	height: auto;
-}
 
 /* API Endpoints tab links - remove underline */
 .ash-nazg-card .nav-tab-wrapper {
@@ -71,13 +61,4 @@
 /* API Endpoints tab content - add top padding */
 .ash-nazg-card .nav-tab-wrapper + table {
 	margin-top: $spacing-xl;
-}
-
-/* Refresh Data button icon alignment */
-#ash-nazg-refresh-endpoints .dashicons {
-	font-size: 16px;
-	width: 16px;
-	height: 16px;
-	vertical-align: middle;
-	margin-top: -2px;
 }

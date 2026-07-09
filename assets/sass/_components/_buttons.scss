@@ -5,6 +5,39 @@
 
 @use '../variables' as *;
 
+/*
+ * WordPress 7.0 "Modern" restyled admin buttons (min-height 40px). We keep the
+ * new design-system sizing for a blended, consistent feel and only fix content
+ * alignment: core sizes dashicons for its own 20px icon / line-height math,
+ * which drifts when a button mixes an icon with a text label. Flexbox centers
+ * the icon on the label's vertical center. Applied to ALL buttons (not just
+ * icon buttons via :has()) so it works in every browser regardless of :has()
+ * support; vertical-align keeps buttons aligned with adjacent inputs.
+ */
+.wp-core-ui .button,
+.wp-core-ui .button-primary,
+.wp-core-ui .button-secondary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: $spacing-xs;
+	vertical-align: middle;
+}
+
+/*
+ * Core sets `.wp-core-ui .button .dashicons { line-height: 1.9; vertical-align: top }`
+ * (specificity 0,3,0) for its own 20px icon math. Match that specificity to
+ * override it so the icon sits at native size with no inflated line box; the
+ * button's flexbox (above) then centers it against the label.
+ */
+.wp-core-ui .button .dashicons,
+.wp-core-ui .button-primary .dashicons,
+.wp-core-ui .button-secondary .dashicons {
+	line-height: 1;
+	vertical-align: middle;
+	margin: 0;
+}
+
 /* Big round red delete button with depressible effect */
 .ash-nazg-big-red-button {
 	background: linear-gradient(to bottom, #dc3232 0%, #b92828 100%);
