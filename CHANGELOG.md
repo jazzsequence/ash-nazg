@@ -6,11 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [0.6.3] - 2026-05-20
+## [0.6.3] - 2026-07-09
+
+### Added
+
+- **Real PDS design tokens compiled into the build**: The plugin now depends on the public `@pantheon-systems/pds-design-tokens` npm package (exact-pinned) instead of a private `../pds-core` sibling checkout. `npm run copy:tokens` vendors the published light-mode token CSS to `assets/sass/_pds-tokens.scss` (committed, like `assets/js/libs/chart.umd.js`), which `admin.scss` `@use`s so the real `:root{--pds-*}` definitions compile into `admin.css`. The CSS build no longer depends on a private repo and works in CI, and the shipped artifact is fully self-contained.
 
 ### Fixed
 
-- **PDS design tokens not included in release artifact**: `admin.css` contained `@import url()` references to `pds-design-tokens-light-mode.css` and `pds/foundations/index.css`, both of which are excluded from the release via `.distignore`. All `var(--pds-*)` SASS variables in `_variables.scss` are now hardcoded to their PDS light-mode token values, and the two local `@import url()` lines are removed from `admin.scss`. The compiled `admin.css` is now fully self-contained — no runtime CSS dependencies on files that aren't in the release artifact. Five remaining `var(--pds-*)` references in component SCSS files are preserved because they already have hardcoded CSS fallback values.
+- **WordPress 7.0 styling breakage**: WordPress 7.0's "Modern" design system exposed a latent bug — the shipped `admin.css` referenced `var(--pds-*)` tokens that were never defined anywhere (the token source was gitignored, distignored, and never imported), so modals lost their background/shadow and colors broke on real installs. Tokens are now defined in the compiled CSS (see Added), so every reference resolves.
+- **WordPress 7.0 button and icon alignment**: WP 7 enlarged core buttons (40px) and restyled dashicon metrics, which made the plugin's icon buttons balloon and pushed dashicons off-center. Buttons now use flexbox centering (no `:has()`, so it works in every browser) with a matching-specificity override of core's `.wp-core-ui .button .dashicons` line-height, keeping the plugin's buttons blended with the new design system.
+- **Development page fatal error**: The page fataled with "Cannot use object of type WP_Error as array" when the Pantheon API returned a `WP_Error` (e.g. an invalid or expired token). The environment list is now guarded before use.
+- **Metrics filter row alignment**: The Load Metrics / Refresh buttons now match the 48px height of the adjacent WP 7 select controls so the row aligns.
+- **Site Label input width**: The inline-edit input for the site label was constrained (WordPress's `.regular-text` was wider than the field needs).
+- **License metadata mismatch**: `package.json` and the plugin header declared `MIT` while the bundled `LICENSE` file and README are GPL v2 or later. Both now declare GPL-2.0-or-later to match.
+
+### Changed
+
+- **Development asset cache-busting**: Plugin CSS/JS are enqueued with a `filemtime()`-based version in development (WP_DEBUG or a local environment) so rebuilt assets are not served stale from the browser or Pantheon edge cache; production continues to use the stable plugin version.
 
 ---
 

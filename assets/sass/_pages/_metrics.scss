@@ -18,6 +18,15 @@
 	}
 }
 
+/* WP 7 form controls (48px) are taller than buttons (40px). Match the select
+   height so the metrics filter row's inputs and buttons align. Target by ID
+   (specificity 1,0,0) to cleanly beat core's `.wp-core-ui .button { min-height:
+   40px }` without relying on stylesheet load order. */
+#load-metrics,
+#refresh-metrics {
+	min-height: 48px;
+}
+
 .ash-nazg-filter-group {
 	display: flex;
 	flex-direction: column;

@@ -28,7 +28,7 @@ if ( $environments && is_array( $environments ) ) {
 $ordered_envs = array_filter(
 	array_merge( [ 'dev' ], $env_multidevs, $std_envs ),
 	function ( $id ) use ( $environments ) {
-		return isset( $environments[ $id ] );
+		return is_array( $environments ) && isset( $environments[ $id ] );
 	}
 );
 ?>
