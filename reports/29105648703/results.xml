@@ -1,0 +1,171 @@
+<testsuites id="" name="" tests="66" failures="0" skipped="0" errors="0" time="114.562344">
+<testsuite name="global.setup.js" timestamp="2026-07-10T15:59:12.560Z" hostname="setup" tests="1" failures="0" skipped="0" time="1.254" errors="0">
+<testcase name="authenticate as admin" classname="global.setup.js" time="1.254">
+</testcase>
+</testsuite>
+<testsuite name="a11y.spec.js" timestamp="2026-07-10T15:59:12.560Z" hostname="chromium" tests="12" failures="0" skipped="0" time="221.03" errors="0">
+<testcase name="Dashboard page has no critical/serious a11y violations" classname="a11y.spec.js" time="20.736">
+</testcase>
+<testcase name="Metrics page has no critical/serious a11y violations" classname="a11y.spec.js" time="33.662">
+</testcase>
+<testcase name="Development page has no critical/serious a11y violations" classname="a11y.spec.js" time="34.584">
+</testcase>
+<testcase name="Addons page has no critical/serious a11y violations" classname="a11y.spec.js" time="20.583">
+</testcase>
+<testcase name="Workflows page has no critical/serious a11y violations" classname="a11y.spec.js" time="8.746">
+</testcase>
+<testcase name="Backups page has no critical/serious a11y violations" classname="a11y.spec.js" time="17.11">
+</testcase>
+<testcase name="Clone page has no critical/serious a11y violations" classname="a11y.spec.js" time="7.045">
+</testcase>
+<testcase name="Logs page has no critical/serious a11y violations" classname="a11y.spec.js" time="18.921">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/a11y-Logs-page-has-no-critical-serious-a11y-violations-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|../test-results/a11y-Logs-page-has-no-critical-serious-a11y-violations-chromium/video-1.webm]]
+
+[[ATTACHMENT|../test-results/a11y-Logs-page-has-no-critical-serious-a11y-violations-chromium/video.webm]]
+
+[[ATTACHMENT|../test-results/a11y-Logs-page-has-no-critical-serious-a11y-violations-chromium/error-context.md]]
+
+[[ATTACHMENT|../test-results/a11y-Logs-page-has-no-critical-serious-a11y-violations-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Settings page has no critical/serious a11y violations" classname="a11y.spec.js" time="18.08">
+</testcase>
+<testcase name="Dashboard widget on WP admin index has no a11y violations" classname="a11y.spec.js" time="15.772">
+</testcase>
+<testcase name="Backups page tab switching maintains a11y" classname="a11y.spec.js" time="13.89">
+</testcase>
+<testcase name="Metrics page with data loaded has no a11y violations" classname="a11y.spec.js" time="11.901">
+</testcase>
+</testsuite>
+<testsuite name="addons.spec.js" timestamp="2026-07-10T15:59:12.560Z" hostname="chromium" tests="6" failures="0" skipped="0" time="18.262" errors="0">
+<testcase name="Addons › page renders without errors" classname="addons.spec.js" time="3.928">
+</testcase>
+<testcase name="Addons › Redis addon toggle is present" classname="addons.spec.js" time="3.586">
+</testcase>
+<testcase name="Addons › Solr addon toggle is present" classname="addons.spec.js" time="2.842">
+</testcase>
+<testcase name="Addons › Elasticsearch shows Coming Soon badge" classname="addons.spec.js" time="2.796">
+</testcase>
+<testcase name="Addons › Redis status reflects live environment state" classname="addons.spec.js" time="2.556">
+</testcase>
+<testcase name="Addons › save button is present and enabled" classname="addons.spec.js" time="2.554">
+</testcase>
+</testsuite>
+<testsuite name="backups-actions.spec.js" timestamp="2026-07-10T15:59:12.560Z" hostname="chromium" tests="4" failures="0" skipped="0" time="21.787" errors="0">
+<testcase name="Backups — create and download › backup type selector has all expected options" classname="backups-actions.spec.js" time="3.521">
+</testcase>
+<testcase name="Backups — create and download › retention period field accepts a value" classname="backups-actions.spec.js" time="3.288">
+</testcase>
+<testcase name="Backups — create and download › create database backup and verify it appears in the list" classname="backups-actions.spec.js" time="10.656">
+</testcase>
+<testcase name="Backups — create and download › download button generates a signed URL" classname="backups-actions.spec.js" time="4.322">
+</testcase>
+</testsuite>
+<testsuite name="backups.spec.js" timestamp="2026-07-10T15:59:12.560Z" hostname="chromium" tests="5" failures="0" skipped="0" time="25.638" errors="0">
+<testcase name="Backups › page renders with tabbed environment UI" classname="backups.spec.js" time="4.52">
+</testcase>
+<testcase name="Backups › default tab is visible and active" classname="backups.spec.js" time="4.956">
+</testcase>
+<testcase name="Backups › tab switching shows the correct panel" classname="backups.spec.js" time="5.759">
+</testcase>
+<testcase name="Backups › backup creation form renders" classname="backups.spec.js" time="5.323">
+</testcase>
+<testcase name="Backups › existing backups section loads" classname="backups.spec.js" time="5.08">
+</testcase>
+</testsuite>
+<testsuite name="clone.spec.js" timestamp="2026-07-10T15:59:12.560Z" hostname="chromium" tests="5" failures="0" skipped="0" time="16.114" errors="0">
+<testcase name="Clone › page renders without errors" classname="clone.spec.js" time="2.312">
+</testcase>
+<testcase name="Clone › source environment selector is present" classname="clone.spec.js" time="3.994">
+</testcase>
+<testcase name="Clone › target environment selector is present" classname="clone.spec.js" time="3.222">
+</testcase>
+<testcase name="Clone › database and files checkboxes are present" classname="clone.spec.js" time="3.487">
+</testcase>
+<testcase name="Clone › clone button is present" classname="clone.spec.js" time="3.099">
+</testcase>
+</testsuite>
+<testsuite name="dashboard.spec.js" timestamp="2026-07-10T15:59:12.560Z" hostname="chromium" tests="9" failures="0" skipped="0" time="35.813" errors="0">
+<testcase name="Dashboard › renders the Pantheon branded header" classname="dashboard.spec.js" time="3.727">
+</testcase>
+<testcase name="Dashboard › shows the 50/50 two-column layout" classname="dashboard.spec.js" time="4.429">
+</testcase>
+<testcase name="Dashboard › environment card shows Pantheon site info" classname="dashboard.spec.js" time="3.222">
+</testcase>
+<testcase name="Dashboard › API endpoint testing table renders" classname="dashboard.spec.js" time="4.021">
+</testcase>
+<testcase name="Dashboard › inline site label editing is accessible" classname="dashboard.spec.js" time="3.882">
+</testcase>
+<testcase name="Dashboard › connection mode toggle is present with a valid mode" classname="dashboard.spec.js" time="3.81">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget renders on wp-admin index" classname="dashboard.spec.js" time="4.146">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget chart renders after data loads" classname="dashboard.spec.js" time="4.715">
+</testcase>
+<testcase name="WP Admin Dashboard Widget › widget links to Metrics page" classname="dashboard.spec.js" time="3.861">
+</testcase>
+</testsuite>
+<testsuite name="development.spec.js" timestamp="2026-07-10T15:59:12.560Z" hostname="chromium" tests="6" failures="0" skipped="0" time="28.382" errors="0">
+<testcase name="Development › page renders without errors" classname="development.spec.js" time="5.041">
+</testcase>
+<testcase name="Development › upstream updates section renders" classname="development.spec.js" time="4.943">
+</testcase>
+<testcase name="Development › recent commits card renders" classname="development.spec.js" time="4.665">
+</testcase>
+<testcase name="Development › environments card renders with environment list" classname="development.spec.js" time="4.222">
+</testcase>
+<testcase name="Development › refresh button on recent commits is clickable" classname="development.spec.js" time="4.478">
+</testcase>
+<testcase name="Development › code deployment section renders" classname="development.spec.js" time="5.033">
+</testcase>
+</testsuite>
+<testsuite name="logs.spec.js" timestamp="2026-07-10T15:59:12.560Z" hostname="chromium" tests="4" failures="0" skipped="0" time="12.517" errors="0">
+<testcase name="Logs › page renders without errors" classname="logs.spec.js" time="2.564">
+</testcase>
+<testcase name="Logs › Fetch Logs button is present and clickable" classname="logs.spec.js" time="2.901">
+</testcase>
+<testcase name="Logs › Clear Logs button is present" classname="logs.spec.js" time="3.728">
+</testcase>
+<testcase name="Logs › fetching logs loads content" classname="logs.spec.js" time="3.324">
+</testcase>
+</testsuite>
+<testsuite name="metrics.spec.js" timestamp="2026-07-10T15:59:12.560Z" hostname="chromium" tests="6" failures="0" skipped="0" time="36.123" errors="0">
+<testcase name="Metrics › page renders summary statistics above filters" classname="metrics.spec.js" time="4.498">
+</testcase>
+<testcase name="Metrics › Load Metrics button fetches real API data" classname="metrics.spec.js" time="9.323">
+</testcase>
+<testcase name="Metrics › environment selector contains expected options" classname="metrics.spec.js" time="3.676">
+</testcase>
+<testcase name="Metrics › duration selector has all time period options" classname="metrics.spec.js" time="3.751">
+</testcase>
+<testcase name="Metrics › summary stats update after data loads" classname="metrics.spec.js" time="8.719">
+</testcase>
+<testcase name="Metrics › filter persistence: selections survive page reload" classname="metrics.spec.js" time="6.156">
+</testcase>
+</testsuite>
+<testsuite name="settings.spec.js" timestamp="2026-07-10T15:59:12.560Z" hostname="chromium" tests="4" failures="0" skipped="0" time="8.824" errors="0">
+<testcase name="Settings › settings page renders without errors" classname="settings.spec.js" time="2.2">
+</testcase>
+<testcase name="Settings › machine token section is present" classname="settings.spec.js" time="1.725">
+</testcase>
+<testcase name="Settings › session token section renders" classname="settings.spec.js" time="2.512">
+</testcase>
+<testcase name="Settings › per-user token documentation is visible" classname="settings.spec.js" time="2.387">
+</testcase>
+</testsuite>
+<testsuite name="workflows.spec.js" timestamp="2026-07-10T15:59:12.560Z" hostname="chromium" tests="4" failures="0" skipped="0" time="13.39" errors="0">
+<testcase name="Workflows › page renders without errors" classname="workflows.spec.js" time="3.614">
+</testcase>
+<testcase name="Workflows › available workflows section renders" classname="workflows.spec.js" time="3.412">
+</testcase>
+<testcase name="Workflows › Object Cache Pro workflow card is present" classname="workflows.spec.js" time="3.404">
+</testcase>
+<testcase name="Workflows › trigger workflow button is present" classname="workflows.spec.js" time="2.96">
+</testcase>
+</testsuite>
+</testsuites>
