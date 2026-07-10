@@ -17,10 +17,10 @@
 			$('#ash-nazg-backup-env-' + env).removeClass('hidden');
 		});
 
-		// Toggle backup set visibility
-		$('.ash-nazg-backup-toggle').on('click keypress', function(e) {
-			// Allow both click and Enter key
-			if (e.type === 'keypress' && e.which !== 13) {
+		// Toggle backup set visibility — keydown handles Enter (13) and Space (32)
+		// for role="button" keyboard accessibility (keypress is deprecated).
+		$('.ash-nazg-backup-toggle').on('click keydown', function(e) {
+			if (e.type === 'keydown' && e.which !== 13 && e.which !== 32) {
 				return;
 			}
 
