@@ -1,5 +1,12 @@
 # Ash Nazg
 
+[[![E2E & Accessibility Tests](https://github.com/jazzsequence/ash-nazg/actions/workflows/e2e.yml/badge.svg)](https://github.com/jazzsequence/ash-nazg/actions/workflows/e2e.yml)](https://github.com/jazzsequence/ash-nazg/actions/workflows/e2e.yml)
+[[![Lint & Test](https://github.com/jazzsequence/ash-nazg/actions/workflows/lint-test.yml/badge.svg)](https://github.com/jazzsequence/ash-nazg/actions/workflows/lint-test.yml)](https://github.com/jazzsequence/ash-nazg/actions/workflows/lint-test.yml)
+[![GitHub License](https://img.shields.io/github/license/jazzsequence/ash-nazg)](https://github.com/jazzsequence/ash-nazg?tab=GPL-2.0-1-ov-file)
+[![GitHub Release](https://img.shields.io/github/v/release/jazzsequence/ash-nazg)](https://github.com/jazzsequence/ash-nazg/releases)
+
+> _Ash nazg durbatulûk, ash nazg gimbatul, ash nazg thrakatulûk, agh burzum-ishi krimpatul_
+
 **One ring to rule them all** - Manage your Pantheon hosting environment directly from WordPress.
 
 ![One Ring](https://static.wikia.nocookie.net/lotr/images/0/0d/The_One_Ring_on_a_map_of_Middle-earth.jpg)
