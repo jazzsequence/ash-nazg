@@ -1,7 +1,7 @@
 # Ash Nazg
 
 [![E2E & Accessibility Tests](https://github.com/jazzsequence/ash-nazg/actions/workflows/e2e.yml/badge.svg)](https://github.com/jazzsequence/ash-nazg/actions/workflows/e2e.yml)
-[![Lint & Test](https://github.com/jazzsequence/ash-nazg/actions/workflows/lint-test.yml/badge.svg)](https://github.com/jazzsequence/ash-nazg/actions/workflows/lint-test.yml)]
+[![Lint & Test](https://github.com/jazzsequence/ash-nazg/actions/workflows/lint-test.yml/badge.svg)](https://github.com/jazzsequence/ash-nazg/actions/workflows/lint-test.yml)
 [![GitHub License](https://img.shields.io/github/license/jazzsequence/ash-nazg)](https://github.com/jazzsequence/ash-nazg?tab=GPL-2.0-1-ov-file)
 [![GitHub Release](https://img.shields.io/github/v/release/jazzsequence/ash-nazg)](https://github.com/jazzsequence/ash-nazg/releases)
 
