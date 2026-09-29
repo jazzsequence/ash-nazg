@@ -1,5 +1,33 @@
 # Ash-Nazg TODO List
 
+## Pantheon API v0 → v1 migration follow-ups
+
+The plugin was migrated to Pantheon's v1 Public API. These items need a live v1 Personal Access Token to verify — the rewrite was built against the OpenAPI spec/schema only, since no live token was available during migration.
+
+### Verify live (highest priority)
+- [ ] Confirm a v1 Personal Access Token actually authenticates directly as a Bearer token against `/v1/*` endpoints as documented
+- [ ] Confirm whether a v1 Personal Access Token authenticates against the legacy `/v0/authorize/machine-token` exchange, or whether the two credentials are truly mutually exclusive (currently assumed mutually exclusive — a separate Machine Token field exists in Settings specifically because of this)
+- [ ] Verify Relay-connection pagination params (`pager[first]=N`, `currentUser_workspacesConnection_first=N`) are serialized correctly — exact query-param encoding for nested object args was not documented in the OpenAPI spec
+- [ ] Verify `get_backup_download_url()`'s assumption that a backup's `id`/folder name is (or starts with) its Unix timestamp, used to derive the `timestamp` query param v1's `backup-download-urls` endpoint requires
+- [ ] Verify `clone_database()`/`clone_files()` request body shapes (`fromEnvironment`, `wpReplaceSiteURL`) against a live call
+- [ ] Verify `get_upstream_updates()`'s approximation (trigger the async `upstream-updates/check` workflow, poll, then re-read `commitLog`/`composerUpdates`) actually produces useful data — v1's check endpoint is an async workflow, unlike v0's synchronous response
+
+### Hybrid v0 fallback — revisit once Pantheon ships v1 equivalents
+These features have no v1 endpoint yet and fall back to the legacy v0 API via a separate legacy Machine Token (kept in Settings alongside the new Personal Access Token):
+- [ ] `update_site_label()` — no v1 PUT/PATCH on `/sites/{id}`
+- [ ] `delete_site()` — no v1 `DELETE /sites/{id}`
+- [ ] `get_environment_metrics()` / `clear_metrics_cache()` — no v1 metrics endpoint (schema types exist, nothing serves them)
+- [ ] `get_domains()` — no v1 domain-listing endpoint (only create/delete/set-primary/verify)
+- [ ] `get_code_tips()` — no v1 equivalent found
+- [ ] `trigger_workflow()` (Install Object Cache Pro on the Workflows page) — no generic v1 workflow-trigger endpoint
+
+### Known data gaps (not fixable without a v1 API change)
+- [ ] Backups page shows "Unknown" for backup Size and Expires columns — v1's `Backup`/`BackupDownload` schema has no `size` or `ttl` fields
+- [ ] `create_backup()` can no longer create a single-element (code-only/database-only/files-only) backup — v1's `createSiteBackup` only creates a full code+database+files combo; the `$element` UI selector is currently a no-op for creation (still respected for restore/download)
+
+## Pre-existing issue (unrelated to the v1 migration, discovered while testing it)
+- [ ] `composer test` silently reports success while actually dropping `test-plugin.php` (and everything alphabetically after it: `test-state-management.php`, `test-user-tokens.php`) from every run. Root cause: `test-plugin.php` is the only test file that does `require_once ASH_NAZG_PLUGIN_FILE`, and `ash-nazg.php` starts with `if ( ! defined( 'ABSPATH' ) ) { exit; }` — `tests/bootstrap.php` never defines `ABSPATH`, so that bare `exit;` kills the entire PHP process with code 0 the moment that test file loads, silently truncating the whole PHPUnit run (both single-site and multisite) before those files' tests execute, with no failure reported. Confirmed pre-existing and unrelated to the v0→v1 API work (the file is byte-identical to HEAD). Fix is likely either defining `ABSPATH` in `tests/bootstrap.php` or having `test-plugin.php` require the individual `includes/*.php` files directly like every other test does, instead of the full plugin bootstrap file. Until fixed, verify test coverage for changes touching those 3 files with `vendor/bin/phpunit --filter '^(?!.*Test_Plugin).*$'` instead of `composer test`.
+
 ## Planned Features
 
 ### UI/UX Improvements
