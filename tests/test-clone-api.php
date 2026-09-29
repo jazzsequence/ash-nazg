@@ -41,7 +41,7 @@ class Test_Clone_API extends TestCase {
 
 		// Check that clone_database uses correct endpoint.
 		$this->assertStringContainsString(
-			'/v0/sites/%s/environments/%s/database/clone',
+			'/sites/%s/environments/%s/database/clone',
 			$api_file,
 			'clone_database should use correct API endpoint'
 		);
@@ -57,7 +57,7 @@ class Test_Clone_API extends TestCase {
 
 		// Check that clone_files uses correct endpoint.
 		$this->assertStringContainsString(
-			'/v0/sites/%s/environments/%s/files/clone',
+			'/sites/%s/environments/%s/files/clone',
 			$api_file,
 			'clone_files should use correct API endpoint'
 		);
@@ -71,11 +71,11 @@ class Test_Clone_API extends TestCase {
 
 		$api_file = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
 
-		// Check that from_environment parameter is used.
+		// Check that fromEnvironment parameter is used.
 		$this->assertMatchesRegularExpression(
-			'/from_environment.*=>.*from_env/',
+			'/fromEnvironment.*=>.*from_env/',
 			$api_file,
-			'clone_database should use from_environment parameter'
+			'clone_database should use fromEnvironment parameter'
 		);
 
 		// Check that from_url and to_url are optional.
@@ -99,11 +99,11 @@ class Test_Clone_API extends TestCase {
 
 		$api_file = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
 
-		// Check that from_environment parameter is used.
+		// Check that fromEnvironment parameter is used.
 		$this->assertMatchesRegularExpression(
-			'/from_environment.*=>.*from_env/',
+			'/fromEnvironment.*=>.*from_env/',
 			$api_file,
-			'clone_files should use from_environment parameter'
+			'clone_files should use fromEnvironment parameter'
 		);
 	}
 

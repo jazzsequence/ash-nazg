@@ -43,26 +43,29 @@ class Test_Git_API extends TestCase {
 	}
 
 	/**
-	 * Test that get_environment_commits uses correct endpoint.
+	 * Test that get_environment_commits derives commits from get_environments().
+	 *
+	 * v1 has no dedicated commits endpoint - commit history is the `commitLog`
+	 * field nested on each Environment returned by get_environments().
 	 */
 	public function test_get_environment_commits_endpoint() {
 		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
 
-		$this->assertStringContainsString(
-			'/v0/sites/%s/environments/%s/commits',
+		$this->assertMatchesRegularExpression(
+			'/function get_environment_commits.*get_environments.*commitLog/s',
 			$file_contents,
-			'get_environment_commits should use correct API endpoint'
+			'get_environment_commits should derive commits from get_environments()\'s commitLog field'
 		);
 	}
 
 	/**
-	 * Test that get_upstream_updates uses correct endpoint.
+	 * Test that get_upstream_updates uses the v1 async check endpoint.
 	 */
 	public function test_get_upstream_updates_endpoint() {
 		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
 
 		$this->assertStringContainsString(
-			'/v0/sites/%s/upstream-updates',
+			'/sites/%s/environments/%s/upstream-updates/check',
 			$file_contents,
 			'get_upstream_updates should use correct API endpoint'
 		);
@@ -171,7 +174,7 @@ class Test_Git_API extends TestCase {
 		);
 
 		$this->assertMatchesRegularExpression(
-			'/function get_upstream_updates.*debug_log.*Failed to get upstream updates/s',
+			'/function get_upstream_updates.*debug_log.*Failed to check upstream updates/s',
 			$file_contents,
 			'get_upstream_updates should log errors using debug_log helper'
 		);

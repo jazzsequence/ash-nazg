@@ -49,22 +49,22 @@ class Test_Backups_API extends TestCase {
 
 		// Should use correct backup endpoints.
 		$this->assertStringContainsString(
-			'/v0/sites/%s/environments/%s/backups/catalog',
+			'/sites/%s/environments/%s/backups',
 			$api_file_contents,
-			'Should use backups catalog endpoint'
+			'Should use backups listing endpoint'
 		);
 		$this->assertStringContainsString(
-			'/v0/sites/%s/environments/%s/backups',
+			'/sites/%s/backups?environment=%s',
 			$api_file_contents,
-			'Should use backups creation endpoint'
+			'Should use backup creation endpoint'
 		);
 		$this->assertStringContainsString(
-			'/v0/sites/%s/environments/%s/backups/%s/restore',
+			'/sites/%s/backups/restore?key=%s',
 			$api_file_contents,
 			'Should use backup restore endpoint'
 		);
 		$this->assertStringContainsString(
-			'/v0/sites/%s/environments/%s/backups/%s/%s/download-url',
+			'/sites/%s/environments/%s/backup-download-urls',
 			$api_file_contents,
 			'Should use backup download URL endpoint'
 		);
@@ -116,11 +116,11 @@ class Test_Backups_API extends TestCase {
 
 		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
 
-		// Should have keep_for parameter in backup creation.
+		// Should convert keep_for (days) to v1's ttl (seconds) parameter.
 		$this->assertStringContainsString(
-			"'keep_for'",
+			'$keep_for * DAY_IN_SECONDS',
 			$api_file_contents,
-			'Should include keep_for parameter in backup creation'
+			'Should convert keep_for days to ttl seconds for v1'
 		);
 
 		// Should validate keep_for (minimum 1 day).
@@ -267,7 +267,7 @@ class Test_Backups_API extends TestCase {
 			'Should log backup retrieval'
 		);
 		$this->assertStringContainsString(
-			'Created %s backup',
+			'Created backup for',
 			$api_file_contents,
 			'Should log backup creation'
 		);
