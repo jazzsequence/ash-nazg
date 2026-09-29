@@ -214,8 +214,8 @@
 
 							// Calculate progress for this workflow
 							let progress = 0;
-							if (status.step && status.operations && status.operations.length > 0) {
-								progress = Math.round((status.step / status.operations.length) * 100);
+							if (status.progress) {
+								progress = status.progress;
 							}
 
 							workflowStatuses[workflowId] = {

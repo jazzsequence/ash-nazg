@@ -88,15 +88,6 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	 */
 	$api_env = map_local_env_to_dev( $env );
 
-	// Check if site uses integrated composer by checking environment settings.
-	$has_integrated_composer = false;
-	if ( $site_id && $api_env ) {
-		$env_settings = api_request( sprintf( '/v0/sites/%s/environments/%s/settings', $site_id, $api_env ) );
-		if ( ! is_wp_error( $env_settings ) && isset( $env_settings['build_step'] ) ) {
-			$has_integrated_composer = (bool) $env_settings['build_step'];
-		}
-	}
-
 	$site_endpoints = [];
 	$user_endpoints = [];
 
@@ -105,39 +96,35 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 
 	if ( $site_id ) {
 		$site_endpoints['Sites'][] = test_endpoint(
-			sprintf( '/v0/sites/%s', $site_id ),
+			sprintf( '/sites/%s', $site_id ),
 			__( 'Site Information', 'ash-nazg' ),
-			__( 'Basic site details and metadata', 'ash-nazg' )
+			__( 'Basic site details, settings, and addons', 'ash-nazg' )
 		);
 
 		$site_endpoints['Sites'][] = test_endpoint(
-			sprintf( '/v0/sites/%s/environments', $site_id ),
+			sprintf( '/sites/%s/environments?pager[first]=50', $site_id ),
 			__( 'Environments List', 'ash-nazg' ),
-			__( 'All environments (dev, test, live, multidevs)', 'ash-nazg' )
+			__( 'All environments (dev, test, live, multidevs), including commit log, diffstat, and env variables', 'ash-nazg' )
 		);
 
 		$site_endpoints['Sites'][] = test_endpoint(
-			sprintf( '/v0/sites/%s/memberships/users', $site_id ),
+			sprintf( '/sites/%s/users', $site_id ),
 			__( 'Team Members', 'ash-nazg' ),
 			__( 'Site team members and their roles', 'ash-nazg' )
 		);
 
-		$site_endpoints['Sites'][] = test_endpoint(
-			sprintf( '/v0/sites/%s/memberships/organizations', $site_id ),
-			__( 'Organization Memberships', 'ash-nazg' ),
-			__( 'Organizations associated with this site', 'ash-nazg' )
-		);
-
-		$site_endpoints['Sites'][] = test_endpoint(
+		$site_endpoints['Sites'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/sites/%s/plan', $site_id ),
 			__( 'Site Plan', 'ash-nazg' ),
-			__( 'Current plan and pricing information', 'ash-nazg' )
+			__( 'Current plan and pricing information', 'ash-nazg' ),
+			__( 'Merged into Site Information (settings.planName / settings.serviceLevel) in v1', 'ash-nazg' )
 		);
 
-		$site_endpoints['Sites'][] = test_endpoint(
+		$site_endpoints['Sites'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/sites/%s/available-plans', $site_id ),
 			__( 'Available Plans', 'ash-nazg' ),
-			__( 'Plans available for upgrade/downgrade', 'ash-nazg' )
+			__( 'Plans available for upgrade/downgrade', 'ash-nazg' ),
+			__( 'No v1 equivalent yet', 'ash-nazg' )
 		);
 	}
 
@@ -145,10 +132,11 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	$site_endpoints['Authorization'] = [];
 
 	if ( $site_id ) {
-		$site_endpoints['Authorization'][] = test_endpoint(
+		$site_endpoints['Authorization'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/sites/%s/authorizations', $site_id ),
 			__( 'User Permissions', 'ash-nazg' ),
-			__( 'Current user permissions on this site', 'ash-nazg' )
+			__( 'Current user permissions on this site', 'ash-nazg' ),
+			__( 'No v1 equivalent yet', 'ash-nazg' )
 		);
 	}
 
@@ -156,47 +144,42 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	$site_endpoints['Code'] = [];
 
 	if ( $site_id ) {
-		$site_endpoints['Code'][] = test_endpoint(
+		$site_endpoints['Code'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/sites/%s/code-tips', $site_id ),
 			__( 'Git Branches', 'ash-nazg' ),
-			__( 'Available Git branches and commits', 'ash-nazg' )
+			__( 'Available Git branches and commits', 'ash-nazg' ),
+			__( 'No v1 equivalent yet', 'ash-nazg' )
 		);
 
-		$site_endpoints['Code'][] = test_endpoint(
+		$site_endpoints['Code'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/sites/%s/upstream-updates', $site_id ),
 			__( 'Upstream Updates', 'ash-nazg' ),
-			__( 'Available upstream update commits', 'ash-nazg' )
+			__( 'Available upstream update commits', 'ash-nazg' ),
+			__( 'v1 exposes this as an async check workflow (POST upstream-updates/check), not a synchronous GET - unsuitable for this status page', 'ash-nazg' )
 		);
 	}
 
 	if ( $site_id && $api_env ) {
-		$site_endpoints['Code'][] = test_endpoint(
+		$site_endpoints['Code'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/sites/%s/environments/%s/commits', $site_id, $api_env ),
 			__( 'Commit History', 'ash-nazg' ),
-			__( 'Git commit history for environment', 'ash-nazg' )
+			__( 'Git commit history for environment', 'ash-nazg' ),
+			__( 'Merged into Environments List (commitLog field) in v1', 'ash-nazg' )
 		);
 
-		$site_endpoints['Code'][] = test_endpoint(
+		$site_endpoints['Code'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/sites/%s/environments/%s/diffstat', $site_id, $api_env ),
 			__( 'Uncommitted Changes', 'ash-nazg' ),
-			__( 'Git diff for uncommitted changes (SFTP mode)', 'ash-nazg' )
+			__( 'Git diff for uncommitted changes (SFTP mode)', 'ash-nazg' ),
+			__( 'Merged into Environments List (diffstat field) in v1', 'ash-nazg' )
 		);
 
-		// Only test Composer Updates if site uses integrated composer.
-		if ( $has_integrated_composer ) {
-			$site_endpoints['Code'][] = test_endpoint(
-				sprintf( '/v0/sites/%s/environments/%s/build/updates', $site_id, $api_env ),
-				__( 'Composer Updates', 'ash-nazg' ),
-				__( 'Composer dependencies changes', 'ash-nazg' )
-			);
-		} else {
-			$site_endpoints['Code'][] = mark_endpoint_unavailable(
-				sprintf( '/v0/sites/%s/environments/%s/build/updates', $site_id, $api_env ),
-				__( 'Composer Updates', 'ash-nazg' ),
-				__( 'Composer dependencies changes', 'ash-nazg' ),
-				__( 'Not available - site does not use Integrated Composer (build_step is disabled)', 'ash-nazg' )
-			);
-		}
+		$site_endpoints['Code'][] = mark_endpoint_unavailable(
+			sprintf( '/v0/sites/%s/environments/%s/build/updates', $site_id, $api_env ),
+			__( 'Composer Updates', 'ash-nazg' ),
+			__( 'Composer dependencies changes', 'ash-nazg' ),
+			__( 'Merged into Environments List (composerUpdates field) in v1', 'ash-nazg' )
+		);
 	}
 
 	// Backups.
@@ -204,15 +187,16 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 
 	if ( $site_id && $api_env ) {
 		$site_endpoints['Backups'][] = test_endpoint(
-			sprintf( '/v0/sites/%s/environments/%s/backups/catalog', $site_id, $api_env ),
+			sprintf( '/sites/%s/environments/%s/backups', $site_id, $api_env ),
 			__( 'Backups Catalog', 'ash-nazg' ),
 			__( 'All available backups', 'ash-nazg' )
 		);
 
-		$site_endpoints['Backups'][] = test_endpoint(
+		$site_endpoints['Backups'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/sites/%s/environments/%s/backups/schedule', $site_id, $api_env ),
 			__( 'Backup Schedule', 'ash-nazg' ),
-			__( 'Automated backup schedule configuration', 'ash-nazg' )
+			__( 'Automated backup schedule configuration', 'ash-nazg' ),
+			__( 'v1 only exposes PUT/DELETE for the backup schedule, no GET', 'ash-nazg' )
 		);
 	}
 
@@ -220,16 +204,18 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	$site_endpoints['Domains'] = [];
 
 	if ( $site_id && $api_env ) {
-		$site_endpoints['Domains'][] = test_endpoint(
+		$site_endpoints['Domains'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/sites/%s/environments/%s/domains', $site_id, $api_env ),
 			__( 'Custom Domains', 'ash-nazg' ),
-			__( 'Domains associated with environment', 'ash-nazg' )
+			__( 'Domains associated with environment', 'ash-nazg' ),
+			__( 'No v1 domain-listing endpoint yet (only create/delete/set-primary/verify)', 'ash-nazg' )
 		);
 
-		$site_endpoints['Domains'][] = test_endpoint(
+		$site_endpoints['Domains'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/sites/%s/environments/%s/domains/dns', $site_id, $api_env ),
 			__( 'DNS Recommendations', 'ash-nazg' ),
-			__( 'DNS configuration recommendations', 'ash-nazg' )
+			__( 'DNS configuration recommendations', 'ash-nazg' ),
+			__( 'No v1 equivalent yet', 'ash-nazg' )
 		);
 	}
 
@@ -237,16 +223,18 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	$site_endpoints['Settings'] = [];
 
 	if ( $site_id && $api_env ) {
-		$site_endpoints['Settings'][] = test_endpoint(
+		$site_endpoints['Settings'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/sites/%s/environments/%s/settings', $site_id, $api_env ),
 			__( 'Environment Settings', 'ash-nazg' ),
-			__( 'Configuration settings for environment', 'ash-nazg' )
+			__( 'Configuration settings for environment', 'ash-nazg' ),
+			__( 'Merged into Site Information (settings field) in v1', 'ash-nazg' )
 		);
 
-		$site_endpoints['Settings'][] = test_endpoint(
+		$site_endpoints['Settings'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/sites/%s/environments/%s/variables', $site_id, $api_env ),
 			__( 'Environment Variables', 'ash-nazg' ),
-			__( 'Environment-specific variables', 'ash-nazg' )
+			__( 'Environment-specific variables', 'ash-nazg' ),
+			__( 'Merged into Environments List (envVariables field) in v1', 'ash-nazg' )
 		);
 	}
 
@@ -254,10 +242,11 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	$site_endpoints['Metrics'] = [];
 
 	if ( $site_id && $api_env ) {
-		$site_endpoints['Metrics'][] = test_endpoint(
+		$site_endpoints['Metrics'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/sites/%s/environments/%s/metrics', $site_id, $api_env ),
 			__( 'Traffic Metrics', 'ash-nazg' ),
-			__( 'Pages served, visits, cache performance', 'ash-nazg' )
+			__( 'Pages served, visits, cache performance', 'ash-nazg' ),
+			__( 'No v1 endpoint yet - falls back to legacy v0 (requires a Machine Token)', 'ash-nazg' )
 		);
 	}
 
@@ -266,7 +255,7 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 
 	if ( $site_id ) {
 		$site_endpoints['Workflows'][] = test_endpoint(
-			sprintf( '/v0/sites/%s/workflows', $site_id ),
+			sprintf( '/sites/%s/workflows', $site_id ),
 			__( 'Site Workflows', 'ash-nazg' ),
 			__( 'All workflows for this site', 'ash-nazg' )
 		);
@@ -277,37 +266,41 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 
 	if ( $user_id ) {
 		$user_endpoints['User'][] = test_endpoint(
-			sprintf( '/v0/users/%s', $user_id ),
+			'/current-user?currentUser_workspacesConnection_first=50',
 			__( 'User Profile', 'ash-nazg' ),
-			__( 'Current user information', 'ash-nazg' )
+			__( 'Current user information, SSH keys, and workspace memberships', 'ash-nazg' )
 		);
 
-		$user_endpoints['User'][] = test_endpoint(
+		$user_endpoints['User'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/users/%s/keys', $user_id ),
 			__( 'SSH Keys', 'ash-nazg' ),
-			__( 'SSH public keys', 'ash-nazg' )
+			__( 'SSH public keys', 'ash-nazg' ),
+			__( 'Merged into User Profile (sshKeys field) in v1', 'ash-nazg' )
 		);
 
-		$user_endpoints['User'][] = test_endpoint(
+		$user_endpoints['User'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/users/%s/machine-tokens', $user_id ),
 			__( 'Machine Tokens', 'ash-nazg' ),
-			__( 'Active machine tokens', 'ash-nazg' )
+			__( 'Active machine tokens', 'ash-nazg' ),
+			__( 'Machine tokens are a v0-only concept; v1 personal access tokens have no listing endpoint', 'ash-nazg' )
 		);
 
-		$user_endpoints['User'][] = test_endpoint(
+		$user_endpoints['User'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/users/%s/memberships/sites', $user_id ),
 			__( 'User Sites', 'ash-nazg' ),
-			__( 'Sites where user has membership', 'ash-nazg' )
+			__( 'Sites where user has membership', 'ash-nazg' ),
+			__( 'No direct v1 equivalent - sites are listed per-workspace via workspace sitesConnection', 'ash-nazg' )
 		);
 
-		$user_endpoints['User'][] = test_endpoint(
+		$user_endpoints['User'][] = mark_endpoint_unavailable(
 			sprintf( '/v0/users/%s/memberships/organizations', $user_id ),
 			__( 'User Organizations', 'ash-nazg' ),
-			__( 'Organizations where user has membership', 'ash-nazg' )
+			__( 'Organizations where user has membership', 'ash-nazg' ),
+			__( 'Merged into User Profile (workspacesConnection field) in v1', 'ash-nazg' )
 		);
 
 		$user_endpoints['User'][] = test_endpoint(
-			sprintf( '/v0/users/%s/upstreams', $user_id ),
+			sprintf( '/users/%s/upstreams', $user_id ),
 			__( 'Available Upstreams', 'ash-nazg' ),
 			__( 'Upstreams available to user', 'ash-nazg' )
 		);
