@@ -176,7 +176,7 @@ function add_delete_site_menu() {
 	add_submenu_page(
 		'ash-nazg',
 		__( 'Delete Site', 'ash-nazg' ),
-		'<span style="background: #dc3232; color: #fff; padding: 2px 8px; border-radius: 3px;">⚠️ DO NOT CLICK</span>',
+		'<span class="ash-nazg-badge ash-nazg-badge-danger">⚠️ DO NOT CLICK</span>',
 		'manage_options',
 		'ash-nazg-delete-site',
 		__NAMESPACE__ . '\\render_delete_site_page'

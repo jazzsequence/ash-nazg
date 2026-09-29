@@ -26,9 +26,8 @@
 	</div>
 
 	<!-- Deletion Form -->
-	<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20"
-		style="border: 3px solid #dc3232; background: #fff8f8;">
-		<h2 style="color: #dc3232;">
+	<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20 ash-nazg-delete-site-confirm">
+		<h2>
 			<?php esc_html_e( 'Final Confirmation Required', 'ash-nazg' ); ?>
 		</h2>
 
@@ -49,7 +48,7 @@
 				>
 			</p>
 
-			<p style="text-align: center; margin: 40px 0;">
+			<p class="ash-nazg-delete-site-submit">
 				<button
 					type="submit"
 					id="delete-site-button"
@@ -64,16 +63,16 @@
 	</div>
 
 	<!-- Cancel message (hidden by default, shown only on cancel) -->
-	<div id="cancel-message" class="ash-nazg-card ash-nazg-card-full" style="display: none; margin-top: 20px; border: 3px solid #46b450; background: #f7fcf7;">
-		<p style="text-align: center; font-size: 24px; margin: 20px 0;">
+	<div id="cancel-message" class="ash-nazg-card ash-nazg-card-full ash-nazg-hidden ash-nazg-delete-site-cancel-message">
+		<p>
 			<strong><?php esc_html_e( '😅 Whew! That was a close one!', 'ash-nazg' ); ?></strong>
 			<br>
-			<span style="font-size: 18px;"><?php esc_html_e( 'Deletion cancelled. Your site is safe.', 'ash-nazg' ); ?></span>
+			<span class="ash-nazg-delete-site-cancel-subtext"><?php esc_html_e( 'Deletion cancelled. Your site is safe.', 'ash-nazg' ); ?></span>
 		</p>
 	</div>
 
 	<!-- Escape Route Link -->
-	<p style="text-align: center; margin-top: 20px;">
+	<p class="ash-nazg-delete-site-back-link">
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=ash-nazg' ) ); ?>" class="button button-large">
 			← <?php esc_html_e( 'Back to Dashboard', 'ash-nazg' ); ?>
 		</a>

@@ -163,7 +163,7 @@ use Pantheon\AshNazg\Helpers;
 		</div>
 
 		<!-- Workflow Progress Modal (hidden initially) -->
-		<div id="ash-nazg-clone-progress-modal" class="ash-nazg-modal" style="display:none;">
+		<div id="ash-nazg-clone-progress-modal" class="ash-nazg-modal ash-nazg-hidden">
 			<div class="ash-nazg-modal-content">
 				<h2><?php esc_html_e( 'Clone Progress', 'ash-nazg' ); ?></h2>
 				<div id="ash-nazg-clone-progress-content">

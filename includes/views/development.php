@@ -105,8 +105,8 @@ $ordered_envs = array_filter(
 
 		if ( $show_debug ) :
 			?>
-			<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20" style="background: #fff8dc; border: 2px solid #f0ad4e;">
-				<h2 style="color: #f0ad4e;">Debug: Upstream Updates Data</h2>
+			<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20 ash-nazg-debug-box">
+				<h2>Debug: Upstream Updates Data</h2>
 				<h3>1. Raw upstream_updates (BEFORE filtering):</h3>
 				<pre><?php echo esc_html( print_r( $upstream_updates_raw ?? 'Not available', true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r ?></pre>
 				<h3>2. Filtered upstream_updates (AFTER filtering):</h3>
@@ -384,7 +384,7 @@ $ordered_envs = array_filter(
 					</button>
 
 					<!-- Deploy panel (hidden by default) -->
-					<div id="ash-nazg-deploy-to-test-panel" class="ash-nazg-deploy-panel" style="display: none;">
+					<div id="ash-nazg-deploy-to-test-panel" class="ash-nazg-deploy-panel ash-nazg-hidden">
 						<p>
 							<label for="ash-nazg-deploy-note-test">
 								<?php esc_html_e( 'Deployment Note (optional):', 'ash-nazg' ); ?>
@@ -430,7 +430,7 @@ $ordered_envs = array_filter(
 					</button>
 
 					<!-- Deploy panel (hidden by default) -->
-					<div id="ash-nazg-deploy-to-live-panel" class="ash-nazg-deploy-panel" style="display: none;">
+					<div id="ash-nazg-deploy-to-live-panel" class="ash-nazg-deploy-panel ash-nazg-hidden">
 						<p>
 							<label for="ash-nazg-deploy-note-live">
 								<?php esc_html_e( 'Deployment Note (optional):', 'ash-nazg' ); ?>

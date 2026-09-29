@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php esc_html_e( 'View the contents of your WordPress debug.log file. If the site is in Git mode, it will temporarily switch to SFTP mode to read the file, then switch back.', 'ash-nazg' ); ?>
 			</p>
 
-			<p id="ash-nazg-logs-timestamp" <?php echo $logs_fetched_at ? '' : 'style="display: none;"'; ?>>
+			<p id="ash-nazg-logs-timestamp" class="<?php echo $logs_fetched_at ? '' : 'ash-nazg-hidden'; ?>">
 				<strong><?php esc_html_e( 'Last fetched:', 'ash-nazg' ); ?></strong>
 				<span id="ash-nazg-logs-timestamp-value">
 					<?php
