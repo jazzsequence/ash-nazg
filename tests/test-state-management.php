@@ -96,32 +96,32 @@ class Test_State_Management extends TestCase {
 	}
 
 	/**
-	 * Test connection mode endpoint is correct.
+	 * Test connection mode endpoints are correct.
+	 *
+	 * v1 splits this into two distinct endpoints (one per mode) instead of
+	 * v0's single PUT with a `mode` body param.
 	 */
 	public function test_connection_mode_endpoint() {
 		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
 
 		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
 
-		// Should use correct endpoint for mode switching.
 		$this->assertStringContainsString(
-			'/v0/sites/%s/environments/%s/connection-mode',
+			'/sites/%s/environments/%s/development-mode/on-server',
 			$api_file_contents,
-			'Should use connection-mode endpoint'
+			'Should use the on-server (SFTP) development mode endpoint'
+		);
+		$this->assertStringContainsString(
+			'/sites/%s/environments/%s/development-mode/git',
+			$api_file_contents,
+			'Should use the git development mode endpoint'
 		);
 
-		// Should use PUT method.
-		$this->assertStringContainsString(
-			"'PUT'",
+		// Should use POST method.
+		$this->assertMatchesRegularExpression(
+			"/function update_connection_mode.*'POST'/s",
 			$api_file_contents,
-			'Should use PUT method for connection mode updates'
-		);
-
-		// Should send mode in request body.
-		$this->assertStringContainsString(
-			"'mode'",
-			$api_file_contents,
-			'Should include mode in request body'
+			'Should use POST method for connection mode updates'
 		);
 	}
 
@@ -196,11 +196,11 @@ class Test_State_Management extends TestCase {
 			'Should clear transient cache after updates'
 		);
 
-		// Should clear environment info cache specifically.
+		// Should clear the environments cache specifically.
 		$this->assertStringContainsString(
-			'ash_nazg_all_env_info',
+			'ash_nazg_environments_',
 			$api_file_contents,
-			'Should clear environment info cache'
+			'Should clear the environments cache'
 		);
 	}
 

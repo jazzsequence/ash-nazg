@@ -26,12 +26,20 @@ class Test_API extends TestCase {
 			'get_api_token function should exist'
 		);
 		$this->assertTrue(
+			function_exists( 'Pantheon\AshNazg\API\get_access_token' ),
+			'get_access_token function should exist'
+		);
+		$this->assertTrue(
 			function_exists( 'Pantheon\AshNazg\API\get_machine_token' ),
-			'get_machine_token function should exist'
+			'get_machine_token function should exist (legacy v0 fallback)'
 		);
 		$this->assertTrue(
 			function_exists( 'Pantheon\AshNazg\API\api_request' ),
 			'api_request function should exist'
+		);
+		$this->assertTrue(
+			function_exists( 'Pantheon\AshNazg\API\api_request_v0' ),
+			'api_request_v0 function should exist (legacy fallback)'
 		);
 		$this->assertTrue(
 			function_exists( 'Pantheon\AshNazg\API\get_site_info' ),
@@ -95,54 +103,68 @@ class Test_API extends TestCase {
 	/**
 	 * Test API endpoint paths are correct.
 	 *
-	 * Verifies the code uses the correct API version (v0).
+	 * Verifies the code uses the v1 API as its primary base URL, with the
+	 * legacy v0 API reachable only through api_request_v0() for the small
+	 * set of hybrid-fallback functions that have no v1 equivalent yet.
 	 */
 	public function test_api_endpoint_paths() {
 		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
 
-		// Read the API file and check for correct endpoint paths.
 		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
 
-		// Should use v0 endpoints, not v1.
+		// api_request() should hit the v1 base URL.
+		$this->assertStringContainsString(
+			"'https://api.pantheon.io/v1'",
+			$api_file_contents,
+			'api_request() should use the v1 API base URL'
+		);
+
+		// api_request_v0() should still exist for the hybrid-fallback functions.
+		$this->assertStringContainsString(
+			"'https://api.pantheon.io'",
+			$api_file_contents,
+			'api_request_v0() should use the legacy v0 API base URL'
+		);
 		$this->assertStringContainsString(
 			'/v0/authorize/machine-token',
 			$api_file_contents,
-			'Should use v0 authorization endpoint'
-		);
-		$this->assertStringContainsString(
-			'/v0/sites',
-			$api_file_contents,
-			'Should use v0 sites endpoint'
+			'Legacy v0 session exchange should still be present for hybrid-fallback functions'
 		);
 
-		// Should not use v1 endpoints.
-		$this->assertStringNotContainsString(
-			'/v1/sites',
-			$api_file_contents,
-			'Should not use deprecated v1 sites endpoint'
-		);
+		// Hybrid-fallback functions should still reference their v0 paths.
+		$v0_fallback_paths = [
+			'/v0/sites/%s/label',
+			'/v0/sites/%s',
+			'/v0/sites/%s/code-tips',
+			'/v0/sites/%s/environments/%s/metrics',
+			'/v0/sites/%s/environments/%s/domains',
+			'/v0/sites/%s/environments/%s/workflows',
+		];
+		foreach ( $v0_fallback_paths as $path ) {
+			$this->assertStringContainsString(
+				$path,
+				$api_file_contents,
+				"Hybrid-fallback function should still reference v0 path {$path}"
+			);
+		}
 	}
 
 	/**
-	 * Test client parameter is included in authentication.
+	 * Test client parameter is included in the legacy v0 authentication exchange.
 	 *
-	 * The Pantheon API requires a 'client' field in authentication requests.
+	 * The legacy v0 machine-token exchange requires a 'client' field. v1 has
+	 * no such exchange (the token is sent directly), so this only applies to
+	 * get_v0_session_token(), used by the hybrid-fallback functions.
 	 */
-	public function test_client_parameter_in_auth() {
+	public function test_client_parameter_in_legacy_v0_auth() {
 		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
 
 		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
 
-		// Should include client parameter in auth request.
-		$this->assertStringContainsString(
-			"'client'",
+		$this->assertMatchesRegularExpression(
+			"/function get_v0_session_token.*'client'.*'ash-nazg'/s",
 			$api_file_contents,
-			'Authentication should include client parameter'
-		);
-		$this->assertStringContainsString(
-			'ash-nazg',
-			$api_file_contents,
-			'Client should be identified as ash-nazg'
+			'Legacy v0 exchange should include client parameter'
 		);
 	}
 
@@ -158,10 +180,9 @@ class Test_API extends TestCase {
 
 		// Check for specific error codes.
 		$error_codes = array(
-			'api_unavailable'        => '503/502 errors',
-			'invalid_token'          => '401/403 errors',
-			'bad_request'            => '400 errors',
-			'no_token'               => 'Missing machine token',
+			'authentication_failed'  => '401/403 errors',
+			'no_token'               => 'Missing Personal Access Token',
+			'no_v0_token'            => 'Missing legacy Machine Token for a hybrid-fallback call',
 			'api_connection_failed'  => 'Connection failures',
 			'environment_not_found'  => 'Invalid environment',
 		);
@@ -186,7 +207,7 @@ class Test_API extends TestCase {
 		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
 
 		// Should handle these HTTP status codes.
-		$status_codes = array( 200, 400, 401, 403, 502, 503 );
+		$status_codes = array( 200, 401, 403 );
 
 		foreach ( $status_codes as $code ) {
 			$this->assertStringContainsString(
@@ -210,7 +231,7 @@ class Test_API extends TestCase {
 
 		// Should fetch all environments (not a single environment endpoint).
 		$this->assertStringContainsString(
-			'/v0/sites/%s/environments',
+			'/sites/%s/environments?pager',
 			$api_file_contents,
 			'Should use environments list endpoint'
 		);
@@ -224,74 +245,41 @@ class Test_API extends TestCase {
 	}
 
 	/**
-	 * Test get_user_id parses Pantheon UUID from per-user session token.
+	 * Test get_user_id resolves the Pantheon user ID via get_current_pantheon_user().
+	 *
+	 * v1 has no session token to parse a UUID out of - GET /current-user
+	 * returns the ID directly.
 	 */
-	public function test_get_user_id_parses_session_token() {
+	public function test_get_user_id_uses_current_pantheon_user() {
 		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
 		$this->assertMatchesRegularExpression(
-			'/function get_user_id.*ash_nazg_session_token_%d/s',
+			'/function get_user_id.*get_current_pantheon_user/s',
 			$file_contents,
-			'get_user_id should read the per-user session token transient'
+			'get_user_id should resolve the ID via get_current_pantheon_user()'
 		);
 	}
 
 	/**
-	 * Test get_user_id validates UUID format from session token.
+	 * Test that get_user_organizations derives workspaces from get_current_pantheon_user().
 	 */
-	public function test_get_user_id_validates_uuid_format() {
+	public function test_get_user_organizations_derives_from_current_user() {
 		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
 		$this->assertMatchesRegularExpression(
-			'/function get_user_id.*preg_match.*\[0-9a-f\]/s',
+			'/function get_user_organizations.*get_current_pantheon_user.*workspacesConnection/s',
 			$file_contents,
-			'get_user_id should validate UUID format before trusting parsed value'
+			'get_user_organizations should derive workspaces from get_current_pantheon_user()'
 		);
 	}
 
 	/**
-	 * Test get_user_id retains fallback to legacy ash_nazg_user_id transient.
-	 */
-	public function test_get_user_id_has_legacy_fallback() {
-		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
-		$this->assertMatchesRegularExpression(
-			'/function get_user_id.*ash_nazg_user_id/s',
-			$file_contents,
-			'get_user_id should fall back to the ash_nazg_user_id transient'
-		);
-	}
-
-	/**
-	 * Test that get_user_organizations uses the correct endpoint.
-	 */
-	public function test_get_user_organizations_endpoint() {
-		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
-		$this->assertMatchesRegularExpression(
-			'/function get_user_organizations.*\/v0\/users\/.*\/memberships\/organizations/s',
-			$file_contents,
-			'get_user_organizations should call /v0/users/{id}/memberships/organizations'
-		);
-	}
-
-	/**
-	 * Test that get_user_organizations caches its result.
-	 */
-	public function test_get_user_organizations_caching() {
-		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
-		$this->assertMatchesRegularExpression(
-			'/function get_user_organizations.*get_transient.*set_transient/s',
-			$file_contents,
-			'get_user_organizations should use WordPress transients for caching'
-		);
-	}
-
-	/**
-	 * Test that get_current_pantheon_user uses the correct endpoint.
+	 * Test that get_current_pantheon_user uses the v1 /current-user endpoint.
 	 */
 	public function test_get_current_pantheon_user_endpoint() {
 		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
 		$this->assertMatchesRegularExpression(
-			'/function get_current_pantheon_user.*\/v0\/users\//s',
+			'/function get_current_pantheon_user.*\/current-user/s',
 			$file_contents,
-			'get_current_pantheon_user should call /v0/users/{user_id}'
+			'get_current_pantheon_user should call /current-user'
 		);
 	}
 
@@ -304,6 +292,28 @@ class Test_API extends TestCase {
 			'/function get_current_pantheon_user.*get_transient.*set_transient/s',
 			$file_contents,
 			'get_current_pantheon_user should use WordPress transients for caching'
+		);
+	}
+
+	/**
+	 * Test that the v1 personal access token and legacy v0 machine token are
+	 * resolved through completely separate storage chains.
+	 *
+	 * v0 does not accept a v1 personal access token, and vice versa, so the
+	 * two credentials must never be conflated.
+	 */
+	public function test_access_token_and_machine_token_are_separate() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+
+		$this->assertMatchesRegularExpression(
+			'/function get_api_token.*get_user_access_token/s',
+			$file_contents,
+			'get_api_token() (v1) should resolve via get_user_access_token(), not the legacy machine token'
+		);
+		$this->assertMatchesRegularExpression(
+			'/function get_v0_session_token.*get_user_machine_token/s',
+			$file_contents,
+			'get_v0_session_token() (legacy) should resolve via get_user_machine_token(), not the v1 access token'
 		);
 	}
 }

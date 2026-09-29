@@ -96,11 +96,11 @@ class Test_Delete_Site_API extends TestCase {
 			'Should clear site info cache'
 		);
 
-		// Should clear environment info cache.
+		// Should clear environments cache.
 		$this->assertStringContainsString(
-			'ash_nazg_all_env_info_',
+			'ash_nazg_environments_',
 			$func_content,
-			'Should clear environment info cache'
+			'Should clear environments cache'
 		);
 	}
 

@@ -34,8 +34,8 @@ class Test_User_Tokens extends TestCase {
 			'get_user_machine_token function should exist'
 		);
 		$this->assertTrue(
-			function_exists( 'Pantheon\AshNazg\API\clear_user_session_token' ),
-			'clear_user_session_token function should exist'
+			function_exists( 'Pantheon\AshNazg\API\clear_v0_session_token' ),
+			'clear_v0_session_token function should exist (legacy v0 fallback only)'
 		);
 	}
 
@@ -116,50 +116,38 @@ class Test_User_Tokens extends TestCase {
 	}
 
 	/**
-	 * Test that get_api_token uses per-user session tokens.
+	 * Test that get_api_token resolves the v1 Personal Access Token per-user.
+	 *
+	 * v1 has no session-token exchange or cache - the stored token is used
+	 * directly, resolved via the separate get_user_access_token() chain (not
+	 * get_user_machine_token(), which resolves the incompatible legacy v0 credential).
 	 */
-	public function test_get_api_token_uses_per_user_cache() {
+	public function test_get_api_token_uses_per_user_access_token() {
 		$file_path = dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
 		$this->assertFileExists( $file_path );
 
 		$contents = file_get_contents( $file_path );
 
-		// Should use per-user transient key format.
-		$this->assertStringContainsString(
-			'ash_nazg_session_token_%d',
+		$this->assertMatchesRegularExpression(
+			'/function get_api_token.*get_user_access_token/s',
 			$contents,
-			'get_api_token should use per-user session token cache key'
-		);
-
-		// Should call get_user_machine_token instead of get_machine_token.
-		$this->assertStringContainsString(
-			'get_user_machine_token',
-			$contents,
-			'get_api_token should call get_user_machine_token for per-user tokens'
+			'get_api_token should call get_user_access_token for the v1 Personal Access Token'
 		);
 	}
 
 	/**
-	 * Test that clear_user_session_token function clears per-user cache.
+	 * Test that clear_v0_session_token clears the per-user legacy v0 cache.
 	 */
-	public function test_clear_user_session_token_clears_user_cache() {
+	public function test_clear_v0_session_token_clears_user_cache() {
 		$file_path = dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
 		$this->assertFileExists( $file_path );
 
 		$contents = file_get_contents( $file_path );
 
-		// Should format cache key with user ID.
-		$this->assertStringContainsString(
-			'sprintf',
+		$this->assertMatchesRegularExpression(
+			'/function clear_v0_session_token.*delete_transient.*sprintf/s',
 			$contents,
-			'clear_user_session_token should format cache key with user ID'
-		);
-
-		// Should delete transient.
-		$this->assertStringContainsString(
-			'delete_transient',
-			$contents,
-			'clear_user_session_token should delete transient'
+			'clear_v0_session_token should format a per-user cache key and delete the transient'
 		);
 	}
 
@@ -193,11 +181,11 @@ class Test_User_Tokens extends TestCase {
 			'Settings page should use ash_nazg_user_machine_token meta key'
 		);
 
-		// Should clear user session token after saving.
+		// Should clear the cached legacy v0 session after saving a new machine token.
 		$this->assertStringContainsString(
-			'clear_user_session_token',
+			'clear_v0_session_token',
 			$contents,
-			'Settings page should clear user session token after saving new token'
+			'Settings page should clear the legacy v0 session after saving a new machine token'
 		);
 	}
 
@@ -262,11 +250,11 @@ class Test_User_Tokens extends TestCase {
 			'Migration handler should store token in user meta'
 		);
 
-		// Should clear user session token.
+		// Should clear the cached legacy v0 session.
 		$this->assertStringContainsString(
-			'clear_user_session_token',
+			'clear_v0_session_token',
 			$contents,
-			'Migration handler should clear user session token'
+			'Migration handler should clear the legacy v0 session'
 		);
 	}
 

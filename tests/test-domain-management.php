@@ -101,11 +101,11 @@ class Test_Domain_Management extends TestCase {
 			'Should use POST HTTP method'
 		);
 
-		// Should have domain in request body.
+		// Should include domain as a query parameter (v1 takes it in the URL, not a JSON body key).
 		$this->assertStringContainsString(
-			"'domain'",
+			'domain=%s',
 			$func_content,
-			'Should include domain in request body'
+			'Should include domain as a query parameter'
 		);
 
 		// Should validate domain parameter.
