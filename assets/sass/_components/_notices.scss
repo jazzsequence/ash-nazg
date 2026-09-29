@@ -3,9 +3,16 @@
  * WordPress admin notices styling
  */
 
+@use '../variables' as *;
+
 .notice.notice-success p:first-child strong,
 .notice.notice-error p:first-child strong,
 .notice.notice-warning p:first-child strong {
 	display: block;
 	margin-bottom: 5px;
+}
+
+.ash-nazg-notice-inline {
+	margin: 0 0 $spacing-lg 0;
+	padding: $spacing-md;
 }

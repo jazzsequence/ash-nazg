@@ -149,8 +149,8 @@
 
 						var status = response.data;
 						var progress = 0;
-						if (status.step && status.operations && status.operations.length > 0) {
-							progress = Math.round((status.step / status.operations.length) * 100);
+						if (status.progress) {
+							progress = status.progress;
 						}
 						if (progress > 0) {
 							progressModal.updateProgress(progress, status.active_description || '');

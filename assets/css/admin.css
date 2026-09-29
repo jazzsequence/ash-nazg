@@ -648,6 +648,11 @@
   margin-bottom: 5px;
 }
 
+.ash-nazg-notice-inline {
+  margin: 0 0 15px 0;
+  padding: 10px;
+}
+
 /**
  * Components - Edit Link
  * Inline edit pencil icon styling
@@ -1677,6 +1682,10 @@ canvas {
 
 .ash-nazg-mt-10 {
   margin-top: 10px;
+}
+
+.ash-nazg-my-30 {
+  margin: 30px 0;
 }
 
 /**
