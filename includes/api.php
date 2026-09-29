@@ -2,6 +2,17 @@
 /**
  * Pantheon API client functions.
  *
+ * Talks to the Pantheon Public API v1 (https://api.pantheon.io/v1) using a
+ * personal access token sent directly as a Bearer token - no token exchange,
+ * no session-token caching (unlike the legacy v0 API this replaces).
+ *
+ * A small number of features have no v1 endpoint yet (site label update,
+ * delete site, metrics, domain listing, code tips, generic workflow
+ * triggering). Those fall back to the legacy v0 API via api_request_v0(),
+ * authenticated with a *separate* legacy machine token - v0 does not accept
+ * v1 personal access tokens, so the two credentials are stored and resolved
+ * independently. See get_user_access_token() vs get_user_machine_token().
+ *
  * @package Pantheon\AshNazg
  */
 
@@ -10,13 +21,13 @@ namespace Pantheon\AshNazg\API;
 use Pantheon\AshNazg\Helpers;
 
 /**
- * Get API session token.
+ * Get the v1 API token (personal access token) for a user.
  *
- * Retrieves machine token from Pantheon Secrets, exchanges it for a session token,
- * and caches the result. Auto-refreshes when expired.
+ * V1 has no token-exchange step - the stored token is used directly as the
+ * Bearer token on every request, so this is just a lookup.
  *
  * @param int|null $user_id Optional. User ID. Defaults to current user.
- * @return string|\WP_Error Session token on success, WP_Error on failure.
+ * @return string|\WP_Error Personal access token on success, WP_Error on failure.
  */
 function get_api_token( $user_id = null ) {
 	if ( null === $user_id ) {
@@ -31,139 +42,16 @@ function get_api_token( $user_id = null ) {
 		);
 	}
 
-	// Check for cached session token (per-user).
-	$cache_key = sprintf( 'ash_nazg_session_token_%d', $user_id );
-	$cached_token = get_transient( $cache_key );
-	if ( false !== $cached_token ) {
-		return $cached_token;
-	}
-
-	// Get machine token for this user.
-	$machine_token = get_user_machine_token( $user_id );
-	if ( ! $machine_token ) {
-		Helpers\debug_log( sprintf( 'No machine token found for user %d', $user_id ) );
+	$token = get_user_access_token( $user_id );
+	if ( ! $token ) {
+		Helpers\debug_log( sprintf( 'No personal access token found for user %d', $user_id ) );
 		return new \WP_Error(
 			'no_token',
-			__( 'No machine token configured. Please add a token in Settings.', 'ash-nazg' )
+			__( 'No Personal Access Token configured. Please add one in Settings.', 'ash-nazg' )
 		);
 	}
 
-	// Exchange machine token for session token.
-	$response = wp_remote_post(
-		'https://api.pantheon.io/v0/authorize/machine-token',
-		[
-			'headers' => [
-				'Content-Type' => 'application/json',
-			],
-			'body'    => wp_json_encode(
-				[
-					'machine_token' => $machine_token,
-					'client'        => 'ash-nazg',
-				]
-			),
-			'timeout' => 15,
-		]
-	);
-
-	if ( is_wp_error( $response ) ) {
-		$error_message = $response->get_error_message();
-		\Pantheon\AshNazg\Helpers\debug_log( 'Failed to exchange machine token: ' . $error_message );
-		return new \WP_Error(
-			'api_connection_failed',
-			sprintf(
-				/* translators: %s: error message */
-				__( 'Cannot connect to Pantheon API: %s', 'ash-nazg' ),
-				$error_message
-			)
-		);
-	}
-
-	$status_code = wp_remote_retrieve_response_code( $response );
-	$body        = wp_remote_retrieve_body( $response );
-
-	// Handle 503 Service Unavailable.
-	if ( 503 === $status_code ) {
-		\Pantheon\AshNazg\Helpers\debug_log( 'Pantheon API is unavailable (503)' );
-		return new \WP_Error(
-			'api_unavailable',
-			__( 'Pantheon API is temporarily unavailable (503 Service Unavailable). This is usually a temporary issue. Please try again later.', 'ash-nazg' )
-		);
-	}
-
-	// Handle 502 Bad Gateway.
-	if ( 502 === $status_code ) {
-		\Pantheon\AshNazg\Helpers\debug_log( 'Pantheon API bad gateway (502)' );
-		return new \WP_Error(
-			'api_unavailable',
-			__( 'Pantheon API is experiencing issues (502 Bad Gateway). Please try again later.', 'ash-nazg' )
-		);
-	}
-
-	// Handle Bad Request (malformed request).
-	if ( 400 === $status_code ) {
-		$data          = json_decode( $body, true );
-		$error_details = '';
-		if ( ! empty( $data['errors'] ) && is_array( $data['errors'] ) ) {
-			$error_messages = array_map(
-				function ( $error ) {
-					return isset( $error['message'] ) ? $error['message'] : '';
-				},
-				$data['errors']
-			);
-			$error_details = ' (' . implode( ', ', array_filter( $error_messages ) ) . ')';
-		}
-		\Pantheon\AshNazg\Helpers\debug_log( 'Bad request to API (400): ' . $body );
-		return new \WP_Error(
-			'bad_request',
-			sprintf(
-				/* translators: %s: error details from API */
-				__( 'Invalid request to Pantheon API%s. This may be a plugin bug - please report it.', 'ash-nazg' ),
-				$error_details
-			)
-		);
-	}
-
-	// Handle authentication errors.
-	if ( 401 === $status_code || 403 === $status_code ) {
-		\Pantheon\AshNazg\Helpers\debug_log( 'Invalid machine token (status ' . $status_code . ')' );
-		return new \WP_Error(
-			'invalid_token',
-			__( 'Invalid machine token. Please check your token in Settings and ensure it is valid and not expired.', 'ash-nazg' )
-		);
-	}
-
-	// Handle other non-200 responses.
-	if ( 200 !== $status_code ) {
-		\Pantheon\AshNazg\Helpers\debug_log( 'API authentication failed with status ' . $status_code );
-		\Pantheon\AshNazg\Helpers\debug_log( 'Response body: ' . substr( $body, 0, 200 ) );
-		return new \WP_Error(
-			'api_error',
-			sprintf(
-				/* translators: %d: HTTP status code */
-				__( 'Pantheon API returned an error (HTTP %d). Please try again or check API status.', 'ash-nazg' ),
-				$status_code
-			)
-		);
-	}
-
-	$data = json_decode( $body, true );
-	if ( empty( $data['session'] ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( 'No session token in API response' );
-		return new \WP_Error(
-			'invalid_response',
-			__( 'Invalid response from Pantheon API. No session token received.', 'ash-nazg' )
-		);
-	}
-
-	$session_token = $data['session'];
-
-	/*
-	 * Cache for 1 hour (tokens are valid for longer, but we refresh
-	 * regularly for security). Use per-user cache key.
-	 */
-	set_transient( $cache_key, $session_token, HOUR_IN_SECONDS );
-
-	return $session_token;
+	return $token;
 }
 
 /**
@@ -171,6 +59,7 @@ function get_api_token( $user_id = null ) {
  *
  * Uses WordPress salts for encryption key and AES-256-CBC encryption.
  * Tokens stored in Pantheon Secrets are not encrypted (already secure).
+ * Used for both the v1 personal access token and the legacy v0 machine token.
  *
  * @param string $token Plain text token.
  * @return string Encrypted token (base64 encoded).
@@ -213,13 +102,88 @@ function decrypt_token( $encrypted_token ) {
 }
 
 /**
- * Get machine token for a specific user.
+ * Get the v1 personal access token for a specific user.
  *
  * Checks in this order:
  * 1. Pantheon Secret with user ID suffix (pantheon_get_secret)
  * 2. User meta (encrypted, stored in database)
  * 3. Global Pantheon Secret (backward compatibility)
  * 4. Global option (backward compatibility)
+ *
+ * Mirrors get_user_machine_token() exactly, but resolves a completely
+ * separate, v1-only credential - a machine token cannot be substituted here.
+ *
+ * @param int|null $user_id Optional. User ID. Defaults to current user.
+ * @return string|false Personal access token on success, false on failure.
+ */
+function get_user_access_token( $user_id = null ) {
+	if ( null === $user_id ) {
+		$user_id = get_current_user_id();
+	}
+
+	if ( ! $user_id ) {
+		Helpers\debug_log( 'Cannot get user access token - no user ID' );
+		return false;
+	}
+
+	// Try per-user Pantheon Secret first.
+	if ( function_exists( 'pantheon_get_secret' ) ) {
+		$secret_key = sprintf( 'ash_nazg_access_token_%d', $user_id );
+		$token = pantheon_get_secret( $secret_key );
+		if ( ! empty( $token ) ) {
+			Helpers\debug_log( sprintf( 'Retrieved access token from Pantheon Secret for user %d', $user_id ) );
+			return $token;
+		}
+	}
+
+	// Try per-user meta (encrypted).
+	$encrypted_token = get_user_meta( $user_id, 'ash_nazg_user_access_token', true );
+	if ( ! empty( $encrypted_token ) ) {
+		$token = decrypt_token( $encrypted_token );
+		if ( $token ) {
+			Helpers\debug_log( sprintf( 'Retrieved access token from user meta for user %d', $user_id ) );
+			return $token;
+		}
+	}
+
+	// Fallback to global token (backward compatibility).
+	Helpers\debug_log( sprintf( 'No per-user access token found for user %d, falling back to global token', $user_id ) );
+	return get_access_token();
+}
+
+/**
+ * Get the global v1 personal access token.
+ *
+ * Retrieves from Pantheon Secrets if available, otherwise falls back to WordPress options.
+ *
+ * @return string|false Personal access token or false if not found.
+ */
+function get_access_token() {
+	// Try Pantheon Secrets first (production).
+	if ( function_exists( 'pantheon_get_secret' ) ) {
+		$token = pantheon_get_secret( 'ash_nazg_access_token' );
+		if ( ! empty( $token ) ) {
+			return $token;
+		}
+	}
+
+	// Fallback to WordPress options (development/testing).
+	$token = get_option( 'ash_nazg_access_token' );
+	return ! empty( $token ) ? $token : false;
+}
+
+/**
+ * Get the legacy v0 machine token for a specific user.
+ *
+ * Checks in this order:
+ * 1. Pantheon Secret with user ID suffix (pantheon_get_secret)
+ * 2. User meta (encrypted, stored in database)
+ * 3. Global Pantheon Secret (backward compatibility)
+ * 4. Global option (backward compatibility)
+ *
+ * Only used by the small set of hybrid-fallback functions that still need
+ * v0 because v1 has no equivalent endpoint yet. Unchanged from before the
+ * v0->v1 migration - existing installs keep working with zero action needed.
  *
  * @param int|null $user_id Optional. User ID. Defaults to current user.
  * @return string|false Machine token on success, false on failure.
@@ -260,28 +224,7 @@ function get_user_machine_token( $user_id = null ) {
 }
 
 /**
- * Clear session token for a user.
- *
- * @param int|null $user_id Optional. User ID. Defaults to current user.
- */
-function clear_user_session_token( $user_id = null ) {
-	if ( null === $user_id ) {
-		$user_id = get_current_user_id();
-	}
-
-	if ( ! $user_id ) {
-		Helpers\debug_log( 'Cannot clear session token - no user ID' );
-		return;
-	}
-
-	$cache_key = sprintf( 'ash_nazg_session_token_%d', $user_id );
-	delete_transient( $cache_key );
-
-	Helpers\debug_log( sprintf( 'Cleared session token for user %d', $user_id ) );
-}
-
-/**
- * Get machine token.
+ * Get the legacy global v0 machine token.
  *
  * Retrieves from Pantheon Secrets if available, otherwise falls back to WordPress options.
  *
@@ -302,24 +245,193 @@ function get_machine_token() {
 }
 
 /**
- * Make authenticated API request.
+ * Exchange the legacy v0 machine token for a v0 session token.
  *
- * @param string $endpoint API endpoint path (e.g., '/v0/sites/abc123').
+ * V0-only. Cached per-user for 1 hour, same as the old exchange this
+ * replaces. Only called by api_request_v0(), which is only used by the
+ * handful of hybrid-fallback functions that have no v1 equivalent yet.
+ *
+ * @param int|null $user_id Optional. User ID. Defaults to current user.
+ * @return string|\WP_Error Session token on success, WP_Error on failure.
+ */
+function get_v0_session_token( $user_id = null ) {
+	if ( null === $user_id ) {
+		$user_id = get_current_user_id();
+	}
+
+	if ( ! $user_id ) {
+		return new \WP_Error(
+			'no_user',
+			__( 'Unable to authenticate - no user logged in.', 'ash-nazg' )
+		);
+	}
+
+	// Check for cached session token (per-user).
+	$cache_key = sprintf( 'ash_nazg_v0_session_token_%d', $user_id );
+	$cached_token = get_transient( $cache_key );
+	if ( false !== $cached_token ) {
+		return $cached_token;
+	}
+
+	$machine_token = get_user_machine_token( $user_id );
+	if ( ! $machine_token ) {
+		Helpers\debug_log( sprintf( 'No legacy machine token found for user %d', $user_id ) );
+		return new \WP_Error(
+			'no_v0_token',
+			__( 'This feature requires a legacy Pantheon machine token (Settings > Machine Token). This requirement will be removed once Pantheon ships v1 support for it.', 'ash-nazg' )
+		);
+	}
+
+	$response = wp_remote_post(
+		'https://api.pantheon.io/v0/authorize/machine-token',
+		[
+			'headers' => [
+				'Content-Type' => 'application/json',
+			],
+			'body' => wp_json_encode(
+				[
+					'machine_token' => $machine_token,
+					'client' => 'ash-nazg',
+				]
+			),
+			'timeout' => 15,
+		]
+	);
+
+	if ( is_wp_error( $response ) ) {
+		$error_message = $response->get_error_message();
+		Helpers\debug_log( 'Failed to exchange legacy machine token: ' . $error_message );
+		return new \WP_Error(
+			'api_connection_failed',
+			sprintf(
+				/* translators: %s: error message */
+				__( 'Cannot connect to Pantheon API: %s', 'ash-nazg' ),
+				$error_message
+			)
+		);
+	}
+
+	$status_code = wp_remote_retrieve_response_code( $response );
+	$body = wp_remote_retrieve_body( $response );
+
+	if ( 401 === $status_code || 403 === $status_code ) {
+		Helpers\debug_log( 'Invalid legacy machine token (status ' . $status_code . ')' );
+		return new \WP_Error(
+			'invalid_v0_token',
+			__( 'Invalid legacy machine token. Please check your Machine Token in Settings.', 'ash-nazg' )
+		);
+	}
+
+	if ( 200 !== $status_code ) {
+		Helpers\debug_log( 'Legacy v0 authentication failed with status ' . $status_code );
+		return new \WP_Error(
+			'api_error',
+			sprintf(
+				/* translators: %d: HTTP status code */
+				__( 'Pantheon API returned an error (HTTP %d). Please try again or check API status.', 'ash-nazg' ),
+				$status_code
+			)
+		);
+	}
+
+	$data = json_decode( $body, true );
+	if ( empty( $data['session'] ) ) {
+		Helpers\debug_log( 'No session token in legacy v0 API response' );
+		return new \WP_Error(
+			'invalid_response',
+			__( 'Invalid response from Pantheon API. No session token received.', 'ash-nazg' )
+		);
+	}
+
+	$session_token = $data['session'];
+
+	set_transient( $cache_key, $session_token, HOUR_IN_SECONDS );
+
+	return $session_token;
+}
+
+/**
+ * Clear the cached legacy v0 session token for a user.
+ *
+ * Internal only - v0 is now only used as a fallback for a handful of
+ * functions, so there's no user-facing "Clear Session Token" control for it.
+ *
+ * @param int|null $user_id Optional. User ID. Defaults to current user.
+ */
+function clear_v0_session_token( $user_id = null ) {
+	if ( null === $user_id ) {
+		$user_id = get_current_user_id();
+	}
+
+	if ( ! $user_id ) {
+		return;
+	}
+
+	delete_transient( sprintf( 'ash_nazg_v0_session_token_%d', $user_id ) );
+}
+
+/**
+ * Make an authenticated v1 API request.
+ *
+ * @param string $endpoint API endpoint path, relative to https://api.pantheon.io/v1 (e.g., '/sites/abc123').
  * @param string $method   HTTP method (GET, POST, PUT, DELETE).
  * @param array  $body     Optional request body.
  * @return array|\WP_Error Response data or WP_Error on failure.
  */
 function api_request( $endpoint, $method = 'GET', $body = [] ) {
-	$session_token = get_api_token();
+	$token = get_api_token();
+	if ( is_wp_error( $token ) ) {
+		return $token;
+	}
+
+	return do_api_request( 'https://api.pantheon.io/v1' . $endpoint, $token, $method, $body );
+}
+
+/**
+ * Make an authenticated legacy v0 API request.
+ *
+ * Only used by the hybrid-fallback functions that have no v1 equivalent.
+ * Uses a completely separate credential (legacy machine token, exchanged
+ * for a v0 session token) from the v1 personal access token used elsewhere.
+ *
+ * @param string $endpoint API endpoint path, including the /v0 prefix (e.g., '/v0/sites/abc123').
+ * @param string $method   HTTP method (GET, POST, PUT, DELETE).
+ * @param array  $body     Optional request body.
+ * @return array|\WP_Error Response data or WP_Error on failure.
+ */
+function api_request_v0( $endpoint, $method = 'GET', $body = [] ) {
+	$session_token = get_v0_session_token();
 	if ( is_wp_error( $session_token ) ) {
 		return $session_token;
 	}
 
-	$url  = 'https://api.pantheon.io' . $endpoint;
+	$result = do_api_request( 'https://api.pantheon.io' . $endpoint, $session_token, $method, $body );
+
+	if ( is_wp_error( $result ) ) {
+		$data = $result->get_error_data();
+		if ( isset( $data['status'] ) && in_array( (int) $data['status'], [ 401, 403 ], true ) ) {
+			clear_v0_session_token();
+			Helpers\debug_log( 'Legacy v0 authentication failed, cleared cached session token' );
+		}
+	}
+
+	return $result;
+}
+
+/**
+ * Shared HTTP request logic for both the v1 and legacy v0 API clients.
+ *
+ * @param string $url    Full request URL.
+ * @param string $token  Bearer token to send.
+ * @param string $method HTTP method (GET, POST, PUT, DELETE).
+ * @param array  $body   Optional request body.
+ * @return array|\WP_Error Response data or WP_Error on failure.
+ */
+function do_api_request( $url, $token, $method = 'GET', $body = [] ) {
 	$args = [
 		'method'  => $method,
 		'headers' => [
-			'Authorization' => 'Bearer ' . $session_token,
+			'Authorization' => 'Bearer ' . $token,
 			'Content-Type'  => 'application/json',
 		],
 		'timeout' => 30,
@@ -342,32 +454,31 @@ function api_request( $endpoint, $method = 'GET', $body = [] ) {
 	$response = wp_remote_request( $url, $args );
 
 	if ( is_wp_error( $response ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( 'API request failed: ' . $response->get_error_message() );
+		Helpers\debug_log( 'API request failed: ' . $response->get_error_message() );
 		return $response;
 	}
 
 	$status_code = wp_remote_retrieve_response_code( $response );
-	$body        = wp_remote_retrieve_body( $response );
-	$data        = json_decode( $body, true );
+	$response_body = wp_remote_retrieve_body( $response );
+	$data = json_decode( $response_body, true );
 
-	// Handle authentication errors by clearing cached session token.
 	if ( 401 === $status_code || 403 === $status_code ) {
-		clear_user_session_token();
-		Helpers\debug_log( sprintf( 'Authentication failed (%d), cleared cached session token', $status_code ) );
+		Helpers\debug_log( sprintf( 'Authentication failed (%d) for %s', $status_code, $url ) );
 		return new \WP_Error(
 			'authentication_failed',
 			sprintf(
 				/* translators: %d: HTTP status code */
-				__( 'Authentication failed (%d). Session token has been cleared. Please try again.', 'ash-nazg' ),
+				__( 'Authentication failed (%d). Please check your token in Settings.', 'ash-nazg' ),
 				$status_code
-			)
+			),
+			[ 'status' => $status_code ]
 		);
 	}
 
 	if ( $status_code < 200 || $status_code >= 300 ) {
 		$error_message = isset( $data['message'] ) ? $data['message'] : 'Unknown API error';
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'API error %d: %s', $status_code, $error_message ) );
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Full API response body: %s', $body ) );
+		Helpers\debug_log( sprintf( 'API error %d: %s', $status_code, $error_message ) );
+		Helpers\debug_log( sprintf( 'Full API response body: %s', $response_body ) );
 		return new \WP_Error(
 			'api_error',
 			sprintf(
@@ -384,16 +495,39 @@ function api_request( $endpoint, $method = 'GET', $body = [] ) {
 }
 
 /**
+ * Add a `workflow_id` alias to a WorkflowPayload response.
+ *
+ * V1 write operations consistently return the workflow ID under `id`, but
+ * some existing callers (carried over from v0, which was inconsistent about
+ * this) read `workflow_id`. Aliasing avoids having to audit every call site.
+ *
+ * @param array|\WP_Error $result API response.
+ * @return array|\WP_Error Same response with `workflow_id` added, or the error unchanged.
+ */
+function normalize_workflow_payload( $result ) {
+	if ( is_wp_error( $result ) || ! is_array( $result ) ) {
+		return $result;
+	}
+
+	if ( isset( $result['id'] ) && ! isset( $result['workflow_id'] ) ) {
+		$result['workflow_id'] = $result['id'];
+	}
+
+	return $result;
+}
+
+/**
  * Get cached API endpoint data.
  *
  * Generic helper for GET requests with caching.
  *
- * @param string $endpoint API endpoint path (e.g., '/v0/sites/{site_id}').
+ * @param string $endpoint API endpoint path.
  * @param string $cache_key Transient cache key.
  * @param int    $ttl       Cache time-to-live in seconds. Default DAY_IN_SECONDS.
+ * @param bool   $use_v0    Whether to route this through the legacy v0 client. Default false.
  * @return array|\WP_Error Endpoint data or WP_Error on failure.
  */
-function get_cached_endpoint( $endpoint, $cache_key, $ttl = DAY_IN_SECONDS ) {
+function get_cached_endpoint( $endpoint, $cache_key, $ttl = DAY_IN_SECONDS, $use_v0 = false ) {
 	// Check cache first.
 	$cached = get_transient( $cache_key );
 	if ( false !== $cached ) {
@@ -405,7 +539,7 @@ function get_cached_endpoint( $endpoint, $cache_key, $ttl = DAY_IN_SECONDS ) {
 	}
 
 	// Fetch from API.
-	$data = api_request( $endpoint, 'GET' );
+	$data = $use_v0 ? api_request_v0( $endpoint, 'GET' ) : api_request( $endpoint, 'GET' );
 
 	if ( is_wp_error( $data ) ) {
 		return $data;
@@ -445,7 +579,7 @@ function get_api_field( $endpoint_type, $field, $default_value = null ) {
 			break;
 
 		case 'user':
-			$data = get_user_info();
+			$data = get_current_pantheon_user();
 			break;
 
 		default:
@@ -547,50 +681,43 @@ function get_environment_info_from_env() {
 /**
  * Get the current authenticated Pantheon user's profile (terminus whoami equivalent).
  *
- * Uses the user_id cached during session token exchange to fetch name and email
- * from /v0/users/{user_id}. Returns null when no session has been established.
+ * Calls GET /current-user directly - v1 has no session token to parse a user
+ * ID out of, so this (and get_user_id()) work from a single cached request
+ * keyed by the WordPress user ID instead.
  *
- * @return array|null User data with 'email', 'profile.firstname', 'profile.lastname', or null.
+ * @return array|null User data (id, email, firstName, lastName, name, workspacesConnection), or null on error.
  */
 function get_current_pantheon_user() {
-	/*
-	 * Session token format: "{pantheon_user_uuid}:{session_uuid}:{token}".
-	 * Parse the UUID directly so this works on every request, not only when
-	 * the ash_nazg_user_id transient happens to be set.
-	 */
-	$wp_user_id    = get_current_user_id();
-	$session_token = get_transient( sprintf( 'ash_nazg_session_token_%d', $wp_user_id ) );
-
-	$pantheon_user_id = null;
-	if ( $session_token && is_string( $session_token ) ) {
-		$segments = explode( ':', $session_token, 2 );
-		if ( ! empty( $segments[0] ) && preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $segments[0] ) ) {
-			$pantheon_user_id = $segments[0];
-		}
-	}
-
-	// Fallback to the transient set during token exchange.
-	if ( ! $pantheon_user_id ) {
-		$pantheon_user_id = get_transient( 'ash_nazg_user_id' );
-	}
-
-	if ( ! $pantheon_user_id ) {
+	$wp_user_id = get_current_user_id();
+	if ( ! $wp_user_id ) {
 		return null;
 	}
 
-	$cache_key = sprintf( 'ash_nazg_pantheon_user_%s', $pantheon_user_id );
+	$cache_key = sprintf( 'ash_nazg_pantheon_user_%d', $wp_user_id );
 	$cached    = get_transient( $cache_key );
 	if ( false !== $cached ) {
 		return $cached['data'];
 	}
 
-	$endpoint = sprintf( '/v0/users/%s', rawurlencode( $pantheon_user_id ) );
-	$result   = api_request( $endpoint, 'GET' );
+	/*
+	 * currentUser_workspacesConnection_first must be set explicitly - it's a
+	 * Relay-style connection with no documented default page size.
+	 */
+	$result = api_request( '/current-user?currentUser_workspacesConnection_first=50', 'GET' );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get Pantheon user profile: %s', $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to get Pantheon user profile: %s', $result->get_error_message() ) );
 		return null;
 	}
+
+	/*
+	 * v1 returns firstName/lastName flat; v0 nested them under `profile`.
+	 * Alias into the old shape so the Dashboard view doesn't need to change.
+	 */
+	$result['profile'] = [
+		'firstname' => $result['firstName'] ?? '',
+		'lastname' => $result['lastName'] ?? '',
+	];
 
 	set_transient(
 		$cache_key,
@@ -605,63 +732,48 @@ function get_current_pantheon_user() {
 }
 
 /**
- * Get organizations the current Pantheon user belongs to.
+ * Get workspaces the current Pantheon user belongs to.
  *
- * Returns an array of [{id, organization: {id, profile: {name, machine_name}}}].
- * Cached per-user for 1 hour since org membership changes infrequently.
+ * V1 replaces "organizations" with "workspaces", nested directly in the
+ * /current-user response rather than a separate endpoint. Reshaped back into
+ * the old [{id, organization: {id, profile: {name, machine_name}}}] contract
+ * so the Dashboard page's rendering loop doesn't need to change.
  *
- * @return array|null Array of org membership objects, or null on error.
+ * @return array|null Array of org-shaped membership objects, or null on error.
  */
 function get_user_organizations() {
-	$wp_user_id = get_current_user_id();
+	$user = get_current_pantheon_user();
+	if ( ! $user || empty( $user['workspacesConnection']['edges'] ) ) {
+		return null;
+	}
 
-	// Get Pantheon user UUID from session token.
-	$session_token    = get_transient( sprintf( 'ash_nazg_session_token_%d', $wp_user_id ) );
-	$pantheon_user_id = null;
-	if ( $session_token && is_string( $session_token ) ) {
-		$segments = explode( ':', $session_token, 2 );
-		if ( ! empty( $segments[0] ) && preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $segments[0] ) ) {
-			$pantheon_user_id = $segments[0];
+	$memberships = [];
+	foreach ( $user['workspacesConnection']['edges'] as $edge ) {
+		$workspace = $edge['node']['workspace'] ?? null;
+		if ( empty( $workspace['id'] ) ) {
+			continue;
 		}
-	}
-	if ( ! $pantheon_user_id ) {
-		$pantheon_user_id = get_transient( 'ash_nazg_user_id' );
-	}
-	if ( ! $pantheon_user_id ) {
-		return null;
-	}
 
-	$cache_key = sprintf( 'ash_nazg_user_orgs_%s', $pantheon_user_id );
-	$cached    = get_transient( $cache_key );
-	if ( false !== $cached ) {
-		return $cached['data'];
-	}
-
-	$endpoint = sprintf( '/v0/users/%s/memberships/organizations', rawurlencode( $pantheon_user_id ) );
-	$result   = api_request( $endpoint, 'GET' );
-
-	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get user organizations: %s', $result->get_error_message() ) );
-		return null;
+		$memberships[] = [
+			'id' => $workspace['id'],
+			'organization' => [
+				'id' => $workspace['id'],
+				'profile' => [
+					'name' => $workspace['name'] ?? $workspace['id'],
+					'machine_name' => $workspace['id'],
+				],
+			],
+		];
 	}
 
-	set_transient(
-		$cache_key,
-		[
-			'data'      => $result,
-			'cached_at' => time(),
-		],
-		HOUR_IN_SECONDS
-	);
-
-	return $result;
+	return $memberships;
 }
 
 /**
  * Get Pantheon site information.
  *
  * @param string|null $site_id Optional. Site UUID. Auto-detected if not provided.
- * @return array|WP_Error Site data or WP_Error on failure.
+ * @return array|\WP_Error Site data or WP_Error on failure.
  */
 function get_site_info( $site_id = null ) {
 	$site_id = Helpers\ensure_site_id( $site_id );
@@ -673,13 +785,13 @@ function get_site_info( $site_id = null ) {
 	$env_data = get_site_info_from_env();
 	if ( $env_data && $env_data['id'] === $site_id ) {
 		// We have $_ENV data, but still fetch API for additional fields.
-		$endpoint = '/v0/sites/' . $site_id;
+		$endpoint = '/sites/' . $site_id;
 		$cache_key = 'ash_nazg_site_info_' . $site_id;
 		$api_data = get_cached_endpoint( $endpoint, $cache_key );
 
 		// Merge: prefer $_ENV for fields it has, add API-only fields.
 		if ( ! is_wp_error( $api_data ) ) {
-			return array_merge( $api_data, $env_data );
+			return array_merge( normalize_site_info( $api_data ), $env_data );
 		}
 
 		// API failed, return $_ENV data only.
@@ -687,14 +799,36 @@ function get_site_info( $site_id = null ) {
 	}
 
 	// No $_ENV data, use API only.
-	$endpoint = '/v0/sites/' . $site_id;
+	$endpoint = '/sites/' . $site_id;
 	$cache_key = 'ash_nazg_site_info_' . $site_id;
+	$api_data = get_cached_endpoint( $endpoint, $cache_key );
 
-	return get_cached_endpoint( $endpoint, $cache_key );
+	return is_wp_error( $api_data ) ? $api_data : normalize_site_info( $api_data );
+}
+
+/**
+ * Alias v1 Site fields to the v0 names some views still read directly.
+ *
+ * @param array $site Raw v1 Site data.
+ * @return array Site data with v0-named aliases added.
+ */
+function normalize_site_info( $site ) {
+	if ( ! is_array( $site ) ) {
+		return $site;
+	}
+
+	if ( ! isset( $site['name'] ) && isset( $site['machineName'] ) ) {
+		$site['name'] = $site['machineName'];
+	}
+
+	return $site;
 }
 
 /**
  * Update site label.
+ *
+ * V0 fallback: v1 has no PUT/PATCH on /sites/{id} yet - `label` is readable
+ * but not writable via the public API. Requires a legacy machine token.
  *
  * @param string $site_id Site UUID.
  * @param string $label   New site label.
@@ -720,17 +854,17 @@ function update_site_label( $site_id, $label ) {
 		'label' => $label,
 	];
 
-	$result = api_request( $endpoint, 'PUT', $body );
+	$result = api_request_v0( $endpoint, 'PUT', $body );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to update site label for %s: %s', $site_id, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to update site label for %s: %s', $site_id, $result->get_error_message() ) );
 		return $result;
 	}
 
 	// Clear site info cache to force refresh.
 	delete_transient( sprintf( 'ash_nazg_site_info_%s', $site_id ) );
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Site label updated to "%s" for site %s', $label, $site_id ) );
+	Helpers\debug_log( sprintf( 'Site label updated to "%s" for site %s', $label, $site_id ) );
 
 	return $result;
 }
@@ -760,9 +894,7 @@ function get_environment_info( $site_id = null, $env = null ) {
 	$env_data = get_environment_info_from_env();
 
 	// Fetch all environments from API (there's no single-environment endpoint).
-	$endpoint = sprintf( '/v0/sites/%s/environments', $site_id );
-	$cache_key_all = sprintf( 'ash_nazg_all_env_info_%s', $site_id );
-	$environments = get_cached_endpoint( $endpoint, $cache_key_all );
+	$environments = get_environments( $site_id );
 
 	if ( is_wp_error( $environments ) ) {
 		// API failed - return $_ENV data if available.
@@ -903,7 +1035,7 @@ function get_local_git_diffstat() {
 		$return_code = 0;
 		exec( $cmd, $output, $return_code ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.exec_exec
 		if ( 0 !== $return_code ) {
-			\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'get_local_git_diffstat: git returned exit code %d', $return_code ) );
+			Helpers\debug_log( sprintf( 'get_local_git_diffstat: git returned exit code %d', $return_code ) );
 			return null;
 		}
 	} elseif ( function_exists( 'shell_exec' ) ) {
@@ -1073,9 +1205,6 @@ function get_effective_environment( $site_id = null ) {
  * @return void
  */
 function clear_cache() {
-	delete_transient( 'ash_nazg_session_token' );
-	delete_transient( 'ash_nazg_user_id' );
-
 	// Clear site-specific caches if we can detect site ID.
 	$site_id = get_pantheon_site_id();
 	if ( $site_id ) {
@@ -1092,45 +1221,16 @@ function clear_cache() {
 }
 
 /**
- * Get user ID from current session.
+ * Get the Pantheon user ID for the current WordPress user.
  *
  * @return string|false User ID or false if not available.
  */
 function get_user_id() {
-	$wp_user_id = get_current_user_id();
-
-	/*
-	 * Primary: parse the Pantheon user UUID from the cached session token
-	 * (format: "{uuid}:{session_uuid}:{token}") — works on every request.
-	 */
-	$session_token = get_transient( sprintf( 'ash_nazg_session_token_%d', $wp_user_id ) );
-	if ( $session_token && is_string( $session_token ) ) {
-		$segments = explode( ':', $session_token, 2 );
-		if ( ! empty( $segments[0] ) && preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $segments[0] ) ) {
-			return $segments[0];
-		}
-	}
-
-	// Fallback: legacy global transient set during token exchange.
-	$cached_user_id = get_transient( 'ash_nazg_user_id' );
-	if ( false !== $cached_user_id ) {
-		return $cached_user_id;
-	}
-
-	// Last resort: trigger auth to populate the token and try again.
-	$token = get_api_token();
-	if ( is_wp_error( $token ) ) {
+	$user = get_current_pantheon_user();
+	if ( ! $user || empty( $user['id'] ) ) {
 		return false;
 	}
-	$session_token = get_transient( sprintf( 'ash_nazg_session_token_%d', $wp_user_id ) );
-	if ( $session_token && is_string( $session_token ) ) {
-		$segments = explode( ':', $session_token, 2 );
-		if ( ! empty( $segments[0] ) && preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $segments[0] ) ) {
-			return $segments[0];
-		}
-	}
-
-	return false;
+	return $user['id'];
 }
 
 /**
@@ -1193,10 +1293,12 @@ function get_endpoints_status( $site_id = null, $env = null, $refresh = false ) 
  * @return true|\WP_Error True on success, WP_Error on failure.
  */
 function test_connection() {
-	// Clear any cached tokens to force fresh authentication.
-	delete_transient( 'ash_nazg_session_token' );
+	// Force a fresh site info fetch, bypassing the cache, to verify connectivity now.
+	$site_id = Helpers\ensure_site_id( null );
+	if ( ! is_wp_error( $site_id ) ) {
+		delete_transient( sprintf( 'ash_nazg_site_info_%s', $site_id ) );
+	}
 
-	// Try to get site info.
 	$result = get_site_info();
 
 	if ( is_wp_error( $result ) ) {
@@ -1212,6 +1314,11 @@ function test_connection() {
  * On Pantheon environments, reads directly from $_ENV which is always current.
  * On local environments (Lando/ddev), calls the Terminus internal variables endpoint
  * which returns the full env var set including PANTHEON_INDEX_* for Solr.
+ *
+ * Note: terminus.pantheon.io is a separate internal service, not part of the
+ * api.pantheon.io v0/v1 versioning. It's unverified whether it accepts a v1
+ * personal access token the same way it accepted v0 session tokens - flagged
+ * in TODO.md since this only affects local (Lando/ddev) development.
  *
  * @param string $site_id Optional. Site UUID.
  * @param string $env     Optional. Environment name.
@@ -1275,13 +1382,12 @@ function get_addon_env_variables( $site_id = null, $env = null ) {
 	$data = json_decode( $body, true );
 
 	if ( 401 === $status_code || 403 === $status_code ) {
-		clear_user_session_token();
-		Helpers\debug_log( sprintf( 'get_addon_env_variables: Auth failed (%d), cleared session token', $status_code ) );
+		Helpers\debug_log( sprintf( 'get_addon_env_variables: Auth failed (%d)', $status_code ) );
 		return new \WP_Error(
 			'authentication_failed',
 			sprintf(
 				/* translators: %d: HTTP status code */
-				__( 'Authentication failed (%d). Session token has been cleared. Please try again.', 'ash-nazg' ),
+				__( 'Authentication failed (%d). Please check your Personal Access Token in Settings.', 'ash-nazg' ),
 				$status_code
 			)
 		);
@@ -1391,7 +1497,8 @@ function get_site_addons( $site_id = null ) {
  * Update site addon.
  *
  * Enable or disable a specific site addon via the Pantheon API.
- * Uses PUT to enable, DELETE to disable.
+ * v1 uses a single PUT with an `enable` query param for both directions
+ * (v0 used PUT to enable and DELETE to disable).
  *
  * @param string $site_id Site UUID.
  * @param string $addon_id Addon identifier (e.g., 'redis', 'solr').
@@ -1413,19 +1520,29 @@ function update_site_addon( $site_id, $addon_id, $enabled ) {
 		);
 	}
 
-	// Addon endpoints use PUT to enable, DELETE to disable.
-	$endpoint = sprintf( '/v0/sites/%s/addons/%s', $site_id, $addon_id );
-	$method = $enabled ? 'PUT' : 'DELETE';
+	// Map plugin addon IDs to the v1 AddonType enum.
+	$addon_type_map = [
+		'redis' => 'CACHESERVER',
+		'solr' => 'INDEXSERVER',
+		'elasticsearch' => 'ELASTICSEARCH',
+	];
+	$addon_type = $addon_type_map[ $addon_id ] ?? strtoupper( $addon_id );
 
-	// Send empty body to ensure Content-Length header is set (avoid 411 errors).
-	$result = api_request( $endpoint, $method, [] );
+	$endpoint = sprintf(
+		'/sites/%s/addons/%s?enable=%s',
+		$site_id,
+		$addon_type,
+		$enabled ? 'true' : 'false'
+	);
+
+	$result = api_request( $endpoint, 'PUT', [] );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to %s addon %s for site %s: %s', $enabled ? 'enable' : 'disable', $addon_id, $site_id, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to %s addon %s for site %s: %s', $enabled ? 'enable' : 'disable', $addon_id, $site_id, $result->get_error_message() ) );
 		return $result;
 	}
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Addon %s %s for site %s - API Response: %s', $addon_id, $enabled ? 'enabled' : 'disabled', $site_id, wp_json_encode( $result ) ) );
+	Helpers\debug_log( sprintf( 'Addon %s %s for site %s - API Response: %s', $addon_id, $enabled ? 'enabled' : 'disabled', $site_id, wp_json_encode( $result ) ) );
 
 	// Store the new addon state in environment state.
 	$env_state = get_environment_state();
@@ -1585,7 +1702,7 @@ function sync_environment_state( $site_id = null, $env = null ) {
 	$env_info = get_environment_info( $site_id, $api_env );
 
 	if ( is_wp_error( $env_info ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to sync environment state - %s', $env_info->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to sync environment state - %s', $env_info->get_error_message() ) );
 		return false;
 	}
 
@@ -1618,10 +1735,13 @@ function get_connection_mode() {
 /**
  * Update connection mode (SFTP/Git toggle).
  *
+ * V1 splits this into two distinct endpoints instead of v0's single PUT with
+ * a `mode` body param.
+ *
  * @param string $site_id Site UUID.
  * @param string $env Environment name.
  * @param string $mode Connection mode: 'sftp' or 'git'.
- * @return array|WP_Error Environment data or WP_Error on failure.
+ * @return array|\WP_Error Workflow payload or WP_Error on failure.
  */
 function update_connection_mode( $site_id, $env, $mode ) {
 	if ( ! in_array( $mode, [ 'sftp', 'git' ], true ) ) {
@@ -1634,15 +1754,14 @@ function update_connection_mode( $site_id, $env, $mode ) {
 	// Map local environments to dev for API queries.
 	$api_env = map_local_env_to_dev( $env );
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/connection-mode', $site_id, $api_env );
-	$body = [
-		'mode' => $mode,
-	];
+	$endpoint = 'sftp' === $mode
+		? sprintf( '/sites/%s/environments/%s/development-mode/on-server', $site_id, $api_env )
+		: sprintf( '/sites/%s/environments/%s/development-mode/git', $site_id, $api_env );
 
-	$result = api_request( $endpoint, 'PUT', $body );
+	$result = api_request( $endpoint, 'POST', [] );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to update connection mode to %s on %s/%s - Error: %s', $mode, $site_id, $env, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to update connection mode to %s on %s/%s - Error: %s', $mode, $site_id, $env, $result->get_error_message() ) );
 		return $result;
 	}
 
@@ -1651,11 +1770,11 @@ function update_connection_mode( $site_id, $env, $mode ) {
 	 * Note: We do NOT update the state here. The state should only be updated
 	 * after the mode change is verified, which is done by the caller.
 	 */
-	delete_transient( sprintf( 'ash_nazg_all_env_info_%s', $site_id ) );
+	delete_transient( sprintf( 'ash_nazg_environments_%s', $site_id ) );
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Connection mode change to %s initiated on %s/%s', $mode, $site_id, $env ) );
+	Helpers\debug_log( sprintf( 'Connection mode change to %s initiated on %s/%s', $mode, $site_id, $env ) );
 
-	return $result;
+	return normalize_workflow_payload( $result );
 }
 
 /**
@@ -1684,11 +1803,15 @@ function get_available_workflows() {
 /**
  * Trigger a Pantheon workflow.
  *
+ * V0 fallback: v1 has no generic `POST .../environments/{env}/workflows`
+ * endpoint - only specific typed mutations (deploy, addon, domain, etc).
+ * Requires a legacy machine token.
+ *
  * @param string $site_id Site UUID.
  * @param string $env Environment name.
  * @param string $workflow_type Workflow type (e.g., 'scaffold_extensions').
  * @param array $params Workflow parameters.
- * @return array|WP_Error Workflow response or WP_Error on failure.
+ * @return array|\WP_Error Workflow response or WP_Error on failure.
  */
 function trigger_workflow( $site_id, $env, $workflow_type, $params ) {
 	// Validate environment.
@@ -1713,14 +1836,14 @@ function trigger_workflow( $site_id, $env, $workflow_type, $params ) {
 		'params' => $params,
 	];
 
-	$result = api_request( $endpoint, 'POST', $body );
+	$result = api_request_v0( $endpoint, 'POST', $body );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to trigger workflow %s on %s/%s (API env: %s) - Error: %s', $workflow_type, $site_id, $env, $api_env, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to trigger workflow %s on %s/%s (API env: %s) - Error: %s', $workflow_type, $site_id, $env, $api_env, $result->get_error_message() ) );
 		return $result;
 	}
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Triggered workflow %s on %s/%s (API env: %s) - Response: %s', $workflow_type, $site_id, $env, $api_env, wp_json_encode( $result ) ) );
+	Helpers\debug_log( sprintf( 'Triggered workflow %s on %s/%s (API env: %s) - Response: %s', $workflow_type, $site_id, $env, $api_env, wp_json_encode( $result ) ) );
 
 	return $result;
 }
@@ -1728,17 +1851,28 @@ function trigger_workflow( $site_id, $env, $workflow_type, $params ) {
 /**
  * Get workflow status.
  *
+ * V1's WorkflowStatus.result is uppercase (SUCCEEDED/FAILED/...) and has no
+ * `step`/`active_description` fields (v0 had both, lowercase result). Aliased
+ * back to the old shape so callers (including JS-side polling) don't change.
+ *
  * @param string $site_id Site UUID.
  * @param string $workflow_id Workflow UUID.
- * @return array|WP_Error Workflow data or WP_Error on failure.
+ * @return array|\WP_Error Workflow data or WP_Error on failure.
  */
 function get_workflow_status( $site_id, $workflow_id ) {
-	$endpoint = sprintf( '/v0/sites/%s/workflows/%s', $site_id, $workflow_id );
+	$endpoint = sprintf( '/sites/%s/workflows/%s', $site_id, $workflow_id );
 	$result = api_request( $endpoint, 'GET' );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get workflow status %s on %s - Error: %s', $workflow_id, $site_id, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to get workflow status %s on %s - Error: %s', $workflow_id, $site_id, $result->get_error_message() ) );
 		return $result;
+	}
+
+	if ( isset( $result['result'] ) ) {
+		$result['result'] = strtolower( $result['result'] );
+	}
+	if ( isset( $result['activeDescription'] ) && ! isset( $result['active_description'] ) ) {
+		$result['active_description'] = $result['activeDescription'];
 	}
 
 	return $result;
@@ -1747,9 +1881,13 @@ function get_workflow_status( $site_id, $workflow_id ) {
 /**
  * Get git commit history for an environment.
  *
+ * V1 returns commit history as the `commitLog` field nested on the
+ * Environment object (from get_environments()) rather than a dedicated
+ * endpoint. Reshaped to the old {hash, message, author, datetime} contract.
+ *
  * @param string $site_id Site UUID.
  * @param string $env Environment name.
- * @return array|WP_Error Array of commit objects or WP_Error on failure.
+ * @return array|\WP_Error Array of commit objects or WP_Error on failure.
  */
 function get_environment_commits( $site_id, $env ) {
 	$cache_key = sprintf( 'ash_nazg_commits_%s_%s', $site_id, $env );
@@ -1762,13 +1900,18 @@ function get_environment_commits( $site_id, $env ) {
 	/* Map local environment names to dev for API queries. */
 	$api_env = map_local_env_to_dev( $env );
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/commits', $site_id, $api_env );
-	$result = api_request( $endpoint, 'GET' );
+	$environments = get_environments( $site_id );
 
-	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get commits for %s/%s: %s', $site_id, $env, $result->get_error_message() ) );
-		return $result;
+	if ( is_wp_error( $environments ) ) {
+		Helpers\debug_log( sprintf( 'Failed to get commits for %s/%s: %s', $site_id, $env, $environments->get_error_message() ) );
+		return $environments;
 	}
+
+	if ( ! isset( $environments[ $api_env ]['commitLog'] ) || ! is_array( $environments[ $api_env ]['commitLog'] ) ) {
+		return [];
+	}
+
+	$result = array_map( __NAMESPACE__ . '\\normalize_commit', $environments[ $api_env ]['commitLog'] );
 
 	/* Cache for 5 minutes to keep commit log fresh. */
 	set_transient(
@@ -1784,18 +1927,35 @@ function get_environment_commits( $site_id, $env ) {
 }
 
 /**
+ * Reshape a v1 Commit object to the old v0 {hash, message, author, datetime} contract.
+ *
+ * @param array $commit Raw v1 Commit object.
+ * @return array Reshaped commit.
+ */
+function normalize_commit( $commit ) {
+	return [
+		'hash' => $commit['sha'] ?? '',
+		'message' => $commit['message'] ?? '',
+		'author' => $commit['author'] ?? '',
+		'datetime' => $commit['createdAt'] ?? '',
+	];
+}
+
+/**
  * Get available upstream update commits.
  *
- * For multidev environments, pass the environment name so the correct
- * upstream branch is compared (refs/heads/{env} rather than master).
+ * V1's upstream-updates/check is an async workflow (unlike v0's synchronous
+ * GET) - this triggers the check, waits for it to finish, then re-reads the
+ * environment's commit log to approximate the old {commits, behind, has_code,
+ * environments} shape. Unverified against a live site - flagged in TODO.md.
  *
  * @param string      $site_id Site UUID.
- * @param string|null $env     Current environment name. Null falls back to master branch.
- * @return array|WP_Error Array of upstream commit objects or WP_Error on failure.
+ * @param string|null $env     Current environment name. Null falls back to dev.
+ * @return array|\WP_Error Array shaped like the old public API response, or WP_Error on failure.
  */
 function get_upstream_updates( $site_id, $env = null ) {
 	// Use an env-specific cache key for multidevs since their branch differs from master.
-	$is_multidev = $env && \Pantheon\AshNazg\Helpers\is_multidev_environment( $env );
+	$is_multidev = $env && Helpers\is_multidev_environment( $env );
 	$cache_key = $is_multidev
 		? sprintf( 'ash_nazg_upstream_updates_%s_%s', $site_id, $env )
 		: sprintf( 'ash_nazg_upstream_updates_%s', $site_id );
@@ -1805,22 +1965,42 @@ function get_upstream_updates( $site_id, $env = null ) {
 		return $cached['data'];
 	}
 
-	$endpoint = sprintf( '/v0/sites/%s/upstream-updates', $site_id );
-	$result = api_request( $endpoint, 'GET' );
+	$api_env = map_local_env_to_dev( $env ?: 'dev' );
 
-	// Public API endpoint not yet deployed — fall back to Terminus API.
-	if ( is_wp_error( $result ) ) {
-		$error_data = $result->get_error_data( 'api_error' );
-		if ( isset( $error_data['status'] ) && 404 === $error_data['status'] ) {
-			\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Public API upstream-updates 404 for %s, trying Terminus API fallback', $site_id ) );
-			$result = get_upstream_updates_via_terminus( $site_id, $env );
-		}
+	$endpoint = sprintf( '/sites/%s/environments/%s/upstream-updates/check', $site_id, $api_env );
+	$workflow = api_request( $endpoint, 'POST', [] );
+
+	if ( is_wp_error( $workflow ) ) {
+		Helpers\debug_log( sprintf( 'Failed to check upstream updates for %s: %s', $site_id, $workflow->get_error_message() ) );
+		return $workflow;
 	}
 
-	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get upstream updates for %s: %s', $site_id, $result->get_error_message() ) );
-		return $result;
+	// Wait for the check workflow to finish before re-reading environment state.
+	if ( ! empty( $workflow['id'] ) ) {
+		poll_workflow( $site_id, $workflow['id'], 15, 2 );
 	}
+
+	$environments = get_environments( $site_id );
+	if ( is_wp_error( $environments ) ) {
+		return $environments;
+	}
+
+	$env_data = $environments[ $api_env ] ?? [];
+	$composer_updates = $env_data['composerUpdates'] ?? [];
+	$updated_deps = array_merge(
+		$composer_updates['addedDependencies'] ?? [],
+		$composer_updates['updatedDependencies'] ?? [],
+		$composer_updates['removedDependencies'] ?? []
+	);
+
+	$commits = array_map( __NAMESPACE__ . '\\normalize_commit', $env_data['commitLog'] ?? [] );
+
+	$result = [
+		'commits' => $commits,
+		'behind' => count( $updated_deps ),
+		'has_code' => ! empty( $updated_deps ) || ! empty( $commits ),
+		'environments' => [],
+	];
 
 	/*
 	 * Cache for 5 minutes.
@@ -1839,139 +2019,39 @@ function get_upstream_updates( $site_id, $env = null ) {
 }
 
 /**
- * Fetch upstream updates from the Terminus API (terminus.pantheon.io).
- *
- * Used as a fallback when the public API returns 404. Returns a normalized
- * response in the same shape as the public API so callers need no changes.
- *
- * For multidev environments, pass $env so the comparison uses the correct
- * branch (refs/heads/{env}) rather than always comparing against master.
- *
- * @param string      $site_id Site UUID.
- * @param string|null $env     Current environment name.
- * @return array|WP_Error Normalized upstream updates or WP_Error on failure.
- */
-function get_upstream_updates_via_terminus( $site_id, $env = null ) {
-	$session_token = get_api_token();
-	if ( is_wp_error( $session_token ) ) {
-		return $session_token;
-	}
-
-	// Terminus uses the env's branch name: master for dev/test/live, env name for multidevs.
-	$branch = ( $env && \Pantheon\AshNazg\Helpers\is_multidev_environment( $env ) ) ? $env : 'master';
-
-	$url = sprintf(
-		'https://terminus.pantheon.io/api/sites/%s/code-upstream-updates?base_branch=%s',
-		rawurlencode( $site_id ),
-		rawurlencode( 'refs/heads/' . $branch )
-	);
-
-	$response = wp_remote_get(
-		$url,
-		[
-			'headers' => [
-				'Authorization' => 'Bearer ' . $session_token,
-				'Accept'        => 'application/json',
-			],
-			'timeout' => 30,
-		]
-	);
-
-	if ( is_wp_error( $response ) ) {
-		return $response;
-	}
-
-	$status_code = wp_remote_retrieve_response_code( $response );
-	$body        = wp_remote_retrieve_body( $response );
-	$data        = json_decode( $body, true );
-
-	if ( $status_code < 200 || $status_code >= 300 ) {
-		$error_message = $data['message'] ?? 'Unknown Terminus API error';
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Terminus API upstream-updates error %d for %s: %s', $status_code, $site_id, $error_message ) );
-		return new \WP_Error(
-			'api_error',
-			sprintf(
-				/* translators: %1$d: HTTP status code, %2$s: error message */
-				__( 'Terminus API request failed (%1$d): %2$s', 'ash-nazg' ),
-				$status_code,
-				$error_message
-			),
-			[ 'status' => $status_code ]
-		);
-	}
-
-	return normalize_terminus_upstream_response( $data );
-}
-
-/**
- * Normalize a Terminus API upstream response to the public API shape.
- *
- * Terminus returns update_log as a hash-keyed object and per-env status as
- * top-level keys. This converts both to match the public API format so the
- * rest of the codebase only needs to handle one structure.
- *
- * @param array $data Raw Terminus API response.
- * @return array Normalized response with 'commits', 'behind', 'has_code', 'environments'.
- */
-function normalize_terminus_upstream_response( $data ) {
-	$commits = [];
-	if ( isset( $data['update_log'] ) && is_array( $data['update_log'] ) ) {
-		foreach ( $data['update_log'] as $hash => $commit ) {
-			if ( ! isset( $commit['hash'] ) ) {
-				$commit['hash'] = $hash;
-			}
-			$commits[] = $commit;
-		}
-	}
-
-	$environments = [];
-	foreach ( [ 'dev', 'test', 'live' ] as $env ) {
-		if ( isset( $data[ $env ] ) ) {
-			$environments[ $env ] = $data[ $env ];
-		}
-	}
-
-	return [
-		'commits'      => $commits,
-		'behind'       => $data['behind'] ?? count( $commits ),
-		'has_code'     => $data['has_code'] ?? true,
-		'environments' => $environments,
-	];
-}
-
-/**
  * Apply upstream updates to an environment.
  *
  * @param string $site_id Site UUID.
  * @param string $env Environment name.
  * @param bool   $updatedb Whether to run update.php after applying (Drupal).
  * @param bool   $xoption Whether to accept updates with merge conflicts (force theirs).
- * @return array|WP_Error Workflow response on success, WP_Error on failure.
+ * @return array|\WP_Error Workflow response on success, WP_Error on failure.
  */
 function apply_upstream_updates( $site_id, $env, $updatedb = false, $xoption = false ) {
 	/* Map local environment names to dev for API queries. */
 	$api_env = map_local_env_to_dev( $env );
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/upstream/updates', $site_id, $api_env );
+	$endpoint = sprintf(
+		'/sites/%s/environments/%s/upstream-updates/apply?updateDb=%s&xOption=%s',
+		$site_id,
+		$api_env,
+		$updatedb ? 'true' : 'false',
+		$xoption ? 'true' : 'false'
+	);
 
-	$body = [
-		'updatedb' => (bool) $updatedb,
-		'xoption' => (bool) $xoption,
-	];
-
-	$result = api_request( $endpoint, 'POST', $body );
+	$result = api_request( $endpoint, 'POST', [] );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to apply upstream updates on %s.%s - Error: %s', $site_id, $env, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to apply upstream updates on %s.%s - Error: %s', $site_id, $env, $result->get_error_message() ) );
 		return $result;
 	}
 
 	/* Clear upstream updates cache after applying. */
 	delete_transient( sprintf( 'ash_nazg_upstream_updates_%s', $site_id ) );
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Applied upstream updates on %s.%s - Response: %s', $site_id, $env, wp_json_encode( $result ) ) );
+	Helpers\debug_log( sprintf( 'Applied upstream updates on %s.%s - Response: %s', $site_id, $env, wp_json_encode( $result ) ) );
 
-	return $result;
+	return normalize_workflow_payload( $result );
 }
 
 /**
@@ -1983,7 +2063,7 @@ function apply_upstream_updates( $site_id, $env, $updatedb = false, $xoption = f
  * @param bool   $clear_cache Whether to clear cache after deployment.
  * @param bool   $sync_content Whether to sync content from live (test only).
  * @param bool   $updatedb Whether to run database updates after deployment.
- * @return array|WP_Error Workflow response or WP_Error on failure.
+ * @return array|\WP_Error Workflow response or WP_Error on failure.
  */
 function deploy_code( $site_id, $target_env, $note = '', $clear_cache = true, $sync_content = false, $updatedb = false ) {
 	/* Validate target environment. */
@@ -1997,26 +2077,27 @@ function deploy_code( $site_id, $target_env, $note = '', $clear_cache = true, $s
 	/* Determine source environment. */
 	$source_env = ( 'test' === $target_env ) ? 'dev' : 'test';
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/deploy', $site_id, $target_env );
+	$endpoint = sprintf( '/sites/%s/environments/%s/deployments', $site_id, $target_env );
 
 	$body = [
-		'clear_cache' => $clear_cache,
-		'updatedb' => $updatedb,
+		'clearCache' => $clear_cache,
+		'updateDb' => $updatedb,
+		'deployCode' => true,
 	];
 
 	if ( ! empty( $note ) ) {
-		$body['note'] = $note;
+		$body['annotation'] = $note;
 	}
 
 	/* sync_content only applies to test → live. */
 	if ( 'live' === $target_env && $sync_content ) {
-		$body['sync_content'] = true;
+		$body['cloneDatabase'] = [ 'fromEnvironment' => 'live' ];
 	}
 
 	$result = api_request( $endpoint, 'POST', $body );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to deploy code to %s.%s - Error: %s', $site_id, $target_env, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to deploy code to %s.%s - Error: %s', $site_id, $target_env, $result->get_error_message() ) );
 		return $result;
 	}
 
@@ -2024,9 +2105,9 @@ function deploy_code( $site_id, $target_env, $note = '', $clear_cache = true, $s
 	delete_transient( sprintf( 'ash_nazg_commits_%s_%s', $site_id, $source_env ) );
 	delete_transient( sprintf( 'ash_nazg_commits_%s_%s', $site_id, $target_env ) );
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Deployed code to %s.%s - Response: %s', $site_id, $target_env, wp_json_encode( $result ) ) );
+	Helpers\debug_log( sprintf( 'Deployed code to %s.%s - Response: %s', $site_id, $target_env, wp_json_encode( $result ) ) );
 
-	return $result;
+	return normalize_workflow_payload( $result );
 }
 
 /**
@@ -2037,11 +2118,11 @@ function deploy_code( $site_id, $target_env, $note = '', $clear_cache = true, $s
  * @param string $to_env Target environment to clone to.
  * @param string $from_url Source URL for WordPress search-replace (optional).
  * @param string $to_url Target URL for WordPress search-replace (optional).
- * @param bool $clear_cache Whether to clear cache after cloning.
- * @param bool $updatedb Whether to run database updates after cloning.
- * @return array|WP_Error Workflow data on success, WP_Error on failure.
+ * @param bool $clear_cache Unused - v1's database/clone endpoint has no clearCache param. Kept for call-site compatibility.
+ * @param bool $updatedb Unused - v1's database/clone endpoint has no updateDb param. Kept for call-site compatibility.
+ * @return array|\WP_Error Workflow data on success, WP_Error on failure.
  */
-function clone_database( $site_id, $from_env, $to_env, $from_url = '', $to_url = '', $clear_cache = true, $updatedb = false ) {
+function clone_database( $site_id, $from_env, $to_env, $from_url = '', $to_url = '', $clear_cache = true, $updatedb = false ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
 	/* Validate environments. */
 	if ( empty( $from_env ) || empty( $to_env ) ) {
 		return new \WP_Error(
@@ -2057,24 +2138,24 @@ function clone_database( $site_id, $from_env, $to_env, $from_url = '', $to_url =
 		);
 	}
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/database/clone', $site_id, $to_env );
+	$endpoint = sprintf( '/sites/%s/environments/%s/database/clone', $site_id, $to_env );
 
 	$body = [
-		'from_environment' => $from_env,
-		'clear_cache' => $clear_cache,
-		'updatedb' => $updatedb,
+		'fromEnvironment' => $from_env,
 	];
 
 	/* Add URLs for WordPress search-replace if provided. */
 	if ( ! empty( $from_url ) && ! empty( $to_url ) ) {
-		$body['from_url'] = $from_url;
-		$body['to_url'] = $to_url;
+		$body['wpReplaceSiteURL'] = [
+			'fromUrl' => $from_url,
+			'toUrl' => $to_url,
+		];
 	}
 
 	$result = api_request( $endpoint, 'POST', $body );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to clone database from %s.%s to %s.%s - Error: %s', $site_id, $from_env, $site_id, $to_env, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to clone database from %s.%s to %s.%s - Error: %s', $site_id, $from_env, $site_id, $to_env, $result->get_error_message() ) );
 		return $result;
 	}
 
@@ -2085,9 +2166,9 @@ function clone_database( $site_id, $from_env, $to_env, $from_url = '', $to_url =
 	/* Clear environment state cache. */
 	delete_transient( sprintf( 'ash_nazg_env_state_%s_%s', $site_id, $to_env ) );
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Cloned database from %s.%s to %s.%s - Response: %s', $site_id, $from_env, $site_id, $to_env, wp_json_encode( $result ) ) );
+	Helpers\debug_log( sprintf( 'Cloned database from %s.%s to %s.%s - Response: %s', $site_id, $from_env, $site_id, $to_env, wp_json_encode( $result ) ) );
 
-	return $result;
+	return normalize_workflow_payload( $result );
 }
 
 /**
@@ -2096,7 +2177,7 @@ function clone_database( $site_id, $from_env, $to_env, $from_url = '', $to_url =
  * @param string $site_id Site UUID.
  * @param string $from_env Source environment to clone from.
  * @param string $to_env Target environment to clone to.
- * @return array|WP_Error Workflow data on success, WP_Error on failure.
+ * @return array|\WP_Error Workflow data on success, WP_Error on failure.
  */
 function clone_files( $site_id, $from_env, $to_env ) {
 	/* Validate environments. */
@@ -2114,25 +2195,25 @@ function clone_files( $site_id, $from_env, $to_env ) {
 		);
 	}
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/files/clone', $site_id, $to_env );
+	$endpoint = sprintf( '/sites/%s/environments/%s/files/clone', $site_id, $to_env );
 
 	$body = [
-		'from_environment' => $from_env,
+		'fromEnvironment' => $from_env,
 	];
 
 	$result = api_request( $endpoint, 'POST', $body );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to clone files from %s.%s to %s.%s - Error: %s', $site_id, $from_env, $site_id, $to_env, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to clone files from %s.%s to %s.%s - Error: %s', $site_id, $from_env, $site_id, $to_env, $result->get_error_message() ) );
 		return $result;
 	}
 
 	/* Clear environment state cache. */
 	delete_transient( sprintf( 'ash_nazg_env_state_%s_%s', $site_id, $to_env ) );
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Cloned files from %s.%s to %s.%s - Response: %s', $site_id, $from_env, $site_id, $to_env, wp_json_encode( $result ) ) );
+	Helpers\debug_log( sprintf( 'Cloned files from %s.%s to %s.%s - Response: %s', $site_id, $from_env, $site_id, $to_env, wp_json_encode( $result ) ) );
 
-	return $result;
+	return normalize_workflow_payload( $result );
 }
 
 /**
@@ -2140,8 +2221,10 @@ function clone_files( $site_id, $from_env, $to_env ) {
  *
  * WARNING: This is PERMANENT and IRREVERSIBLE. All data will be lost.
  *
+ * v0 fallback: v1 has no DELETE /sites/{id} yet. Requires a legacy machine token.
+ *
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
- * @return array|WP_Error API response or WP_Error on failure.
+ * @return array|\WP_Error API response or WP_Error on failure.
  */
 function delete_site( $site_id = null ) {
 	$site_id = Helpers\ensure_site_id( $site_id );
@@ -2152,7 +2235,7 @@ function delete_site( $site_id = null ) {
 	Helpers\debug_log( sprintf( 'CRITICAL: Site deletion initiated for %s', $site_id ) );
 
 	$endpoint = sprintf( '/v0/sites/%s', $site_id );
-	$result = api_request( $endpoint, 'DELETE' );
+	$result = api_request_v0( $endpoint, 'DELETE' );
 
 	if ( is_wp_error( $result ) ) {
 		Helpers\debug_log( sprintf( 'Site deletion failed for %s - Error: %s', $site_id, $result->get_error_message() ) );
@@ -2161,7 +2244,7 @@ function delete_site( $site_id = null ) {
 
 	// Clear all caches.
 	delete_transient( 'ash_nazg_site_info_' . $site_id );
-	delete_transient( 'ash_nazg_all_env_info_' . $site_id );
+	delete_transient( 'ash_nazg_environments_' . $site_id );
 	delete_transient( 'ash_nazg_backups_' . $site_id );
 	delete_transient( 'ash_nazg_code_tips_' . $site_id );
 
@@ -2173,9 +2256,14 @@ function delete_site( $site_id = null ) {
 /**
  * Get domains for an environment.
  *
+ * V0 fallback: v1 has no domain-listing endpoint yet (only create/delete/
+ * set-primary/verify). Requires a legacy machine token. Note: as of this
+ * migration this function has no real callers in the admin UI - only
+ * add_domain()/delete_domain() (used by Multisite automation) are exercised.
+ *
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
  * @param string $env Optional. Environment name. Auto-detected if not provided.
- * @return array|WP_Error Array of domains or WP_Error on failure.
+ * @return array|\WP_Error Array of domains or WP_Error on failure.
  */
 function get_domains( $site_id = null, $env = null ) {
 	$site_id = Helpers\ensure_site_id( $site_id );
@@ -2191,7 +2279,7 @@ function get_domains( $site_id = null, $env = null ) {
 	$api_env = map_local_env_to_dev( $env );
 
 	$endpoint = sprintf( '/v0/sites/%s/environments/%s/domains', $site_id, $api_env );
-	$result = api_request( $endpoint, 'GET' );
+	$result = api_request_v0( $endpoint, 'GET' );
 
 	if ( is_wp_error( $result ) ) {
 		Helpers\debug_log( sprintf( 'Failed to get domains for %s/%s: %s', $site_id, $env, $result->get_error_message() ) );
@@ -2207,7 +2295,7 @@ function get_domains( $site_id = null, $env = null ) {
  * @param string $domain Domain name to add (e.g., 'example.com').
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
  * @param string $env Optional. Environment name. Defaults to 'live'.
- * @return array|WP_Error API response or WP_Error on failure.
+ * @return array|\WP_Error API response or WP_Error on failure.
  */
 function add_domain( $domain, $site_id = null, $env = 'live' ) {
 	$site_id = Helpers\ensure_site_id( $site_id );
@@ -2219,12 +2307,11 @@ function add_domain( $domain, $site_id = null, $env = 'live' ) {
 		return new \WP_Error( 'invalid_domain', __( 'Domain name is required.', 'ash-nazg' ) );
 	}
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/domains', $site_id, $env );
-	$body = [ 'domain' => $domain ];
+	$endpoint = sprintf( '/sites/%s/environments/%s/domains?domain=%s', $site_id, $env, rawurlencode( $domain ) );
 
 	Helpers\debug_log( sprintf( 'Adding domain %s to %s/%s', $domain, $site_id, $env ) );
 
-	$result = api_request( $endpoint, 'POST', $body );
+	$result = api_request( $endpoint, 'POST', [] );
 
 	if ( is_wp_error( $result ) ) {
 		Helpers\debug_log( sprintf( 'Failed to add domain %s to %s/%s - Error: %s', $domain, $site_id, $env, $result->get_error_message() ) );
@@ -2242,7 +2329,7 @@ function add_domain( $domain, $site_id = null, $env = 'live' ) {
  * @param string $domain Domain name to delete.
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
  * @param string $env Optional. Environment name. Defaults to 'live'.
- * @return array|WP_Error API response or WP_Error on failure.
+ * @return array|\WP_Error API response or WP_Error on failure.
  */
 function delete_domain( $domain, $site_id = null, $env = 'live' ) {
 	$site_id = Helpers\ensure_site_id( $site_id );
@@ -2254,7 +2341,7 @@ function delete_domain( $domain, $site_id = null, $env = 'live' ) {
 		return new \WP_Error( 'invalid_domain', __( 'Domain name is required.', 'ash-nazg' ) );
 	}
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/domains/%s', $site_id, $env, $domain );
+	$endpoint = sprintf( '/sites/%s/environments/%s/domains/%s', $site_id, $env, rawurlencode( $domain ) );
 
 	Helpers\debug_log( sprintf( 'Deleting domain %s from %s/%s', $domain, $site_id, $env ) );
 
@@ -2273,8 +2360,11 @@ function delete_domain( $domain, $site_id = null, $env = 'live' ) {
 /**
  * Get git branches and commits (code tips).
  *
+ * V0 fallback: no v1 equivalent found for this endpoint. Requires a legacy
+ * machine token.
+ *
  * @param string $site_id Site UUID.
- * @return array|WP_Error Array of git branch references or WP_Error on failure.
+ * @return array|\WP_Error Array of git branch references or WP_Error on failure.
  */
 function get_code_tips( $site_id ) {
 	$cache_key = sprintf( 'ash_nazg_code_tips_%s', $site_id );
@@ -2285,10 +2375,10 @@ function get_code_tips( $site_id ) {
 	}
 
 	$endpoint = sprintf( '/v0/sites/%s/code-tips', $site_id );
-	$result = api_request( $endpoint, 'GET' );
+	$result = api_request_v0( $endpoint, 'GET' );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get code tips for %s: %s', $site_id, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to get code tips for %s: %s', $site_id, $result->get_error_message() ) );
 		return $result;
 	}
 
@@ -2308,9 +2398,12 @@ function get_code_tips( $site_id ) {
 /**
  * Get diffstat for uncommitted SFTP changes.
  *
+ * V1 returns this as the `diffstat` field nested on the Environment object
+ * (from get_environments()) rather than a dedicated endpoint.
+ *
  * @param string $site_id Site UUID.
  * @param string $env Environment name.
- * @return array|WP_Error Diffstat data or WP_Error on failure.
+ * @return array|\WP_Error Diffstat data or WP_Error on failure.
  */
 function get_diffstat( $site_id, $env ) {
 	$cache_key = sprintf( 'ash_nazg_diffstat_%s_%s', $site_id, $env );
@@ -2323,12 +2416,19 @@ function get_diffstat( $site_id, $env ) {
 	/* Map local environment names to dev for API queries. */
 	$api_env = map_local_env_to_dev( $env );
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/diffstat', $site_id, $api_env );
-	$result = api_request( $endpoint, 'GET' );
+	$environments = get_environments( $site_id );
 
-	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get diffstat for %s/%s: %s', $site_id, $env, $result->get_error_message() ) );
-		return $result;
+	if ( is_wp_error( $environments ) ) {
+		Helpers\debug_log( sprintf( 'Failed to get diffstat for %s/%s: %s', $site_id, $env, $environments->get_error_message() ) );
+		return $environments;
+	}
+
+	$result = [];
+	foreach ( $environments[ $api_env ]['diffstat'] ?? [] as $file ) {
+		if ( empty( $file['path'] ) ) {
+			continue;
+		}
+		$result[ $file['path'] ] = [ 'status' => $file['status'] ?? '?' ];
 	}
 
 	/* Cache for 1 minute (changes frequently in SFTP mode). */
@@ -2350,36 +2450,47 @@ function get_diffstat( $site_id, $env ) {
  * @param string $site_id Site UUID.
  * @param string $env Environment name.
  * @param string $message Commit message.
- * @return array|WP_Error Commit response or WP_Error on failure.
+ * @return array|\WP_Error Commit response or WP_Error on failure.
  */
 function commit_sftp_changes( $site_id, $env, $message ) {
 	/* Map local environment names to dev for API queries. */
 	$api_env = map_local_env_to_dev( $env );
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/code/commit', $site_id, $api_env );
-	$body = [
-		'message' => $message,
-		'committer_name' => wp_get_current_user()->display_name,
-		'committer_email' => wp_get_current_user()->user_email,
-	];
+	$current_user = wp_get_current_user();
 
-	$result = api_request( $endpoint, 'POST', $body );
+	$endpoint = sprintf(
+		'/sites/%s/environments/%s/commits?message=%s&committerName=%s&committerEmail=%s',
+		$site_id,
+		$api_env,
+		rawurlencode( $message ),
+		rawurlencode( $current_user->display_name ),
+		rawurlencode( $current_user->user_email )
+	);
+
+	$result = api_request( $endpoint, 'POST', [] );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to commit on %s/%s (API env: %s) - Error: %s', $site_id, $env, $api_env, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to commit on %s/%s (API env: %s) - Error: %s', $site_id, $env, $api_env, $result->get_error_message() ) );
 		return $result;
 	}
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Committed changes on %s/%s (API env: %s) - Response: %s', $site_id, $env, $api_env, wp_json_encode( $result ) ) );
+	delete_transient( sprintf( 'ash_nazg_diffstat_%s_%s', $site_id, $env ) );
 
-	return $result;
+	Helpers\debug_log( sprintf( 'Committed changes on %s/%s (API env: %s) - Response: %s', $site_id, $env, $api_env, wp_json_encode( $result ) ) );
+
+	return normalize_workflow_payload( $result );
 }
 
 /**
  * Get all environments for a site.
  *
+ * V1 returns a Relay-style EnvironmentConnection; reshaped into the same
+ * name-keyed map (`$environments['dev'] => {...}`) that v0 returned, since
+ * several other functions (get_environment_info, get_effective_environment,
+ * get_environment_commits, get_diffstat) index into it by environment name.
+ *
  * @param string $site_id Site UUID.
- * @return array|WP_Error Environments data or WP_Error on failure.
+ * @return array|\WP_Error Environments data or WP_Error on failure.
  */
 function get_environments( $site_id ) {
 	$cache_key = sprintf( 'ash_nazg_environments_%s', $site_id );
@@ -2389,12 +2500,29 @@ function get_environments( $site_id ) {
 		return $cached['data'];
 	}
 
-	$endpoint = sprintf( '/v0/sites/%s/environments', $site_id );
-	$result = api_request( $endpoint, 'GET' );
+	// Pager first must be set explicitly - no documented default page size.
+	$endpoint = sprintf( '/sites/%s/environments?pager[first]=50', $site_id );
+	$connection = api_request( $endpoint, 'GET' );
 
-	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get environments for %s: %s', $site_id, $result->get_error_message() ) );
-		return $result;
+	if ( is_wp_error( $connection ) ) {
+		Helpers\debug_log( sprintf( 'Failed to get environments for %s: %s', $site_id, $connection->get_error_message() ) );
+		return $connection;
+	}
+
+	$result = [];
+	foreach ( $connection['edges'] ?? [] as $edge ) {
+		$node = $edge['node'] ?? null;
+		if ( empty( $node['id'] ) ) {
+			continue;
+		}
+		// Preserve v0 field names some views still read directly.
+		$is_sftp = isset( $node['developmentMode'] ) && 'SFTP' === $node['developmentMode'];
+		$node['on_server_development'] = $is_sftp;
+		$node['connection_mode'] = $is_sftp ? 'sftp' : 'git';
+		if ( ! isset( $node['dns_zone'] ) && isset( $node['dnsZone'] ) ) {
+			$node['dns_zone'] = $node['dnsZone'];
+		}
+		$result[ $node['id'] ] = $node;
 	}
 
 	/* Cache for 5 minutes. */
@@ -2416,30 +2544,29 @@ function get_environments( $site_id ) {
  * @param string $site_id Site UUID.
  * @param string $env_name New environment name.
  * @param string $source_env Source environment to clone from (default: dev).
- * @return array|WP_Error Environment creation response or WP_Error on failure.
+ * @return array|\WP_Error Environment creation response or WP_Error on failure.
  */
 function create_multidev( $site_id, $env_name, $source_env = 'dev' ) {
-	$endpoint = sprintf( '/v0/sites/%s/environments', $site_id );
-	$body = [
-		'environment_name' => $env_name,
-		'from_environment' => $source_env,
-		'clone_database' => true,
-		'clone_files' => true,
-	];
+	$endpoint = sprintf(
+		'/sites/%s/multidevs?name=%s&cloneFromEnv=%s',
+		$site_id,
+		rawurlencode( $env_name ),
+		rawurlencode( $source_env )
+	);
 
-	$result = api_request( $endpoint, 'POST', $body );
+	$result = api_request( $endpoint, 'POST', [] );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to create multidev %s on %s - Error: %s', $env_name, $site_id, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to create multidev %s on %s - Error: %s', $env_name, $site_id, $result->get_error_message() ) );
 		return $result;
 	}
 
 	// Clear environments cache after creating new environment.
 	delete_transient( sprintf( 'ash_nazg_environments_%s', $site_id ) );
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Created multidev %s on %s - Response: %s', $env_name, $site_id, wp_json_encode( $result ) ) );
+	Helpers\debug_log( sprintf( 'Created multidev %s on %s - Response: %s', $env_name, $site_id, wp_json_encode( $result ) ) );
 
-	return $result;
+	return normalize_workflow_payload( $result );
 }
 
 /**
@@ -2447,27 +2574,24 @@ function create_multidev( $site_id, $env_name, $source_env = 'dev' ) {
  *
  * @param string $site_id Site UUID.
  * @param string $multidev_name Multidev environment name to merge.
- * @return array|WP_Error Merge response or WP_Error on failure.
+ * @return array|\WP_Error Merge response or WP_Error on failure.
  */
 function merge_multidev_to_dev( $site_id, $multidev_name ) {
-	$endpoint = sprintf( '/v0/sites/%s/environments/dev/merge', $site_id );
-	$body = [
-		'source_environment' => $multidev_name,
-	];
+	$endpoint = sprintf( '/sites/%s/environments/%s/merges/cloud-to-dev', $site_id, $multidev_name );
 
-	$result = api_request( $endpoint, 'POST', $body );
+	$result = api_request( $endpoint, 'POST', [] );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to merge multidev %s to dev on %s - Error: %s', $multidev_name, $site_id, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to merge multidev %s to dev on %s - Error: %s', $multidev_name, $site_id, $result->get_error_message() ) );
 		return $result;
 	}
 
 	// Clear commits cache for dev environment.
-	delete_transient( sprintf( 'ash_nazg_env_commits_%s_dev', $site_id ) );
+	delete_transient( sprintf( 'ash_nazg_commits_%s_dev', $site_id ) );
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Merged multidev %s to dev on %s - Response: %s', $multidev_name, $site_id, wp_json_encode( $result ) ) );
+	Helpers\debug_log( sprintf( 'Merged multidev %s to dev on %s - Response: %s', $multidev_name, $site_id, wp_json_encode( $result ) ) );
 
-	return $result;
+	return normalize_workflow_payload( $result );
 }
 
 /**
@@ -2476,18 +2600,21 @@ function merge_multidev_to_dev( $site_id, $multidev_name ) {
  * @param string $site_id Site UUID.
  * @param string $multidev_name Multidev environment name to merge dev into.
  * @param bool   $updatedb Whether to run update.php after merging (Drupal).
- * @return array|WP_Error Workflow response or WP_Error on failure.
+ * @return array|\WP_Error Workflow response or WP_Error on failure.
  */
 function merge_dev_to_multidev( $site_id, $multidev_name, $updatedb = false ) {
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/merge-from-dev', $site_id, $multidev_name );
+	$endpoint = sprintf( '/sites/%s/environments/%s/merges/dev-to-cloud', $site_id, $multidev_name );
 	$body = [
-		'updatedb' => (bool) $updatedb,
+		'params' => [
+			'fromEnvironment' => 'dev',
+			'updatedb' => (bool) $updatedb,
+		],
 	];
 
 	$result = api_request( $endpoint, 'POST', $body );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to merge dev to multidev %s on %s - Error: %s', $multidev_name, $site_id, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to merge dev to multidev %s on %s - Error: %s', $multidev_name, $site_id, $result->get_error_message() ) );
 		return $result;
 	}
 
@@ -2495,9 +2622,9 @@ function merge_dev_to_multidev( $site_id, $multidev_name, $updatedb = false ) {
 	delete_transient( sprintf( 'ash_nazg_commits_%s_dev', $site_id ) );
 	delete_transient( sprintf( 'ash_nazg_commits_%s_%s', $site_id, $multidev_name ) );
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Merged dev to multidev %s on %s - Response: %s', $multidev_name, $site_id, wp_json_encode( $result ) ) );
+	Helpers\debug_log( sprintf( 'Merged dev to multidev %s on %s - Response: %s', $multidev_name, $site_id, wp_json_encode( $result ) ) );
 
-	return $result;
+	return normalize_workflow_payload( $result );
 }
 
 /**
@@ -2505,7 +2632,7 @@ function merge_dev_to_multidev( $site_id, $multidev_name, $updatedb = false ) {
  *
  * @param string $site_id Site UUID.
  * @param string $multidev_name Multidev environment name to delete.
- * @return array|WP_Error Deletion response or WP_Error on failure.
+ * @return array|\WP_Error Deletion response or WP_Error on failure.
  */
 function delete_multidev( $site_id, $multidev_name ) {
 	// Prevent deletion of standard environments.
@@ -2516,21 +2643,21 @@ function delete_multidev( $site_id, $multidev_name ) {
 		);
 	}
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s', $site_id, $multidev_name );
+	$endpoint = sprintf( '/sites/%s/multidevs/%s', $site_id, $multidev_name );
 
 	$result = api_request( $endpoint, 'DELETE' );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to delete multidev %s on %s - Error: %s', $multidev_name, $site_id, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to delete multidev %s on %s - Error: %s', $multidev_name, $site_id, $result->get_error_message() ) );
 		return $result;
 	}
 
 	// Clear environments cache after deleting environment.
 	delete_transient( sprintf( 'ash_nazg_environments_%s', $site_id ) );
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Deleted multidev %s on %s - Response: %s', $multidev_name, $site_id, wp_json_encode( $result ) ) );
+	Helpers\debug_log( sprintf( 'Deleted multidev %s on %s - Response: %s', $multidev_name, $site_id, wp_json_encode( $result ) ) );
 
-	return $result;
+	return normalize_workflow_payload( $result );
 }
 
 /**
@@ -2540,7 +2667,7 @@ function delete_multidev( $site_id, $multidev_name ) {
  * @param string $workflow_id Workflow ID.
  * @param int    $max_attempts Maximum number of polling attempts (default: 60).
  * @param int    $sleep_seconds Seconds to wait between polls (default: 2).
- * @return array|WP_Error Final workflow status or WP_Error on failure/timeout.
+ * @return array|\WP_Error Final workflow status or WP_Error on failure/timeout.
  */
 function poll_workflow( $site_id, $workflow_id, $max_attempts = 60, $sleep_seconds = 2 ) {
 	$attempts = 0;
@@ -2553,7 +2680,7 @@ function poll_workflow( $site_id, $workflow_id, $max_attempts = 60, $sleep_secon
 		}
 
 		// Check if workflow is complete.
-		if ( isset( $status['result'] ) && in_array( $status['result'], [ 'succeeded', 'failed' ], true ) ) {
+		if ( isset( $status['result'] ) && in_array( $status['result'], [ 'SUCCEEDED', 'FAILED', 'succeeded', 'failed' ], true ) ) {
 			return $status;
 		}
 
@@ -2574,11 +2701,22 @@ function poll_workflow( $site_id, $workflow_id, $max_attempts = 60, $sleep_secon
 }
 
 /**
- * Get backups catalog for an environment.
+ * Get backups for an environment.
+ *
+ * V1 groups each backup's code/database/files archives under one Backup
+ * object (`{id, date, code, database, files}`); v0 instead returned one flat
+ * catalog entry per archive, keyed by a synthetic id, with a `folder` field
+ * (shared across the 3 entries for one backup event) that the Backups page
+ * uses to group them back into a set. Reshaped into that flat contract so
+ * the view's grouping/rendering logic doesn't need to change.
+ *
+ * Note: v1 has no `size` or `ttl` (expiry) fields for individual backup
+ * archives - the view already renders "Unknown" when these are 0, which is
+ * the honest state here (not a bug), flagged in TODO.md.
  *
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
  * @param string $env Optional. Environment name. Auto-detected if not provided.
- * @return array|\WP_Error Backups catalog (map of backup_id => Backup) or WP_Error on failure.
+ * @return array|\WP_Error Backups catalog (map of backup_id => flat archive entry) or WP_Error on failure.
  */
 function get_backups( $site_id = null, $env = null ) {
 	$site_id = Helpers\ensure_site_id( $site_id );
@@ -2594,26 +2732,59 @@ function get_backups( $site_id = null, $env = null ) {
 	// Map local environments to dev for API queries.
 	$api_env = map_local_env_to_dev( $env );
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/backups/catalog', $site_id, $api_env );
+	$endpoint = sprintf( '/sites/%s/environments/%s/backups', $site_id, $api_env );
 	$cache_key = sprintf( 'ash_nazg_backups_%s_%s', $site_id, $api_env );
 
 	// Cache for 5 minutes (backups don't change frequently).
 	$backups = get_cached_endpoint( $endpoint, $cache_key, 5 * MINUTE_IN_SECONDS );
 
 	if ( is_wp_error( $backups ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get backups for %s.%s - Error: %s', $site_id, $api_env, $backups->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to get backups for %s.%s - Error: %s', $site_id, $api_env, $backups->get_error_message() ) );
 		return $backups;
 	}
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Retrieved %d backups for %s.%s', count( $backups ), $site_id, $api_env ) );
+	$element_suffixes = [
+		'code' => '_code.tar.gz',
+		'database' => '_database.sql.gz',
+		'files' => '_files.tar.gz',
+	];
 
-	return $backups;
+	$catalog = [];
+	foreach ( (array) $backups as $backup ) {
+		if ( empty( $backup['id'] ) ) {
+			continue;
+		}
+		$timestamp = ! empty( $backup['date'] ) ? strtotime( $backup['date'] ) : 0;
+
+		foreach ( $element_suffixes as $element => $suffix ) {
+			if ( empty( $backup[ $element ] ) ) {
+				continue;
+			}
+			$entry_id = sprintf( '%s_%s', $backup['id'], $element );
+			$catalog[ $entry_id ] = [
+				'folder' => $backup['id'],
+				'filename' => ( $backup[ $element ]['name'] ?? $backup['id'] ) . $suffix,
+				'timestamp' => $timestamp,
+				'size' => 0, // Not available in v1.
+				'ttl' => 0, // Not available in v1.
+			];
+		}
+	}
+
+	Helpers\debug_log( sprintf( 'Retrieved %d backups for %s.%s', count( $catalog ), $site_id, $api_env ) );
+
+	return $catalog;
 }
 
 /**
  * Create a new backup.
  *
- * @param string $element Backup element type: 'all', 'code', 'database', or 'files'.
+ * Note: v1's createSiteBackup has no per-element selection like v0 did
+ * ('code', 'database', 'files') - it always creates a full code+database+
+ * files combo backup. $element is kept for call-site compatibility but is
+ * not sent to the API; this is a behavior change from v0, flagged in TODO.md.
+ *
+ * @param string $element Backup element type: 'all', 'code', 'database', or 'files'. Not sent to v1 - see note above.
  * @param int    $keep_for Number of days to keep the backup (default: 365).
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
  * @param string $env Optional. Environment name. Auto-detected if not provided.
@@ -2630,7 +2801,7 @@ function create_backup( $element, $keep_for = 365, $site_id = null, $env = null 
 		return $env;
 	}
 
-	// Validate element type.
+	// Validate element type (for signature/call-site compatibility only - see docblock).
 	$valid_elements = [ 'all', 'code', 'database', 'files' ];
 	if ( ! in_array( $element, $valid_elements, true ) ) {
 		return new \WP_Error(
@@ -2643,31 +2814,28 @@ function create_backup( $element, $keep_for = 365, $site_id = null, $env = null 
 		);
 	}
 
-	// Validate keep_for (minimum 1 day).
+	// Validate keep_for (minimum 1 day), convert to seconds for v1's ttl param.
 	$keep_for = max( 1, (int) $keep_for );
+	$ttl_seconds = $keep_for * DAY_IN_SECONDS;
 
 	// Map local environments to dev for API queries.
 	$api_env = map_local_env_to_dev( $env );
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/backups', $site_id, $api_env );
-	$body = [
-		'element' => $element,
-		'keep_for' => $keep_for,
-	];
+	$endpoint = sprintf( '/sites/%s/backups?environment=%s&ttl=%d', $site_id, $api_env, $ttl_seconds );
 
-	$result = api_request( $endpoint, 'POST', $body );
+	$result = api_request( $endpoint, 'POST', [] );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to create %s backup for %s.%s - Error: %s', $element, $site_id, $api_env, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to create backup for %s.%s - Error: %s', $site_id, $api_env, $result->get_error_message() ) );
 		return $result;
 	}
 
 	// Clear backups cache after creating backup.
 	delete_transient( sprintf( 'ash_nazg_backups_%s_%s', $site_id, $api_env ) );
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Created %s backup for %s.%s - Workflow ID: %s', $element, $site_id, $api_env, $result['id'] ?? 'unknown' ) );
+	Helpers\debug_log( sprintf( 'Created backup for %s.%s - Workflow ID: %s', $site_id, $api_env, $result['id'] ?? 'unknown' ) );
 
-	return $result;
+	return normalize_workflow_payload( $result );
 }
 
 /**
@@ -2705,29 +2873,38 @@ function restore_backup( $backup_id, $element, $site_id = null, $env = null ) {
 
 	// Map local environments to dev for API queries.
 	$api_env = map_local_env_to_dev( $env );
+	$restore_type = strtoupper( $element );
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/backups/%s/restore', $site_id, $api_env, $backup_id );
-	$body = [
-		'element' => $element,
-	];
+	$endpoint = sprintf(
+		'/sites/%s/backups/restore?key=%s&type=%s&environment=%s',
+		$site_id,
+		rawurlencode( $backup_id ),
+		$restore_type,
+		$api_env
+	);
 
-	$result = api_request( $endpoint, 'POST', $body );
+	$result = api_request( $endpoint, 'POST', [] );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to restore %s from backup %s on %s.%s - Error: %s', $element, $backup_id, $site_id, $api_env, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to restore %s from backup %s on %s.%s - Error: %s', $element, $backup_id, $site_id, $api_env, $result->get_error_message() ) );
 		return $result;
 	}
 
 	// Clear backups cache after restore.
 	delete_transient( sprintf( 'ash_nazg_backups_%s_%s', $site_id, $api_env ) );
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Restored %s from backup %s on %s.%s - Workflow ID: %s', $element, $backup_id, $site_id, $api_env, $result['workflow_id'] ?? 'unknown' ) );
+	Helpers\debug_log( sprintf( 'Restored %s from backup %s on %s.%s - Workflow ID: %s', $element, $backup_id, $site_id, $api_env, $result['id'] ?? 'unknown' ) );
 
-	return $result;
+	return normalize_workflow_payload( $result );
 }
 
 /**
  * Get a signed download URL for a backup file.
+ *
+ * Note: v1 identifies the backup by element `type` + `timestamp` rather than
+ * v0's opaque backup_id/folder name. Assumes $backup_id is (or starts with)
+ * the backup's Unix timestamp, consistent with Pantheon's historical backup
+ * folder naming - unverified against a live site, flagged in TODO.md.
  *
  * @param string $backup_id Backup ID (folder name from catalog).
  * @param string $element Element to download: 'code', 'database', or 'files'.
@@ -2761,31 +2938,43 @@ function get_backup_download_url( $backup_id, $element, $site_id = null, $env = 
 
 	// Map local environments to dev for API queries.
 	$api_env = map_local_env_to_dev( $env );
+	$backup_type = strtoupper( $element );
+	$timestamp = (int) preg_replace( '/\D.*$/', '', $backup_id );
 
-	$endpoint = sprintf( '/v0/sites/%s/environments/%s/backups/%s/%s/download-url', $site_id, $api_env, $backup_id, $element );
+	$endpoint = sprintf(
+		'/sites/%s/environments/%s/backup-download-urls?type=%s&timestamp=%d',
+		$site_id,
+		$api_env,
+		$backup_type,
+		$timestamp
+	);
 
-	$result = api_request( $endpoint, 'POST' );
+	$result = api_request( $endpoint, 'POST', [] );
 
 	if ( is_wp_error( $result ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Failed to get download URL for %s backup %s on %s.%s - Error: %s', $element, $backup_id, $site_id, $api_env, $result->get_error_message() ) );
+		Helpers\debug_log( sprintf( 'Failed to get download URL for %s backup %s on %s.%s - Error: %s', $element, $backup_id, $site_id, $api_env, $result->get_error_message() ) );
 		return $result;
 	}
 
 	if ( ! isset( $result['url'] ) ) {
-		\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Download URL response missing url field for %s backup %s on %s.%s', $element, $backup_id, $site_id, $api_env ) );
+		Helpers\debug_log( sprintf( 'Download URL response missing url field for %s backup %s on %s.%s', $element, $backup_id, $site_id, $api_env ) );
 		return new \WP_Error(
 			'missing_url',
 			__( 'API response did not include download URL', 'ash-nazg' )
 		);
 	}
 
-	\Pantheon\AshNazg\Helpers\debug_log( sprintf( 'Retrieved download URL for %s backup %s on %s.%s', $element, $backup_id, $site_id, $api_env ) );
+	Helpers\debug_log( sprintf( 'Retrieved download URL for %s backup %s on %s.%s', $element, $backup_id, $site_id, $api_env ) );
 
 	return $result['url'];
 }
 
 /**
  * Get environment metrics for a specific time period.
+ *
+ * V0 fallback: v1 has no metrics endpoint yet - the TimeseriesMetricsPoint/
+ * MetricsDuration schema types exist but nothing serves them. Requires a
+ * legacy machine token.
  *
  * @param string $duration Time period: "7d", "28d", "12w", or "12m".
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
@@ -2823,7 +3012,7 @@ function get_environment_metrics( $duration, $site_id = null, $env = null ) {
 	$cache_key = sprintf( 'ash_nazg_metrics_%s_%s_%s', $site_id, $api_env, $duration );
 
 	// Cache for 1 hour (metrics update periodically).
-	$metrics = get_cached_endpoint( $endpoint, $cache_key, HOUR_IN_SECONDS );
+	$metrics = get_cached_endpoint( $endpoint, $cache_key, HOUR_IN_SECONDS, true );
 
 	if ( is_wp_error( $metrics ) ) {
 		Helpers\debug_log( sprintf( 'Failed to get metrics for %s.%s (%s) - Error: %s', $site_id, $api_env, $duration, $metrics->get_error_message() ) );
