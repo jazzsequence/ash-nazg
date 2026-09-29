@@ -80,7 +80,7 @@ use Pantheon\AshNazg\API;
 		<?php endif; ?>
 	<?php endif; ?>
 
-	<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20" style="margin-top: 30px;">
+	<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20 ash-nazg-mt-30">
 		<h2><?php esc_html_e( 'Environment Information', 'ash-nazg' ); ?></h2>
 		<table class="form-table">
 			<tr>
