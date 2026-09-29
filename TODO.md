@@ -25,9 +25,6 @@ These features have no v1 endpoint yet and fall back to the legacy v0 API via a 
 - [ ] Backups page shows "Unknown" for backup Size and Expires columns — v1's `Backup`/`BackupDownload` schema has no `size` or `ttl` fields
 - [ ] `create_backup()` can no longer create a single-element (code-only/database-only/files-only) backup — v1's `createSiteBackup` only creates a full code+database+files combo; the `$element` UI selector is currently a no-op for creation (still respected for restore/download)
 
-## Pre-existing issue (unrelated to the v1 migration, discovered while testing it)
-- [ ] `composer test` silently reports success while actually dropping `test-plugin.php` (and everything alphabetically after it: `test-state-management.php`, `test-user-tokens.php`) from every run. Root cause: `test-plugin.php` is the only test file that does `require_once ASH_NAZG_PLUGIN_FILE`, and `ash-nazg.php` starts with `if ( ! defined( 'ABSPATH' ) ) { exit; }` — `tests/bootstrap.php` never defines `ABSPATH`, so that bare `exit;` kills the entire PHP process with code 0 the moment that test file loads, silently truncating the whole PHPUnit run (both single-site and multisite) before those files' tests execute, with no failure reported. Confirmed pre-existing and unrelated to the v0→v1 API work (the file is byte-identical to HEAD). Fix is likely either defining `ABSPATH` in `tests/bootstrap.php` or having `test-plugin.php` require the individual `includes/*.php` files directly like every other test does, instead of the full plugin bootstrap file. Until fixed, verify test coverage for changes touching those 3 files with `vendor/bin/phpunit --filter '^(?!.*Test_Plugin).*$'` instead of `composer test`.
-
 ## Planned Features
 
 ### UI/UX Improvements
