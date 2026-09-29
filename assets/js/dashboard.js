@@ -266,41 +266,46 @@ jQuery(document).ready(function($) {
 		});
 	});
 
-	// ── Machine token copy ───────────────────────────────────────────────────
+	// ── Token copy (Personal Access Token + legacy Machine Token) ───────────
 
-	$('#ash-nazg-copy-token').on('click', function() {
-		var $btn      = $(this);
-		var $feedback = $('#ash-nazg-copy-token-feedback');
-		var nonce     = $btn.data('nonce');
+	function bindCopyTokenButton(buttonId, feedbackId, ajaxAction) {
+		$(buttonId).on('click', function() {
+			var $btn      = $(this);
+			var $feedback = $(feedbackId);
+			var nonce     = $btn.data('nonce');
 
-		$btn.prop('disabled', true);
+			$btn.prop('disabled', true);
 
-		$.ajax({
-			url: ashNazgDashboard.ajaxUrl,
-			type: 'POST',
-			dataType: 'json',
-			data: {
-				action: 'ash_nazg_copy_machine_token',
-				nonce:  nonce
-			},
-			success: function(response) {
-				if (response.success && response.data && response.data.token) {
-					navigator.clipboard.writeText(response.data.token).then(function() {
-						$feedback.removeAttr('hidden');
-						setTimeout(function() { $feedback.attr('hidden', true); }, 2500);
-					}).catch(function() {
-						window.alert(ashNazgDashboard.i18n.clipboardError);
-					});
-				} else {
-					window.alert(response.data && response.data.message ? response.data.message : ashNazgDashboard.i18n.copyTokenError);
+			$.ajax({
+				url: ashNazgDashboard.ajaxUrl,
+				type: 'POST',
+				dataType: 'json',
+				data: {
+					action: ajaxAction,
+					nonce:  nonce
+				},
+				success: function(response) {
+					if (response.success && response.data && response.data.token) {
+						navigator.clipboard.writeText(response.data.token).then(function() {
+							$feedback.removeAttr('hidden');
+							setTimeout(function() { $feedback.attr('hidden', true); }, 2500);
+						}).catch(function() {
+							window.alert(ashNazgDashboard.i18n.clipboardError);
+						});
+					} else {
+						window.alert(response.data && response.data.message ? response.data.message : ashNazgDashboard.i18n.copyTokenError);
+					}
+				},
+				error: function() {
+					window.alert(ashNazgDashboard.i18n.copyTokenError);
+				},
+				complete: function() {
+					$btn.prop('disabled', false);
 				}
-			},
-			error: function() {
-				window.alert(ashNazgDashboard.i18n.copyTokenError);
-			},
-			complete: function() {
-				$btn.prop('disabled', false);
-			}
+			});
 		});
-	});
+	}
+
+	bindCopyTokenButton('#ash-nazg-copy-access-token', '#ash-nazg-copy-access-token-feedback', 'ash_nazg_copy_access_token');
+	bindCopyTokenButton('#ash-nazg-copy-token', '#ash-nazg-copy-token-feedback', 'ash_nazg_copy_machine_token');
 });

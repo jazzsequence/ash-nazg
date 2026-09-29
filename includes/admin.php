@@ -52,6 +52,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_refresh_metrics', __NAMESPACE__ . '\\ajax_refresh_metrics' );
 	add_action( 'wp_ajax_ash_nazg_save_primary_org', __NAMESPACE__ . '\\ajax_save_primary_org' );
 	add_action( 'wp_ajax_ash_nazg_copy_machine_token', __NAMESPACE__ . '\\ajax_copy_machine_token' );
+	add_action( 'wp_ajax_ash_nazg_copy_access_token', __NAMESPACE__ . '\\ajax_copy_access_token' );
 	add_action( 'load-toplevel_page_ash-nazg', __NAMESPACE__ . '\\dashboard_screen_options' );
 	add_action( 'load-ash-nazg_page_ash-nazg-addons', __NAMESPACE__ . '\\addons_screen_options' );
 	add_action( 'load-ash-nazg_page_ash-nazg-backups', __NAMESPACE__ . '\\backups_screen_options' );
@@ -3141,6 +3142,31 @@ function ajax_copy_machine_token() {
 }
 
 /**
+ * AJAX handler to return the current user's Personal Access Token for clipboard copy.
+ *
+ * The token is returned in the JSON response and never written into the HTML.
+ * The frontend JS immediately calls navigator.clipboard.writeText() and discards it.
+ *
+ * @return void
+ */
+function ajax_copy_access_token() {
+	check_ajax_referer( 'ash_nazg_copy_access_token', 'nonce' );
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ] );
+	}
+
+	$token = API\get_user_access_token( get_current_user_id() );
+
+	if ( ! $token ) {
+		wp_send_json_error( [ 'message' => __( 'No Personal Access Token found for this user.', 'ash-nazg' ) ] );
+	}
+
+	// Return the token once — JS must copy it immediately and not store it.
+	wp_send_json_success( [ 'token' => $token ] );
+}
+
+/**
  * Display token migration notice on Ash Nazg pages.
  *
  * Progressive nag system:
@@ -3455,7 +3481,7 @@ function handle_delete_redundant_user_meta_token() {
 	}
 
 	delete_user_meta( $user_id, 'ash_nazg_user_machine_token' );
-	API\clear_user_session_token( $user_id );
+	API\clear_v0_session_token( $user_id );
 
 	Helpers\debug_log( sprintf( 'User %d deleted redundant user meta token (Pantheon Secret is primary)', $user_id ) );
 
@@ -3508,8 +3534,8 @@ function handle_token_migration() {
 				// Delete global database token.
 				delete_option( 'ash_nazg_machine_token' );
 
-				// Clear session token for this user.
-				API\clear_user_session_token( $user_id );
+				// Clear the cached legacy v0 session derived from this token.
+				API\clear_v0_session_token( $user_id );
 
 				$message = __( 'Token successfully migrated to your account.', 'ash-nazg' );
 
