@@ -3,6 +3,8 @@
  * Development page specific styles
  */
 
+@use '../variables' as *;
+
 .ash-nazg-screen-options-note {
 	padding: 12px 0 0 0;
 }
@@ -44,6 +46,16 @@
 	background: #f6f7f7;
 	border: 1px solid #dcdcde;
 	border-radius: 4px;
+}
+
+/* Debug output (?debug=1) */
+.ash-nazg-debug-box {
+	background: #fff8dc;
+	border: 2px solid $color-warning;
+
+	h2 {
+		color: $color-warning;
+	}
 }
 
 .ash-nazg-deploy-note {
