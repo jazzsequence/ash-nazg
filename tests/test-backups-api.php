@@ -282,4 +282,114 @@ class Test_Backups_API extends TestCase {
 			'Should log download URL retrieval'
 		);
 	}
+
+	/**
+	 * Test that Backup.date is parsed as a numeric Unix timestamp, not an ISO date.
+	 *
+	 * Regression guard: live-verified against a real site that Backup.date is
+	 * a numeric string (e.g. "1780592488"), not an ISO datetime - strtotime()
+	 * on a bare numeric string does not reliably parse it as a Unix timestamp.
+	 */
+	public function test_backup_date_parsed_as_numeric_timestamp() {
+		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
+
+		$this->assertMatchesRegularExpression(
+			"/function get_backups.*is_numeric\\( \\\$backup\\['date'\\]/s",
+			$api_file_contents,
+			'get_backups should check is_numeric() on Backup.date before casting'
+		);
+		$this->assertDoesNotMatchRegularExpression(
+			"/function get_backups.*strtotime\\( \\\$backup\\['date'\\]/s",
+			$api_file_contents,
+			'get_backups should not call strtotime() directly on Backup.date'
+		);
+	}
+
+	/**
+	 * Test that get_backups() uses the real size/ttl/name fields from each
+	 * backup element instead of hardcoding them.
+	 *
+	 * Regression guard: live-verified against a real site that v1 backup
+	 * elements do have real size/ttl fields and a complete filename,
+	 * contrary to what the OpenAPI schema doc implied.
+	 */
+	public function test_backups_use_real_size_ttl_name() {
+		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
+
+		$get_backups_pos = strpos( $api_file_contents, 'function get_backups(' );
+		$this->assertNotFalse( $get_backups_pos, 'Should find get_backups function' );
+		$func_content = substr( $api_file_contents, $get_backups_pos, 2000 );
+
+		$this->assertStringContainsString(
+			"\$backup[ \$element ]['size']",
+			$func_content,
+			'get_backups should read the real size field from each backup element'
+		);
+		$this->assertStringContainsString(
+			"\$backup[ \$element ]['ttl']",
+			$func_content,
+			'get_backups should read the real ttl field from each backup element'
+		);
+		$this->assertStringContainsString(
+			"\$backup[ \$element ]['name']",
+			$func_content,
+			'get_backups should use the real, already-complete filename from each backup element'
+		);
+	}
+
+	/**
+	 * Test that get_backup_download_url() looks up the real per-element
+	 * timestamp instead of parsing one out of the opaque backup id.
+	 *
+	 * Regression guard: live-verified against a real site that a backup's
+	 * top-level id is a hash (e.g. "kWrk7cFXaq0...="), not a timestamp, so
+	 * stripping non-digit characters from it can never yield a real timestamp.
+	 */
+	public function test_backup_download_url_looks_up_real_timestamp() {
+		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
+
+		$this->assertStringNotContainsString(
+			"preg_replace( '/\\D.*\$/'",
+			$api_file_contents,
+			'get_backup_download_url should no longer derive a timestamp by regex-stripping the backup id'
+		);
+
+		$get_download_url_pos = strpos( $api_file_contents, 'function get_backup_download_url(' );
+		$this->assertNotFalse( $get_download_url_pos, 'Should find get_backup_download_url function' );
+		$func_content = substr( $api_file_contents, $get_download_url_pos, 1500 );
+
+		$this->assertStringContainsString(
+			'get_raw_backups(',
+			$func_content,
+			'get_backup_download_url should look up the raw backups list rather than guessing a timestamp'
+		);
+		$this->assertStringContainsString(
+			"\$backup[ \$element ]['timestamp']",
+			$func_content,
+			'get_backup_download_url should read the matched element\'s own timestamp field'
+		);
+	}
+
+	/**
+	 * Test that get_backups() and get_backup_download_url() share the same
+	 * raw-backups fetch helper instead of duplicating the endpoint/cache key.
+	 */
+	public function test_backups_share_raw_fetch_helper() {
+		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
+
+		$this->assertTrue(
+			function_exists( 'Pantheon\AshNazg\API\get_raw_backups' ),
+			'get_raw_backups helper function should exist'
+		);
+		$this->assertMatchesRegularExpression(
+			'/function get_backups.*get_raw_backups\(/s',
+			$api_file_contents,
+			'get_backups should call the shared get_raw_backups() helper'
+		);
+		$this->assertMatchesRegularExpression(
+			'/function get_backup_download_url.*get_raw_backups\(/s',
+			$api_file_contents,
+			'get_backup_download_url should call the shared get_raw_backups() helper'
+		);
+	}
 }

@@ -8,10 +8,12 @@
  *
  * A small number of features have no v1 endpoint yet (site label update,
  * delete site, metrics, domain listing, code tips, generic workflow
- * triggering). Those fall back to the legacy v0 API via api_request_v0(),
- * authenticated with a *separate* legacy machine token - v0 does not accept
- * v1 personal access tokens, so the two credentials are stored and resolved
- * independently. See get_user_access_token() vs get_user_machine_token().
+ * triggering). Those fall back to the legacy v0 API via api_request_v0().
+ * Live-verified: a v1 personal access token works as a v0 machine_token
+ * for the full v0 API surface, so api_request_v0() authenticates with the
+ * same personal access token first, falling back to a separate legacy
+ * machine token only for installs whose stored token predates the unified
+ * Personal Access Token system. See get_v0_session_token().
  *
  * @package Pantheon\AshNazg
  */
@@ -245,11 +247,19 @@ function get_machine_token() {
 }
 
 /**
- * Exchange the legacy v0 machine token for a v0 session token.
+ * Exchange a token for a v0 session token.
  *
  * V0-only. Cached per-user for 1 hour, same as the old exchange this
  * replaces. Only called by api_request_v0(), which is only used by the
  * handful of hybrid-fallback functions that have no v1 equivalent yet.
+ *
+ * Live-verified: a v1 Personal Access Token works as a v0 machine_token
+ * for the full v0 API surface (not just this exchange - confirmed against
+ * /v0/sites/{id}, .../metrics, .../code-tips, .../domains, /v0/users/{id}).
+ * So the PAT is tried first, meaning most installs only need to configure
+ * one token; the separate legacy machine token is kept only as a fallback
+ * for installs whose stored token predates the unified Personal Access
+ * Token system and may not also be valid for v1.
  *
  * @param int|null $user_id Optional. User ID. Defaults to current user.
  * @return string|\WP_Error Session token on success, WP_Error on failure.
@@ -273,12 +283,15 @@ function get_v0_session_token( $user_id = null ) {
 		return $cached_token;
 	}
 
-	$machine_token = get_user_machine_token( $user_id );
+	$machine_token = get_user_access_token( $user_id );
 	if ( ! $machine_token ) {
-		Helpers\debug_log( sprintf( 'No legacy machine token found for user %d', $user_id ) );
+		$machine_token = get_user_machine_token( $user_id );
+	}
+	if ( ! $machine_token ) {
+		Helpers\debug_log( sprintf( 'No Personal Access Token or legacy machine token found for user %d', $user_id ) );
 		return new \WP_Error(
 			'no_v0_token',
-			__( 'This feature requires a legacy Pantheon machine token (Settings > Machine Token). This requirement will be removed once Pantheon ships v1 support for it.', 'ash-nazg' )
+			__( 'This feature requires a Pantheon Personal Access Token (or, for older installs, a legacy Machine Token). Please add one in Settings.', 'ash-nazg' )
 		);
 	}
 
@@ -2500,8 +2513,12 @@ function get_environments( $site_id ) {
 		return $cached['data'];
 	}
 
-	// Pager first must be set explicitly - no documented default page size.
-	$endpoint = sprintf( '/sites/%s/environments?pager[first]=50', $site_id );
+	/*
+	 * Live-verified: `pager[first]=N` is invalid (HTTP 400) - bracket query
+	 * param syntax isn't supported. The endpoint already returns every
+	 * environment with totalCount and no pager param at all, so omit it.
+	 */
+	$endpoint = sprintf( '/sites/%s/environments', $site_id );
 	$connection = api_request( $endpoint, 'GET' );
 
 	if ( is_wp_error( $connection ) ) {
@@ -2701,6 +2718,25 @@ function poll_workflow( $site_id, $workflow_id, $max_attempts = 60, $sleep_secon
 }
 
 /**
+ * Get the raw v1 Backup[] response for an environment, cached.
+ *
+ * Shared by get_backups() (reshapes into the old flat v0 catalog contract)
+ * and get_backup_download_url() (needs the raw per-element `timestamp`,
+ * which the reshaped catalog doesn't carry).
+ *
+ * @param string $site_id Site UUID.
+ * @param string $api_env Environment name, already mapped via map_local_env_to_dev().
+ * @return array|\WP_Error Raw Backup[] array or WP_Error on failure.
+ */
+function get_raw_backups( $site_id, $api_env ) {
+	$endpoint = sprintf( '/sites/%s/environments/%s/backups', $site_id, $api_env );
+	$cache_key = sprintf( 'ash_nazg_backups_%s_%s', $site_id, $api_env );
+
+	// Cache for 5 minutes (backups don't change frequently).
+	return get_cached_endpoint( $endpoint, $cache_key, 5 * MINUTE_IN_SECONDS );
+}
+
+/**
  * Get backups for an environment.
  *
  * V1 groups each backup's code/database/files archives under one Backup
@@ -2710,9 +2746,11 @@ function poll_workflow( $site_id, $workflow_id, $max_attempts = 60, $sleep_secon
  * uses to group them back into a set. Reshaped into that flat contract so
  * the view's grouping/rendering logic doesn't need to change.
  *
- * Note: v1 has no `size` or `ttl` (expiry) fields for individual backup
- * archives - the view already renders "Unknown" when these are 0, which is
- * the honest state here (not a bug), flagged in TODO.md.
+ * Live-verified against a real site: `Backup.date` is a numeric-string Unix
+ * timestamp (not an ISO date string), and each element sub-object (code/
+ * database/files) *does* carry real `size` and `ttl` fields plus a complete
+ * `name` (already including the file extension) - contrary to what the
+ * OpenAPI schema doc implied. All three are used here now.
  *
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
  * @param string $env Optional. Environment name. Auto-detected if not provided.
@@ -2732,11 +2770,7 @@ function get_backups( $site_id = null, $env = null ) {
 	// Map local environments to dev for API queries.
 	$api_env = map_local_env_to_dev( $env );
 
-	$endpoint = sprintf( '/sites/%s/environments/%s/backups', $site_id, $api_env );
-	$cache_key = sprintf( 'ash_nazg_backups_%s_%s', $site_id, $api_env );
-
-	// Cache for 5 minutes (backups don't change frequently).
-	$backups = get_cached_endpoint( $endpoint, $cache_key, 5 * MINUTE_IN_SECONDS );
+	$backups = get_raw_backups( $site_id, $api_env );
 
 	if ( is_wp_error( $backups ) ) {
 		Helpers\debug_log( sprintf( 'Failed to get backups for %s.%s - Error: %s', $site_id, $api_env, $backups->get_error_message() ) );
@@ -2754,19 +2788,26 @@ function get_backups( $site_id = null, $env = null ) {
 		if ( empty( $backup['id'] ) ) {
 			continue;
 		}
-		$timestamp = ! empty( $backup['date'] ) ? strtotime( $backup['date'] ) : 0;
+		// Backup.date is a numeric-string Unix timestamp, not an ISO date.
+		$timestamp = is_numeric( $backup['date'] ?? null ) ? (int) $backup['date'] : 0;
 
 		foreach ( $element_suffixes as $element => $suffix ) {
 			if ( empty( $backup[ $element ] ) ) {
 				continue;
 			}
 			$entry_id = sprintf( '%s_%s', $backup['id'], $element );
+
+			/*
+			 * name already includes the file extension - only synthesize
+			 * one from the suffix map if it's ever missing.
+			 */
+			$filename = $backup[ $element ]['name'] ?? ( $backup['id'] . $suffix );
 			$catalog[ $entry_id ] = [
 				'folder' => $backup['id'],
-				'filename' => ( $backup[ $element ]['name'] ?? $backup['id'] ) . $suffix,
+				'filename' => $filename,
 				'timestamp' => $timestamp,
-				'size' => 0, // Not available in v1.
-				'ttl' => 0, // Not available in v1.
+				'size' => (int) ( $backup[ $element ]['size'] ?? 0 ),
+				'ttl' => (int) ( $backup[ $element ]['ttl'] ?? 0 ),
 			];
 		}
 	}
@@ -2901,10 +2942,12 @@ function restore_backup( $backup_id, $element, $site_id = null, $env = null ) {
 /**
  * Get a signed download URL for a backup file.
  *
- * Note: v1 identifies the backup by element `type` + `timestamp` rather than
- * v0's opaque backup_id/folder name. Assumes $backup_id is (or starts with)
- * the backup's Unix timestamp, consistent with Pantheon's historical backup
- * folder naming - unverified against a live site, flagged in TODO.md.
+ * V1 identifies the backup archive by element `type` + `timestamp`, not
+ * v0's opaque backup_id/folder name - and live-verified, that opaque id is
+ * a hash (e.g. "kWrk7cFXaq0...="), not a timestamp, so it can't be parsed
+ * out of $backup_id directly. Instead, re-look-up the matching Backup from
+ * the (cached) backups list by its id and read the element's own precise
+ * `timestamp` field.
  *
  * @param string $backup_id Backup ID (folder name from catalog).
  * @param string $element Element to download: 'code', 'database', or 'files'.
@@ -2939,7 +2982,27 @@ function get_backup_download_url( $backup_id, $element, $site_id = null, $env = 
 	// Map local environments to dev for API queries.
 	$api_env = map_local_env_to_dev( $env );
 	$backup_type = strtoupper( $element );
-	$timestamp = (int) preg_replace( '/\D.*$/', '', $backup_id );
+
+	$raw_backups = get_raw_backups( $site_id, $api_env );
+
+	if ( is_wp_error( $raw_backups ) ) {
+		return $raw_backups;
+	}
+
+	$timestamp = null;
+	foreach ( (array) $raw_backups as $backup ) {
+		if ( ( $backup['id'] ?? null ) === $backup_id && ! empty( $backup[ $element ]['timestamp'] ) ) {
+			$timestamp = (int) $backup[ $element ]['timestamp'];
+			break;
+		}
+	}
+
+	if ( null === $timestamp ) {
+		return new \WP_Error(
+			'backup_not_found',
+			__( 'Could not find the requested backup. It may have expired or been removed.', 'ash-nazg' )
+		);
+	}
 
 	$endpoint = sprintf(
 		'/sites/%s/environments/%s/backup-download-urls?type=%s&timestamp=%d',

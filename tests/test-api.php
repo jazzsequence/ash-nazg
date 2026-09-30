@@ -230,8 +230,11 @@ class Test_API extends TestCase {
 		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
 
 		// Should fetch all environments (not a single environment endpoint).
+		// Live-verified: no pager param needed - the endpoint already
+		// returns every environment, and bracket-notation pager[first]=N is
+		// invalid (HTTP 400) if ever added back.
 		$this->assertStringContainsString(
-			'/sites/%s/environments?pager',
+			"'/sites/%s/environments'",
 			$api_file_contents,
 			'Should use environments list endpoint'
 		);
@@ -296,24 +299,35 @@ class Test_API extends TestCase {
 	}
 
 	/**
-	 * Test that the v1 personal access token and legacy v0 machine token are
-	 * resolved through completely separate storage chains.
-	 *
-	 * v0 does not accept a v1 personal access token, and vice versa, so the
-	 * two credentials must never be conflated.
+	 * Test that get_api_token() (v1) always resolves via the access-token chain.
 	 */
-	public function test_access_token_and_machine_token_are_separate() {
+	public function test_api_token_uses_access_token_chain() {
 		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
 
 		$this->assertMatchesRegularExpression(
 			'/function get_api_token.*get_user_access_token/s',
 			$file_contents,
-			'get_api_token() (v1) should resolve via get_user_access_token(), not the legacy machine token'
+			'get_api_token() (v1) should resolve via get_user_access_token()'
 		);
+	}
+
+	/**
+	 * Test that get_v0_session_token() prefers the v1 access token, falling
+	 * back to the legacy machine token.
+	 *
+	 * Live-verified against a real site: a v1 Personal Access Token works as
+	 * a v0 machine_token for the full v0 API surface, so most installs only
+	 * need one token. The separate legacy machine-token chain is kept only
+	 * as a fallback for installs whose stored token predates the unified
+	 * Personal Access Token system.
+	 */
+	public function test_v0_session_token_prefers_access_token() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+
 		$this->assertMatchesRegularExpression(
-			'/function get_v0_session_token.*get_user_machine_token/s',
+			'/function get_v0_session_token.*get_user_access_token.*get_user_machine_token/s',
 			$file_contents,
-			'get_v0_session_token() (legacy) should resolve via get_user_machine_token(), not the v1 access token'
+			'get_v0_session_token() should try get_user_access_token() before falling back to get_user_machine_token()'
 		);
 	}
 }
