@@ -205,13 +205,13 @@ For WordPress multisite installations, automatically add custom domains to Panth
 
 ### Settings
 
-Configure your Pantheon Personal Access Token (v1 API, required for almost all features) and, optionally, a legacy Machine Token (v0 API, only needed for a small set of features with no v1 equivalent yet). Both are stored securely in Pantheon Secrets (production) or WordPress options (local development fallback). The two credentials are **not interchangeable** — a Machine Token does not authenticate against v1, and vice versa.
+Configure your Pantheon Personal Access Token — required for almost everything, and it also powers the small set of features still on the legacy v0 API (see below), so most admins only ever need to set this one token. Both it and the optional legacy Machine Token field are stored securely in Pantheon Secrets (production) or WordPress options (local development fallback).
 
 ![Settings page showing Personal Access Token and legacy Machine Token configuration](screenshots/ash-nazg-settings.png)
 
 **Features:**
-- Per-user Personal Access Token configuration for the v1 API
-- Per-user legacy Machine Token configuration, only needed for: site label editing, Delete Site, Metrics, domain listing, and the Install Object Cache Pro workflow (v0 fallback until Pantheon ships v1 equivalents)
+- Per-user Personal Access Token configuration — used for the v1 API and, automatically, for the small set of features still on the legacy v0 API (site label editing, Delete Site, Metrics, domain listing, Install Object Cache Pro)
+- Optional per-user legacy Machine Token field, only needed as a fallback if your Personal Access Token ever doesn't work for those v0-only features (e.g. a token issued before Pantheon unified the two systems)
 - Pantheon Secrets integration with user ID suffix for both token types
 - Encrypted token storage (AES-256-CBC) for database fallback
 - Migration from global to per-user tokens (legacy Machine Token)
@@ -250,7 +250,7 @@ This plugin does **not** provide access to:
 - **Must be hosted on Pantheon** (plugin uses Pantheon-specific environment variables and Secrets API)
 - WordPress 5.0 or higher
 - PHP 7.4 or higher
-- Pantheon Personal Access Token (per-user) stored in Pantheon Secrets, generated from your [Pantheon account settings](https://dashboard.pantheon.io/users/#account/tokens) — a legacy Machine Token is additionally needed only for the small set of features still on the v0 API (see Settings, above)
+- Pantheon Personal Access Token (per-user) stored in Pantheon Secrets, generated from your [Pantheon account settings](https://dashboard.pantheon.io/users/#account/tokens) — this one token also covers the small set of features still on the v0 API (see Settings, above)
 - User with `manage_options` capability in WordPress
 
 ## Installation
@@ -312,9 +312,9 @@ Each WordPress admin has their own Pantheon Personal Access Token, used directly
    - The plugin will auto-detect your Pantheon environment variables
    - If your token is configured correctly, you'll see environment information on the dashboard
 
-### Setting Up a Legacy Machine Token (optional)
+### Setting Up a Legacy Machine Token (optional, rarely needed)
 
-A small set of features (site label editing, Delete Site, Metrics, domain listing, Install Object Cache Pro) have no v1 API equivalent yet and fall back to the legacy v0 API, which requires a separate Machine Token — **your Personal Access Token will not work for these**. Follow the same steps above on the **Ash Nazg > Settings** page's Machine Token section, using `ash_nazg_machine_token_{user_id}` as the secret name instead. This requirement will be removed once Pantheon ships v1 equivalents for these features (tracked in [TODO.md](./TODO.md)).
+A small set of features (site label editing, Delete Site, Metrics, domain listing, Install Object Cache Pro) have no v1 API equivalent yet and fall back to the legacy v0 API. Your Personal Access Token already works for these — Pantheon's v1 Personal Access Tokens are fully valid v0 credentials too, so most admins don't need to do anything extra here. The separate Machine Token field exists only as a fallback for the rare case where your stored token predates Pantheon's unified Personal Access Token system and doesn't work for these v0-only calls. If you hit that, follow the same steps above on the **Ash Nazg > Settings** page's Machine Token section, using `ash_nazg_machine_token_{user_id}` as the secret name instead. This whole fallback requirement will go away once Pantheon ships v1 equivalents for these features (tracked in [TODO.md](./TODO.md)).
 
 ### Migrating from v0.3.x to v0.4.0
 

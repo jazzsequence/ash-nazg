@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **Migrated from the Pantheon Public API v0 to v1**: `includes/api.php` now calls `https://api.pantheon.io/v1` directly. The biggest change is auth — v1 has no token-exchange step, so a Personal Access Token is now sent as the Bearer token on every request instead of being exchanged for a short-lived session token. All session-token caching/clearing machinery has been removed.
-- **New, separate Personal Access Token setting**: added alongside the existing (now legacy) Machine Token field, since the two credentials are not interchangeable — a Machine Token does not authenticate against v1, and a Personal Access Token does not authenticate against v0's exchange endpoint. Existing installs' stored Machine Tokens keep working with zero action needed for the handful of features still on v0 (see below); a new Personal Access Token is required to unlock everything else.
+- **New Personal Access Token setting**: added alongside the existing (now optional/legacy) Machine Token field. A Personal Access Token is required for v1; live-verified, it also works as a v0 `machine_token` for the full v0 API surface, so it now also covers the handful of features still on v0 (see below) — most installs only need to set this one token. The legacy Machine Token field is kept only as a fallback for installs whose stored token predates the unified Personal Access Token system.
 - Read-heavy functions (`get_site_addons`, `get_environment_commits`, `get_diffstat`, `get_environment_info`) now pull from richer nested v1 responses (e.g. `Environment.commitLog`, `Environment.diffstat`, `Site.settings.addons`) instead of dedicated v0 endpoints, reducing the number of API calls for the same data.
 - `update_site_addon()` now uses a single v1 `PUT .../addons/{addonType}?enable=` call for both enabling and disabling an addon, instead of v0's PUT-to-enable/DELETE-to-disable pair.
 - `update_connection_mode()` now calls one of two distinct v1 endpoints (`development-mode/git` or `development-mode/on-server`) instead of v0's single endpoint with a `mode` body parameter.
@@ -22,10 +22,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Known limitations (tracked in TODO.md)
 
-- Five features (`site label editing`, `Delete Site`, `Metrics`, `domain listing`, `Install Object Cache Pro`) have no v1 API equivalent yet and fall back to the legacy v0 API, requiring the legacy Machine Token.
-- Backups page shows "Unknown" for Size and Expires — v1's backup schema doesn't expose these fields.
+- Five features (`site label editing`, `Delete Site`, `Metrics`, `domain listing`, `Install Object Cache Pro`) have no v1 API equivalent yet and fall back to the legacy v0 API (via the same Personal Access Token in the common case).
 - `create_backup()` can no longer create a single-element (code/database/files-only) backup — v1 only supports full combo backups.
-- This migration was built and tested against the v1 OpenAPI spec without a live Personal Access Token; several endpoint/body-shape assumptions are flagged in TODO.md as needing live verification.
+- Some endpoint/body-shape assumptions (`clone_database`/`clone_files` request bodies, `restore_backup`'s `key` param, `get_upstream_updates`'s async check) still need live verification; see TODO.md.
+
+This migration was initially built against the v1 OpenAPI spec without a live Personal Access Token, then live-verified against a real site once one became available — several corrections came out of that (removed an invalid `pager[first]=N` query param that returned HTTP 400, fixed `Backup.date` timestamp parsing, and backup `size`/`ttl`/filename fields turned out to be present after all, contrary to what the schema doc implied).
 
 ## [0.6.3] - 2026-07-09
 

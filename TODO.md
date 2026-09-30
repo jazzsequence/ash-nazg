@@ -2,18 +2,24 @@
 
 ## Pantheon API v0 → v1 migration follow-ups
 
-The plugin was migrated to Pantheon's v1 Public API. These items need a live v1 Personal Access Token to verify — the rewrite was built against the OpenAPI spec/schema only, since no live token was available during migration.
+The plugin was migrated to Pantheon's v1 Public API, built against the OpenAPI spec/schema only (no live token at the time). Since then, live-verified against a real site with a real v1 Personal Access Token — findings below.
 
-### Verify live (highest priority)
-- [ ] Confirm a v1 Personal Access Token actually authenticates directly as a Bearer token against `/v1/*` endpoints as documented
-- [ ] Confirm whether a v1 Personal Access Token authenticates against the legacy `/v0/authorize/machine-token` exchange, or whether the two credentials are truly mutually exclusive (currently assumed mutually exclusive — a separate Machine Token field exists in Settings specifically because of this)
-- [ ] Verify Relay-connection pagination params (`pager[first]=N`, `currentUser_workspacesConnection_first=N`) are serialized correctly — exact query-param encoding for nested object args was not documented in the OpenAPI spec
-- [ ] Verify `get_backup_download_url()`'s assumption that a backup's `id`/folder name is (or starts with) its Unix timestamp, used to derive the `timestamp` query param v1's `backup-download-urls` endpoint requires
+### Live-verified and fixed
+- [x] A v1 Personal Access Token authenticates directly as a Bearer token against `/v1/*` — confirmed (`GET /current-user` returns full profile + workspaces).
+- [x] **A v1 Personal Access Token also fully works as a v0 `machine_token`** — confirmed against every v0 endpoint the hybrid-fallback functions use (`/v0/sites/{id}`, `.../metrics`, `.../code-tips`, `.../domains`, `/v0/users/{id}`), not just the exchange itself. This was the opposite of what we'd assumed. `get_v0_session_token()` now tries the Personal Access Token first, falling back to the separate legacy Machine Token only for installs whose stored token predates the unified Personal Access Token system (untested — no old-style token available to verify that direction).
+- [x] Relay-connection pagination: `currentUser_workspacesConnection_first=N` works as documented. `pager[first]=N` (bracket notation) is **invalid** (HTTP 400) — removed; the environments endpoint already returns every environment with no pager param at all.
+- [x] `Backup.date` is a numeric-string Unix timestamp, not an ISO date string — fixed the `strtotime()` call that assumed otherwise.
+- [x] Backup elements (code/database/files) *do* have real `size` and `ttl` fields, and `name` is already a complete filename — fixed `get_backups()` to use the real values instead of hardcoding 0 and double-appending a filename suffix.
+- [x] `get_backup_download_url()`'s assumption that a backup's opaque `id` is timestamp-based was wrong — it's a hash. Fixed to look up the real per-element `timestamp` from the (cached) backups list instead.
+
+### Still needs live verification
 - [ ] Verify `clone_database()`/`clone_files()` request body shapes (`fromEnvironment`, `wpReplaceSiteURL`) against a live call
 - [ ] Verify `get_upstream_updates()`'s approximation (trigger the async `upstream-updates/check` workflow, poll, then re-read `commitLog`/`composerUpdates`) actually produces useful data — v1's check endpoint is an async workflow, unlike v0's synchronous response
+- [ ] Verify `restore_backup()`'s `key` query param is really the backup's opaque `id` (as currently sent) rather than something timestamp-based like the download-url endpoint needed — not verified live since restore is destructive, unlike the read-only endpoints above
+- [ ] Confirm whether a genuinely old-style (pre-unification) machine token works as a v1 Bearer token directly — only the reverse (new PAT working for v0) has been confirmed; no old-style token was available to test
 
 ### Hybrid v0 fallback — revisit once Pantheon ships v1 equivalents
-These features have no v1 endpoint yet and fall back to the legacy v0 API via a separate legacy Machine Token (kept in Settings alongside the new Personal Access Token):
+These features have no v1 endpoint yet and fall back to the legacy v0 API (now via the same Personal Access Token in the common case — see above):
 - [ ] `update_site_label()` — no v1 PUT/PATCH on `/sites/{id}`
 - [ ] `delete_site()` — no v1 `DELETE /sites/{id}`
 - [ ] `get_environment_metrics()` / `clear_metrics_cache()` — no v1 metrics endpoint (schema types exist, nothing serves them)
@@ -22,7 +28,6 @@ These features have no v1 endpoint yet and fall back to the legacy v0 API via a 
 - [ ] `trigger_workflow()` (Install Object Cache Pro on the Workflows page) — no generic v1 workflow-trigger endpoint
 
 ### Known data gaps (not fixable without a v1 API change)
-- [ ] Backups page shows "Unknown" for backup Size and Expires columns — v1's `Backup`/`BackupDownload` schema has no `size` or `ttl` fields
 - [ ] `create_backup()` can no longer create a single-element (code-only/database-only/files-only) backup — v1's `createSiteBackup` only creates a full code+database+files combo; the `$element` UI selector is currently a no-op for creation (still respected for restore/download)
 
 ## Planned Features
