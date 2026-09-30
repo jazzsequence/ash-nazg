@@ -2914,7 +2914,8 @@ function restore_backup( $backup_id, $element, $site_id = null, $env = null ) {
 
 	// Map local environments to dev for API queries.
 	$api_env = map_local_env_to_dev( $env );
-	$restore_type = strtoupper( $element );
+	// Live-verified: the type enum is RESTORE_{ELEMENT}_BACKUP, not the bare element name.
+	$restore_type = sprintf( 'RESTORE_%s_BACKUP', strtoupper( $element ) );
 
 	$endpoint = sprintf(
 		'/sites/%s/backups/restore?key=%s&type=%s&environment=%s',

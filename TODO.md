@@ -11,11 +11,17 @@ The plugin was migrated to Pantheon's v1 Public API, built against the OpenAPI s
 - [x] `Backup.date` is a numeric-string Unix timestamp, not an ISO date string — fixed the `strtotime()` call that assumed otherwise.
 - [x] Backup elements (code/database/files) *do* have real `size` and `ttl` fields, and `name` is already a complete filename — fixed `get_backups()` to use the real values instead of hardcoding 0 and double-appending a filename suffix.
 - [x] `get_backup_download_url()`'s assumption that a backup's opaque `id` is timestamp-based was wrong — it's a hash. Fixed to look up the real per-element `timestamp` from the (cached) backups list instead.
+- [x] `clone_database()`/`clone_files()` request body shapes — confirmed live against a disposable multidev (`new-multi`, cloned from `dev`). Both the bare `{"fromEnvironment": "..."}` shape and the `wpReplaceSiteURL: {fromUrl, toUrl}` sub-object completed with `SUCCEEDED`/`FINISHED`. No code change needed.
+- [x] `restore_backup()`'s `type` query param — **was wrong**, fixed. The v1 enum is `RESTORE_{ELEMENT}_BACKUP` (e.g. `RESTORE_DATABASE_BACKUP`), not the bare element name (`DATABASE`) the code was sending. Fixed in `includes/api.php`; regression test added in `tests/test-backups-api.php`.
 
-### Still needs live verification
-- [ ] Verify `clone_database()`/`clone_files()` request body shapes (`fromEnvironment`, `wpReplaceSiteURL`) against a live call
-- [ ] Verify `get_upstream_updates()`'s approximation (trigger the async `upstream-updates/check` workflow, poll, then re-read `commitLog`/`composerUpdates`) actually produces useful data — v1's check endpoint is an async workflow, unlike v0's synchronous response
-- [ ] Verify `restore_backup()`'s `key` query param is really the backup's opaque `id` (as currently sent) rather than something timestamp-based like the download-url endpoint needed — not verified live since restore is destructive, unlike the read-only endpoints above
+### Known v1 platform bug (reported upstream, not fixable in this plugin)
+- [ ] **`restoreSiteBackup` (`POST /sites/{id}/backups/restore`) appears non-functional in v1 as of 2026-09-30.** Live-tested against the disposable `new-multi` multidev with 5 different parameter combinations — every combination accepted the request (`HTTP 200`, workflow created) but the workflow itself always failed asynchronously ~15–25s later with the same generic `"The operation failed to complete."` and no further detail:
+  1. `key` = top-level `Backup.id`, cross-environment (`dev` backup → `new-multi`)
+  2. `key` = the database element's own `BackupDownload.id`, cross-environment
+  3. `key` = the element's `folder` value (e.g. `1780592488_backup`), cross-environment
+  4. `key` = a same-environment backup's own `Backup.id` (created and restored entirely within `new-multi`)
+  5. Same as #4 but with `env=` instead of `environment=` as the query param name
+  All 5 failed identically regardless of `key` format or same-vs-cross-environment target, which rules out a parameter-shape mistake on our end — this looks like a genuine backend defect or an unannounced restriction, not a docs/usage issue. Since `key`'s correct format could not be confirmed as a result, this needs to be re-verified once Pantheon fixes/clarifies the endpoint. **Flagged for the Public API team** — see the v1-gaps summary.
 - [ ] Confirm whether a genuinely old-style (pre-unification) machine token works as a v1 Bearer token directly — only the reverse (new PAT working for v0) has been confirmed; no old-style token was available to test
 
 ### Hybrid v0 fallback — revisit once Pantheon ships v1 equivalents

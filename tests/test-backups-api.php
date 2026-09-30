@@ -392,4 +392,22 @@ class Test_Backups_API extends TestCase {
 			'get_backup_download_url should call the shared get_raw_backups() helper'
 		);
 	}
+
+	/**
+	 * Live-verified: v1's restore type enum is RESTORE_{ELEMENT}_BACKUP, not the bare element name.
+	 */
+	public function test_restore_backup_uses_full_type_enum() {
+		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
+
+		$func_pos = strpos( $api_file_contents, 'function restore_backup' );
+		$this->assertNotFalse( $func_pos, 'Should find function restore_backup' );
+
+		$func_content = substr( $api_file_contents, $func_pos, 2000 );
+
+		$this->assertStringContainsString(
+			"sprintf( 'RESTORE_%s_BACKUP', strtoupper( \$element ) )",
+			$func_content,
+			'restore_backup should build the RESTORE_{ELEMENT}_BACKUP enum value, not the bare element name'
+		);
+	}
 }
