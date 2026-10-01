@@ -26,6 +26,10 @@ dist/
 wp-config-local.php
 .htaccess
 
+# Environment variables / secrets
+.env
+.env.*
+
 # IDE
 .vscode/
 .idea/

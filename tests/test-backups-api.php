@@ -286,9 +286,9 @@ class Test_Backups_API extends TestCase {
 	/**
 	 * Test that Backup.date is parsed as a numeric Unix timestamp, not an ISO date.
 	 *
-	 * Regression guard: live-verified against a real site that Backup.date is
-	 * a numeric string (e.g. "1780592488"), not an ISO datetime - strtotime()
-	 * on a bare numeric string does not reliably parse it as a Unix timestamp.
+	 * Regression guard: Backup.date is a numeric string (e.g. "1780592488"),
+	 * not an ISO datetime - strtotime() on a bare numeric string does not
+	 * reliably parse it as a Unix timestamp.
 	 */
 	public function test_backup_date_parsed_as_numeric_timestamp() {
 		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
@@ -309,9 +309,8 @@ class Test_Backups_API extends TestCase {
 	 * Test that get_backups() uses the real size/ttl/name fields from each
 	 * backup element instead of hardcoding them.
 	 *
-	 * Regression guard: live-verified against a real site that v1 backup
-	 * elements do have real size/ttl fields and a complete filename,
-	 * contrary to what the OpenAPI schema doc implied.
+	 * Regression guard: v1 backup elements have real size/ttl fields and a
+	 * complete filename, contrary to what the OpenAPI schema doc implied.
 	 */
 	public function test_backups_use_real_size_ttl_name() {
 		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
@@ -341,9 +340,9 @@ class Test_Backups_API extends TestCase {
 	 * Test that get_backup_download_url() looks up the real per-element
 	 * timestamp instead of parsing one out of the opaque backup id.
 	 *
-	 * Regression guard: live-verified against a real site that a backup's
-	 * top-level id is a hash (e.g. "kWrk7cFXaq0...="), not a timestamp, so
-	 * stripping non-digit characters from it can never yield a real timestamp.
+	 * Regression guard: a backup's top-level id is a hash (e.g.
+	 * "kWrk7cFXaq0...="), not a timestamp, so stripping non-digit
+	 * characters from it can never yield a real timestamp.
 	 */
 	public function test_backup_download_url_looks_up_real_timestamp() {
 		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
