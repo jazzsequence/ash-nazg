@@ -2230,43 +2230,6 @@ function clone_files( $site_id, $from_env, $to_env ) {
 }
 
 /**
- * Delete the Pantheon site.
- *
- * WARNING: This is PERMANENT and IRREVERSIBLE. All data will be lost.
- *
- * v0 fallback: v1 has no DELETE /sites/{id} yet. Requires a legacy machine token.
- *
- * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
- * @return array|\WP_Error API response or WP_Error on failure.
- */
-function delete_site( $site_id = null ) {
-	$site_id = Helpers\ensure_site_id( $site_id );
-	if ( is_wp_error( $site_id ) ) {
-		return $site_id;
-	}
-
-	Helpers\debug_log( sprintf( 'CRITICAL: Site deletion initiated for %s', $site_id ) );
-
-	$endpoint = sprintf( '/v0/sites/%s', $site_id );
-	$result = api_request_v0( $endpoint, 'DELETE' );
-
-	if ( is_wp_error( $result ) ) {
-		Helpers\debug_log( sprintf( 'Site deletion failed for %s - Error: %s', $site_id, $result->get_error_message() ) );
-		return $result;
-	}
-
-	// Clear all caches.
-	delete_transient( 'ash_nazg_site_info_' . $site_id );
-	delete_transient( 'ash_nazg_environments_' . $site_id );
-	delete_transient( 'ash_nazg_backups_' . $site_id );
-	delete_transient( 'ash_nazg_code_tips_' . $site_id );
-
-	Helpers\debug_log( sprintf( 'Site %s successfully deleted', $site_id ) );
-
-	return $result;
-}
-
-/**
  * Get domains for an environment.
  *
  * V0 fallback: v1 has no domain-listing endpoint yet (only create/delete/
