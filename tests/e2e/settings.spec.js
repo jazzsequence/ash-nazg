@@ -14,11 +14,6 @@ test.describe('Settings', () => {
     await expect(page.locator('.notice-error')).toHaveCount(0);
   });
 
-  test('machine token section is present', async ({ page }) => {
-    // Token may be configured (showing status) or unconfigured (showing form).
-    await expect(page.locator('text=/machine token/i').first()).toBeVisible({ timeout: 5000 });
-  });
-
   test('session token section renders', async ({ page }) => {
     await expect(page.locator('text=/session token/i').first()).toBeVisible({ timeout: 5000 });
   });

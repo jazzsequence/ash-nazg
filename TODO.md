@@ -27,7 +27,6 @@ The plugin was migrated to Pantheon's v1 Public API, built against the OpenAPI s
 ### Hybrid v0 fallback — revisit once Pantheon ships v1 equivalents
 These features have no v1 endpoint yet and fall back to the legacy v0 API (now via the same Personal Access Token in the common case — see above):
 - [ ] `update_site_label()` — no v1 PUT/PATCH on `/sites/{id}`
-- [ ] `delete_site()` — no v1 `DELETE /sites/{id}`
 - [ ] `get_environment_metrics()` / `clear_metrics_cache()` — no v1 metrics endpoint (schema types exist, nothing serves them)
 - [ ] `get_domains()` — no v1 domain-listing endpoint (only create/delete/set-primary/verify)
 - [ ] `get_code_tips()` — no v1 equivalent found

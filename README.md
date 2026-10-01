@@ -31,7 +31,7 @@ View your Pantheon environment status, site information, and connection mode at 
 - Site and environment information from Pantheon API
 - SFTP/Git mode toggle with automatic polling verification
 - Inline site label and organization editing with pencil icon
-- Pantheon user info and machine token copy button in environment card
+- Pantheon user info and Personal Access Token copy button in environment card
 - 50/50 two-column layout with environment and site info cards
 - Screen Options to show/hide individual API endpoint groups (with master toggle)
 - Smart caching with "last checked" timestamps and one-click refresh
@@ -205,37 +205,18 @@ For WordPress multisite installations, automatically add custom domains to Panth
 
 ### Settings
 
-Configure your Pantheon Personal Access Token — required for almost everything, and it also powers the small set of features still on the legacy v0 API (see below), so most admins only ever need to set this one token. Both it and the optional legacy Machine Token field are stored securely in Pantheon Secrets (production) or WordPress options (local development fallback).
+Configure your Pantheon Personal Access Token — required for almost everything, and it also powers the small set of features still on the legacy v0 API (see below), so most admins only ever need to set this one token. It's stored securely in Pantheon Secrets (production) or WordPress options (local development fallback).
 
-![Settings page showing Personal Access Token and legacy Machine Token configuration](screenshots/ash-nazg-settings.png)
+If an admin still has an old-style Machine Token stored from before Personal Access Tokens existed, Ash Nazg shows a notice offering to remove it — it's no longer used for authentication at all, since a Personal Access Token already covers everything it did.
+
+![Settings page showing Personal Access Token configuration](screenshots/ash-nazg-settings.png)
 
 **Features:**
-- Per-user Personal Access Token configuration — used for the v1 API and, automatically, for the small set of features still on the legacy v0 API (site label editing, Delete Site, Metrics, domain listing, Install Object Cache Pro)
-- Optional per-user legacy Machine Token field, only needed as a fallback if your Personal Access Token ever doesn't work for those v0-only features (e.g. a token issued before Pantheon unified the two systems)
-- Pantheon Secrets integration with user ID suffix for both token types
+- Per-user Personal Access Token configuration — used for the v1 API and, automatically, for the small set of features still on the legacy v0 API (site label editing, Metrics, domain listing, Install Object Cache Pro)
+- Pantheon Secrets integration with user ID suffix
 - Encrypted token storage (AES-256-CBC) for database fallback
-- Migration from global to per-user tokens (legacy Machine Token)
 - Auto-clears invalid legacy sessions on 401/403 errors
 - Development fallback for local environments
-
-### Delete Site (Debug Mode Only)
-
-Demonstration feature showing full Pantheon API capabilities.
-
-![Delete site page - big red delete button enabled after typing DELETE](screenshots/ash-nazg-delete-1.png)
-
-![Delete site page - danger warnings and confirmation input](screenshots/ash-nazg-delete-2.png)
-
-![Delete site page - whew message after cancellation](screenshots/ash-nazg-delete-3.png)
-
-**Features:**
-- Big red DELETE SITE button
-- Menu item: "⚠️ DO NOT CLICK" (red background)
-- Type "DELETE" to enable button
-- Two-stage confirmation (modal + JavaScript alert)
-- "Whew! That was a close one!" message on cancellation
-- Fully functional - actually deletes site via Pantheon API
-- Redirects to Pantheon dashboard after deletion
 
 ### Excluded for Security
 
@@ -243,7 +224,7 @@ This plugin does **not** provide access to:
 - Organization or user management (beyond what's displayed)
 - Billing information or plan changes
 - Token generation/revocation (only usage)
-- Unrestricted site deletion (only via debug mode)
+- Site deletion
 
 ## Requirements
 
@@ -312,18 +293,13 @@ Each WordPress admin has their own Pantheon Personal Access Token, used directly
    - The plugin will auto-detect your Pantheon environment variables
    - If your token is configured correctly, you'll see environment information on the dashboard
 
-### Setting Up a Legacy Machine Token (optional, rarely needed)
+### About the v0-Only Fallback Features
 
-A small set of features (site label editing, Delete Site, Metrics, domain listing, Install Object Cache Pro) have no v1 API equivalent yet and fall back to the legacy v0 API. Your Personal Access Token already works for these — Pantheon's v1 Personal Access Tokens are fully valid v0 credentials too, so most admins don't need to do anything extra here. The separate Machine Token field exists only as a fallback for the rare case where your stored token predates Pantheon's unified Personal Access Token system and doesn't work for these v0-only calls. If you hit that, follow the same steps above on the **Ash Nazg > Settings** page's Machine Token section, using `ash_nazg_machine_token_{user_id}` as the secret name instead. This whole fallback requirement will go away once Pantheon ships v1 equivalents for these features (tracked in [TODO.md](./TODO.md)).
+A small set of features (site label editing, Metrics, domain listing, Install Object Cache Pro) have no v1 API equivalent yet and fall back to the legacy v0 API. Your Personal Access Token already works for these — Pantheon's v1 Personal Access Tokens are fully valid v0 credentials too, so there's nothing extra to configure. This fallback requirement will go away once Pantheon ships v1 equivalents for these features (tracked in [TODO.md](./TODO.md)).
 
-### Migrating from v0.3.x to v0.4.0
+### If You Have an Old Machine Token Stored
 
-If you're upgrading from a previous version with a site-wide global token, the plugin will show a migration notice with instructions:
-
-- **Global database token**: Click "Migrate to My Account" to copy and encrypt the token to your user account
-- **Global Pantheon Secret**: Follow the terminus command instructions to set your per-user secret
-
-The global token will be deleted after migration. Other admins will need to set up their own tokens.
+Versions before the Personal Access Token system used a separate Machine Token for authentication. If one is still stored on your site, Ash Nazg shows a notice on its admin pages once a Personal Access Token is also configured, offering one-click removal of any database-stored copy — it's no longer used for anything. If the old token is stored as a Pantheon Secret instead, the notice shows the `terminus secret:delete` command to run, since the plugin can't delete Secrets itself.
 
 ## Development
 
@@ -420,7 +396,7 @@ The Pantheon API is available to all Pantheon customers. Some features may vary 
 
 ### Are my tokens secure?
 
-**Yes, especially if using Pantheon Secrets.** Each WordPress admin has their own Personal Access Token (and, if needed, legacy Machine Token) for better security and audit trails.
+**Yes, especially if using Pantheon Secrets.** Each WordPress admin has their own Personal Access Token for better security and audit trails.
 
 **Pantheon Secrets (Recommended):** Tokens stored in Pantheon Secrets are encrypted and retrieved at runtime using `pantheon_get_secret()`. This is the most secure option.
 
@@ -437,8 +413,8 @@ WordPress users with `manage_options` capability can:
 WordPress admins **cannot** (via this plugin):
 - Manage Pantheon users or organizations
 - Access billing information
-- Generate or revoke machine tokens
-- Delete sites (except via debug mode demonstration feature)
+- Generate or revoke Personal Access Tokens
+- Delete sites
 
 ## Support
 

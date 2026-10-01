@@ -11,20 +11,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **Migrated from the Pantheon Public API v0 to v1**: `includes/api.php` now calls `https://api.pantheon.io/v1` directly. The biggest change is auth — v1 has no token-exchange step, so a Personal Access Token is now sent as the Bearer token on every request instead of being exchanged for a short-lived session token. All session-token caching/clearing machinery has been removed.
-- **New Personal Access Token setting**: added alongside the existing (now optional/legacy) Machine Token field. A Personal Access Token is required for v1; live-verified, it also works as a v0 `machine_token` for the full v0 API surface, so it now also covers the handful of features still on v0 (see below) — most installs only need to set this one token. The legacy Machine Token field is kept only as a fallback for installs whose stored token predates the unified Personal Access Token system.
+- **New Personal Access Token setting**: a Personal Access Token is required for v1; live-verified, it also works as a v0 `machine_token` for the full v0 API surface, so it also covers the handful of features still on v0 (see below) — only one token is needed. See Removed below for the legacy Machine Token.
 - Read-heavy functions (`get_site_addons`, `get_environment_commits`, `get_diffstat`, `get_environment_info`) now pull from richer nested v1 responses (e.g. `Environment.commitLog`, `Environment.diffstat`, `Site.settings.addons`) instead of dedicated v0 endpoints, reducing the number of API calls for the same data.
 - `update_site_addon()` now uses a single v1 `PUT .../addons/{addonType}?enable=` call for both enabling and disabling an addon, instead of v0's PUT-to-enable/DELETE-to-disable pair.
 - `update_connection_mode()` now calls one of two distinct v1 endpoints (`development-mode/git` or `development-mode/on-server`) instead of v0's single endpoint with a `mode` body parameter.
 
+### Removed
+
+- **Delete Site** (debug-mode-only demonstration feature): removed entirely — it only ever existed to show off API capability, required the legacy v0 API (no v1 equivalent), and wasn't a real operational feature.
+- **Legacy Machine Token as an authentication credential**: live-verified, a Personal Access Token fully covers everything the Machine Token did, including the v0-only fallback features, so the Machine Token is no longer used for authentication at all. Removed: the Settings page's Machine Token field, the Dashboard's Machine Token copy button, and the old per-user-vs-global Machine Token migration notice system. If a Machine Token is still found stored (Secret, user meta, or global option), a new notice offers one-click removal of any database-stored copy once a Personal Access Token is also configured — Pantheon Secrets must still be deleted via Terminus, shown as a copy-paste command.
+
 ### Fixed
 
 - Removed the "Clear Session Token" Settings feature — meaningless under v1, which has no session tokens to clear.
+- Dashboard's API Endpoints Status diagnostics no longer hardcode ~15 rows as "unavailable" for v0-only features. They're now live-tested through the v0 client like the real hybrid-fallback functions already do, so the page reflects actual connectivity instead of a static assumption. Rows that were purely redundant with data already shown elsewhere (commit history, diffstat, env variables/settings, SSH keys, user organizations) were removed instead of faked.
+- `restore_backup()` switched to the v0 fallback — live testing found v1's restore endpoint fails unconditionally regardless of parameters (a Pantheon platform bug, not a client-side issue; confirmed v0 fails the same way right now too, so this is ready to work once Pantheon fixes it).
 
 ### Known limitations (tracked in TODO.md)
 
-- Five features (`site label editing`, `Delete Site`, `Metrics`, `domain listing`, `Install Object Cache Pro`) have no v1 API equivalent yet and fall back to the legacy v0 API (via the same Personal Access Token in the common case).
+- Four features (`site label editing`, `Metrics`, `domain listing`, `Install Object Cache Pro`) have no v1 API equivalent yet and fall back to the legacy v0 API (via the same Personal Access Token in the common case).
 - `create_backup()` can no longer create a single-element (code/database/files-only) backup — v1 only supports full combo backups.
-- Some endpoint/body-shape assumptions (`clone_database`/`clone_files` request bodies, `restore_backup`'s `key` param, `get_upstream_updates`'s async check) still need live verification; see TODO.md.
+- Backup restore (both v0 and v1) is currently broken platform-wide as of 2026-10-01 — see TODO.md.
+- `get_upstream_updates()`'s v1 check endpoint is Composer-only, unlike v0's synchronous git-aware response — a real capability regression for standard git-mode sites; see TODO.md.
 
 This migration was initially built against the v1 OpenAPI spec without a live Personal Access Token, then live-verified against a real site once one became available — several corrections came out of that (removed an invalid `pager[first]=N` query param that returned HTTP 400, fixed `Backup.date` timestamp parsing, and backup `size`/`ttl`/filename fields turned out to be present after all, contrary to what the schema doc implied).
 

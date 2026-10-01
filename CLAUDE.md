@@ -47,25 +47,17 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 **Model:** 1:1 relationship - a WordPress site running on Pantheon manages its own Pantheon environment through the API.
 
 **Implementation:**
-- Uses Pantheon machine tokens for API authentication
-- **Per-user machine tokens**: Each admin with `manage_options` capability has their own token (v0.4.0+)
-- Machine tokens stored via:
-  - **Pantheon Secrets API** (recommended): `ash_nazg_machine_token_{user_id}` (e.g., `ash_nazg_machine_token_1`)
-  - **WordPress user meta** (fallback): Encrypted with AES-256-CBC using WordPress AUTH_SALT
-  - **Legacy global token**: Backward compatibility for pre-v0.4.0 installations
-- Retrieved using `get_user_machine_token()` with fallback chain:
-  1. Per-user Pantheon Secret (`pantheon_get_secret("ash_nazg_machine_token_{user_id}")`)
+- Uses a Pantheon Personal Access Token (v1 API) for authentication - sent directly as the Bearer token on every request, no exchange step
+- **Per-user Personal Access Tokens**: Each admin with `manage_options` capability has their own token
+- Personal Access Tokens stored via `get_user_access_token()`, checked in order:
+  1. Per-user Pantheon Secret (`pantheon_get_secret("ash_nazg_access_token_{user_id}")`)
   2. Per-user encrypted meta (`get_user_meta()` with `decrypt_token()`)
-  3. Global Pantheon Secret (`pantheon_get_secret("ash_nazg_machine_token")`)
-  4. Global option (`get_option("ash_nazg_machine_token")`)
-- Machine tokens exchanged for session tokens via `/v0/authorize/machine-token` endpoint
-- Bearer token authentication for all subsequent API requests
-- **Per-user session tokens**: Cached in Transients with user ID suffix (`ash_nazg_session_token_{user_id}`)
-- Session token TTL: 1 hour (HOUR_IN_SECONDS)
+  3. Global Pantheon Secret (`pantheon_get_secret("ash_nazg_access_token")`)
+  4. Global option (`get_option("ash_nazg_access_token")`)
 - Token encryption: AES-256-CBC with WordPress salts for database-stored tokens
 - Auto-detect Pantheon environment variables (`$_ENV['PANTHEON_SITE']`, etc.) to minimize manual configuration
 - Access gated by `manage_options` capability
-- Migration system: Admin notices and settings page button to migrate from global to per-user tokens
+- **Legacy Machine Token**: a v1 Personal Access Token is live-verified to work fully as a v0 credential, so the old Machine Token is no longer used for authentication at all. It's only detected (via `pantheon_get_secret`/`get_user_meta`/`get_option` checks on `ash_nazg_machine_token*`) to show a cleanup notice offering one-click removal of any database-stored copy if one is still found.
 
 **References:**
 - Pantheon Secrets: https://docs.pantheon.io/guides/secrets
@@ -101,7 +93,7 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 **Menu Structure (order as of v0.6.0):**
 - Top-level menu: "Ash Nazg" (slug: ash-nazg)
 - Implemented submenu pages (in menu order):
-  - Dashboard - 50/50 two-column layout; environment status, user/org info, machine token copy, API endpoints testing with Screen Options, inline label/org editing
+  - Dashboard - 50/50 two-column layout; environment status, user/org info, Personal Access Token copy, API endpoints testing with Screen Options, inline label/org editing
   - Metrics - traffic and cache performance charts with Screen Options per chart; localStorage persistence
   - Development - code deployment, upstream updates, multidev management, uncommitted changes, commit SFTP changes; Screen Options for Environments and Multidev cards
   - Addons - enable/disable site addons (Redis, Apache Solr, Elasticsearch coming soon); Screen Options per addon; live status detection
@@ -109,8 +101,7 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
   - Backups - create, restore, download backups; tabbed dev/test/live UI; Screen Options age filter
   - Clone - clone database and/or files between environments
   - Logs - debug log viewer with fetch/clear functionality and auto-mode switching
-  - Settings - machine token configuration, session token management
-  - Delete Site (debug mode only) - site deletion demonstration feature
+  - Settings - Personal Access Token configuration
 
 **UI Implementation:**
 - Traditional WordPress admin HTML/CSS (no React)
@@ -160,12 +151,12 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 - Session tokens or temporary authentication credentials
 
 **Token Storage Requirements:**
-- **Recommended: Pantheon Secrets API** via `pantheon_get_secret('ash_nazg_machine_token')`
+- **Recommended: Pantheon Secrets API** via `pantheon_get_secret('ash_nazg_access_token')`
   - Secrets are encrypted at rest
   - Retrieved at runtime when needed
   - Automatically available in Pantheon environments
-  - Set via Terminus: `terminus secret:set <site> ash_nazg_machine_token YOUR_TOKEN --scope=user,web`
-- **Alternative: WordPress Database** via WordPress options table (`get_option('ash_nazg_machine_token')`)
+  - Set via Terminus: `terminus secret:set <site> ash_nazg_access_token YOUR_TOKEN --scope=user,web`
+- **Alternative: WordPress Database** via WordPress options table (`get_option('ash_nazg_access_token')`)
   - Less secure - stored in plaintext in database
   - Configurable via Settings page in WordPress admin
   - Suitable for local development or testing
@@ -195,20 +186,16 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 **File:** `includes/api.php` (namespace: `Pantheon\AshNazg\API`)
 
 **Core Functions:**
-- `get_user_machine_token( $user_id = null )` - Retrieves machine token for a specific user:
-  - Checks per-user Pantheon Secret (`ash_nazg_machine_token_{user_id}`)
+- `get_user_access_token( $user_id = null )` - Retrieves the Personal Access Token for a specific user:
+  - Checks per-user Pantheon Secret (`ash_nazg_access_token_{user_id}`)
   - Checks per-user encrypted meta (with `decrypt_token()`)
-  - Falls back to global token for backward compatibility
-  - Returns decrypted token ready for API use
-- `encrypt_token( $token )` - Encrypts token with AES-256-CBC using WordPress AUTH_SALT
-- `decrypt_token( $encrypted_token )` - Decrypts token from user meta
-- `get_api_token( $user_id = null )` - Central authentication function:
-  - Retrieves per-user machine token via `get_user_machine_token()`
-  - Exchanges machine token for session token via `/v0/authorize/machine-token`
-  - Caches session token in per-user Transient (`ash_nazg_session_token_{user_id}`)
-  - Auto-refreshing session tokens when expired
-  - Auto-clearing invalid tokens on 401/403 errors via `clear_user_session_token()`
-- `clear_user_session_token( $user_id = null )` - Clears per-user cached session token
+  - Falls back to the global token for backward compatibility
+  - Returns the token ready for use as the Bearer token directly (v1 has no exchange step)
+- `encrypt_token( $token )` - Encrypts a token with AES-256-CBC using WordPress AUTH_SALT
+- `decrypt_token( $encrypted_token )` - Decrypts a token from user meta
+- `get_api_token( $user_id = null )` - Resolves the v1 Bearer token via `get_user_access_token()`
+- `get_v0_session_token( $user_id = null )` - Exchanges the same Personal Access Token for a v0 session token (used only by the small set of hybrid-fallback functions with no v1 equivalent), cached per-user for 1 hour
+- `clear_v0_session_token( $user_id = null )` - Clears the per-user cached v0 session token
 
 **API Resource Functions:**
 - Each API function embeds its own caching logic
@@ -433,7 +420,6 @@ This runs PHPUnit with the configuration in `phpunit.xml.dist`.
 - `test-backups-api.php` - Backup management API functions
 - `test-clone-api.php` - Clone content API functions
 - `test-domain-management.php` - Domain management and multisite integration
-- `test-delete-site-api.php` - Delete site API function and AJAX handlers
 
 **Test Types:**
 1. **Structural Tests** - Verify functions exist and are properly namespaced
