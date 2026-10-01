@@ -9,7 +9,8 @@
   "require-dev": {
     "pantheon-systems/pantheon-wp-coding-standards": "^3.0",
     "pantheon-systems/wpunit-helpers": "^2.0",
-    "phpunit/phpunit": "^9.6"
+    "phpunit/phpunit": "^9.6",
+    "yoast/phpunit-polyfills": "^4.0"
   },
   "autoload": {
   },
