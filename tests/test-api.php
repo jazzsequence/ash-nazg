@@ -30,10 +30,6 @@ class Test_API extends TestCase {
 			'get_access_token function should exist'
 		);
 		$this->assertTrue(
-			function_exists( 'Pantheon\AshNazg\API\get_machine_token' ),
-			'get_machine_token function should exist (legacy v0 fallback)'
-		);
-		$this->assertTrue(
 			function_exists( 'Pantheon\AshNazg\API\api_request' ),
 			'api_request function should exist'
 		);
@@ -312,22 +308,30 @@ class Test_API extends TestCase {
 	}
 
 	/**
-	 * Test that get_v0_session_token() prefers the v1 access token, falling
-	 * back to the legacy machine token.
+	 * Test that get_v0_session_token() uses only the v1 Personal Access Token.
 	 *
 	 * Live-verified against a real site: a v1 Personal Access Token works as
-	 * a v0 machine_token for the full v0 API surface, so most installs only
-	 * need one token. The separate legacy machine-token chain is kept only
-	 * as a fallback for installs whose stored token predates the unified
-	 * Personal Access Token system.
+	 * a v0 machine_token for the full v0 API surface, so the legacy Machine
+	 * Token is no longer used for authentication at all - it's detected
+	 * elsewhere only for the cleanup notice (see Test_User_Tokens).
 	 */
-	public function test_v0_session_token_prefers_access_token() {
+	public function test_v0_session_token_uses_only_access_token() {
 		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
 
-		$this->assertMatchesRegularExpression(
-			'/function get_v0_session_token.*get_user_access_token.*get_user_machine_token/s',
-			$file_contents,
-			'get_v0_session_token() should try get_user_access_token() before falling back to get_user_machine_token()'
+		$func_pos = strpos( $file_contents, 'function get_v0_session_token' );
+		$this->assertNotFalse( $func_pos, 'Should find function get_v0_session_token' );
+
+		$func_content = substr( $file_contents, $func_pos, 1500 );
+
+		$this->assertStringContainsString(
+			'get_user_access_token(',
+			$func_content,
+			'get_v0_session_token() should call get_user_access_token()'
+		);
+		$this->assertStringNotContainsString(
+			'get_user_machine_token',
+			$func_content,
+			'get_v0_session_token() should no longer fall back to get_user_machine_token()'
 		);
 	}
 }

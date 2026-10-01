@@ -72,7 +72,7 @@ class Test_Plugin extends TestCase {
 		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
 
 		$this->assertTrue( function_exists( 'Pantheon\AshNazg\API\get_api_token' ), 'get_api_token function should exist' );
-		$this->assertTrue( function_exists( 'Pantheon\AshNazg\API\get_machine_token' ), 'get_machine_token function should exist' );
+		$this->assertTrue( function_exists( 'Pantheon\AshNazg\API\get_access_token' ), 'get_access_token function should exist' );
 		$this->assertTrue( function_exists( 'Pantheon\AshNazg\API\api_request' ), 'api_request function should exist' );
 		$this->assertTrue( function_exists( 'Pantheon\AshNazg\API\get_site_info' ), 'get_site_info function should exist' );
 		$this->assertTrue( function_exists( 'Pantheon\AshNazg\API\get_environment_info' ), 'get_environment_info function should exist' );

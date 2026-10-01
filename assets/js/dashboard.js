@@ -307,5 +307,4 @@ jQuery(document).ready(function($) {
 	}
 
 	bindCopyTokenButton('#ash-nazg-copy-access-token', '#ash-nazg-copy-access-token-feedback', 'ash_nazg_copy_access_token');
-	bindCopyTokenButton('#ash-nazg-copy-token', '#ash-nazg-copy-token-feedback', 'ash_nazg_copy_machine_token');
 });

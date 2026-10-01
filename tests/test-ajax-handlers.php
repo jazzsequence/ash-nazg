@@ -378,7 +378,7 @@ class Test_AJAX_Handlers extends TestCase {
 	}
 
 	/**
-	 * Test AJAX handlers for org selection and machine token copy are registered.
+	 * Test AJAX handlers for org selection and access token copy are registered.
 	 */
 	public function test_org_and_token_ajax_handlers_exist() {
 		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
@@ -389,27 +389,27 @@ class Test_AJAX_Handlers extends TestCase {
 			'save_primary_org AJAX action should be registered'
 		);
 		$this->assertStringContainsString(
-			'ash_nazg_copy_machine_token',
+			'ash_nazg_copy_access_token',
 			$admin_file_contents,
-			'copy_machine_token AJAX action should be registered'
+			'copy_access_token AJAX action should be registered'
 		);
 	}
 
 	/**
-	 * Test that machine token copy handler has nonce and capability checks.
+	 * Test that access token copy handler has nonce and capability checks.
 	 */
-	public function test_copy_machine_token_security() {
+	public function test_copy_access_token_security() {
 		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
 
 		$this->assertMatchesRegularExpression(
-			'/function ajax_copy_machine_token.*check_ajax_referer/s',
+			'/function ajax_copy_access_token.*check_ajax_referer/s',
 			$admin_file_contents,
-			'ajax_copy_machine_token must verify nonce'
+			'ajax_copy_access_token must verify nonce'
 		);
 		$this->assertMatchesRegularExpression(
-			'/function ajax_copy_machine_token.*current_user_can/s',
+			'/function ajax_copy_access_token.*current_user_can/s',
 			$admin_file_contents,
-			'ajax_copy_machine_token must check capabilities'
+			'ajax_copy_access_token must check capabilities'
 		);
 	}
 

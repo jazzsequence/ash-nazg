@@ -30,19 +30,27 @@ class Test_User_Tokens extends TestCase {
 			'decrypt_token function should exist'
 		);
 		$this->assertTrue(
-			function_exists( 'Pantheon\AshNazg\API\get_user_machine_token' ),
-			'get_user_machine_token function should exist'
+			function_exists( 'Pantheon\AshNazg\API\get_user_access_token' ),
+			'get_user_access_token function should exist'
 		);
 		$this->assertTrue(
 			function_exists( 'Pantheon\AshNazg\API\clear_v0_session_token' ),
 			'clear_v0_session_token function should exist (legacy v0 fallback only)'
 		);
+		$this->assertFalse(
+			function_exists( 'Pantheon\AshNazg\API\get_user_machine_token' ),
+			'get_user_machine_token should not exist - the Machine Token is no longer a usable credential'
+		);
+		$this->assertFalse(
+			function_exists( 'Pantheon\AshNazg\API\get_machine_token' ),
+			'get_machine_token should not exist - the Machine Token is no longer a usable credential'
+		);
 	}
 
 	/**
-	 * Test that get_user_machine_token checks per-user sources.
+	 * Test that get_user_access_token checks per-user sources.
 	 */
-	public function test_get_user_machine_token_checks_user_sources() {
+	public function test_get_user_access_token_checks_user_sources() {
 		$file_path = dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
 		$this->assertFileExists( $file_path );
 
@@ -50,30 +58,30 @@ class Test_User_Tokens extends TestCase {
 
 		// Should check per-user Pantheon Secret.
 		$this->assertStringContainsString(
-			'ash_nazg_machine_token_%d',
+			'ash_nazg_access_token_%d',
 			$contents,
-			'get_user_machine_token should check per-user Pantheon Secret with user ID suffix'
+			'get_user_access_token should check per-user Pantheon Secret with user ID suffix'
 		);
 
 		// Should check per-user meta.
 		$this->assertStringContainsString(
-			'ash_nazg_user_machine_token',
+			'ash_nazg_user_access_token',
 			$contents,
-			'get_user_machine_token should check per-user meta'
+			'get_user_access_token should check per-user meta'
 		);
 
 		// Should call decrypt_token for user meta.
 		$this->assertStringContainsString(
 			'decrypt_token',
 			$contents,
-			'get_user_machine_token should decrypt tokens from user meta'
+			'get_user_access_token should decrypt tokens from user meta'
 		);
 
 		// Should fallback to global token.
 		$this->assertStringContainsString(
-			'get_machine_token()',
+			'get_access_token()',
 			$contents,
-			'get_user_machine_token should fallback to global token for backward compatibility'
+			'get_user_access_token should fallback to global token for backward compatibility'
 		);
 	}
 
@@ -117,10 +125,6 @@ class Test_User_Tokens extends TestCase {
 
 	/**
 	 * Test that get_api_token resolves the v1 Personal Access Token per-user.
-	 *
-	 * v1 has no session-token exchange or cache - the stored token is used
-	 * directly, resolved via the separate get_user_access_token() chain (not
-	 * get_user_machine_token(), which resolves the incompatible legacy v0 credential).
 	 */
 	public function test_get_api_token_uses_per_user_access_token() {
 		$file_path = dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
@@ -152,7 +156,7 @@ class Test_User_Tokens extends TestCase {
 	}
 
 	/**
-	 * Test that settings page handles per-user tokens.
+	 * Test that settings page handles the per-user Personal Access Token only.
 	 */
 	public function test_settings_page_handles_per_user_tokens() {
 		$file_path = dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/settings.php';
@@ -174,125 +178,18 @@ class Test_User_Tokens extends TestCase {
 			'Settings page should store token in user meta'
 		);
 
-		// Should use ash_nazg_user_machine_token meta key.
+		// Should use ash_nazg_user_access_token meta key.
 		$this->assertStringContainsString(
-			'ash_nazg_user_machine_token',
+			'ash_nazg_user_access_token',
 			$contents,
-			'Settings page should use ash_nazg_user_machine_token meta key'
+			'Settings page should use ash_nazg_user_access_token meta key'
 		);
 
-		// Should clear the cached legacy v0 session after saving a new machine token.
-		$this->assertStringContainsString(
-			'clear_v0_session_token',
+		// Should no longer accept a machine token field.
+		$this->assertStringNotContainsString(
+			'ash_nazg_machine_token',
 			$contents,
-			'Settings page should clear the legacy v0 session after saving a new machine token'
-		);
-	}
-
-	/**
-	 * Test that migration notice checks for global token.
-	 */
-	public function test_migration_notice_checks_global_token() {
-		$file_path = dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/admin.php';
-		$this->assertFileExists( $file_path );
-
-		$contents = file_get_contents( $file_path );
-
-		// Should check for global option.
-		$this->assertStringContainsString(
-			"get_option( 'ash_nazg_machine_token' )",
-			$contents,
-			'Migration notice should check for global option'
-		);
-
-		// Should check for global Pantheon Secret.
-		$this->assertStringContainsString(
-			"pantheon_get_secret( 'ash_nazg_machine_token' )",
-			$contents,
-			'Migration notice should check for global Pantheon Secret'
-		);
-
-		// Should check if user already has token.
-		$this->assertStringContainsString(
-			'ash_nazg_user_machine_token',
-			$contents,
-			'Migration notice should check if user already has per-user token'
-		);
-	}
-
-	/**
-	 * Test that migration handler encrypts and deletes global token.
-	 */
-	public function test_migration_handler_encrypts_and_deletes() {
-		$file_path = dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/admin.php';
-		$this->assertFileExists( $file_path );
-
-		$contents = file_get_contents( $file_path );
-
-		// Should encrypt token during migration.
-		$this->assertStringContainsString(
-			'encrypt_token',
-			$contents,
-			'Migration handler should encrypt token before storing'
-		);
-
-		// Should delete global token after migration.
-		$this->assertStringContainsString(
-			"delete_option( 'ash_nazg_machine_token' )",
-			$contents,
-			'Migration handler should delete global token after migration'
-		);
-
-		// Should update user meta.
-		$this->assertStringContainsString(
-			'update_user_meta',
-			$contents,
-			'Migration handler should store token in user meta'
-		);
-
-		// Should clear the cached legacy v0 session.
-		$this->assertStringContainsString(
-			'clear_v0_session_token',
-			$contents,
-			'Migration handler should clear the legacy v0 session'
-		);
-	}
-
-	/**
-	 * Test that migration notice has progressive nag logic.
-	 */
-	public function test_migration_notice_has_progressive_nag() {
-		$file_path = dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/admin.php';
-		$this->assertFileExists( $file_path );
-
-		$contents = file_get_contents( $file_path );
-
-		// Should track dismiss timestamp.
-		$this->assertStringContainsString(
-			'ash_nazg_migration_dismissed_time',
-			$contents,
-			'Migration notice should track dismiss timestamp'
-		);
-
-		// Should track dismiss count.
-		$this->assertStringContainsString(
-			'ash_nazg_migration_dismiss_count',
-			$contents,
-			'Migration notice should track dismiss count'
-		);
-
-		// Should have week-long wait period for first dismiss.
-		$this->assertStringContainsString(
-			'WEEK_IN_SECONDS',
-			$contents,
-			'Migration notice should wait 1 week after first dismiss'
-		);
-
-		// Should have 24-hour wait period for subsequent dismisses.
-		$this->assertStringContainsString(
-			'DAY_IN_SECONDS',
-			$contents,
-			'Migration notice should wait 24 hours after subsequent dismisses'
+			'Settings page should no longer let admins set a new legacy Machine Token'
 		);
 	}
 
@@ -314,7 +211,7 @@ class Test_User_Tokens extends TestCase {
 
 		// Should show Terminus command with user ID suffix.
 		$this->assertStringContainsString(
-			'ash_nazg_machine_token_',
+			'ash_nazg_access_token_',
 			$contents,
 			'Settings view should show Terminus command with user ID suffix'
 		);
@@ -324,30 +221,6 @@ class Test_User_Tokens extends TestCase {
 			'user ID',
 			$contents,
 			'Settings view should explain the user ID suffix'
-		);
-	}
-
-	/**
-	 * Test that migration button appears on settings page for global token.
-	 */
-	public function test_settings_view_has_migration_button() {
-		$file_path = dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/views/settings.php';
-		$this->assertFileExists( $file_path );
-
-		$contents = file_get_contents( $file_path );
-
-		// Should check if using global token.
-		$this->assertStringContainsString(
-			'$has_global_token',
-			$contents,
-			'Settings view should check if global token exists'
-		);
-
-		// Should show migration button.
-		$this->assertStringContainsString(
-			'Migrate to My Account',
-			$contents,
-			'Settings view should show migration button'
 		);
 	}
 
@@ -376,93 +249,145 @@ class Test_User_Tokens extends TestCase {
 	}
 
 	/**
-	 * Test that redundant user meta token notice function exists.
+	 * Test that the legacy Machine Token notice detects a stored token from any source.
 	 */
-	public function test_redundant_user_meta_notice_function_exists() {
+	public function test_legacy_machine_token_notice_function_exists() {
 		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/admin.php';
 
 		$this->assertTrue(
-			function_exists( 'Pantheon\AshNazg\Admin\display_redundant_user_meta_notice' ),
-			'display_redundant_user_meta_notice should exist'
+			function_exists( 'Pantheon\AshNazg\Admin\display_legacy_machine_token_notice' ),
+			'display_legacy_machine_token_notice should exist'
 		);
 	}
 
 	/**
-	 * Test that redundant user meta token handler function exists.
+	 * Test that the notice checks per-user secret, per-user meta, global secret, and global option.
 	 */
-	public function test_redundant_user_meta_handler_function_exists() {
+	public function test_legacy_machine_token_notice_checks_all_sources() {
+		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$func_pos = strpos( $admin_contents, 'function display_legacy_machine_token_notice' );
+		$this->assertNotFalse( $func_pos, 'Should find function display_legacy_machine_token_notice' );
+
+		$func_content = substr( $admin_contents, $func_pos, 2500 );
+
+		$this->assertStringContainsString( 'ash_nazg_machine_token_%d', $func_content, 'Notice should check per-user secret' );
+		$this->assertStringContainsString( 'ash_nazg_user_machine_token', $func_content, 'Notice should check per-user meta' );
+		$this->assertStringContainsString( "pantheon_get_secret( 'ash_nazg_machine_token' )", $func_content, 'Notice should check global secret' );
+		$this->assertStringContainsString( "get_option( 'ash_nazg_machine_token' )", $func_content, 'Notice should check global option' );
+	}
+
+	/**
+	 * Test that the removal button is only offered when an access token also exists,
+	 * to avoid locking an admin out of the v0-only fallback features.
+	 */
+	public function test_legacy_machine_token_notice_gates_removal_on_access_token() {
+		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$func_pos = strpos( $admin_contents, 'function display_legacy_machine_token_notice' );
+		$func_content = substr( $admin_contents, $func_pos, 2500 );
+
+		$this->assertStringContainsString(
+			'$has_access_token && $has_db_token',
+			$func_content,
+			'Notice should only show the remove button when an access token exists alongside a database-stored machine token'
+		);
+	}
+
+	/**
+	 * Test that the delete handler exists, is secured, and refuses to run without an access token.
+	 */
+	public function test_legacy_machine_token_delete_handler_is_safe() {
 		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/admin.php';
 
 		$this->assertTrue(
-			function_exists( 'Pantheon\AshNazg\Admin\handle_delete_redundant_user_meta_token' ),
-			'handle_delete_redundant_user_meta_token should exist'
+			function_exists( 'Pantheon\AshNazg\Admin\handle_delete_legacy_machine_token' ),
+			'handle_delete_legacy_machine_token should exist'
+		);
+
+		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$this->assertMatchesRegularExpression(
+			'/function handle_delete_legacy_machine_token.*wp_verify_nonce/s',
+			$admin_contents,
+			'handler must verify nonce'
+		);
+		$this->assertMatchesRegularExpression(
+			'/function handle_delete_legacy_machine_token.*current_user_can/s',
+			$admin_contents,
+			'handler must check capabilities'
+		);
+		$this->assertMatchesRegularExpression(
+			'/function handle_delete_legacy_machine_token.*get_user_access_token.*wp_die/s',
+			$admin_contents,
+			'handler must refuse to delete the Machine Token when no access token is configured, to avoid lockout'
+		);
+		$this->assertMatchesRegularExpression(
+			'/function handle_delete_legacy_machine_token.*delete_user_meta.*delete_option.*clear_v0_session_token/s',
+			$admin_contents,
+			'handler must delete both database-stored copies and clear the cached v0 session'
 		);
 	}
 
 	/**
 	 * Test that both hooks are registered.
 	 */
-	public function test_redundant_user_meta_hooks_registered() {
+	public function test_legacy_machine_token_hooks_registered() {
 		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
 
 		$this->assertStringContainsString(
-			'handle_delete_redundant_user_meta_token',
+			"add_action( 'admin_notices', __NAMESPACE__ . '\\\\display_legacy_machine_token_notice' )",
 			$admin_contents,
-			'handle_delete_redundant_user_meta_token should be registered'
+			'display_legacy_machine_token_notice should be registered on admin_notices'
 		);
 		$this->assertStringContainsString(
+			"add_action( 'admin_init', __NAMESPACE__ . '\\\\handle_delete_legacy_machine_token' )",
+			$admin_contents,
+			'handle_delete_legacy_machine_token should be registered on admin_init'
+		);
+		$this->assertStringContainsString(
+			"add_action( 'admin_init', __NAMESPACE__ . '\\\\handle_dismiss_legacy_machine_token_notice' )",
+			$admin_contents,
+			'handle_dismiss_legacy_machine_token_notice should be registered on admin_init'
+		);
+	}
+
+	/**
+	 * Test that the old per-user-vs-global machine token migration system is gone.
+	 */
+	public function test_old_migration_system_removed() {
+		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$removed_identifiers = [
+			'display_token_migration_notice',
+			'display_global_secret_cleanup_notice',
 			'display_redundant_user_meta_notice',
-			$admin_contents,
-			'display_redundant_user_meta_notice should be registered'
-		);
+			'handle_token_migration',
+			'handle_global_secret_cleanup_dismissal',
+			'handle_delete_global_token',
+			'handle_delete_redundant_user_meta_token',
+		];
+
+		foreach ( $removed_identifiers as $identifier ) {
+			$this->assertStringNotContainsString(
+				$identifier,
+				$admin_contents,
+				"{$identifier} should no longer exist - superseded by the legacy Machine Token notice"
+			);
+		}
 	}
 
 	/**
-	 * Test that the handler verifies nonce and capability.
+	 * Test that the Dashboard no longer offers to copy a Machine Token.
 	 */
-	public function test_redundant_user_meta_handler_security() {
+	public function test_dashboard_copy_machine_token_removed() {
 		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+		$dashboard_contents = file_get_contents( __DIR__ . '/../includes/views/dashboard.php' );
+		$dashboard_js = file_get_contents( __DIR__ . '/../assets/js/dashboard.js' );
 
-		$this->assertMatchesRegularExpression(
-			'/function handle_delete_redundant_user_meta_token.*wp_verify_nonce/s',
-			$admin_contents,
-			'handler must verify nonce'
-		);
-		$this->assertMatchesRegularExpression(
-			'/function handle_delete_redundant_user_meta_token.*current_user_can/s',
-			$admin_contents,
-			'handler must check capabilities'
-		);
-	}
-
-	/**
-	 * Test that the handler is gated on pantheon_get_secret availability.
-	 */
-	public function test_redundant_user_meta_handler_secret_gate() {
-		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
-
-		$this->assertMatchesRegularExpression(
-			'/function handle_delete_redundant_user_meta_token.*function_exists.*pantheon_get_secret/s',
-			$admin_contents,
-			'handler must check function_exists(pantheon_get_secret)'
-		);
-	}
-
-	/**
-	 * Test that the handler verifies secret still accessible before deleting meta.
-	 */
-	public function test_redundant_user_meta_handler_safety_check() {
-		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
-
-		$this->assertMatchesRegularExpression(
-			'/function handle_delete_redundant_user_meta_token.*delete_user_meta/s',
-			$admin_contents,
-			'handler must call delete_user_meta'
-		);
-		$this->assertMatchesRegularExpression(
-			'/function handle_delete_redundant_user_meta_token.*pantheon_get_secret.*delete_user_meta/s',
-			$admin_contents,
-			'handler must check secret is accessible before deleting meta'
-		);
+		$this->assertStringNotContainsString( 'ajax_copy_machine_token', $admin_contents, 'ajax_copy_machine_token handler should be removed' );
+		$this->assertStringNotContainsString( 'ash_nazg_copy_machine_token', $admin_contents, 'copy-machine-token AJAX action should be deregistered' );
+		$this->assertStringNotContainsString( 'ash-nazg-copy-token"', $dashboard_contents, 'Dashboard should no longer render a copy-machine-token button' );
+		$this->assertStringNotContainsString( 'ash_nazg_copy_machine_token', $dashboard_js, 'Dashboard JS should no longer bind the copy-machine-token button' );
 	}
 }
