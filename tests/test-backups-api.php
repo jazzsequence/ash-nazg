@@ -59,9 +59,9 @@ class Test_Backups_API extends TestCase {
 			'Should use backup creation endpoint'
 		);
 		$this->assertStringContainsString(
-			'/sites/%s/backups/restore?key=%s',
+			'/v0/sites/%s/environments/%s/backups/%s/restore',
 			$api_file_contents,
-			'Should use backup restore endpoint'
+			'Should use the v0 backup restore endpoint'
 		);
 		$this->assertStringContainsString(
 			'/sites/%s/environments/%s/backup-download-urls',
@@ -394,9 +394,9 @@ class Test_Backups_API extends TestCase {
 	}
 
 	/**
-	 * Live-verified: v1's restore type enum is RESTORE_{ELEMENT}_BACKUP, not the bare element name.
+	 * restore_backup() should use the v0 fallback endpoint and request shape.
 	 */
-	public function test_restore_backup_uses_full_type_enum() {
+	public function test_restore_backup_uses_v0_fallback() {
 		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
 
 		$func_pos = strpos( $api_file_contents, 'function restore_backup' );
@@ -405,9 +405,19 @@ class Test_Backups_API extends TestCase {
 		$func_content = substr( $api_file_contents, $func_pos, 2000 );
 
 		$this->assertStringContainsString(
-			"sprintf( 'RESTORE_%s_BACKUP', strtoupper( \$element ) )",
+			'api_request_v0(',
 			$func_content,
-			'restore_backup should build the RESTORE_{ELEMENT}_BACKUP enum value, not the bare element name'
+			'restore_backup should use the v0 fallback client'
+		);
+		$this->assertStringContainsString(
+			"'/v0/sites/%s/environments/%s/backups/%s/restore'",
+			$func_content,
+			'restore_backup should use the v0 path-based restore endpoint'
+		);
+		$this->assertStringContainsString(
+			"[ 'element' => \$element ]",
+			$func_content,
+			'restore_backup should send element in the v0 request body'
 		);
 	}
 }

@@ -2882,6 +2882,10 @@ function create_backup( $element, $keep_for = 365, $site_id = null, $env = null 
 /**
  * Restore a backup.
  *
+ * V0 fallback: v1's restore endpoint is confirmed broken platform-wide
+ * (fails regardless of parameters). Using v0 so this works as soon as
+ * Pantheon fixes it. See TODO.md.
+ *
  * @param string $backup_id Backup ID (folder name from catalog).
  * @param string $element Element to restore: 'code', 'database', or 'files'.
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
@@ -2914,18 +2918,15 @@ function restore_backup( $backup_id, $element, $site_id = null, $env = null ) {
 
 	// Map local environments to dev for API queries.
 	$api_env = map_local_env_to_dev( $env );
-	// Live-verified: the type enum is RESTORE_{ELEMENT}_BACKUP, not the bare element name.
-	$restore_type = sprintf( 'RESTORE_%s_BACKUP', strtoupper( $element ) );
 
 	$endpoint = sprintf(
-		'/sites/%s/backups/restore?key=%s&type=%s&environment=%s',
+		'/v0/sites/%s/environments/%s/backups/%s/restore',
 		$site_id,
-		rawurlencode( $backup_id ),
-		$restore_type,
-		$api_env
+		$api_env,
+		rawurlencode( $backup_id )
 	);
 
-	$result = api_request( $endpoint, 'POST', [] );
+	$result = api_request_v0( $endpoint, 'POST', [ 'element' => $element ] );
 
 	if ( is_wp_error( $result ) ) {
 		Helpers\debug_log( sprintf( 'Failed to restore %s from backup %s on %s.%s - Error: %s', $element, $backup_id, $site_id, $api_env, $result->get_error_message() ) );

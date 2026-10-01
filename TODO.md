@@ -12,17 +12,17 @@ The plugin was migrated to Pantheon's v1 Public API, built against the OpenAPI s
 - [x] Backup elements (code/database/files) *do* have real `size` and `ttl` fields, and `name` is already a complete filename — fixed `get_backups()` to use the real values instead of hardcoding 0 and double-appending a filename suffix.
 - [x] `get_backup_download_url()`'s assumption that a backup's opaque `id` is timestamp-based was wrong — it's a hash. Fixed to look up the real per-element `timestamp` from the (cached) backups list instead.
 - [x] `clone_database()`/`clone_files()` request body shapes — confirmed live against a disposable multidev (`new-multi`, cloned from `dev`). Both the bare `{"fromEnvironment": "..."}` shape and the `wpReplaceSiteURL: {fromUrl, toUrl}` sub-object completed with `SUCCEEDED`/`FINISHED`. No code change needed.
-- [x] `restore_backup()`'s `type` query param — **was wrong**, fixed. The v1 enum is `RESTORE_{ELEMENT}_BACKUP` (e.g. `RESTORE_DATABASE_BACKUP`), not the bare element name (`DATABASE`) the code was sending. Fixed in `includes/api.php`; regression test added in `tests/test-backups-api.php`.
+- [x] `restore_backup()`'s `type` query param (v1) — **was wrong**, the enum is `RESTORE_{ELEMENT}_BACKUP`, not the bare element name. Moot now — see below, `restore_backup()` was switched to v0 entirely since v1 restore is confirmed non-functional.
+- [x] `restore_backup()` switched to the v0 fallback endpoint (`POST /v0/sites/{id}/environments/{env}/backups/{backup_id}/restore`, path-based ID + `{"element": ...}` body) — see platform bug below for why.
 
-### Known v1 platform bug (reported upstream, not fixable in this plugin)
-- [ ] **`restoreSiteBackup` (`POST /sites/{id}/backups/restore`) appears non-functional in v1 as of 2026-09-30.** Live-tested against the disposable `new-multi` multidev with 5 different parameter combinations — every combination accepted the request (`HTTP 200`, workflow created) but the workflow itself always failed asynchronously ~15–25s later with the same generic `"The operation failed to complete."` and no further detail:
-  1. `key` = top-level `Backup.id`, cross-environment (`dev` backup → `new-multi`)
-  2. `key` = the database element's own `BackupDownload.id`, cross-environment
-  3. `key` = the element's `folder` value (e.g. `1780592488_backup`), cross-environment
-  4. `key` = a same-environment backup's own `Backup.id` (created and restored entirely within `new-multi`)
-  5. Same as #4 but with `env=` instead of `environment=` as the query param name
-  All 5 failed identically regardless of `key` format or same-vs-cross-environment target, which rules out a parameter-shape mistake on our end — this looks like a genuine backend defect or an unannounced restriction, not a docs/usage issue. Since `key`'s correct format could not be confirmed as a result, this needs to be re-verified once Pantheon fixes/clarifies the endpoint. **Flagged for the Public API team** — see the v1-gaps summary.
+### Known platform bug (reported upstream, not fixable in this plugin) — HIGH PRIORITY, affects both API versions
+- [ ] **Backup restore appears broken platform-wide, on both v0 and v1, as of 2026-10-01 — not a v1-only issue.** Live-tested 7 ways against the real test site:
+  - v1 (`POST /sites/{id}/backups/restore`): 5 parameter combinations (top-level `Backup.id`, per-element `id`, `folder` name; `new-multi` cross-env and same-env; `env` vs `environment` query param) — all accepted (`HTTP 200`) but failed asynchronously ~15–25s later with the same generic `"The operation failed to complete."`
+  - v0 (`POST .../backups/{backup_id}/restore`, the historically-correct path-based shape): tested against `new-multi`, against `dev` with a 6-month-old backup, and against `dev` with a backup created and restored within the same minute — all three failed the same way (workflow `result: failed`, no further detail in logs)
+  - Ruled out: parameter-shape mistakes (v0's shape is confirmed correct from pre-migration code and still fails), multidev-as-target (dev failed too), and stale/expired backups (a fresh backup failed too)
+  - **This should be escalated as a live incident, not just a v1-gap** — it blocks a core operational feature on a real account regardless of which API a customer uses.
 - [ ] Confirm whether a genuinely old-style (pre-unification) machine token works as a v1 Bearer token directly — only the reverse (new PAT working for v0) has been confirmed; no old-style token was available to test
+- [ ] Confirm whether a v1 Personal Access Token works against `terminus.pantheon.io`'s internal variables API (used by `get_addon_env_variables()` on local/Lando environments only) the same way it worked against v0 session tokens — untested, only affects local dev environments, not verifiable from this (non-local) session
 
 ### Hybrid v0 fallback — revisit once Pantheon ships v1 equivalents
 These features have no v1 endpoint yet and fall back to the legacy v0 API (now via the same Personal Access Token in the common case — see above):
