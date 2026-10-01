@@ -35,18 +35,6 @@ function register_settings() {
 			'default'           => '',
 		]
 	);
-
-	register_setting(
-		'ash_nazg_settings',
-		'ash_nazg_machine_token',
-		[
-			'type'              => 'string',
-			'description'       => __( 'Legacy Pantheon machine token, used only for the small set of features with no v1 API equivalent yet', 'ash-nazg' ),
-			'sanitize_callback' => 'sanitize_text_field',
-			'show_in_rest'      => false,
-			'default'           => '',
-		]
-	);
 }
 
 /**
@@ -84,20 +72,6 @@ function render_settings_page() {
 
 			$message = __( 'Settings saved successfully. Your Personal Access Token has been encrypted and stored.', 'ash-nazg' );
 		}
-
-		$machine_token_input = isset( $_POST['ash_nazg_machine_token'] ) ? sanitize_text_field( wp_unslash( $_POST['ash_nazg_machine_token'] ) ) : '';
-		if ( '' !== $machine_token_input ) {
-			$token = $machine_token_input;
-
-			// Encrypt token before storing in user meta.
-			$encrypted_token = API\encrypt_token( $token );
-			update_user_meta( $user_id, 'ash_nazg_user_machine_token', $encrypted_token );
-
-			// Clear the cached legacy v0 session derived from this token.
-			API\clear_v0_session_token( $user_id );
-
-			$message = __( 'Settings saved successfully. Your Machine Token has been encrypted and stored.', 'ash-nazg' );
-		}
 	}
 
 	// Handle test connection.
@@ -125,26 +99,6 @@ function render_settings_page() {
 
 	// For backward compatibility: use user-scoped token if available, otherwise global.
 	$access_token = API\get_user_access_token( $user_id );
-
-	// Check if user has per-user legacy machine token (v0).
-	$user_token = get_user_meta( $user_id, 'ash_nazg_user_machine_token', true );
-	$has_user_token = ! empty( $user_token );
-
-	// Check if user has Pantheon Secret set.
-	$has_user_secret = false;
-	if ( $has_secret_api ) {
-		$secret_key = sprintf( 'ash_nazg_machine_token_%d', $user_id );
-		$secret_value = pantheon_get_secret( $secret_key );
-		$has_user_secret = ! empty( $secret_value );
-	}
-
-	// Check for global token (migration detection).
-	$global_token = get_option( 'ash_nazg_machine_token' );
-	$global_secret = $has_secret_api ? pantheon_get_secret( 'ash_nazg_machine_token' ) : false;
-	$has_global_token = ! empty( $global_token ) || ! empty( $global_secret );
-
-	// For backward compatibility: use user-scoped token if available, otherwise global.
-	$machine_token = API\get_user_machine_token( $user_id );
 
 	require ASH_NAZG_PLUGIN_DIR . 'includes/views/settings.php';
 }

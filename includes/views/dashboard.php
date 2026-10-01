@@ -289,19 +289,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 							</span>
 						</td>
 					</tr>
-					<tr>
-						<th><?php esc_html_e( 'Machine Token (legacy)', 'ash-nazg' ); ?></th>
-						<td>
-							<button type="button" id="ash-nazg-copy-token" class="button button-small"
-								data-nonce="<?php echo esc_attr( wp_create_nonce( 'ash_nazg_copy_machine_token' ) ); ?>">
-								<span class="dashicons dashicons-clipboard" aria-hidden="true"></span>
-								<?php esc_html_e( 'Copy token', 'ash-nazg' ); ?>
-							</button>
-							<span id="ash-nazg-copy-token-feedback" class="ash-nazg-text-muted" hidden>
-								<?php esc_html_e( 'Copied!', 'ash-nazg' ); ?>
-							</span>
-						</td>
-					</tr>
 				<?php endif; // pantheon_user. ?>
 					<tr>
 						<th><?php esc_html_e( 'WordPress', 'ash-nazg' ); ?></th>

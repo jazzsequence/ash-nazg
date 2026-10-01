@@ -17,34 +17,8 @@ use Pantheon\AshNazg\API;
 	<?php \Pantheon\AshNazg\Admin\render_pantheon_header( get_admin_page_title() ); ?>
 
 	<?php if ( ! empty( $message ) ) : ?>
-		<?php
-		// Check if this is a migration instructions message (contains terminus command).
-		$is_instructions = strpos( $message, 'terminus secret:set' ) !== false;
-		$notice_type = $is_instructions ? 'notice-info' : 'notice-success';
-		?>
-		<div class="notice <?php echo esc_attr( $notice_type ); ?> is-dismissible">
-			<?php if ( $is_instructions ) : ?>
-				<?php
-				// Extract the command from the message for better formatting.
-				preg_match( '/terminus secret:set [^\s]+ ash_nazg_machine_token_\d+ YOUR_TOKEN --scope=user,web/', $message, $matches );
-				$command = ! empty( $matches[0] ) ? $matches[0] : '';
-
-				// Split message into parts.
-				$parts = explode( 'Run this command from your local terminal:', $message );
-				$before_command = trim( $parts[0] );
-				$after_command = isset( $parts[1] ) ? trim( str_replace( $command, '', $parts[1] ) ) : '';
-				?>
-				<p><?php echo esc_html( $before_command ); ?></p>
-				<?php if ( $command ) : ?>
-					<p><strong><?php esc_html_e( 'Run this command from your local terminal:', 'ash-nazg' ); ?></strong></p>
-					<pre class="ash-nazg-code-block"><?php echo esc_html( $command ); ?></pre>
-				<?php endif; ?>
-				<?php if ( $after_command ) : ?>
-					<p><?php echo esc_html( $after_command ); ?></p>
-				<?php endif; ?>
-			<?php else : ?>
-				<p><?php echo esc_html( $message ); ?></p>
-			<?php endif; ?>
+		<div class="notice notice-success is-dismissible">
+			<p><?php echo esc_html( $message ); ?></p>
 		</div>
 	<?php endif; ?>
 
@@ -122,7 +96,7 @@ use Pantheon\AshNazg\API;
 		<hr class="ash-nazg-my-30">
 
 		<h2><?php esc_html_e( 'Personal Access Token (v1 API)', 'ash-nazg' ); ?></h2>
-		<p class="description"><?php esc_html_e( 'Required for almost all plugin features. This is a different credential from the legacy Machine Token below - it cannot be substituted for one another.', 'ash-nazg' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Required for almost all plugin features, including the small set of v0-only fallback features.', 'ash-nazg' ); ?></p>
 
 		<?php if ( ! empty( $access_token ) ) : ?>
 			<table class="form-table">
@@ -215,122 +189,6 @@ use Pantheon\AshNazg\API;
 			</form>
 		<?php endif; ?>
 
-		<hr class="ash-nazg-my-30">
-
-		<h2><?php esc_html_e( 'Machine Token (legacy v0 - optional)', 'ash-nazg' ); ?></h2>
-		<p class="description"><?php esc_html_e( 'Only needed for a handful of features that have no v1 API equivalent yet: site label editing, Delete Site, Metrics, domain listing, and the Install Object Cache Pro workflow. This requirement will be removed once Pantheon ships v1 support for them.', 'ash-nazg' ); ?></p>
-
-		<?php if ( ! empty( $machine_token ) ) : ?>
-			<table class="form-table">
-				<tr>
-					<th scope="row">
-						<?php esc_html_e( 'Machine Token', 'ash-nazg' ); ?>
-					</th>
-					<td>
-						<p>
-							<span class="dashicons dashicons-yes-alt ash-nazg-icon-success"></span>
-							<?php
-							if ( $has_global_token && ! $has_user_token && ! $has_user_secret ) {
-								esc_html_e( 'A site-wide machine token is currently set (shared by all admins).', 'ash-nazg' );
-							} else {
-								esc_html_e( 'A machine token is currently set.', 'ash-nazg' );
-							}
-							?>
-						</p>
-						<?php if ( $has_global_token && ! $has_user_token && ! $has_user_secret ) : ?>
-							<p>
-								<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg-settings&ash_nazg_migrate=me' ), 'ash_nazg_migrate_token' ) ); ?>" class="button button-secondary">
-									<?php esc_html_e( 'Migrate to My Account', 'ash-nazg' ); ?>
-								</a>
-							</p>
-							<p class="description">
-								<?php esc_html_e( 'Starting with version 0.4.0, each admin can have their own machine token for better security and audit trails. Click "Migrate to My Account" to copy the site-wide token to your user account.', 'ash-nazg' ); ?>
-							</p>
-						<?php endif; ?>
-					</td>
-				</tr>
-			</table>
-		<?php else : ?>
-			<form method="post" action="">
-				<?php wp_nonce_field( 'ash_nazg_settings', 'ash_nazg_settings_nonce' ); ?>
-
-				<table class="form-table">
-					<tr>
-						<th scope="row">
-							<label for="ash_nazg_machine_token">
-								<?php esc_html_e( 'Machine Token', 'ash-nazg' ); ?>
-							</label>
-						</th>
-						<td>
-							<?php if ( $has_secret_api && ! $has_user_secret ) : ?>
-								<div class="notice notice-info inline ash-nazg-notice-inline">
-									<p>
-										<strong><?php esc_html_e( 'Recommended: Use Pantheon Secrets for Your Token', 'ash-nazg' ); ?></strong>
-									</p>
-									<p>
-										<?php
-										esc_html_e(
-											'For better security, store your machine token using Pantheon Secrets. Your token will be encrypted and retrieved at runtime.',
-											'ash-nazg'
-										);
-										?>
-									</p>
-									<p>
-										<strong><?php esc_html_e( 'Your User ID:', 'ash-nazg' ); ?></strong>
-										<code class="ash-nazg-user-id"><?php echo absint( $user_id ); ?></code>
-									</p>
-									<p>
-										<?php esc_html_e( 'Run this command from your local terminal (copy and paste):', 'ash-nazg' ); ?>
-									</p>
-									<pre class="ash-nazg-code-block">terminus secret:set <?php echo ! empty( $site_name ) ? esc_attr( $site_name ) : '<site>'; ?> ash_nazg_machine_token_<?php echo absint( $user_id ); ?> YOUR_TOKEN --scope=user,web</pre>
-									<p class="description">
-										<?php
-										printf(
-											/* translators: %s: user ID number */
-											esc_html__( 'Note: The "_%s" suffix in the secret name is your user ID. Each WordPress admin can have their own Pantheon machine token.', 'ash-nazg' ),
-											'<strong>' . absint( $user_id ) . '</strong>'
-										);
-										?>
-									</p>
-								</div>
-								<p class="description">
-									<?php esc_html_e( 'Alternatively, you can enter a token below which will be encrypted and stored in the WordPress database.', 'ash-nazg' ); ?>
-								</p>
-							<?php else : ?>
-								<p class="description">
-									<?php esc_html_e( 'Enter your Pantheon machine token below. It will be encrypted and stored in the WordPress database.', 'ash-nazg' ); ?>
-								</p>
-							<?php endif; ?>
-
-							<input
-								type="password"
-								id="ash_nazg_machine_token"
-								name="ash_nazg_machine_token"
-								value=""
-								class="regular-text"
-								placeholder="<?php esc_attr_e( 'Enter Pantheon machine token', 'ash-nazg' ); ?>"
-							/>
-
-							<p class="description">
-								<?php
-								printf(
-									/* translators: %s: URL to Pantheon dashboard */
-									esc_html__( 'Generate a machine token in your %s.', 'ash-nazg' ),
-									'<a href="https://dashboard.pantheon.io/users/#account/tokens" target="_blank">' .
-									esc_html__( 'Pantheon account settings', 'ash-nazg' ) .
-									'</a>'
-								);
-								?>
-							</p>
-						</td>
-					</tr>
-				</table>
-
-				<p class="submit">
-					<?php submit_button( __( 'Save Machine Token', 'ash-nazg' ), 'primary', 'submit', false ); ?>
-				</p>
-			</form>
-		<?php endif; ?>
 	</div>
 
 	<div class="ash-nazg-dashboard">

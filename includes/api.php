@@ -112,9 +112,6 @@ function decrypt_token( $encrypted_token ) {
  * 3. Global Pantheon Secret (backward compatibility)
  * 4. Global option (backward compatibility)
  *
- * Mirrors get_user_machine_token() exactly, but resolves a completely
- * separate, v1-only credential - a machine token cannot be substituted here.
- *
  * @param int|null $user_id Optional. User ID. Defaults to current user.
  * @return string|false Personal access token on success, false on failure.
  */
@@ -175,78 +172,6 @@ function get_access_token() {
 }
 
 /**
- * Get the legacy v0 machine token for a specific user.
- *
- * Checks in this order:
- * 1. Pantheon Secret with user ID suffix (pantheon_get_secret)
- * 2. User meta (encrypted, stored in database)
- * 3. Global Pantheon Secret (backward compatibility)
- * 4. Global option (backward compatibility)
- *
- * Only used by the small set of hybrid-fallback functions that still need
- * v0 because v1 has no equivalent endpoint yet. Unchanged from before the
- * v0->v1 migration - existing installs keep working with zero action needed.
- *
- * @param int|null $user_id Optional. User ID. Defaults to current user.
- * @return string|false Machine token on success, false on failure.
- */
-function get_user_machine_token( $user_id = null ) {
-	if ( null === $user_id ) {
-		$user_id = get_current_user_id();
-	}
-
-	if ( ! $user_id ) {
-		Helpers\debug_log( 'Cannot get user machine token - no user ID' );
-		return false;
-	}
-
-	// Try per-user Pantheon Secret first.
-	if ( function_exists( 'pantheon_get_secret' ) ) {
-		$secret_key = sprintf( 'ash_nazg_machine_token_%d', $user_id );
-		$token = pantheon_get_secret( $secret_key );
-		if ( ! empty( $token ) ) {
-			Helpers\debug_log( sprintf( 'Retrieved machine token from Pantheon Secret for user %d', $user_id ) );
-			return $token;
-		}
-	}
-
-	// Try per-user meta (encrypted).
-	$encrypted_token = get_user_meta( $user_id, 'ash_nazg_user_machine_token', true );
-	if ( ! empty( $encrypted_token ) ) {
-		$token = decrypt_token( $encrypted_token );
-		if ( $token ) {
-			Helpers\debug_log( sprintf( 'Retrieved machine token from user meta for user %d', $user_id ) );
-			return $token;
-		}
-	}
-
-	// Fallback to global token (backward compatibility).
-	Helpers\debug_log( sprintf( 'No per-user token found for user %d, falling back to global token', $user_id ) );
-	return get_machine_token();
-}
-
-/**
- * Get the legacy global v0 machine token.
- *
- * Retrieves from Pantheon Secrets if available, otherwise falls back to WordPress options.
- *
- * @return string|false Machine token or false if not found.
- */
-function get_machine_token() {
-	// Try Pantheon Secrets first (production).
-	if ( function_exists( 'pantheon_get_secret' ) ) {
-		$token = pantheon_get_secret( 'ash_nazg_machine_token' );
-		if ( ! empty( $token ) ) {
-			return $token;
-		}
-	}
-
-	// Fallback to WordPress options (development/testing).
-	$token = get_option( 'ash_nazg_machine_token' );
-	return ! empty( $token ) ? $token : false;
-}
-
-/**
  * Exchange a token for a v0 session token.
  *
  * V0-only. Cached per-user for 1 hour, same as the old exchange this
@@ -255,11 +180,8 @@ function get_machine_token() {
  *
  * Live-verified: a v1 Personal Access Token works as a v0 machine_token
  * for the full v0 API surface (not just this exchange - confirmed against
- * /v0/sites/{id}, .../metrics, .../code-tips, .../domains, /v0/users/{id}).
- * So the PAT is tried first, meaning most installs only need to configure
- * one token; the separate legacy machine token is kept only as a fallback
- * for installs whose stored token predates the unified Personal Access
- * Token system and may not also be valid for v1.
+ * /v0/sites/{id}, .../metrics, .../code-tips, .../domains, /v0/users/{id}),
+ * so the Personal Access Token is the only credential used here.
  *
  * @param int|null $user_id Optional. User ID. Defaults to current user.
  * @return string|\WP_Error Session token on success, WP_Error on failure.
@@ -283,15 +205,12 @@ function get_v0_session_token( $user_id = null ) {
 		return $cached_token;
 	}
 
-	$machine_token = get_user_access_token( $user_id );
-	if ( ! $machine_token ) {
-		$machine_token = get_user_machine_token( $user_id );
-	}
-	if ( ! $machine_token ) {
-		Helpers\debug_log( sprintf( 'No Personal Access Token or legacy machine token found for user %d', $user_id ) );
+	$access_token = get_user_access_token( $user_id );
+	if ( ! $access_token ) {
+		Helpers\debug_log( sprintf( 'No Personal Access Token found for user %d', $user_id ) );
 		return new \WP_Error(
 			'no_v0_token',
-			__( 'This feature requires a Pantheon Personal Access Token (or, for older installs, a legacy Machine Token). Please add one in Settings.', 'ash-nazg' )
+			__( 'This feature requires a Pantheon Personal Access Token. Please add one in Settings.', 'ash-nazg' )
 		);
 	}
 
@@ -303,7 +222,7 @@ function get_v0_session_token( $user_id = null ) {
 			],
 			'body' => wp_json_encode(
 				[
-					'machine_token' => $machine_token,
+					'machine_token' => $access_token,
 					'client' => 'ash-nazg',
 				]
 			),
