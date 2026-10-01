@@ -14,10 +14,6 @@ test.describe('Settings', () => {
     await expect(page.locator('.notice-error')).toHaveCount(0);
   });
 
-  test('session token section renders', async ({ page }) => {
-    await expect(page.locator('text=/session token/i').first()).toBeVisible({ timeout: 5000 });
-  });
-
   test('per-user token documentation is visible', async ({ page }) => {
     // When a global token is present the migration UI shows; when per-user
     // token is set it shows the user ID for Pantheon Secrets setup.

@@ -161,8 +161,8 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
   - Configurable via Settings page in WordPress admin
   - Suitable for local development or testing
   - Database contents never committed to git
-- **Session Tokens**: Cached in WordPress transients
-  - Expire automatically after 1 hour
+- **v0 session tokens** (internal only, not user-facing): the Personal Access Token above is exchanged for a short-lived v0 session token, used only by the small set of hybrid-fallback functions with no v1 equivalent
+  - Cached in WordPress transients, expires after 1 hour
   - Stored in database or Redis (not committed)
   - Auto-refreshed when expired
 
@@ -457,26 +457,29 @@ This is a Hackathon 2026 project demonstrating the full capabilities of the Pant
 
 ## API Reference
 
-**Base URL:** `https://api.pantheon.io` | **Docs:** https://api.pantheon.io/docs | **Version:** `/v0/`
+**Base URL:** `https://api.pantheon.io/v1` | **Docs:** https://api.pantheon.io/docs (v0) and https://api.pantheon.io/v1/docs (v1) — raw specs at `.../docs/swagger.json` and `.../v1/openapi.json` respectively | **Version:** v1, with a small v0 fallback (see below)
 
-**Key Endpoints Used:**
-- Auth: `POST /v0/authorize/machine-token` - Exchange machine token for session (1hr cache)
-- Sites: `GET /v0/sites/{site_id}`, `PUT /v0/sites/{site_id}/label`, `GET /v0/sites/{site_id}/environments`
-- Addons: `PUT /v0/sites/{site_id}/addons/{addon_id}` (enable), `DELETE` (disable)
-- Git: `GET /v0/sites/{site_id}/upstream-updates`, `POST /v0/sites/{site_id}/environments/{env}/upstream/updates`
-- Commits: `GET /v0/sites/{site_id}/environments/{env}/commits`, `POST .../code/commit`
-- Multidev: `POST /v0/sites/{site_id}/environments`, `DELETE /v0/sites/{site_id}/environments/{env}`
-- Merge: `POST /v0/sites/{site_id}/environments/dev/merge` (merge multidev → dev)
-- SFTP/Git: `PUT /v0/sites/{site_id}/environments/{env}/connection-mode`
-- Workflows: `GET /v0/sites/{site_id}/workflows`, `GET /v0/sites/{site_id}/workflows/{workflow_id}`
-- Backups: `GET /v0/sites/{site_id}/environments/{env}/backups/catalog`
+**Key v1 Endpoints Used** (direct `Authorization: Bearer {personal-access-token}`, no exchange step):
+- Sites: `GET /sites/{site_id}`, `GET /sites/{site_id}/environments`
+- Addons: `PUT /sites/{site_id}/addons/{addonType}?enable=` (single endpoint for enable and disable)
+- Development: `Environment.commitLog`/`diffstat`/`envVariables` fields on `GET .../environments` (no separate commit/diffstat endpoints); `POST .../commits` (SFTP commit); `POST .../upstream-updates/check` + `/apply`; `POST .../development-mode/git` or `/on-server`
+- Multidev: `POST /sites/{site_id}/multidevs`, `DELETE /sites/{site_id}/multidevs/{name}`
+- Merge: `POST .../merges/cloud-to-dev` (multidev → dev), `POST .../merges/dev-to-cloud` (dev → multidev)
+- Clone: `POST .../database/clone`, `POST .../files/clone` (body: `fromEnvironment`, optional `wpReplaceSiteURL`)
+- Deploy: `POST .../environments/{env}/deployments`
+- Workflows: `GET /sites/{site_id}/workflows`, `GET /sites/{site_id}/workflows/{workflow_id}`
+- Backups: `GET .../environments/{env}/backups`, `POST /sites/{site_id}/backups` (create), `POST .../backup-download-urls`
+- Domains: `POST .../domains` (add), `DELETE .../domains/{domain}` (remove — no v1 listing endpoint, see below)
+
+**Remaining v0 fallback** (`https://api.pantheon.io/v0`, same Personal Access Token works as a v0 `machine_token` — live-verified): `update_site_label()`, `get_environment_metrics()`/`clear_metrics_cache()`, `get_domains()` (listing only), `get_code_tips()`, `trigger_workflow()` (generic workflow trigger, e.g. Install Object Cache Pro), and `restore_backup()` (v1's restore is confirmed broken platform-wide as of 2026-10-01 — see TODO.md). None of these have a v1 equivalent yet except restore, which does but it doesn't work.
 
 **Critical Patterns:**
-- All requests: `Authorization: Bearer {session-token}`
+- All v1 requests: `Authorization: Bearer {personal-access-token}` directly — no session-token exchange or cache
+- The v0 fallback still exchanges the same token for a short-lived v0 session token (`get_v0_session_token()`, 1hr cache) — internal only, not user-facing
 - Local envs (lando/local/localhost/ddev) → map to 'dev' for API
-- Cache site/env data 24hrs, session tokens 1hr
+- Cache site/env data 24hrs
 - Clear cache after mutations
-- Per-environment upstream updates: filter site-wide results against env commits
+- **Not everything documented here has been live-tested** — see "Live-Verify Before Trusting the Spec" below. Several functions (addons, commits/diffstat reads, connection-mode, deploy, multidev lifecycle, merges, domain add/delete, workflow status/polling) were built from the OpenAPI spec only and have never been confirmed against a real site.
 ## Development Notes
 
 ### WordPress Hooks to Use
@@ -530,46 +533,31 @@ This is a Hackathon 2026 project demonstrating the full capabilities of the Pant
 ### Pantheon API Documentation
 **CRITICAL: NEVER search the web for Pantheon API documentation.**
 
-- The ONLY source of Pantheon API documentation is: **api.pantheon.io/docs**
+- The ONLY sources of Pantheon API documentation are: **api.pantheon.io/docs** (v0, raw spec at `.../docs/swagger.json`) and **api.pantheon.io/v1/docs** (v1, raw spec at `.../v1/openapi.json`) — the v1 spec is also mirrored locally in `.pantheonapi-docs/` via the `pantheon-api-helper` tool; prefer reading those files over re-fetching
 - No other documentation exists online
 - We are creating the documentation through practice by building this plugin
 - Web searches for Pantheon API information are a waste of time
-- All API exploration should be done by testing endpoints directly
 
-**API Endpoint Verification Workflow:**
+**CRITICAL: Live-Verify Before Trusting the Spec — Reading the spec is necessary but NOT sufficient.**
 
-Before using ANY Pantheon API endpoint, you MUST verify the endpoint structure and parameters using the swagger.json file:
+The spec tells you the *intended* shape of a request/response. It does not tell you whether the endpoint actually behaves that way, or whether it works at all. This codebase has repeatedly found real, spec-contradicting bugs only through live testing — not through re-reading the docs more carefully:
+- `restore_backup()`'s documented request shape was correct per spec, but the live endpoint fails unconditionally regardless of parameters (a platform bug, 2026-10-01)
+- `get_backup_download_url()`'s opaque ID was assumed timestamp-based per naming convention; live testing showed it's a hash
+- `Backup.date` was assumed to be an ISO date string; live testing showed it's a numeric Unix timestamp string
+- Backup `size`/`ttl` fields were assumed absent based on an incomplete schema read; live testing showed they're present
+- Pagination used `pager[first]=N` per a stale assumption; live testing showed it's `xConnection_first=N` and returns HTTP 400 otherwise
 
-1. **Get endpoint definition:**
-   ```bash
-   curl -s "https://api.pantheon.io/docs/swagger.json" | jq '.paths["/v0/sites/{site_id}/endpoint"]'
-   ```
+**The rule:** a function that calls a Pantheon API endpoint is NOT considered correct, done, or trustworthy until it has been exercised against a real Pantheon site with real credentials and the actual response verified — not just "builds cleanly" or "matches the spec's documented shape." Spec-only implementations must be explicitly flagged as unverified (see below), never presented or treated as working.
 
-2. **Get request body schema (for POST/PUT requests):**
-   ```bash
-   curl -s "https://api.pantheon.io/docs/swagger.json" | jq '.definitions.SchemaName'
-   ```
-   (The schema name is found in the endpoint definition under `parameters[].schema.$ref`)
+**How to verify:**
+1. Read the spec first — check `.pantheonapi-docs/` (local, already-fetched v1 docs) before ever re-fetching `swagger.json`/`openapi.json` over the network. This narrows what to test, it doesn't replace testing.
+2. Make a real request against a live site. Self-contained fetch-and-use scripts are fine for this (fetch a credential and use it within one script execution); never persist a raw credential to a file or shell variable for reuse across multiple tool calls.
+3. For mutating/destructive operations (multidev create/delete, domain add/delete, deploy, merge, restore, etc.), use a disposable multidev as the target where possible, and get explicit user authorization before touching a real dev/test/live environment's content.
+4. Compare the actual response against what the code assumes — field names, types, nesting, enum values, pagination params, error shapes. Fix any mismatch.
+5. **Track verification status in TODO.md**, using the existing convention: a "Live-verified and fixed" section (checked items, with what was found) and a "Still needs live verification" section (unchecked items, naming the specific function). A function with no live-token access yet (e.g., during initial spec-only implementation) must be listed as unverified in TODO.md — don't let it go undocumented just because it compiles and matches the spec.
+6. Never claim a migration, fix, or new integration is "done" or "working" in a commit message, CHANGELOG entry, or response to the user if it's only spec-conformant and not live-tested. Say "built against the spec, not yet live-verified" instead.
 
-3. **Verify these details:**
-   - HTTP method (GET, POST, PUT, DELETE)
-   - Required vs optional parameters
-   - Parameter types (string, boolean, integer)
-   - Request body structure
-   - Expected response format
-
-4. **Never assume parameter names or structure** - always check the swagger.json first
-
-**Example:**
-```bash
-# Check multidev creation endpoint
-curl -s "https://api.pantheon.io/docs/swagger.json" | jq '.paths["/v0/sites/{site_id}/environments"].post'
-
-# Get the CreateMultidevRequest schema
-curl -s "https://api.pantheon.io/docs/swagger.json" | jq '.definitions.CreateMultidevRequest'
-```
-
-This workflow prevents errors from incorrect parameter names, missing required fields, or wrong data types.
+This applies to every Pantheon API integration in this codebase, present and future, regardless of API version.
 
 ### Local Development Workflow
 
@@ -686,9 +674,9 @@ The `release.yml` workflow attaches the clean plugin zip automatically.
 ### Debugging API Issues
 - Enable WordPress debug logging (`WP_DEBUG`, `WP_DEBUG_LOG`)
 - Check `$WP_CONTENT_DIR/debug.log` for API client errors
-- Verify machine token is accessible via `pantheon_get_secret()`
-- Verify session token hasn't expired (check Transient cache)
-- Test endpoint directly with curl using session token
+- Verify the Personal Access Token is accessible via `pantheon_get_secret()` (or `get_user_meta()`/`get_option()` fallback)
+- Test the v1 endpoint directly with curl using `Authorization: Bearer {personal-access-token}`
+- For the v0-only fallback functions specifically: verify the cached v0 session token hasn't expired (check Transient cache), or test the v0 endpoint directly with a session token obtained via `/v0/authorize/machine-token`
 - Check Pantheon API status page
 - Inspect `error_log()` output for sanitized API responses
 

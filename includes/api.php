@@ -7,13 +7,11 @@
  * no session-token caching (unlike the legacy v0 API this replaces).
  *
  * A small number of features have no v1 endpoint yet (site label update,
- * delete site, metrics, domain listing, code tips, generic workflow
- * triggering). Those fall back to the legacy v0 API via api_request_v0().
- * Live-verified: a v1 personal access token works as a v0 machine_token
- * for the full v0 API surface, so api_request_v0() authenticates with the
- * same personal access token first, falling back to a separate legacy
- * machine token only for installs whose stored token predates the unified
- * Personal Access Token system. See get_v0_session_token().
+ * metrics, domain listing, code tips, generic workflow triggering, and
+ * backup restore - v1's restore endpoint exists but is non-functional).
+ * Those fall back to the legacy v0 API via api_request_v0(), authenticated
+ * with the same Personal Access Token - it works as a v0 machine_token for
+ * the full v0 API surface. See get_v0_session_token().
  *
  * @package Pantheon\AshNazg
  */
@@ -177,11 +175,8 @@ function get_access_token() {
  * V0-only. Cached per-user for 1 hour, same as the old exchange this
  * replaces. Only called by api_request_v0(), which is only used by the
  * handful of hybrid-fallback functions that have no v1 equivalent yet.
- *
- * Live-verified: a v1 Personal Access Token works as a v0 machine_token
- * for the full v0 API surface (not just this exchange - confirmed against
- * /v0/sites/{id}, .../metrics, .../code-tips, .../domains, /v0/users/{id}),
- * so the Personal Access Token is the only credential used here.
+ * The Personal Access Token works as a v0 machine_token for the full v0
+ * API surface, so it's the only credential used here.
  *
  * @param int|null $user_id Optional. User ID. Defaults to current user.
  * @return string|\WP_Error Session token on success, WP_Error on failure.
@@ -741,6 +736,10 @@ function get_site_info( $site_id = null ) {
 /**
  * Alias v1 Site fields to the v0 names some views still read directly.
  *
+ * `holder_type`, `holder_id`, and `owner` have no v1 equivalent (the owning
+ * workspace is exposed via `supportingWorkspaces` instead) and are not
+ * backfilled.
+ *
  * @param array $site Raw v1 Site data.
  * @return array Site data with v0-named aliases added.
  */
@@ -751,6 +750,45 @@ function normalize_site_info( $site ) {
 
 	if ( ! isset( $site['name'] ) && isset( $site['machineName'] ) ) {
 		$site['name'] = $site['machineName'];
+	}
+
+	if ( ! isset( $site['created'] ) && ! empty( $site['createdAt'] ) ) {
+		$site['created'] = strtotime( $site['createdAt'] );
+	}
+
+	if ( ! isset( $site['framework'] ) && ! empty( $site['upstream']['framework'] ) ) {
+		$site['framework'] = $site['upstream']['framework'];
+	}
+
+	if ( ! isset( $site['frozen'] ) && isset( $site['isFrozen'] ) ) {
+		$site['frozen'] = $site['isFrozen'];
+	}
+
+	if ( ! isset( $site['plan_name'] ) && ! empty( $site['settings']['planName'] ) ) {
+		$site['plan_name'] = $site['settings']['planName'];
+	}
+
+	/*
+	 * v1's regionLabel is already a human-readable label (e.g. "United
+	 * States"), unlike v0's region code - stored under a distinct key so
+	 * callers don't uppercase an already-formatted label.
+	 */
+	if ( ! isset( $site['region_label'] ) && ! empty( $site['regionLabel'] ) ) {
+		$site['region_label'] = $site['regionLabel'];
+	}
+
+	// v1 has no numeric multidev limit, only a boolean "can create one more".
+	if ( ! isset( $site['can_create_multidev'] ) && isset( $site['canCreateMultidev'] ) ) {
+		$site['can_create_multidev'] = $site['canCreateMultidev'];
+	}
+
+	if ( isset( $site['upstream']['id'] ) && empty( $site['upstream']['product_id'] ) && empty( $site['upstream']['upstream_id'] ) ) {
+		$site['upstream']['product_id'] = $site['upstream']['id'];
+	}
+
+	if ( ! isset( $site['organization'] ) && ! empty( $site['supportingWorkspaces'][0]['id'] ) ) {
+		$site['organization'] = $site['supportingWorkspaces'][0]['id'];
+		$site['organization_name'] = $site['supportingWorkspaces'][0]['name'] ?? '';
 	}
 
 	return $site;
@@ -2396,9 +2434,9 @@ function get_environments( $site_id ) {
 	}
 
 	/*
-	 * Live-verified: `pager[first]=N` is invalid (HTTP 400) - bracket query
-	 * param syntax isn't supported. The endpoint already returns every
-	 * environment with totalCount and no pager param at all, so omit it.
+	 * `pager[first]=N` (bracket query param syntax) is invalid here (HTTP
+	 * 400). This endpoint already returns every environment with
+	 * totalCount and no pager param at all, so omit it.
 	 */
 	$endpoint = sprintf( '/sites/%s/environments', $site_id );
 	$connection = api_request( $endpoint, 'GET' );
@@ -2628,11 +2666,10 @@ function get_raw_backups( $site_id, $api_env ) {
  * uses to group them back into a set. Reshaped into that flat contract so
  * the view's grouping/rendering logic doesn't need to change.
  *
- * Live-verified against a real site: `Backup.date` is a numeric-string Unix
- * timestamp (not an ISO date string), and each element sub-object (code/
- * database/files) *does* carry real `size` and `ttl` fields plus a complete
- * `name` (already including the file extension) - contrary to what the
- * OpenAPI schema doc implied. All three are used here now.
+ * `Backup.date` is a numeric-string Unix timestamp, not an ISO date string.
+ * Each element sub-object (code/database/files) carries real `size` and
+ * `ttl` fields plus a complete `name` (already including the file
+ * extension), all used here.
  *
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
  * @param string $env Optional. Environment name. Auto-detected if not provided.
@@ -2827,11 +2864,10 @@ function restore_backup( $backup_id, $element, $site_id = null, $env = null ) {
  * Get a signed download URL for a backup file.
  *
  * V1 identifies the backup archive by element `type` + `timestamp`, not
- * v0's opaque backup_id/folder name - and live-verified, that opaque id is
- * a hash (e.g. "kWrk7cFXaq0...="), not a timestamp, so it can't be parsed
- * out of $backup_id directly. Instead, re-look-up the matching Backup from
- * the (cached) backups list by its id and read the element's own precise
- * `timestamp` field.
+ * v0's opaque backup_id/folder name. That opaque id is a hash (e.g.
+ * "kWrk7cFXaq0...="), not a timestamp, so it can't be parsed out of
+ * $backup_id directly - instead, re-look up the matching Backup from the
+ * (cached) backups list by its id and read the element's own `timestamp`.
  *
  * @param string $backup_id Backup ID (folder name from catalog).
  * @param string $element Element to download: 'code', 'database', or 'files'.

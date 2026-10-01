@@ -240,19 +240,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 							}
 							?>
 						<tr>
-							<th><?php esc_html_e( 'Organization', 'ash-nazg' ); ?></th>
+							<th><?php esc_html_e( 'Workspace', 'ash-nazg' ); ?></th>
 							<td>
 								<span id="ash-nazg-org-display" class="ash-nazg-editable">
 									<span><?php echo esc_html( $display_org_name ); ?></span>
 									<?php if ( count( $user_organizations ) > 1 ) : ?>
-										<a href="#" id="ash-nazg-org-edit" class="ash-nazg-edit-link" title="<?php esc_attr_e( 'Change organization', 'ash-nazg' ); ?>">
+										<a href="#" id="ash-nazg-org-edit" class="ash-nazg-edit-link" title="<?php esc_attr_e( 'Change workspace', 'ash-nazg' ); ?>">
 											<span class="dashicons dashicons-edit" aria-hidden="true"></span>
 										</a>
 									<?php endif; ?>
 								</span>
 								<?php if ( count( $user_organizations ) > 1 ) : ?>
 								<span id="ash-nazg-org-select-wrap" class="ash-nazg-hidden">
-									<select id="ash-nazg-org-select" aria-label="<?php esc_attr_e( 'Select organization', 'ash-nazg' ); ?>">
+									<select id="ash-nazg-org-select" aria-label="<?php esc_attr_e( 'Select workspace', 'ash-nazg' ); ?>">
 										<?php foreach ( $user_organizations as $membership ) : ?>
 											<?php
 											$org_id   = $membership['organization']['id'] ?? '';
@@ -329,20 +329,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<table class="widefat striped">
 					<tbody>
 						<?php
-						// Get all 14 site info fields.
+						// Get all site info fields (holder_type/holder_id/owner have no v1 equivalent - see normalize_site_info()).
 						$site_id = API\get_api_field( 'site', 'id' );
 						$site_name = API\get_api_field( 'site', 'name' );
 						$site_label = API\get_api_field( 'site', 'label' );
 						$site_created = API\get_api_field( 'site', 'created' );
 						$site_framework = API\get_api_field( 'site', 'framework' );
-						$site_organization = API\get_api_field( 'site', 'organization' );
+						$site_organization_name = API\get_api_field( 'site', 'organization_name' );
 						$site_plan_name = API\get_api_field( 'site', 'plan_name' );
-						$site_holder_type = API\get_api_field( 'site', 'holder_type' );
-						$site_holder_id = API\get_api_field( 'site', 'holder_id' );
-						$site_owner = API\get_api_field( 'site', 'owner' );
 						$site_frozen = API\get_api_field( 'site', 'frozen' );
-						$site_region = API\get_api_field( 'site', 'region' );
-						$site_max_multidevs = API\get_api_field( 'site', 'max_num_multidevs' );
+						$site_region_label = API\get_api_field( 'site', 'region_label' );
+						$site_can_create_multidev = API\get_api_field( 'site', 'can_create_multidev' );
 						$site_upstream = API\get_api_field( 'site', 'upstream' );
 						?>
 						<?php if ( $site_id ) : ?>
@@ -394,34 +391,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 								<td><?php echo esc_html( $site_framework ); ?></td>
 							</tr>
 						<?php endif; ?>
-						<?php if ( $site_organization ) : ?>
+						<?php if ( $site_organization_name ) : ?>
 							<tr>
-								<th><?php esc_html_e( 'Organization', 'ash-nazg' ); ?></th>
-								<td><code><?php echo esc_html( $site_organization ); ?></code></td>
+								<th><?php esc_html_e( 'Workspace', 'ash-nazg' ); ?></th>
+								<td><?php echo esc_html( $site_organization_name ); ?></td>
 							</tr>
 						<?php endif; ?>
 						<?php if ( $site_plan_name ) : ?>
 							<tr>
 								<th><?php esc_html_e( 'Plan', 'ash-nazg' ); ?></th>
 								<td><?php echo esc_html( $site_plan_name ); ?></td>
-							</tr>
-						<?php endif; ?>
-						<?php if ( $site_holder_type ) : ?>
-							<tr>
-								<th><?php esc_html_e( 'Holder Type', 'ash-nazg' ); ?></th>
-								<td><?php echo esc_html( ucfirst( $site_holder_type ) ); ?></td>
-							</tr>
-						<?php endif; ?>
-						<?php if ( $site_holder_id ) : ?>
-							<tr>
-								<th><?php esc_html_e( 'Holder ID', 'ash-nazg' ); ?></th>
-								<td><code><?php echo esc_html( $site_holder_id ); ?></code></td>
-							</tr>
-						<?php endif; ?>
-						<?php if ( $site_owner ) : ?>
-							<tr>
-								<th><?php esc_html_e( 'Owner', 'ash-nazg' ); ?></th>
-								<td><code><?php echo esc_html( $site_owner ); ?></code></td>
 							</tr>
 						<?php endif; ?>
 						<?php if ( null !== $site_frozen ) : ?>
@@ -440,16 +419,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 								</td>
 							</tr>
 						<?php endif; ?>
-						<?php if ( $site_region ) : ?>
+						<?php if ( $site_region_label ) : ?>
 							<tr>
 								<th><?php esc_html_e( 'Region', 'ash-nazg' ); ?></th>
-								<td><?php echo esc_html( strtoupper( $site_region ) ); ?></td>
+								<td><?php echo esc_html( $site_region_label ); ?></td>
 							</tr>
 						<?php endif; ?>
-						<?php if ( null !== $site_max_multidevs ) : ?>
+						<?php if ( null !== $site_can_create_multidev ) : ?>
 							<tr>
-								<th><?php esc_html_e( 'Max Multidevs', 'ash-nazg' ); ?></th>
-								<td><?php echo esc_html( $site_max_multidevs ); ?></td>
+								<th><?php esc_html_e( 'Can Create Multidev', 'ash-nazg' ); ?></th>
+								<td>
+									<?php if ( $site_can_create_multidev ) : ?>
+										<span class="dashicons dashicons-yes-alt ash-nazg-icon-success"></span>
+										<?php esc_html_e( 'Yes', 'ash-nazg' ); ?>
+									<?php else : ?>
+										<span class="dashicons dashicons-no ash-nazg-icon-error"></span>
+										<?php esc_html_e( 'No', 'ash-nazg' ); ?>
+									<?php endif; ?>
+								</td>
 							</tr>
 						<?php endif; ?>
 						<?php if ( $site_upstream ) : ?>

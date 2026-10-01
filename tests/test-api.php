@@ -226,9 +226,9 @@ class Test_API extends TestCase {
 		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
 
 		// Should fetch all environments (not a single environment endpoint).
-		// Live-verified: no pager param needed - the endpoint already
-		// returns every environment, and bracket-notation pager[first]=N is
-		// invalid (HTTP 400) if ever added back.
+		// No pager param needed - the endpoint already returns every
+		// environment, and bracket-notation pager[first]=N is invalid
+		// (HTTP 400).
 		$this->assertStringContainsString(
 			"'/sites/%s/environments'",
 			$api_file_contents,
@@ -309,11 +309,6 @@ class Test_API extends TestCase {
 
 	/**
 	 * Test that get_v0_session_token() uses only the v1 Personal Access Token.
-	 *
-	 * Live-verified against a real site: a v1 Personal Access Token works as
-	 * a v0 machine_token for the full v0 API surface, so the legacy Machine
-	 * Token is no longer used for authentication at all - it's detected
-	 * elsewhere only for the cleanup notice (see Test_User_Tokens).
 	 */
 	public function test_v0_session_token_uses_only_access_token() {
 		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
@@ -333,5 +328,59 @@ class Test_API extends TestCase {
 			$func_content,
 			'get_v0_session_token() should no longer fall back to get_user_machine_token()'
 		);
+	}
+
+	/**
+	 * Test that normalize_site_info() backfills every v0-shaped field the
+	 * Dashboard's Site Information table reads, from the real v1 field names.
+	 */
+	public function test_normalize_site_info_backfills_v0_fields_from_v1() {
+		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
+
+		$v1_site = [
+			'id' => 'site-uuid',
+			'machineName' => 'my-site',
+			'label' => 'My Site',
+			'createdAt' => '2026-01-08T22:25:50Z',
+			'isFrozen' => false,
+			'regionLabel' => 'United States',
+			'canCreateMultidev' => true,
+			'settings' => [ 'planName' => 'Performance Small' ],
+			'upstream' => [ 'id' => 'upstream-uuid', 'framework' => 'WORDPRESS' ],
+			'supportingWorkspaces' => [
+				[ 'id' => 'workspace-uuid', 'name' => 'CXR' ],
+			],
+		];
+
+		$normalized = \Pantheon\AshNazg\API\normalize_site_info( $v1_site );
+
+		$this->assertSame( 'my-site', $normalized['name'], 'name should fall back to machineName' );
+		$this->assertSame( strtotime( '2026-01-08T22:25:50Z' ), $normalized['created'], 'created should be a Unix timestamp parsed from createdAt' );
+		$this->assertSame( 'WORDPRESS', $normalized['framework'], 'framework should come from upstream.framework' );
+		$this->assertFalse( $normalized['frozen'], 'frozen should come from isFrozen' );
+		$this->assertSame( 'Performance Small', $normalized['plan_name'], 'plan_name should come from settings.planName' );
+		$this->assertSame( 'United States', $normalized['region_label'], 'region_label should come from regionLabel' );
+		$this->assertTrue( $normalized['can_create_multidev'], 'can_create_multidev should come from canCreateMultidev' );
+		$this->assertSame( 'upstream-uuid', $normalized['upstream']['product_id'], 'upstream.product_id should come from upstream.id' );
+		$this->assertSame( 'workspace-uuid', $normalized['organization'], 'organization should come from the first supportingWorkspaces entry' );
+		$this->assertSame( 'CXR', $normalized['organization_name'], 'organization_name should come from the first supportingWorkspaces entry' );
+	}
+
+	/**
+	 * Test that normalize_site_info() never overwrites a field that's
+	 * already present (e.g. supplied by the $_ENV merge in get_site_info()).
+	 */
+	public function test_normalize_site_info_does_not_overwrite_existing_fields() {
+		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
+
+		$site = [
+			'name' => 'already-set',
+			'framework' => 'already-set',
+		];
+
+		$normalized = \Pantheon\AshNazg\API\normalize_site_info( $site );
+
+		$this->assertSame( 'already-set', $normalized['name'] );
+		$this->assertSame( 'already-set', $normalized['framework'] );
 	}
 }
