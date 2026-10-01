@@ -89,21 +89,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 							</td>
 						</tr>
 					<?php endforeach; ?>
-					<?php if ( ! in_array( 'elasticsearch', $hidden_addons, true ) ) : ?>
-						<tr>
-							<th scope="row">
-								<?php esc_html_e( 'Elasticsearch', 'ash-nazg' ); ?>
-							</th>
-							<td>
-								<span class="ash-nazg-badge ash-nazg-badge-multidev">
-									<?php esc_html_e( 'Coming Soon', 'ash-nazg' ); ?>
-								</span>
-								<p class="description">
-									<?php esc_html_e( 'Elasticsearch support is not yet available via the Pantheon Public API. Check back in a future release.', 'ash-nazg' ); ?>
-								</p>
-							</td>
-						</tr>
-					<?php endif; ?>
 				</tbody>
 			</table>
 

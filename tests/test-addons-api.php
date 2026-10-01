@@ -86,6 +86,50 @@ class Test_Addons_API extends TestCase {
 	}
 
 	/**
+	 * Test that get_site_addons uses IS_EPIO_ENVIRONMENT to determine Elasticsearch status.
+	 *
+	 * Elasticsearch is Pantheon's hosted ElasticPress.io integration - v0 never
+	 * supported it, which is why it used to be hidden as "Coming Soon."
+	 */
+	public function test_get_site_addons_uses_epio_for_elasticsearch() {
+		$api_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
+
+		$this->assertStringContainsString(
+			'IS_EPIO_ENVIRONMENT',
+			$api_contents,
+			'get_site_addons should use IS_EPIO_ENVIRONMENT to determine Elasticsearch status'
+		);
+
+		$func_pos = strpos( $api_contents, 'function get_site_addons(' );
+		$this->assertNotFalse( $func_pos, 'Should find function get_site_addons' );
+		$func_content = substr( $api_contents, $func_pos, 2000 );
+
+		$this->assertStringContainsString(
+			"'id' => 'elasticsearch'",
+			$func_content,
+			'elasticsearch should be a known addon, not a hardcoded unavailable placeholder'
+		);
+	}
+
+	/**
+	 * Test that get_addon_env_variables returns IS_EPIO_ENVIRONMENT alongside
+	 * the Redis/Solr variables, for both the Pantheon and local code paths.
+	 */
+	public function test_addon_env_variables_includes_epio_environment() {
+		$api_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
+
+		$func_pos = strpos( $api_contents, 'function get_addon_env_variables(' );
+		$this->assertNotFalse( $func_pos, 'Should find function get_addon_env_variables' );
+		$func_content = substr( $api_contents, $func_pos, 2500 );
+
+		$this->assertSame(
+			2,
+			substr_count( $func_content, 'IS_EPIO_ENVIRONMENT' ),
+			'IS_EPIO_ENVIRONMENT should be read on both the Pantheon ($_ENV) and local (Terminus) code paths'
+		);
+	}
+
+	/**
 	 * Test that addon status uses a short cache TTL appropriate for live state.
 	 */
 	public function test_addon_env_variables_uses_short_cache_ttl() {

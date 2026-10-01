@@ -1310,6 +1310,8 @@ function get_addon_env_variables( $site_id = null, $env = null ) {
 			'CACHE_BINDING_ID' => sanitize_text_field( wp_unslash( $_ENV['CACHE_BINDING_ID'] ?? '' ) ),
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- used only as truthiness check, never rendered
 			'PANTHEON_SEARCH_VERSION' => sanitize_text_field( wp_unslash( $_ENV['PANTHEON_SEARCH_VERSION'] ?? '' ) ),
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- used only as truthiness check, never rendered
+			'IS_EPIO_ENVIRONMENT' => sanitize_text_field( wp_unslash( $_ENV['IS_EPIO_ENVIRONMENT'] ?? '' ) ),
 		];
 	}
 
@@ -1385,6 +1387,7 @@ function get_addon_env_variables( $site_id = null, $env = null ) {
 	$vars = [
 		'CACHE_BINDING_ID' => $data['CACHE_BINDING_ID'] ?? '',
 		'PANTHEON_SEARCH_VERSION' => $data['PANTHEON_SEARCH_VERSION'] ?? '',
+		'IS_EPIO_ENVIRONMENT' => $data['IS_EPIO_ENVIRONMENT'] ?? '',
 	];
 
 	set_transient( $cache_key, $vars, HOUR_IN_SECONDS );
@@ -1438,6 +1441,11 @@ function get_site_addons( $site_id = null ) {
 			'name' => __( 'Apache Solr', 'ash-nazg' ),
 			'description' => __( 'Apache Solr search service for advanced search capabilities', 'ash-nazg' ),
 		],
+		'elasticsearch' => [
+			'id' => 'elasticsearch',
+			'name' => __( 'Elasticsearch', 'ash-nazg' ),
+			'description' => __( "Elasticsearch-powered search via Pantheon's hosted ElasticPress.io integration", 'ash-nazg' ),
+		],
 	];
 
 	$addons = [];
@@ -1450,6 +1458,8 @@ function get_site_addons( $site_id = null ) {
 				$addon['enabled'] = ! empty( $env_vars['CACHE_BINDING_ID'] );
 			} elseif ( 'solr' === $addon_id ) {
 				$addon['enabled'] = ! empty( $env_vars['PANTHEON_SEARCH_VERSION'] );
+			} elseif ( 'elasticsearch' === $addon_id ) {
+				$addon['enabled'] = ! empty( $env_vars['IS_EPIO_ENVIRONMENT'] );
 			} else {
 				$addon['enabled'] = isset( $stored_states[ $addon_id ] ) ? (bool) $stored_states[ $addon_id ] : false;
 			}

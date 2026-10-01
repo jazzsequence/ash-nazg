@@ -315,19 +315,15 @@ class Test_AJAX_Handlers extends TestCase {
 	}
 
 	/**
-	 * Test that Elasticsearch coming soon placeholder is referenced in the addons view.
+	 * Test that Elasticsearch is a real, toggleable addon in the view, not a
+	 * hardcoded placeholder - v1 (unlike v0) supports it via ElasticPress.io.
 	 */
-	public function test_addons_elasticsearch_coming_soon() {
+	public function test_addons_elasticsearch_is_toggleable() {
 		$view_contents = file_get_contents( __DIR__ . '/../includes/views/addons.php' );
-		$this->assertStringContainsString(
-			'elasticsearch',
-			strtolower( $view_contents ),
-			'Addons view should reference Elasticsearch'
-		);
-		$this->assertMatchesRegularExpression(
-			'/coming.soon/i',
+		$this->assertStringNotContainsString(
+			'Coming Soon',
 			$view_contents,
-			'Addons view should show a "Coming Soon" indicator for Elasticsearch'
+			'Addons view should no longer show a "Coming Soon" placeholder for Elasticsearch'
 		);
 	}
 

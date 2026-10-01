@@ -2373,8 +2373,7 @@ function dashboard_screen_settings( $settings, $screen ) {
  * Register Screen Options for the Addons page.
  *
  * Known addons are hardcoded because their API endpoints are named
- * (redis, solr, elasticsearch). Elasticsearch is included now so the
- * option is ready when the API endpoint becomes available.
+ * (redis, solr, elasticsearch).
  *
  * @return void
  */
