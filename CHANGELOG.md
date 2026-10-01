@@ -26,6 +26,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Removed the "Clear Session Token" Settings feature — meaningless under v1, which has no session tokens to clear.
 - Dashboard's API Endpoints Status diagnostics no longer hardcode ~15 rows as "unavailable" for v0-only features. They're now live-tested through the v0 client like the real hybrid-fallback functions already do, so the page reflects actual connectivity instead of a static assumption. Rows that were purely redundant with data already shown elsewhere (commit history, diffstat, env variables/settings, SSH keys, user organizations) were removed instead of faked.
 - `restore_backup()` switched to the v0 fallback — live testing found v1's restore endpoint fails unconditionally regardless of parameters (a Pantheon platform bug, not a client-side issue; confirmed v0 fails the same way right now too, so this is ready to work once Pantheon fixes it).
+- Dashboard's Site Information table and workspace auto-detection were built against v0-only field names (`created`, `framework`, `organization`, `plan_name`, `frozen`, `region`, `max_num_multidevs`, `holder_type`, `holder_id`, `owner`) that don't exist in v1's actual API response. Most of the table silently showed nothing; the workspace auto-detection always fell back to the user's first workspace membership instead of the one that actually owns the site. `normalize_site_info()` now backfills the real v1 fields under the names the rest of the codebase expects; `holder_type`/`holder_id`/`owner` have no v1 equivalent and are no longer shown.
+
+### Developer tooling
+
+- Fixed the PHPUnit suite to actually load WordPress — `tests/bootstrap.php` checked for a bootstrap file that never existed in the `wpunit-helpers` package, so WordPress was never loaded in any test run and the suite relied entirely on source-text pattern matching. Also added the `yoast/phpunit-polyfills` dependency it required but never had.
+- Wired the Playwright e2e suite into the pre-commit review gate (`REVIEWER_E2E_CMD` was empty) and added `dotenv` so test credentials load automatically from a local `.env` file. Fixed a Playwright config bug along the way: an explicit `storageState: undefined` meant to override a parent value for the auth-setup project was being dropped across Playwright's config/worker process boundary, causing every e2e run to fail.
+- `.env` is now actually gitignored — it was documented as required in CLAUDE.md but never added.
 
 ### Known limitations (tracked in TODO.md)
 
