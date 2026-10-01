@@ -637,11 +637,6 @@
   border: 1px solid var(--pds-color-badge-indicator-critical-background, #ca3521);
 }
 
-.ash-nazg-badge-danger {
-  background: #dc3232;
-  color: #ffffff;
-}
-
 /**
  * Components - Notices
  * WordPress admin notices styling
@@ -1642,43 +1637,6 @@ canvas {
   color: var(--pds-color-fg-default-secondary);
   min-height: 20px;
   font-style: italic;
-}
-
-/**
- * Pages - Delete Site
- * Danger-themed confirmation UI for the debug-only Delete Site page
- */
-.ash-nazg-delete-site-confirm {
-  border: 3px solid #991b1b;
-  background: #fff8f8;
-}
-.ash-nazg-delete-site-confirm h2 {
-  color: #991b1b;
-}
-
-.ash-nazg-delete-site-submit {
-  text-align: center;
-  margin: 40px 0;
-}
-
-.ash-nazg-delete-site-cancel-message {
-  margin-top: 20px;
-  border: 3px solid #166534;
-  background: #f7fcf7;
-}
-.ash-nazg-delete-site-cancel-message p {
-  text-align: center;
-  font-size: 24px;
-  margin: 20px 0;
-}
-
-.ash-nazg-delete-site-cancel-subtext {
-  font-size: 18px;
-}
-
-.ash-nazg-delete-site-back-link {
-  text-align: center;
-  margin-top: 20px;
 }
 
 /**
