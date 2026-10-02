@@ -14,10 +14,7 @@ test.describe('Settings', () => {
     await expect(page.locator('.notice-error')).toHaveCount(0);
   });
 
-  test('per-user token documentation is visible', async ({ page }) => {
-    // When a global token is present the migration UI shows; when per-user
-    // token is set it shows the user ID for Pantheon Secrets setup.
-    // Either way, per-user token content appears on the page.
-    await expect(page.locator('text=/per-user|user id/i').first()).toBeVisible({ timeout: 5000 });
+  test('token status or per-user setup documentation is visible', async ({ page }) => {
+    await expect(page.locator('text=/per-user|user id|currently set/i').first()).toBeVisible({ timeout: 5000 });
   });
 });

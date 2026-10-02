@@ -26,12 +26,10 @@ test.describe('Addons', () => {
     await expect(solrRow.locator('input[type="checkbox"]')).toBeVisible();
   });
 
-  test('Elasticsearch shows Coming Soon badge', async ({ page }) => {
+  test('Elasticsearch addon toggle is present', async ({ page }) => {
     const esRow = page.locator('tr').filter({ hasText: /elasticsearch/i });
     await expect(esRow).toBeVisible({ timeout: 10_000 });
-    await expect(esRow.locator('.ash-nazg-badge')).toContainText(/coming soon/i);
-    // No checkbox — no toggle available yet.
-    await expect(esRow.locator('input[type="checkbox"]')).toHaveCount(0);
+    await expect(esRow.locator('input[type="checkbox"]')).toBeVisible();
   });
 
   test('Redis status reflects live environment state', async ({ page }) => {

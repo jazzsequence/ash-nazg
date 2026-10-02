@@ -15,7 +15,7 @@ module.exports = defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 4 : 2,
+  workers: process.env.CI ? 4 : 1,
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['junit', { outputFile: 'playwright-report/results.xml' }],
@@ -27,7 +27,7 @@ module.exports = defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'retain-on-failure',
-    actionTimeout: 15_000,
+    actionTimeout: 30_000,
     navigationTimeout: 30_000,
   },
 

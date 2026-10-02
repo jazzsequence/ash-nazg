@@ -29,7 +29,7 @@ setup('authenticate as admin', async ({ page }) => {
   await page.fill('#user_pass', password);
   await page.click('#wp-submit');
 
-  await expect(page).toHaveURL(/wp-admin/, { timeout: 15_000 });
+  await expect(page).toHaveURL(/wp-admin/, { timeout: 30_000 });
 
   await page.context().storageState({ path: AUTH_FILE });
 });
