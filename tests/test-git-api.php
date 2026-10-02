@@ -447,4 +447,56 @@ class Test_Git_API extends TestCase {
 			'get_local_git_unpushed must use @{u} to find commits not on the remote'
 		);
 	}
+
+	/**
+	 * Test that create_multidev() sends a required annotation param, as a
+	 * plain (non-translated) string since it's sent as an opaque value to a
+	 * third-party API, not displayed in the WordPress UI.
+	 */
+	public function test_create_multidev_includes_annotation() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+
+		$func_pos = strpos( $file_contents, 'function create_multidev(' );
+		$this->assertNotFalse( $func_pos, 'Should find create_multidev function' );
+		$func_content = substr( $file_contents, $func_pos, 800 );
+
+		$this->assertStringContainsString(
+			'&annotation=%s',
+			$func_content,
+			'create_multidev should send a required annotation query param'
+		);
+		$this->assertStringNotContainsString(
+			"__( 'Created via Ash Nazg'",
+			$func_content,
+			'The annotation value should not be translatable - it is sent to Pantheon, not displayed in the WordPress UI'
+		);
+	}
+
+	/**
+	 * Test that merge_dev_to_multidev() sends params as a JSON-encoded query
+	 * string value, not a body field.
+	 */
+	public function test_merge_dev_to_multidev_uses_query_string_params() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+
+		$func_pos = strpos( $file_contents, 'function merge_dev_to_multidev(' );
+		$this->assertNotFalse( $func_pos, 'Should find merge_dev_to_multidev function' );
+		$func_content = substr( $file_contents, $func_pos, 800 );
+
+		$this->assertStringContainsString(
+			'wp_json_encode(',
+			$func_content,
+			'merge_dev_to_multidev should JSON-encode its params'
+		);
+		$this->assertStringContainsString(
+			'merges/dev-to-cloud?params=%s',
+			$func_content,
+			'merge_dev_to_multidev should send params in the query string'
+		);
+		$this->assertStringContainsString(
+			"api_request( \$endpoint, 'POST', [] )",
+			$func_content,
+			'merge_dev_to_multidev should not send params in the request body'
+		);
+	}
 }

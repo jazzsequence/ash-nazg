@@ -2560,10 +2560,11 @@ function get_environments( $site_id ) {
  */
 function create_multidev( $site_id, $env_name, $source_env = 'dev' ) {
 	$endpoint = sprintf(
-		'/sites/%s/multidevs?name=%s&cloneFromEnv=%s',
+		'/sites/%s/multidevs?name=%s&cloneFromEnv=%s&annotation=%s',
 		$site_id,
 		rawurlencode( $env_name ),
-		rawurlencode( $source_env )
+		rawurlencode( $source_env ),
+		rawurlencode( 'Created via Ash Nazg' )
 	);
 
 	$result = api_request( $endpoint, 'POST', [] );
@@ -2615,15 +2616,21 @@ function merge_multidev_to_dev( $site_id, $multidev_name ) {
  * @return array|\WP_Error Workflow response or WP_Error on failure.
  */
 function merge_dev_to_multidev( $site_id, $multidev_name, $updatedb = false ) {
-	$endpoint = sprintf( '/sites/%s/environments/%s/merges/dev-to-cloud', $site_id, $multidev_name );
-	$body = [
-		'params' => [
+	$params = wp_json_encode(
+		[
 			'fromEnvironment' => 'dev',
 			'updatedb' => (bool) $updatedb,
-		],
-	];
+		]
+	);
 
-	$result = api_request( $endpoint, 'POST', $body );
+	$endpoint = sprintf(
+		'/sites/%s/environments/%s/merges/dev-to-cloud?params=%s',
+		$site_id,
+		$multidev_name,
+		rawurlencode( $params )
+	);
+
+	$result = api_request( $endpoint, 'POST', [] );
 
 	if ( is_wp_error( $result ) ) {
 		Helpers\debug_log( sprintf( 'Failed to merge dev to multidev %s on %s - Error: %s', $multidev_name, $site_id, $result->get_error_message() ) );
