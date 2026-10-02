@@ -2876,9 +2876,7 @@ function create_backup( $element, $keep_for = 365, $site_id = null, $env = null 
 /**
  * Restore a backup.
  *
- * V0 fallback: v1's restore endpoint is confirmed broken platform-wide
- * (fails regardless of parameters). Using v0 so this works as soon as
- * Pantheon fixes it. See TODO.md.
+ * V0 fallback.
  *
  * @param string $backup_id Backup ID (folder name from catalog).
  * @param string $element Element to restore: 'code', 'database', or 'files'.
@@ -2938,12 +2936,6 @@ function restore_backup( $backup_id, $element, $site_id = null, $env = null ) {
 /**
  * Get a signed download URL for a backup file.
  *
- * V1 identifies the backup archive by element `type` + `timestamp`, not
- * v0's opaque backup_id/folder name. That opaque id is a hash (e.g.
- * "kWrk7cFXaq0...="), not a timestamp, so it can't be parsed out of
- * $backup_id directly - instead, re-look up the matching Backup from the
- * (cached) backups list by its id and read the element's own `timestamp`.
- *
  * @param string $backup_id Backup ID (folder name from catalog).
  * @param string $element Element to download: 'code', 'database', or 'files'.
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
@@ -2986,8 +2978,9 @@ function get_backup_download_url( $backup_id, $element, $site_id = null, $env = 
 
 	$timestamp = null;
 	foreach ( (array) $raw_backups as $backup ) {
-		if ( ( $backup['id'] ?? null ) === $backup_id && ! empty( $backup[ $element ]['timestamp'] ) ) {
-			$timestamp = (int) $backup[ $element ]['timestamp'];
+		$entry_id = sprintf( '%s_%s', $backup['id'] ?? '', $element );
+		if ( $entry_id === $backup_id && is_numeric( $backup['date'] ?? null ) ) {
+			$timestamp = (int) $backup['date'];
 			break;
 		}
 	}

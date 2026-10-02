@@ -337,12 +337,8 @@ class Test_Backups_API extends TestCase {
 	}
 
 	/**
-	 * Test that get_backup_download_url() looks up the real per-element
-	 * timestamp instead of parsing one out of the opaque backup id.
-	 *
-	 * Regression guard: a backup's top-level id is a hash (e.g.
-	 * "kWrk7cFXaq0...="), not a timestamp, so stripping non-digit
-	 * characters from it can never yield a real timestamp.
+	 * Test that get_backup_download_url() looks up the real backup timestamp
+	 * instead of parsing one out of the opaque backup id.
 	 */
 	public function test_backup_download_url_looks_up_real_timestamp() {
 		$api_file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
@@ -363,9 +359,9 @@ class Test_Backups_API extends TestCase {
 			'get_backup_download_url should look up the raw backups list rather than guessing a timestamp'
 		);
 		$this->assertStringContainsString(
-			"\$backup[ \$element ]['timestamp']",
+			"\$backup['date']",
 			$func_content,
-			'get_backup_download_url should read the matched element\'s own timestamp field'
+			'get_backup_download_url should read the matched backup\'s own date field'
 		);
 	}
 
