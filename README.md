@@ -164,14 +164,14 @@ View and clear WordPress debug logs without SSH access. Automatically switches t
 
 ### Addons
 
-Enable or disable Pantheon site addons (Redis object caching, Apache Solr search) directly from WordPress admin.
+Enable or disable Pantheon site addons (Redis object caching, Apache Solr search, Elasticsearch via Pantheon's hosted ElasticPress.io) directly from WordPress admin.
 
 ![Addons page showing Redis and Solr toggle switches with save button](screenshots/ash-nazg-addons.png)
 
 **Features:**
 - Toggle Redis object cache addon
 - Toggle Apache Solr search addon
-- Elasticsearch shown with "Coming Soon" badge (not yet available via API)
+- Toggle Elasticsearch addon
 - Live status detection: reads `$_ENV` on Pantheon, queries Terminus internal API on local
 - Screen Options: show/hide Redis, Solr, and Elasticsearch sections independently
 - Persistent state tracking in WordPress options

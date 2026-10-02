@@ -96,7 +96,7 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
   - Dashboard - 50/50 two-column layout; environment status, user/org info, Personal Access Token copy, API endpoints testing with Screen Options, inline label/org editing
   - Metrics - traffic and cache performance charts with Screen Options per chart; localStorage persistence
   - Development - code deployment, upstream updates, multidev management, uncommitted changes, commit SFTP changes; Screen Options for Environments and Multidev cards
-  - Addons - enable/disable site addons (Redis, Apache Solr, Elasticsearch coming soon); Screen Options per addon; live status detection
+  - Addons - enable/disable site addons (Redis, Apache Solr, Elasticsearch); Screen Options per addon; live status detection
   - Workflows - trigger workflows (Object Cache Pro installation via scaffold_extensions)
   - Backups - create, restore, download backups; tabbed dev/test/live UI; Screen Options age filter
   - Clone - clone database and/or files between environments
