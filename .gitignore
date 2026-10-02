@@ -14,9 +14,6 @@ node_modules/
 package-lock.json
 assets/pds-design-tokens/
 assets/pds/
-assets/images/
-!assets/images/pantheon-logo-light-mode.png
-!assets/images/pantheon-logo-dark-mode.png
 
 # Build artifacts
 *.css.map
