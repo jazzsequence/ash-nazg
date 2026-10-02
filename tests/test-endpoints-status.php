@@ -65,16 +65,11 @@ class Test_Endpoints_Status extends TestCase {
 		$file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/endpoints-status.php' );
 
 		$v0_tested_paths = [
-			'/sites/%s/plan',
 			'/sites/%s/available-plans',
-			'/sites/%s/authorizations',
 			'/sites/%s/code-tips',
-			'/sites/%s/upstream-updates',
-			'/sites/%s/environments/%s/backups/schedule',
 			'/sites/%s/environments/%s/domains',
 			'/sites/%s/environments/%s/domains/dns',
 			'/sites/%s/environments/%s/metrics',
-			'/users/%s/machine-tokens',
 			'/users/%s/memberships/sites',
 		];
 
@@ -85,5 +80,56 @@ class Test_Endpoints_Status extends TestCase {
 				"Should test {$path} via test_endpoint()"
 			);
 		}
+	}
+
+	/**
+	 * v1 endpoints must be labeled /v1, not left with an empty version prefix.
+	 */
+	public function test_v1_endpoints_show_version_prefix() {
+		$file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/endpoints-status.php' );
+
+		$this->assertStringContainsString(
+			"( \$use_v0 ? '/v0' : '/v1' )",
+			$file_contents,
+			'Non-v0 endpoints should be labeled /v1, not given an empty prefix'
+		);
+	}
+
+	/**
+	 * User Permissions should test the real v1 membership endpoint, not the
+	 * removed v0 authorizations endpoint.
+	 */
+	public function test_user_permissions_uses_v1_memberships() {
+		$file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/endpoints-status.php' );
+
+		$this->assertStringContainsString(
+			'/sites/%s/users/%s/memberships',
+			$file_contents,
+			'User Permissions should test the v1 memberships endpoint'
+		);
+		$this->assertStringNotContainsString(
+			'/sites/%s/authorizations',
+			$file_contents,
+			'User Permissions should no longer test the removed v0 authorizations endpoint'
+		);
+	}
+
+	/**
+	 * Upstream Updates should test the real status lookup, not the stale
+	 * pre-migration v0 endpoint.
+	 */
+	public function test_upstream_updates_uses_real_status_check() {
+		$file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/endpoints-status.php' );
+
+		$this->assertStringContainsString(
+			'test_upstream_status_endpoint(',
+			$file_contents,
+			'Upstream Updates should use the real workspace-based status check'
+		);
+		$this->assertStringNotContainsString(
+			"'/sites/%s/upstream-updates'",
+			$file_contents,
+			'Upstream Updates should no longer test the stale pre-migration v0 endpoint'
+		);
 	}
 }

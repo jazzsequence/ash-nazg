@@ -19,7 +19,7 @@ namespace Pantheon\AshNazg\API;
 function test_endpoint( $path, $name, $description = '', $use_v0 = false ) {
 	$endpoint = [
 		'name'        => $name,
-		'path'        => ( $use_v0 ? '/v0' : '' ) . $path,
+		'path'        => ( $use_v0 ? '/v0' : '/v1' ) . $path,
 		'description' => $description,
 		'status'      => 'unknown',
 		'data'        => null,
@@ -48,6 +48,39 @@ function test_endpoint( $path, $name, $description = '', $use_v0 = false ) {
 		if ( is_array( $result ) ) {
 			$endpoint['data'] = [ 'count' => count( $result ) ];
 		}
+	}
+
+	return $endpoint;
+}
+
+/**
+ * Test the upstream update status lookup.
+ *
+ * Doesn't fit test_endpoint()'s single-GET pattern since the real check reads
+ * the site's status from its workspace's sitesConnection, not a direct
+ * per-site endpoint.
+ *
+ * @param string $site_id Site UUID.
+ * @return array Endpoint status data, shaped like test_endpoint()'s return.
+ */
+function test_upstream_status_endpoint( $site_id ) {
+	$endpoint = [
+		'name'        => __( 'Upstream Updates', 'ash-nazg' ),
+		'path'        => '/v1/workspaces/{workspaceId}',
+		'description' => __( 'Upstream update status for this site', 'ash-nazg' ),
+		'status'      => 'unknown',
+		'data'        => null,
+		'error'       => null,
+	];
+
+	$status = get_site_upstream_status( $site_id );
+
+	if ( is_wp_error( $status ) ) {
+		$endpoint['status'] = 'error';
+		$endpoint['error']  = $status->get_error_message();
+	} else {
+		$endpoint['status'] = 'success';
+		$endpoint['data']   = [ 'status' => $status ];
 	}
 
 	return $endpoint;
@@ -83,7 +116,7 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 		);
 
 		$site_endpoints['Sites'][] = test_endpoint(
-			sprintf( '/sites/%s/environments?pager[first]=50', $site_id ),
+			sprintf( '/sites/%s/environments', $site_id ),
 			__( 'Environments List', 'ash-nazg' ),
 			__( 'All environments (dev, test, live, multidevs), including commit log, diffstat, and env variables', 'ash-nazg' )
 		);
@@ -92,13 +125,6 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 			sprintf( '/sites/%s/users', $site_id ),
 			__( 'Team Members', 'ash-nazg' ),
 			__( 'Site team members and their roles', 'ash-nazg' )
-		);
-
-		$site_endpoints['Sites'][] = test_endpoint(
-			sprintf( '/sites/%s/plan', $site_id ),
-			__( 'Site Plan', 'ash-nazg' ),
-			__( 'Current plan and pricing information', 'ash-nazg' ),
-			true
 		);
 
 		$site_endpoints['Sites'][] = test_endpoint(
@@ -112,12 +138,11 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 	// Authorization & Access.
 	$site_endpoints['Authorization'] = [];
 
-	if ( $site_id ) {
+	if ( $site_id && $user_id ) {
 		$site_endpoints['Authorization'][] = test_endpoint(
-			sprintf( '/sites/%s/authorizations', $site_id ),
+			sprintf( '/sites/%s/users/%s/memberships?first=10', $site_id, $user_id ),
 			__( 'User Permissions', 'ash-nazg' ),
-			__( 'Current user permissions on this site', 'ash-nazg' ),
-			true
+			__( 'Current user permissions on this site', 'ash-nazg' )
 		);
 	}
 
@@ -132,12 +157,7 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 			true
 		);
 
-		$site_endpoints['Code'][] = test_endpoint(
-			sprintf( '/sites/%s/upstream-updates', $site_id ),
-			__( 'Upstream Updates', 'ash-nazg' ),
-			__( 'Available upstream update commits', 'ash-nazg' ),
-			true
-		);
+		$site_endpoints['Code'][] = test_upstream_status_endpoint( $site_id );
 	}
 
 	// Backups.
@@ -148,13 +168,6 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 			sprintf( '/sites/%s/environments/%s/backups', $site_id, $api_env ),
 			__( 'Backups Catalog', 'ash-nazg' ),
 			__( 'All available backups', 'ash-nazg' )
-		);
-
-		$site_endpoints['Backups'][] = test_endpoint(
-			sprintf( '/sites/%s/environments/%s/backups/schedule', $site_id, $api_env ),
-			__( 'Backup Schedule', 'ash-nazg' ),
-			__( 'Automated backup schedule configuration', 'ash-nazg' ),
-			true
 		);
 	}
 
@@ -208,13 +221,6 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 			'/current-user?currentUser_workspacesConnection_first=50',
 			__( 'User Profile', 'ash-nazg' ),
 			__( 'Current user information, SSH keys, and workspace memberships', 'ash-nazg' )
-		);
-
-		$user_endpoints['User'][] = test_endpoint(
-			sprintf( '/users/%s/machine-tokens', $user_id ),
-			__( 'Machine Tokens', 'ash-nazg' ),
-			__( 'Active machine tokens', 'ash-nazg' ),
-			true
 		);
 
 		$user_endpoints['User'][] = test_endpoint(
