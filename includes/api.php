@@ -2469,6 +2469,9 @@ function get_environments( $site_id ) {
 		if ( ! isset( $node['dns_zone'] ) && isset( $node['dnsZone'] ) ) {
 			$node['dns_zone'] = $node['dnsZone'];
 		}
+		if ( ! isset( $node['initialized'] ) && isset( $node['isInitialized'] ) ) {
+			$node['initialized'] = $node['isInitialized'];
+		}
 		$result[ $node['id'] ] = $node;
 	}
 
