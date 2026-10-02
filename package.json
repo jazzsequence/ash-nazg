@@ -3,7 +3,7 @@
   "version": "0.6.3",
   "description": "WordPress plugin that integrates Pantheon Public API into the WordPress admin dashboard",
   "scripts": {
-    "copy:tokens": "mkdir -p assets/sass && cp node_modules/@pantheon-systems/pds-design-tokens/build/css/pds-design-tokens-light-mode.css assets/sass/_pds-tokens.scss",
+    "copy:tokens": "mkdir -p assets/sass && cat node_modules/@pantheon-systems/pds-design-tokens/build/css/variables.global.css node_modules/@pantheon-systems/pds-design-tokens/build/css/variables.light.css > assets/sass/_pds-tokens.scss",
     "copy:logos": "mkdir -p assets/images && cp ../pds-core/public/pantheon-logo-light-mode.png assets/images/ && cp ../pds-core/public/pantheon-logo-dark-mode.png assets/images/",
     "copy:chartjs": "mkdir -p assets/js/libs && cp node_modules/chart.js/dist/chart.umd.js assets/js/libs/",
     "prebuild:css": "npm run copy:tokens && npm run copy:chartjs",
@@ -28,7 +28,7 @@
   "license": "GPL-2.0-or-later",
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",
-    "@pantheon-systems/pds-design-tokens": "1.2.0",
+    "@pantheon-systems/pds-design-tokens": "2.0.0-beta.0",
     "@playwright/test": "^1.50.0",
     "dotenv": "^18.0.5",
     "sass": "^1.83.4"
