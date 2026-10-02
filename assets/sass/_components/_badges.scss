@@ -67,7 +67,7 @@
 }
 
 .ash-nazg-badge-error {
-	background: var(--pds-color-badge-indicator-critical-background, #ca3521);
-	color: var(--pds-color-badge-indicator-critical-foreground, #ffffff);
-	border: 1px solid var(--pds-color-badge-indicator-critical-background, #ca3521);
+	background: var(--pds-color-badge-critical-background, #ca3521);
+	color: var(--pds-color-badge-critical-foreground, #ffffff);
+	border: 1px solid var(--pds-color-badge-critical-background, #ca3521);
 }
