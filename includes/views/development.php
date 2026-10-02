@@ -91,13 +91,17 @@ $ordered_envs = array_filter(
 		$updates_list = [];
 		$update_count = 0;
 		$behind = 0;
+		$upstream_status = '';
+		$has_code = false;
 		$upstream_api_error = null;
 		if ( is_wp_error( $upstream_updates_raw ) ) {
 			$upstream_api_error = $upstream_updates_raw->get_error_message();
 		} elseif ( ! is_wp_error( $upstream_updates ) && $upstream_updates && is_array( $upstream_updates ) ) {
-			$updates_list = $upstream_updates['commits'] ?? [];
+			$updates_list = $upstream_updates['dependency_updates'] ?? [];
 			$update_count = count( $updates_list );
 			$behind = $upstream_updates['behind'] ?? 0;
+			$upstream_status = $upstream_updates['status'] ?? '';
+			$has_code = $upstream_updates['has_code'] ?? false;
 		}
 
 		// Debug output when ?debug=1 is present.
@@ -134,61 +138,53 @@ $ordered_envs = array_filter(
 			<p><strong><?php esc_html_e( 'Upstream updates unavailable:', 'ash-nazg' ); ?></strong> <?php echo esc_html( $upstream_api_error ); ?></p>
 		</div>
 		<?php endif; ?>
-		<?php if ( $update_count > 0 || $behind > 0 ) : ?>
+		<?php if ( $has_code ) : ?>
 		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20">
 			<h2><?php esc_html_e( 'Upstream Updates', 'ash-nazg' ); ?></h2>
 			<p>
 				<?php
-				echo esc_html(
-					sprintf(
-						/* translators: %d: number of upstream commits available */
-						_n( '%d upstream update available.', '%d upstream updates available.', $update_count, 'ash-nazg' ),
-						$update_count
-					)
-				);
-				if ( $behind > 0 ) {
-					echo ' ' . esc_html(
-						sprintf(
-							/* translators: %d: number of commits the environment is behind upstream */
-							_n( '(You are %d commit behind.)', '(You are %d commits behind.)', $behind, 'ash-nazg' ),
-							$behind
-						)
+				if ( $upstream_status ) {
+					printf(
+						/* translators: %s: upstream status label, e.g. "Updates in Dev" */
+						esc_html__( 'Upstream status: %s', 'ash-nazg' ),
+						'<strong>' . esc_html( $upstream_status ) . '</strong>'
 					);
+				} else {
+					esc_html_e( 'Upstream updates are available.', 'ash-nazg' );
 				}
 				?>
 			</p>
+			<?php if ( $update_count > 0 ) : ?>
 			<table class="widefat">
 				<thead>
 					<tr>
-						<th><?php esc_html_e( 'Hash', 'ash-nazg' ); ?></th>
-						<th><?php esc_html_e( 'Message', 'ash-nazg' ); ?></th>
-						<th><?php esc_html_e( 'Date', 'ash-nazg' ); ?></th>
+						<th><?php esc_html_e( 'Package', 'ash-nazg' ); ?></th>
+						<th><?php esc_html_e( 'Change', 'ash-nazg' ); ?></th>
+						<th><?php esc_html_e( 'Version', 'ash-nazg' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php foreach ( $updates_list as $update ) : ?>
 					<tr>
 						<td>
+							<code><?php echo esc_html( $update['name'] ?? '' ); ?></code>
+						</td>
+						<td>
 							<?php
-							$full_hash = $update['hash'] ?? $update['id'] ?? 'unknown';
-							$short_hash = substr( $full_hash, 0, 8 );
+							$change_labels = [
+								'ADD' => __( 'Added', 'ash-nazg' ),
+								'UPDATE' => __( 'Updated', 'ash-nazg' ),
+								'REMOVE' => __( 'Removed', 'ash-nazg' ),
+							];
+							echo esc_html( $change_labels[ $update['type'] ?? '' ] ?? ( $update['type'] ?? '' ) );
 							?>
-							<?php /* translators: %s: full commit hash */ ?><code class="ash-nazg-hash-copyable" data-hash="<?php echo esc_attr( $full_hash ); ?>" title="<?php echo esc_attr( sprintf( __( 'Click to copy: %s', 'ash-nazg' ), $full_hash ) ); ?>">
-								<?php echo esc_html( $short_hash ); ?>
-								<span class="dashicons dashicons-clipboard"></span>
-							</code>
-						</td>
-						<td>
-							<?php echo esc_html( $update['message'] ?? $update['commit_message'] ?? 'No message' ); ?>
 						</td>
 						<td>
 							<?php
-							$timestamp = $update['datetime'] ?? $update['timestamp'] ?? null;
-							if ( $timestamp ) {
-								echo esc_html( human_time_diff( is_numeric( $timestamp ) ? $timestamp : strtotime( $timestamp ), time() ) );
-								echo ' ' . esc_html__( 'ago', 'ash-nazg' );
+							if ( ! empty( $update['prior_version'] ) && ! empty( $update['version'] ) ) {
+								echo esc_html( $update['prior_version'] ) . ' &rarr; ' . esc_html( $update['version'] );
 							} else {
-								esc_html_e( 'Unknown', 'ash-nazg' );
+								echo esc_html( $update['version'] ?? '' );
 							}
 							?>
 						</td>
@@ -196,6 +192,7 @@ $ordered_envs = array_filter(
 					<?php endforeach; ?>
 				</tbody>
 			</table>
+			<?php endif; ?>
 
 			<div class="ash-nazg-mt-20">
 				<button type="button" class="button button-primary" id="ash-nazg-apply-upstream-updates" data-nonce="<?php echo esc_attr( wp_create_nonce( 'ash_nazg_apply_upstream_updates' ) ); ?>">
@@ -217,7 +214,7 @@ $ordered_envs = array_filter(
 
 		<!-- Uncommitted Local Changes -->
 		<?php if ( $local_diffstat && ! empty( $local_diffstat ) ) : ?>
-		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20<?php echo $update_count > 0 ? ' ash-nazg-mt-20' : ''; ?>">
+		<div class="ash-nazg-card ash-nazg-card-full ash-nazg-mb-20<?php echo $has_code ? ' ash-nazg-mt-20' : ''; ?>">
 			<h2><?php esc_html_e( 'Uncommitted Local Changes', 'ash-nazg' ); ?></h2>
 			<p><?php esc_html_e( 'Your local working copy has uncommitted changes. Use git to commit or stash them before deploying.', 'ash-nazg' ); ?></p>
 
@@ -456,7 +453,7 @@ $ordered_envs = array_filter(
 
 		<!-- Uncommitted SFTP Changes -->
 		<?php if ( 'sftp' === $connection_mode && $diffstat && ! is_wp_error( $diffstat ) && ! empty( $diffstat ) ) : ?>
-		<div class="ash-nazg-card ash-nazg-card-full<?php echo $update_count > 0 ? ' ash-nazg-mt-20' : ''; ?>">
+		<div class="ash-nazg-card ash-nazg-card-full<?php echo $has_code ? ' ash-nazg-mt-20' : ''; ?>">
 			<h2><?php esc_html_e( 'Uncommitted Changes', 'ash-nazg' ); ?></h2>
 			<p><?php esc_html_e( 'You have uncommitted changes in SFTP mode. Commit them to save your work to the git repository.', 'ash-nazg' ); ?></p>
 

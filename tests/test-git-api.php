@@ -72,6 +72,29 @@ class Test_Git_API extends TestCase {
 	}
 
 	/**
+	 * Test that get_upstream_updates returns real composer dependency changes,
+	 * not the environment's ordinary commit history.
+	 */
+	public function test_get_upstream_updates_returns_dependency_updates() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+
+		$get_upstream_updates_pos = strpos( $file_contents, 'function get_upstream_updates(' );
+		$this->assertNotFalse( $get_upstream_updates_pos, 'Should find get_upstream_updates function' );
+		$func_content = substr( $file_contents, $get_upstream_updates_pos, 2500 );
+
+		$this->assertStringContainsString(
+			"'dependency_updates' =>",
+			$func_content,
+			'get_upstream_updates should return dependency_updates built from composerUpdates'
+		);
+		$this->assertStringNotContainsString(
+			"'commits' =>",
+			$func_content,
+			'get_upstream_updates should not return the environment\'s ordinary commit log as if it were upstream updates'
+		);
+	}
+
+	/**
 	 * Test that get_code_tips uses correct endpoint.
 	 */
 	public function test_get_code_tips_endpoint() {

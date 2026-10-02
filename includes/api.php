@@ -1922,12 +1922,58 @@ function normalize_commit( $commit ) {
 }
 
 /**
- * Get available upstream update commits.
+ * Get a site's upstream update status label (e.g. "Up to Date", "Updates in Dev").
  *
- * V1's upstream-updates/check is an async workflow (unlike v0's synchronous
- * GET) - this triggers the check, waits for it to finish, then re-reads the
- * environment's commit log to approximate the old {commits, behind, has_code,
- * environments} shape. Unverified against a live site - flagged in TODO.md.
+ * @param string $site_id Site UUID.
+ * @return string|\WP_Error Status label, or WP_Error on failure.
+ */
+function get_site_upstream_status( $site_id ) {
+	$site_info = get_site_info( $site_id );
+	if ( is_wp_error( $site_info ) ) {
+		return $site_info;
+	}
+
+	$workspace_id = $site_info['organization'] ?? null;
+	if ( ! $workspace_id ) {
+		return new \WP_Error( 'missing_workspace', __( 'Could not determine workspace for this site.', 'ash-nazg' ) );
+	}
+
+	$upstream_id = $site_info['upstream']['id'] ?? null;
+	$filter = $upstream_id
+		? '&workspace_sitesConnection_filter=' . rawurlencode( wp_json_encode( [ 'upstreamId' => $upstream_id ] ) )
+		: '';
+
+	$cursor = '';
+	for ( $page = 0; $page < 10; $page++ ) {
+		$endpoint = sprintf(
+			'/workspaces/%s?workspace_sitesConnection_first=100%s%s',
+			$workspace_id,
+			$filter,
+			$cursor
+		);
+		$workspace = api_request( $endpoint, 'GET' );
+		if ( is_wp_error( $workspace ) ) {
+			return $workspace;
+		}
+
+		foreach ( $workspace['sitesConnection']['edges'] ?? [] as $edge ) {
+			if ( ( $edge['node']['site']['id'] ?? null ) === $site_id ) {
+				return $edge['node']['upstreamUpdateStatus'] ?? '';
+			}
+		}
+
+		$page_info = $workspace['sitesConnection']['pageInfo'] ?? [];
+		if ( empty( $page_info['hasNextPage'] ) || empty( $page_info['endCursor'] ) ) {
+			break;
+		}
+		$cursor = '&workspace_sitesConnection_after=' . rawurlencode( $page_info['endCursor'] );
+	}
+
+	return new \WP_Error( 'site_not_found', __( 'Could not find this site in its workspace.', 'ash-nazg' ) );
+}
+
+/**
+ * Get available upstream updates.
  *
  * @param string      $site_id Site UUID.
  * @param string|null $env     Current environment name. Null falls back to dev.
@@ -1960,6 +2006,11 @@ function get_upstream_updates( $site_id, $env = null ) {
 		poll_workflow( $site_id, $workflow['id'], 15, 2 );
 	}
 
+	$status = get_site_upstream_status( $site_id );
+	if ( is_wp_error( $status ) ) {
+		return $status;
+	}
+
 	$environments = get_environments( $site_id );
 	if ( is_wp_error( $environments ) ) {
 		return $environments;
@@ -1973,12 +2024,23 @@ function get_upstream_updates( $site_id, $env = null ) {
 		$composer_updates['removedDependencies'] ?? []
 	);
 
-	$commits = array_map( __NAMESPACE__ . '\\normalize_commit', $env_data['commitLog'] ?? [] );
+	$dependency_updates = array_map(
+		static function ( $dep ) {
+			return [
+				'name' => $dep['name'] ?? '',
+				'type' => $dep['type'] ?? '',
+				'prior_version' => $dep['priorVersion'] ?? '',
+				'version' => $dep['version'] ?? '',
+			];
+		},
+		$updated_deps
+	);
 
 	$result = [
-		'commits' => $commits,
+		'status' => $status,
+		'dependency_updates' => $dependency_updates,
 		'behind' => count( $updated_deps ),
-		'has_code' => ! empty( $updated_deps ) || ! empty( $commits ),
+		'has_code' => ( 'Up to Date' !== $status ) || ! empty( $updated_deps ),
 		'environments' => [],
 	];
 
