@@ -443,7 +443,7 @@ class Test_AJAX_Handlers extends TestCase {
 		);
 
 		$this->assertMatchesRegularExpression(
-			"/function ajax_probe_endpoint_group.*check_ajax_referer\( 'ash_nazg_probe_endpoint_group', 'nonce' \).*current_user_can\( 'manage_options' \).*get_endpoint_group_scopes\(\)\[ \\\$group \].*probe_and_cache_endpoint_group/s",
+			"/function ajax_probe_endpoint_group.*check_ajax_referer\( 'ash_nazg_probe_endpoint_group', 'nonce' \).*current_user_can\( 'manage_options' \).*in_array\( \\\$group, API\\\\get_endpoint_groups\(\), true \).*probe_and_cache_endpoint_group/s",
 			$admin,
 			'The handler should verify the nonce and capability and allowlist the group before probing'
 		);

@@ -739,7 +739,7 @@ function render_dashboard_page() {
 	if ( $is_pantheon && $site_id && null === $api_error && $show_endpoints ) {
 		require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
 
-		foreach ( array_keys( API\get_endpoint_group_scopes() ) as $group ) {
+		foreach ( API\get_endpoint_groups() as $group ) {
 			if ( in_array( $group, $hidden_groups, true ) ) {
 				continue;
 			}
@@ -2341,7 +2341,7 @@ function dashboard_screen_settings( $settings, $screen ) {
 
 	// Group names are static, so this never makes an API request.
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
-	$group_names = array_keys( API\get_endpoint_group_scopes() );
+	$group_names = API\get_endpoint_groups();
 
 	ob_start();
 	?>
@@ -2973,7 +2973,7 @@ function ajax_probe_endpoint_group() {
 
 	$group = isset( $_POST['group'] ) ? sanitize_text_field( wp_unslash( $_POST['group'] ) ) : '';
 
-	if ( ! isset( API\get_endpoint_group_scopes()[ $group ] ) ) {
+	if ( ! in_array( $group, API\get_endpoint_groups(), true ) ) {
 		wp_send_json_error( [ 'message' => __( 'Unknown endpoint group.', 'ash-nazg' ) ], 400 );
 	}
 

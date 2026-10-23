@@ -216,19 +216,6 @@ function probe_registry_entry( $entry, $context ) {
 }
 
 /**
- * Get the endpoint groups keyed by name.
- *
- * Compatibility shim for callers written when groups were hand-written and
- * tagged site or user; the registry has no such scope. Callers move to
- * get_endpoint_groups() in the next commit and this is then removed.
- *
- * @return array<string, string> Group name => 'api'.
- */
-function get_endpoint_group_scopes() {
-	return array_fill_keys( get_endpoint_groups(), 'api' );
-}
-
-/**
  * Probe every endpoint in a single registry group.
  *
  * Groups are probed one at a time so a caller can spread the live requests

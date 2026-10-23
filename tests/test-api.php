@@ -444,7 +444,7 @@ class Test_API extends TestCase {
 		);
 
 		$this->assertMatchesRegularExpression(
-			'/function clear_endpoint_group_caches.*get_endpoint_group_scopes.*delete_transient\( get_endpoint_group_cache_key/s',
+			'/function clear_endpoint_group_caches.*get_endpoint_groups.*delete_transient\( get_endpoint_group_cache_key/s',
 			$file_contents,
 			'clear_endpoint_group_caches should clear every group cache'
 		);

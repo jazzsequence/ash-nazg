@@ -1300,7 +1300,7 @@ function get_user_id() {
 /**
  * Get the transient key for one endpoint group's cached probe results.
  *
- * @param string $group   Group name, a key of get_endpoint_group_scopes().
+ * @param string $group   Group name, one of get_endpoint_groups().
  * @param string $site_id Site UUID.
  * @param string $env     Environment name.
  * @return string Transient key.
@@ -1319,7 +1319,7 @@ function get_endpoint_group_cache_key( $group, $site_id, $env ) {
 function clear_endpoint_group_caches( $site_id, $env ) {
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
 
-	foreach ( array_keys( get_endpoint_group_scopes() ) as $group ) {
+	foreach ( get_endpoint_groups() as $group ) {
 		delete_transient( get_endpoint_group_cache_key( $group, $site_id, $env ) );
 	}
 }
@@ -1347,7 +1347,7 @@ function get_cached_endpoint_group( $group, $site_id = null, $env = null ) {
  * Meant to run in its own request (the dashboard calls it over AJAX, one
  * group at a time) so the cost of the live probes never lands on a page load.
  *
- * @param string      $group   Group name, a key of get_endpoint_group_scopes().
+ * @param string      $group   Group name, one of get_endpoint_groups().
  * @param string|null $site_id Optional. Site UUID. Auto-detected if not provided.
  * @param string|null $env     Optional. Environment name. Auto-detected if not provided.
  * @return array {endpoints: array, cached_at: int}.
