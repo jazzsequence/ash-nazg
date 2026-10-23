@@ -415,7 +415,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<strong><?php esc_html_e( 'Summary:', 'ash-nazg' ); ?></strong>
 					<span class="ash-nazg-text-success">✓ <span id="ash-nazg-endpoints-ok">0</span> <?php esc_html_e( 'working', 'ash-nazg' ); ?></span>
 					<span class="ash-nazg-ml-10 ash-nazg-text-warning ash-nazg-hidden" id="ash-nazg-endpoints-unavailable-wrap">⊘ <span id="ash-nazg-endpoints-unavailable">0</span> <?php esc_html_e( 'unavailable', 'ash-nazg' ); ?></span>
-					<span class="ash-nazg-ml-10 ash-nazg-text-muted ash-nazg-hidden" id="ash-nazg-endpoints-skipped-wrap">○ <span id="ash-nazg-endpoints-skipped">0</span> <?php esc_html_e( 'not probed', 'ash-nazg' ); ?></span>
+					<span class="ash-nazg-ml-10 ash-nazg-text-muted ash-nazg-hidden" id="ash-nazg-endpoints-skipped-wrap">○ <span id="ash-nazg-endpoints-skipped">0</span> <?php esc_html_e( 'no request sent', 'ash-nazg' ); ?></span>
 					<span class="ash-nazg-ml-10 ash-nazg-text-error ash-nazg-hidden" id="ash-nazg-endpoints-error-wrap">✗ <span id="ash-nazg-endpoints-error">0</span> <?php esc_html_e( 'errors', 'ash-nazg' ); ?></span>
 					<span class="ash-nazg-ml-10 ash-nazg-text-muted">(<span id="ash-nazg-endpoints-total">0</span> <?php esc_html_e( 'total endpoints', 'ash-nazg' ); ?>)</span>
 				</p>
@@ -431,7 +431,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<?php esc_html_e( 'Needs attention', 'ash-nazg' ); ?> <span class="ash-nazg-endpoint-tab-count" data-count="attention">0</span>
 					</a>
 					<a href="#endpoints" class="nav-tab" role="button" aria-pressed="false" data-filter="skipped">
-						<?php esc_html_e( 'Not tested', 'ash-nazg' ); ?> <span class="ash-nazg-endpoint-tab-count" data-count="skipped">0</span>
+						<?php esc_html_e( 'No request sent', 'ash-nazg' ); ?> <span class="ash-nazg-endpoint-tab-count" data-count="skipped">0</span>
 					</a>
 				</div>
 				<div class="screen-reader-text" role="status" aria-live="polite" id="ash-nazg-endpoint-filter-status"></div>

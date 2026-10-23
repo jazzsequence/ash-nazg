@@ -29,7 +29,7 @@ $endpoint_row_class = 'pending' === $endpoint['status'] ? 'ash-nazg-endpoint-row
 		<?php elseif ( 'unavailable' === $endpoint['status'] ) : ?>
 			<span class="dashicons dashicons-minus ash-nazg-icon-warning" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Unavailable', 'ash-nazg' ) ); ?>"></span>
 		<?php elseif ( 'skipped' === $endpoint['status'] ) : ?>
-			<span class="dashicons dashicons-minus ash-nazg-icon-locked" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Not probed', 'ash-nazg' ) ); ?>"></span>
+			<span class="dashicons dashicons-minus ash-nazg-icon-locked" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'No request sent', 'ash-nazg' ) ); ?>"></span>
 		<?php else : ?>
 			<span class="dashicons dashicons-dismiss ash-nazg-icon-error" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Error', 'ash-nazg' ) ); ?>"></span>
 		<?php endif; ?>

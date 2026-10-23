@@ -200,7 +200,7 @@ class Test_Endpoints_Status extends TestCase {
 
 			$this->assertSame( 'skipped', $result['status'], $method );
 			$this->assertStringContainsString( "this {$method} request", $result['error'], $method );
-			$this->assertStringContainsString( 'testing it would change your site', $result['error'], $method );
+			$this->assertStringContainsString( 'sending it would change your site', $result['error'], $method );
 			$this->assertStringContainsString( 'only ever sends read (GET) requests', $result['error'], $method );
 			$this->assertSame( $method, $result['method'] );
 			$this->assertSame( '/v1/sites/abc-123/wipe', $result['path'] );
@@ -282,7 +282,7 @@ class Test_Endpoints_Status extends TestCase {
 
 		$write = API\get_endpoint_row_placeholder( [ 'v1', 'POST', '/sites/{site_id}/backups', 'Create a backup', 'Backups' ] );
 		$this->assertSame( 'skipped', $write['status'] );
-		$this->assertStringContainsString( 'testing it would change your site', $write['error'] );
+		$this->assertStringContainsString( 'sending it would change your site', $write['error'] );
 
 		// Only the placeholder the plugin can't fill is reported, not {site_id}.
 		$needs_id = API\get_endpoint_row_placeholder( [ 'v0', 'GET', '/sites/{site_id}/builds/{build_id}', 'Get a build', 'Builds & Logs' ] );

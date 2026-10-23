@@ -140,7 +140,7 @@ function get_endpoint_groups() {
  *
  * Placeholders with no value here (a build ID, a backup ID, a secret name)
  * can't be supplied automatically, so the endpoints that need them are
- * listed but not probed.
+ * listed but no request is sent.
  *
  * @param string|null $site_id Site UUID.
  * @param string|null $env     Environment name.
@@ -234,7 +234,7 @@ function describe_placeholder( $name ) {
 }
 
 /**
- * Explain, in plain words, why an endpoint is listed but not probed.
+ * Explain, in plain words, why no request is sent to an endpoint.
  *
  * @param string $method  HTTP method.
  * @param array  $missing Placeholders that couldn't be filled in, with braces (reads only).
@@ -250,7 +250,7 @@ function describe_skip_reason( $method, $missing ) {
 		);
 
 		/* translators: %s: what the request needs, e.g. "a build ID" */
-		return sprintf( __( 'Not tested: this read-only request needs %s, which Ash Nazg has no way to look up.', 'ash-nazg' ), implode( ', ', $needs ) );
+		return sprintf( __( 'No request sent: this read-only request needs %s, which Ash Nazg has no way to look up.', 'ash-nazg' ), implode( ', ', $needs ) );
 	}
 
 	$effects = [
@@ -261,13 +261,13 @@ function describe_skip_reason( $method, $missing ) {
 	];
 
 	/* translators: 1: HTTP method, 2: what the request does */
-	$message = __( 'Not tested: this %1$s request %2$s, so testing it would change your site. Ash Nazg only ever sends read (GET) requests.', 'ash-nazg' );
+	$message = __( 'No request sent: this %1$s request %2$s, so sending it would change your site. Ash Nazg only ever sends read (GET) requests.', 'ash-nazg' );
 
 	return sprintf( $message, $method, $effects[ $method ] ?? __( 'changes something', 'ash-nazg' ) );
 }
 
 /**
- * Build the result for an endpoint that is listed but not probed.
+ * Build the result for an endpoint that is listed but has no request sent to it.
  *
  * @param array  $entry   Registry entry: [ version, method, path, summary, group ].
  * @param string $path    Path to show, with the placeholders that could be filled in.
