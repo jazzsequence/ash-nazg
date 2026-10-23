@@ -493,4 +493,20 @@ class Test_AJAX_Handlers extends TestCase {
 		$this->assertStringContainsString( 'next(index + 1)', $js );
 		$this->assertMatchesRegularExpression( '/errors = \\$rows\\.length - ok - unavailable - skipped - pending/', $js );
 	}
+
+	/**
+	 * Test the Workspace row lives in its own partial, which the dashboard includes.
+	 *
+	 * The AJAX loader re-renders this row once workspaces have loaded, so both
+	 * must use one template.
+	 */
+	public function test_workspace_row_is_a_shared_partial() {
+		$dashboard = file_get_contents( __DIR__ . '/../includes/views/dashboard.php' );
+		$partial = file_get_contents( __DIR__ . '/../includes/views/partials/workspace-row.php' );
+
+		$this->assertStringContainsString( 'partials/workspace-row.php', $dashboard );
+		$this->assertStringNotContainsString( 'ash-nazg-org-select', $dashboard, 'Workspace markup should live only in the partial' );
+		$this->assertStringContainsString( 'ash-nazg-org-select', $partial );
+		$this->assertDoesNotMatchRegularExpression( '/echo \\$/', $partial, 'The partial should not echo a variable without escaping' );
+	}
 }
