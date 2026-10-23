@@ -153,17 +153,4 @@ class Test_Endpoints_Status extends TestCase {
 		$this->assertSame( [], API\probe_endpoint_group( 'Authorization', 'site-id', 'dev', null ) );
 		$this->assertSame( [], API\probe_endpoint_group( 'Nonexistent', 'site-id', 'dev', 'user-id' ) );
 	}
-
-	/**
-	 * Test that get_all_endpoints_status() is assembled from the per-group probes.
-	 */
-	public function test_all_endpoints_status_uses_group_probes() {
-		$file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/endpoints-status.php' );
-
-		$this->assertMatchesRegularExpression(
-			'/function get_all_endpoints_status.*get_endpoint_group_scopes\(\).*probe_endpoint_group\(/s',
-			$file_contents,
-			'get_all_endpoints_status should loop the groups and probe each one'
-		);
-	}
 }

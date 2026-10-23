@@ -262,37 +262,3 @@ function probe_endpoint_group( $group, $site_id = null, $env = null, $user_id = 
 
 	return $endpoints;
 }
-
-/**
- * Get comprehensive API endpoints status.
- *
- * @param string $site_id Optional. Site UUID.
- * @param string $env     Optional. Environment name.
- * @param string $user_id Optional. User ID.
- * @return array Organized endpoint groups: site, user, all.
- */
-function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null ) {
-	$site_endpoints = [];
-	$user_endpoints = [];
-
-	foreach ( get_endpoint_group_scopes() as $group => $scope ) {
-		$endpoints = probe_endpoint_group( $group, $site_id, $env, $user_id );
-
-		// Skip empty categories.
-		if ( empty( $endpoints ) ) {
-			continue;
-		}
-
-		if ( 'user' === $scope ) {
-			$user_endpoints[ $group ] = $endpoints;
-		} else {
-			$site_endpoints[ $group ] = $endpoints;
-		}
-	}
-
-	return [
-		'site' => $site_endpoints,
-		'user' => $user_endpoints,
-		'all' => array_merge( $site_endpoints, $user_endpoints ),
-	];
-}

@@ -1278,7 +1278,6 @@ function clear_cache() {
 		$env = get_pantheon_environment();
 		if ( $env ) {
 			delete_transient( 'ash_nazg_env_info_' . $site_id . '_' . $env );
-			delete_transient( sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $env ) );
 			clear_endpoint_group_caches( $site_id, $env );
 			delete_transient( sprintf( 'ash_nazg_commits_%s_%s', $site_id, $env ) );
 		}
@@ -1370,58 +1369,6 @@ function probe_and_cache_endpoint_group( $group, $site_id = null, $env = null ) 
 	}
 
 	return $result;
-}
-
-/**
- * Get available API endpoints and their status.
- *
- * Tests all available Pantheon API endpoints and returns their status organized by category.
- * Results are cached for 10 minutes to improve performance.
- *
- * @param string $site_id Optional. Site UUID. Auto-detected if not provided.
- * @param string $env     Optional. Environment name. Auto-detected if not provided.
- * @param bool   $refresh Optional. Force refresh of cached data. Default false.
- * @return array Array of endpoint categories with their endpoints and status.
- */
-function get_endpoints_status( $site_id = null, $env = null, $refresh = false ) {
-	if ( null === $site_id ) {
-		$site_id = get_pantheon_site_id();
-	}
-
-	if ( null === $env ) {
-		$env = get_pantheon_environment();
-	}
-
-	// Create a unique cache key based on site and environment.
-	$cache_key = sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $env );
-
-	// Check cache first unless refresh is requested.
-	if ( ! $refresh ) {
-		$cached = get_transient( $cache_key );
-		if ( false !== $cached ) {
-			// Handle both old and new cache formats.
-			if ( is_array( $cached ) && isset( $cached['data'] ) ) {
-				return $cached['data'];
-			}
-			return $cached;
-		}
-	}
-
-	$user_id = get_user_id();
-
-	// Load comprehensive endpoints testing.
-	require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
-
-	$endpoints = get_all_endpoints_status( $site_id, $env, $user_id );
-
-	// Cache for 24 hours with timestamp.
-	$cached_data = [
-		'data' => $endpoints,
-		'cached_at' => time(),
-	];
-	set_transient( $cache_key, $cached_data, DAY_IN_SECONDS );
-
-	return $endpoints;
 }
 
 /**
@@ -1737,8 +1684,6 @@ function clear_addons_cache( $site_id ) {
  * @return void
  */
 function clear_addon_endpoint_cache( $site_id, $env ) {
-	$cache_key = sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $env );
-	delete_transient( $cache_key );
 	clear_endpoint_group_caches( $site_id, $env );
 }
 
