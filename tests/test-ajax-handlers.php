@@ -426,4 +426,39 @@ class Test_AJAX_Handlers extends TestCase {
 			'ajax_save_primary_org must check capabilities'
 		);
 	}
+
+	/**
+	 * Test that the endpoint group probe handler is registered and gated.
+	 *
+	 * It makes live API requests, so it needs a nonce and a capability check,
+	 * and must only accept a group name from the known list.
+	 */
+	public function test_probe_endpoint_group_handler_is_secured() {
+		$admin = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$this->assertStringContainsString(
+			"add_action( 'wp_ajax_ash_nazg_probe_endpoint_group'",
+			$admin,
+			'The probe handler should be registered for logged-in users only'
+		);
+
+		$this->assertMatchesRegularExpression(
+			"/function ajax_probe_endpoint_group.*check_ajax_referer\( 'ash_nazg_probe_endpoint_group', 'nonce' \).*current_user_can\( 'manage_options' \).*get_endpoint_group_scopes\(\)\[ \\\$group \].*probe_and_cache_endpoint_group/s",
+			$admin,
+			'The handler should verify the nonce and capability and allowlist the group before probing'
+		);
+	}
+
+	/**
+	 * Test that the endpoint group partial escapes everything it prints.
+	 */
+	public function test_endpoint_group_partial_escapes_output() {
+		$partial = file_get_contents( __DIR__ . '/../includes/views/partials/endpoint-group.php' );
+
+		$this->assertDoesNotMatchRegularExpression(
+			'/echo \$/',
+			$partial,
+			'The partial should not echo any variable without escaping'
+		);
+	}
 }

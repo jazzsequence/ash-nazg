@@ -45,6 +45,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_get_metrics', __NAMESPACE__ . '\\ajax_get_metrics' );
 	add_action( 'wp_ajax_ash_nazg_refresh_metrics', __NAMESPACE__ . '\\ajax_refresh_metrics' );
 	add_action( 'wp_ajax_ash_nazg_save_primary_org', __NAMESPACE__ . '\\ajax_save_primary_org' );
+	add_action( 'wp_ajax_ash_nazg_probe_endpoint_group', __NAMESPACE__ . '\\ajax_probe_endpoint_group' );
 	add_action( 'wp_ajax_ash_nazg_copy_access_token', __NAMESPACE__ . '\\ajax_copy_access_token' );
 	add_action( 'load-toplevel_page_ash-nazg', __NAMESPACE__ . '\\dashboard_screen_options' );
 	add_action( 'load-ash-nazg_page_ash-nazg-addons', __NAMESPACE__ . '\\addons_screen_options' );
@@ -2947,6 +2948,68 @@ function ajax_refresh_metrics() {
 	API\clear_metrics_cache( null, $env );
 
 	wp_send_json_success( [ 'message' => __( 'Metrics cache cleared successfully.', 'ash-nazg' ) ] );
+}
+
+/**
+ * Render one endpoint group's heading and table.
+ *
+ * @param string $group     Group name.
+ * @param array  $endpoints List of endpoint results.
+ * @param int    $cached_at Unix timestamp the group was probed.
+ * @return string Group markup.
+ */
+function render_endpoint_group( $group, $endpoints, $cached_at ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter -- Consumed by the included partial via shared scope.
+	ob_start();
+	require ASH_NAZG_PLUGIN_DIR . 'includes/views/partials/endpoint-group.php';
+	return ob_get_clean();
+}
+
+/**
+ * AJAX handler: probe one endpoint group and return its rendered table.
+ *
+ * The dashboard calls this once per group so the live probes are spread
+ * across separate requests instead of all running during the page load.
+ *
+ * @return void
+ */
+function ajax_probe_endpoint_group() {
+	check_ajax_referer( 'ash_nazg_probe_endpoint_group', 'nonce' );
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ], 403 );
+	}
+
+	require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
+
+	$group = isset( $_POST['group'] ) ? sanitize_text_field( wp_unslash( $_POST['group'] ) ) : '';
+
+	if ( ! isset( API\get_endpoint_group_scopes()[ $group ] ) ) {
+		wp_send_json_error( [ 'message' => __( 'Unknown endpoint group.', 'ash-nazg' ) ], 400 );
+	}
+
+	$result = API\probe_and_cache_endpoint_group( $group );
+
+	$counts = [
+		'success' => 0,
+		'unavailable' => 0,
+		'error' => 0,
+	];
+	foreach ( $result['endpoints'] as $endpoint ) {
+		if ( 'success' === $endpoint['status'] ) {
+			++$counts['success'];
+		} elseif ( 'unavailable' === $endpoint['status'] ) {
+			++$counts['unavailable'];
+		} else {
+			++$counts['error'];
+		}
+	}
+
+	wp_send_json_success(
+		[
+			'html' => empty( $result['endpoints'] ) ? '' : render_endpoint_group( $group, $result['endpoints'], $result['cached_at'] ),
+			'counts' => $counts,
+		]
+	);
 }
 
 /**
