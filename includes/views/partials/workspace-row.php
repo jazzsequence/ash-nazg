@@ -18,7 +18,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 ?>
-<?php if ( $user_organizations ) : ?>
+<?php if ( false === $user_organizations ) : ?>
+<tr id="ash-nazg-workspace-row" class="ash-nazg-workspace-pending">
+	<th><?php esc_html_e( 'Workspace', 'ash-nazg' ); ?></th>
+	<td><small class="ash-nazg-text-muted"><?php esc_html_e( 'Loading…', 'ash-nazg' ); ?></small></td>
+</tr>
+<?php elseif ( $user_organizations ) : ?>
 	<?php
 	// Determine display org: stored preference → site owner org → first in list.
 	$display_org_id = $primary_org_id;

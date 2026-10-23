@@ -543,4 +543,27 @@ class Test_AJAX_Handlers extends TestCase {
 			$this->assertStringContainsString( "\$(document).on('click', '{$selector}'", $js, $selector );
 		}
 	}
+
+	/**
+	 * Test a cold workspace cache renders a loading row for the loader instead of hiding the row.
+	 *
+	 * get_user_organizations() returns false when nothing is cached, and the partial
+	 * must tell that apart from "no workspaces" (empty) so the AJAX loader has a row to fill in.
+	 */
+	public function test_cold_workspace_cache_renders_a_loading_row() {
+		$partial = file_get_contents( __DIR__ . '/../includes/views/partials/workspace-row.php' );
+		$api = file_get_contents( __DIR__ . '/../includes/api.php' );
+
+		$this->assertMatchesRegularExpression(
+			'/if \( false === \$user_organizations \) : \?>\s*<tr id="ash-nazg-workspace-row" class="ash-nazg-workspace-pending">/',
+			$partial,
+			'A cold cache should render the pending Workspace row'
+		);
+		$this->assertMatchesRegularExpression( '/elseif \( \$user_organizations \) : \?>/', $partial, 'An empty list should still render nothing' );
+		$this->assertMatchesRegularExpression(
+			'/function get_user_organizations\(\).*return get_transient/s',
+			$api,
+			'get_user_organizations() must stay cache-only so the page never blocks on it'
+		);
+	}
 }
