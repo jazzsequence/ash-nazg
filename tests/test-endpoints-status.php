@@ -199,7 +199,9 @@ class Test_Endpoints_Status extends TestCase {
 			);
 
 			$this->assertSame( 'skipped', $result['status'], $method );
-			$this->assertSame( 'Not probed: changes data', $result['error'], $method );
+			$this->assertStringContainsString( "this {$method} request", $result['error'], $method );
+			$this->assertStringContainsString( 'testing it would change your site', $result['error'], $method );
+			$this->assertStringContainsString( 'only ever sends read (GET) requests', $result['error'], $method );
 			$this->assertSame( $method, $result['method'] );
 			$this->assertSame( '/v1/sites/abc-123/wipe', $result['path'] );
 		}
@@ -217,7 +219,8 @@ class Test_Endpoints_Status extends TestCase {
 		);
 
 		$this->assertSame( 'skipped', $result['status'] );
-		$this->assertSame( 'Not probed: needs {build_id}', $result['error'] );
+		$this->assertStringContainsString( 'needs a build ID', $result['error'] );
+		$this->assertStringContainsString( 'no way to look up', $result['error'] );
 		$this->assertSame( '/v0/sites/abc-123/builds/{build_id}', $result['path'] );
 		$this->assertSame( 'v0', $result['version'] );
 	}
@@ -279,12 +282,13 @@ class Test_Endpoints_Status extends TestCase {
 
 		$write = API\get_endpoint_row_placeholder( [ 'v1', 'POST', '/sites/{site_id}/backups', 'Create a backup', 'Backups' ] );
 		$this->assertSame( 'skipped', $write['status'] );
-		$this->assertSame( 'Not probed: changes data', $write['error'] );
+		$this->assertStringContainsString( 'testing it would change your site', $write['error'] );
 
 		// Only the placeholder the plugin can't fill is reported, not {site_id}.
 		$needs_id = API\get_endpoint_row_placeholder( [ 'v0', 'GET', '/sites/{site_id}/builds/{build_id}', 'Get a build', 'Builds & Logs' ] );
 		$this->assertSame( 'skipped', $needs_id['status'] );
-		$this->assertSame( 'Not probed: needs {build_id}', $needs_id['error'] );
+		$this->assertStringContainsString( 'needs a build ID', $needs_id['error'] );
+		$this->assertStringNotContainsString( 'site ID', $needs_id['error'], 'Only the placeholder that cannot be filled is explained' );
 		$this->assertSame( '/v0/sites/{site_id}/builds/{build_id}', $needs_id['path'] );
 
 		$read = API\get_endpoint_row_placeholder( [ 'v1', 'GET', '/sites/{site_id}/environments/{env}/backups', 'List backups', 'Backups' ] );
@@ -311,5 +315,38 @@ class Test_Endpoints_Status extends TestCase {
 				$this->assertSame( 'skipped', $row['status'], $entry[2] );
 			}
 		}
+	}
+
+	/**
+	 * Test the reason explains each kind of method in plain words.
+	 */
+	public function test_skip_reasons_say_what_the_request_does() {
+		$this->load_registry_dependencies();
+
+		$this->assertStringContainsString( 'creates or triggers something', API\describe_skip_reason( 'POST', [] ) );
+		$this->assertStringContainsString( 'updates something', API\describe_skip_reason( 'PUT', [] ) );
+		$this->assertStringContainsString( 'deletes something', API\describe_skip_reason( 'DELETE', [] ) );
+	}
+
+	/**
+	 * Test every placeholder in the registry that the plugin cannot fill has a plain-words description.
+	 *
+	 * An undescribed one would show as a bare {placeholder}, which is the opaque reason users complained about.
+	 */
+	public function test_every_unresolvable_placeholder_is_described() {
+		$this->load_registry_dependencies();
+
+		$undescribed = [];
+		foreach ( API\get_endpoint_registry() as $entry ) {
+			preg_match_all( '/\\{(\\w+)\\}/', $entry[2], $matches );
+
+			foreach ( $matches[1] as $name ) {
+				if ( '{' . $name . '}' === API\describe_placeholder( $name ) ) {
+					$undescribed[ $name ] = true;
+				}
+			}
+		}
+
+		$this->assertSame( [], array_keys( $undescribed ), 'These placeholders have no plain-words description' );
 	}
 }

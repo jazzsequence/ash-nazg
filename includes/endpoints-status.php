@@ -202,6 +202,71 @@ function resolve_endpoint_path( $template, $context ) {
 }
 
 /**
+ * Describe a path placeholder in plain words.
+ *
+ * @param string $name Placeholder name without braces, e.g. build_id.
+ * @return string Description, e.g. "a build ID".
+ */
+function describe_placeholder( $name ) {
+	$descriptions = [
+		'build_id' => __( 'a build ID', 'ash-nazg' ),
+		'backup_id' => __( 'a backup ID', 'ash-nazg' ),
+		'workflow_id' => __( 'a workflow ID', 'ash-nazg' ),
+		'name' => __( 'a secret name', 'ash-nazg' ),
+		'domain' => __( 'a domain name', 'ash-nazg' ),
+		'key_id' => __( 'an SSH key ID', 'ash-nazg' ),
+		'fingerprint' => __( 'an SSH key fingerprint', 'ash-nazg' ),
+		'element' => __( 'a backup element (code, database or files)', 'ash-nazg' ),
+		'day' => __( 'a day of the week', 'ash-nazg' ),
+		'tag' => __( 'a site tag', 'ash-nazg' ),
+		'addon_type' => __( 'an addon type', 'ash-nazg' ),
+		'user_id' => __( 'your Pantheon user ID, which could not be loaded', 'ash-nazg' ),
+		'workspace_id' => __( 'this site\'s workspace ID, which could not be loaded', 'ash-nazg' ),
+		'upstream_id' => __( 'this site\'s upstream ID, which could not be loaded', 'ash-nazg' ),
+		'site_name' => __( 'this site\'s name, which could not be loaded', 'ash-nazg' ),
+		'site_id' => __( 'this site\'s ID, which could not be detected', 'ash-nazg' ),
+		'env' => __( 'an environment name, which could not be detected', 'ash-nazg' ),
+		'start_time' => __( 'a start time', 'ash-nazg' ),
+		'multidev_name' => __( 'a multidev name', 'ash-nazg' ),
+	];
+
+	return $descriptions[ $name ] ?? '{' . $name . '}';
+}
+
+/**
+ * Explain, in plain words, why an endpoint is listed but not probed.
+ *
+ * @param string $method  HTTP method.
+ * @param array  $missing Placeholders that couldn't be filled in, with braces (reads only).
+ * @return string The reason.
+ */
+function describe_skip_reason( $method, $missing ) {
+	if ( 'GET' === $method ) {
+		$needs = array_map(
+			function ( $placeholder ) {
+				return describe_placeholder( trim( $placeholder, '{}' ) );
+			},
+			$missing
+		);
+
+		/* translators: %s: what the request needs, e.g. "a build ID" */
+		return sprintf( __( 'Not tested: this read-only request needs %s, which Ash Nazg has no way to look up.', 'ash-nazg' ), implode( ', ', $needs ) );
+	}
+
+	$effects = [
+		'POST' => __( 'creates or triggers something', 'ash-nazg' ),
+		'PUT' => __( 'updates something', 'ash-nazg' ),
+		'PATCH' => __( 'updates something', 'ash-nazg' ),
+		'DELETE' => __( 'deletes something', 'ash-nazg' ),
+	];
+
+	/* translators: 1: HTTP method, 2: what the request does */
+	$message = __( 'Not tested: this %1$s request %2$s, so testing it would change your site. Ash Nazg only ever sends read (GET) requests.', 'ash-nazg' );
+
+	return sprintf( $message, $method, $effects[ $method ] ?? __( 'changes something', 'ash-nazg' ) );
+}
+
+/**
  * Build the result for an endpoint that is listed but not probed.
  *
  * @param array  $entry   Registry entry: [ version, method, path, summary, group ].
@@ -216,10 +281,7 @@ function build_skipped_endpoint_result( $entry, $path, $missing ) {
 		'description' => '',
 		'status' => 'skipped',
 		'data' => null,
-		'error' => 'GET' === $entry[1]
-			/* translators: %s: comma-separated list of placeholders, e.g. {build_id} */
-			? sprintf( __( 'Not probed: needs %s', 'ash-nazg' ), implode( ', ', $missing ) )
-			: __( 'Not probed: changes data', 'ash-nazg' ),
+		'error' => describe_skip_reason( $entry[1], $missing ),
 		'method' => $entry[1],
 		'version' => $entry[0],
 	];
