@@ -2982,6 +2982,7 @@ function ajax_probe_endpoint_group() {
 	$counts = [
 		'success' => 0,
 		'unavailable' => 0,
+		'skipped' => 0,
 		'error' => 0,
 	];
 	foreach ( $result['endpoints'] as $endpoint ) {
@@ -2989,6 +2990,8 @@ function ajax_probe_endpoint_group() {
 			++$counts['success'];
 		} elseif ( 'unavailable' === $endpoint['status'] ) {
 			++$counts['unavailable'];
+		} elseif ( 'skipped' === $endpoint['status'] ) {
+			++$counts['skipped'];
 		} else {
 			++$counts['error'];
 		}

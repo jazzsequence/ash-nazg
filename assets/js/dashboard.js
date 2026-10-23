@@ -217,13 +217,16 @@ jQuery(document).ready(function($) {
 		var $rows = $('.ash-nazg-endpoint-row');
 		var ok = $rows.filter('[data-status="success"]').length;
 		var unavailable = $rows.filter('[data-status="unavailable"]').length;
-		var errors = $rows.length - ok - unavailable;
+		var skipped = $rows.filter('[data-status="skipped"]').length;
+		var errors = $rows.length - ok - unavailable - skipped;
 
 		$('#ash-nazg-endpoints-ok').text(ok);
 		$('#ash-nazg-endpoints-unavailable').text(unavailable);
+		$('#ash-nazg-endpoints-skipped').text(skipped);
 		$('#ash-nazg-endpoints-error').text(errors);
 		$('#ash-nazg-endpoints-total').text($rows.length);
 		$('#ash-nazg-endpoints-unavailable-wrap').toggleClass('ash-nazg-hidden', unavailable === 0);
+		$('#ash-nazg-endpoints-skipped-wrap').toggleClass('ash-nazg-hidden', skipped === 0);
 		$('#ash-nazg-endpoints-error-wrap').toggleClass('ash-nazg-hidden', errors === 0);
 	}
 

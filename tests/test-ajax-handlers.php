@@ -461,4 +461,19 @@ class Test_AJAX_Handlers extends TestCase {
 			'The partial should not echo any variable without escaping'
 		);
 	}
+
+	/**
+	 * Test that endpoints which are listed but not probed (writes, or reads that need an ID
+	 * we can't supply) get their own status instead of being reported as errors.
+	 */
+	public function test_skipped_endpoints_are_not_reported_as_errors() {
+		$partial = file_get_contents( __DIR__ . '/../includes/views/partials/endpoint-group.php' );
+		$admin = file_get_contents( __DIR__ . '/../includes/admin.php' );
+		$js = file_get_contents( __DIR__ . '/../assets/js/dashboard.js' );
+
+		$this->assertStringContainsString( "'skipped' === \$endpoint['status']", $partial );
+		$this->assertStringContainsString( "++\$counts['skipped']", $admin );
+		$this->assertStringContainsString( 'data-status="skipped"', $js );
+		$this->assertMatchesRegularExpression( '/errors = \$rows\.length - ok - unavailable - skipped/', $js );
+	}
 }

@@ -473,6 +473,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<strong><?php esc_html_e( 'Summary:', 'ash-nazg' ); ?></strong>
 					<span class="ash-nazg-text-success">✓ <span id="ash-nazg-endpoints-ok">0</span> <?php esc_html_e( 'working', 'ash-nazg' ); ?></span>
 					<span class="ash-nazg-ml-10 ash-nazg-text-warning ash-nazg-hidden" id="ash-nazg-endpoints-unavailable-wrap">⊘ <span id="ash-nazg-endpoints-unavailable">0</span> <?php esc_html_e( 'unavailable', 'ash-nazg' ); ?></span>
+					<span class="ash-nazg-ml-10 ash-nazg-text-muted ash-nazg-hidden" id="ash-nazg-endpoints-skipped-wrap">○ <span id="ash-nazg-endpoints-skipped">0</span> <?php esc_html_e( 'not probed', 'ash-nazg' ); ?></span>
 					<span class="ash-nazg-ml-10 ash-nazg-text-error ash-nazg-hidden" id="ash-nazg-endpoints-error-wrap">✗ <span id="ash-nazg-endpoints-error">0</span> <?php esc_html_e( 'errors', 'ash-nazg' ); ?></span>
 					<span class="ash-nazg-ml-10 ash-nazg-text-muted">(<span id="ash-nazg-endpoints-total">0</span> <?php esc_html_e( 'total endpoints', 'ash-nazg' ); ?>)</span>
 				</p>

@@ -42,6 +42,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<span class="dashicons dashicons-yes-alt ash-nazg-icon-success" title="<?php esc_attr_e( 'Available', 'ash-nazg' ); ?>"></span>
 						<?php elseif ( 'unavailable' === $endpoint['status'] ) : ?>
 							<span class="dashicons dashicons-minus ash-nazg-icon-warning" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Unavailable', 'ash-nazg' ) ); ?>"></span>
+						<?php elseif ( 'skipped' === $endpoint['status'] ) : ?>
+							<span class="dashicons dashicons-minus ash-nazg-icon-locked" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Not probed', 'ash-nazg' ) ); ?>"></span>
 						<?php else : ?>
 							<span class="dashicons dashicons-dismiss ash-nazg-icon-error" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Error', 'ash-nazg' ) ); ?>"></span>
 						<?php endif; ?>
@@ -52,7 +54,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<br><small class="ash-nazg-text-muted"><?php echo esc_html( $endpoint['description'] ); ?></small>
 						<?php endif; ?>
 					</td>
-					<td><code class="ash-nazg-tiny-text"><?php echo esc_html( $endpoint['path'] ); ?></code></td>
+					<td><code class="ash-nazg-tiny-text"><?php echo esc_html( trim( ( $endpoint['method'] ?? '' ) . ' ' . $endpoint['path'] ) ); ?></code></td>
 					<td>
 						<?php if ( $cached_at ) : ?>
 							<small class="ash-nazg-text-muted"><?php echo esc_html( human_time_diff( $cached_at ) ); ?> <?php esc_html_e( 'ago', 'ash-nazg' ); ?></small>
@@ -70,6 +72,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 									</div>
 								<?php endif; ?>
 							<?php endforeach; ?>
+						<?php elseif ( 'skipped' === $endpoint['status'] ) : ?>
+							<small class="ash-nazg-text-muted"><?php echo esc_html( $endpoint['error'] ?? '' ); ?></small>
 						<?php elseif ( 'success' !== $endpoint['status'] && ! empty( $endpoint['error'] ) ) : ?>
 							<small class="ash-nazg-text-error"><?php echo esc_html( $endpoint['error'] ); ?></small>
 						<?php else : ?>
