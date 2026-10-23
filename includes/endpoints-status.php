@@ -218,9 +218,9 @@ function get_all_endpoints_status( $site_id = null, $env = null, $user_id = null
 
 	if ( $user_id ) {
 		$user_endpoints['User'][] = test_endpoint(
-			'/current-user?currentUser_workspacesConnection_first=50',
+			'/current-user',
 			__( 'User Profile', 'ash-nazg' ),
-			__( 'Current user information, SSH keys, and workspace memberships', 'ash-nazg' )
+			__( 'Current user information and SSH keys', 'ash-nazg' )
 		);
 
 		$user_endpoints['User'][] = test_endpoint(

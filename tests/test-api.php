@@ -259,14 +259,29 @@ class Test_API extends TestCase {
 	}
 
 	/**
-	 * Test that get_user_organizations derives workspaces from get_current_pantheon_user().
+	 * Test that get_user_organizations fetches the workspace connection separately and caches it.
+	 *
+	 * Live-timed: asking /current-user for 50 workspaces costs ~21s vs ~2.5s without,
+	 * so the workspace list must not ride along on the call that gates the dashboard.
 	 */
-	public function test_get_user_organizations_derives_from_current_user() {
+	public function test_get_user_organizations_fetches_workspaces_separately() {
 		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
 		$this->assertMatchesRegularExpression(
-			'/function get_user_organizations.*get_current_pantheon_user.*workspacesConnection/s',
+			'/function get_user_organizations\( \$cached_only = false \).*get_transient.*currentUser_workspacesConnection_first=50.*set_transient/s',
 			$file_contents,
-			'get_user_organizations should derive workspaces from get_current_pantheon_user()'
+			'get_user_organizations should fetch its own cached workspace list and support a cached-only mode'
+		);
+	}
+
+	/**
+	 * Test that get_current_pantheon_user does not request the expensive workspace connection.
+	 */
+	public function test_get_current_pantheon_user_skips_workspace_connection() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+		$this->assertMatchesRegularExpression(
+			"/function get_current_pantheon_user\(\).*api_request\( '\/current-user', 'GET' \)/s",
+			$file_contents,
+			'get_current_pantheon_user should call /current-user without the workspace page size'
 		);
 	}
 

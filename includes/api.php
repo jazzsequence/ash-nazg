@@ -628,10 +628,12 @@ function get_current_pantheon_user() {
 	}
 
 	/*
-	 * currentUser_workspacesConnection_first must be set explicitly - it's a
-	 * Relay-style connection with no documented default page size.
+	 * Deliberately no currentUser_workspacesConnection_first here. Live-timed,
+	 * first=50 takes ~21s (13 workspaces) versus ~2.5s without it, and this
+	 * call gates the whole dashboard. Workspaces are fetched separately, and
+	 * lazily, by get_user_organizations().
 	 */
-	$result = api_request( '/current-user?currentUser_workspacesConnection_first=50', 'GET' );
+	$result = api_request( '/current-user', 'GET' );
 
 	if ( is_wp_error( $result ) ) {
 		Helpers\debug_log( sprintf( 'Failed to get Pantheon user profile: %s', $result->get_error_message() ) );
@@ -667,11 +669,38 @@ function get_current_pantheon_user() {
  * the old [{id, organization: {id, profile: {name, machine_name}}}] contract
  * so the Dashboard page's rendering loop doesn't need to change.
  *
- * @return array|null Array of org-shaped membership objects, or null on error.
+ * @param bool $cached_only Optional. Return false instead of fetching when the cache is cold.
+ * @return array|false|null Array of org-shaped membership objects, false if `$cached_only` and cold, null on error.
  */
-function get_user_organizations() {
-	$user = get_current_pantheon_user();
-	if ( ! $user || empty( $user['workspacesConnection']['edges'] ) ) {
+function get_user_organizations( $cached_only = false ) {
+	$wp_user_id = get_current_user_id();
+	if ( ! $wp_user_id ) {
+		return null;
+	}
+
+	$cache_key = sprintf( 'ash_nazg_user_workspaces_%d', $wp_user_id );
+	$cached    = get_transient( $cache_key );
+
+	if ( false !== $cached ) {
+		return $cached;
+	}
+
+	// Cold cache and the caller can't wait ~20s for it.
+	if ( $cached_only ) {
+		return false;
+	}
+
+	/*
+	 * currentUser_workspacesConnection_first must be set explicitly - it's a
+	 * Relay-style connection that returns a single workspace by default.
+	 */
+	$user = api_request( '/current-user?currentUser_workspacesConnection_first=50', 'GET' );
+	if ( is_wp_error( $user ) ) {
+		Helpers\debug_log( sprintf( 'Failed to get Pantheon workspaces: %s', $user->get_error_message() ) );
+		return null;
+	}
+
+	if ( empty( $user['workspacesConnection']['edges'] ) ) {
 		return null;
 	}
 
@@ -693,6 +722,8 @@ function get_user_organizations() {
 			],
 		];
 	}
+
+	set_transient( $cache_key, $memberships, DAY_IN_SECONDS );
 
 	return $memberships;
 }
@@ -1176,6 +1207,12 @@ function get_effective_environment( $site_id = null ) {
  * @return void
  */
 function clear_cache() {
+	$wp_user_id = get_current_user_id();
+	if ( $wp_user_id ) {
+		delete_transient( sprintf( 'ash_nazg_pantheon_user_%d', $wp_user_id ) );
+		delete_transient( sprintf( 'ash_nazg_user_workspaces_%d', $wp_user_id ) );
+	}
+
 	// Clear site-specific caches if we can detect site ID.
 	$site_id = get_pantheon_site_id();
 	if ( $site_id ) {
