@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $endpoint_probed_at = $endpoint['cached_at'] ?? $cached_at;
 $endpoint_row_class = 'pending' === $endpoint['status'] ? 'ash-nazg-endpoint-row ash-nazg-endpoint-pending' : 'ash-nazg-endpoint-row';
 ?>
-<tr class="<?php echo esc_attr( $endpoint_row_class ); ?>" data-status="<?php echo esc_attr( $endpoint['status'] ); ?>" data-entry-id="<?php echo esc_attr( $endpoint['id'] ?? '' ); ?>">
+<tr class="<?php echo esc_attr( $endpoint_row_class ); ?>" data-status="<?php echo esc_attr( $endpoint['status'] ); ?>" data-entry-id="<?php echo esc_attr( $endpoint['id'] ?? '' ); ?>" data-version="<?php echo esc_attr( $endpoint['version'] ?? '' ); ?>">
 	<td class="ash-nazg-th-icon">
 		<?php if ( 'success' === $endpoint['status'] ) : ?>
 			<span class="dashicons dashicons-yes-alt ash-nazg-icon-success" title="<?php esc_attr_e( 'Available', 'ash-nazg' ); ?>"></span>

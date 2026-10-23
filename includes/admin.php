@@ -322,6 +322,8 @@ function enqueue_assets( $hook ) {
 					'saveOrgError'      => __( 'Failed to save organization preference.', 'ash-nazg' ),
 					'endpointError' => __( 'Could not check this endpoint. Reload the page to try again.', 'ash-nazg' ),
 					'workspacesError' => __( 'Could not load workspaces. Reload the page to try again.', 'ash-nazg' ),
+					/* translators: %d: number of API endpoints shown after filtering */
+					'endpointsShown' => __( '%d endpoints shown', 'ash-nazg' ),
 				],
 			]
 		);

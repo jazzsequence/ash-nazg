@@ -566,4 +566,34 @@ class Test_AJAX_Handlers extends TestCase {
 			'get_user_organizations() must stay cache-only so the page never blocks on it'
 		);
 	}
+
+	/**
+	 * Test the status tabs and version filter are wired up.
+	 *
+	 * Rows carry their version, the view has the four tabs and the version select,
+	 * and the JS re-applies the filters each time a row is replaced.
+	 */
+	public function test_endpoint_tabs_and_version_filter_are_wired() {
+		$row = file_get_contents( __DIR__ . '/../includes/views/partials/endpoint-row.php' );
+		$view = file_get_contents( __DIR__ . '/../includes/views/dashboard.php' );
+		$js = file_get_contents( __DIR__ . '/../assets/js/dashboard.js' );
+
+		$this->assertStringContainsString( 'data-version="<?php echo esc_attr(', $row );
+
+		foreach ( [ 'all', 'working', 'attention', 'skipped' ] as $filter ) {
+			$this->assertStringContainsString( 'data-filter="' . $filter . '"', $view, $filter );
+			$this->assertStringContainsString( 'data-count="' . $filter . '"', $view, $filter );
+		}
+
+		$this->assertStringContainsString( 'id="ash-nazg-endpoint-version"', $view );
+
+		// A group of toggle buttons with a live region, not the ARIA tabs pattern (which needs a tabpanel and arrow-key handling).
+		$this->assertStringContainsString( 'role="group"', $view );
+		$this->assertStringContainsString( 'aria-pressed=', $view );
+		$this->assertStringNotContainsString( 'role="tab"', $view );
+		$this->assertStringContainsString( 'role="status" aria-live="polite" id="ash-nazg-endpoint-filter-status"', $view );
+		$this->assertStringContainsString( 'announceEndpointFilter()', $js );
+		$this->assertMatchesRegularExpression( '/function updateEndpointSummary\\(\\).*applyEndpointFilters\\(\\);/s', $js, 'Filters should be re-applied as rows load' );
+		$this->assertMatchesRegularExpression( '/function applyEndpointFilters.*ash-nazg-endpoint-group.*ash-nazg-hidden/s', $js, 'Groups with no visible rows should be hidden' );
+	}
 }

@@ -270,6 +270,83 @@ jQuery(document).ready(function($) {
 	// Endpoints are listed immediately; the ones that can be probed are checked
 	// one request at a time after the page has loaded.
 
+	// Client-side filters over the endpoint rows already on the page: a status tab
+	// and an API version, so no extra requests are needed.
+	var endpointFilter = 'all';
+	var endpointVersion = '';
+
+	function endpointRowMatchesFilter($row, filter) {
+		var status = $row.attr('data-status');
+
+		if (filter === 'working') {
+			return status === 'success';
+		}
+
+		if (filter === 'attention') {
+			return status === 'error' || status === 'unavailable';
+		}
+
+		if (filter === 'skipped') {
+			return status === 'skipped';
+		}
+
+		return true;
+	}
+
+	function applyEndpointFilters() {
+		var counts = { all: 0, working: 0, attention: 0, skipped: 0 };
+
+		$('.ash-nazg-endpoint-row').each(function() {
+			var $row = $(this);
+			var inVersion = endpointVersion === '' || $row.attr('data-version') === endpointVersion;
+
+			if (inVersion) {
+				counts.all++;
+				$.each(['working', 'attention', 'skipped'], function(index, filter) {
+					if (endpointRowMatchesFilter($row, filter)) {
+						counts[filter]++;
+					}
+				});
+			}
+
+			$row.toggleClass('ash-nazg-hidden', !(inVersion && endpointRowMatchesFilter($row, endpointFilter)));
+		});
+
+		$('.ash-nazg-endpoint-group').each(function() {
+			var $group = $(this);
+			$group.toggleClass('ash-nazg-hidden', $group.find('.ash-nazg-endpoint-row:not(.ash-nazg-hidden)').length === 0);
+		});
+
+		$.each(counts, function(filter, count) {
+			$('.ash-nazg-endpoint-tab-count[data-count="' + filter + '"]').text(count);
+		});
+	}
+
+	// Tell screen reader users how many endpoints the filter left, but only after
+	// they change it, not each time a row finishes loading.
+	function announceEndpointFilter() {
+		var shown = $('.ash-nazg-endpoint-row:not(.ash-nazg-hidden)').length;
+
+		$('#ash-nazg-endpoint-filter-status').text(ashNazgDashboard.i18n.endpointsShown.replace('%d', shown));
+	}
+
+	$('.ash-nazg-endpoint-tabs').on('click', '.nav-tab', function(e) {
+		e.preventDefault();
+
+		endpointFilter = $(this).data('filter');
+		$('.ash-nazg-endpoint-tabs .nav-tab').removeClass('nav-tab-active').attr('aria-pressed', 'false');
+		$(this).addClass('nav-tab-active').attr('aria-pressed', 'true');
+
+		applyEndpointFilters();
+		announceEndpointFilter();
+	});
+
+	$('#ash-nazg-endpoint-version').on('change', function() {
+		endpointVersion = $(this).val();
+		applyEndpointFilters();
+		announceEndpointFilter();
+	});
+
 	function updateEndpointSummary() {
 		var $rows = $('.ash-nazg-endpoint-row');
 		var ok = $rows.filter('[data-status="success"]').length;
@@ -286,6 +363,8 @@ jQuery(document).ready(function($) {
 		$('#ash-nazg-endpoints-unavailable-wrap').toggleClass('ash-nazg-hidden', unavailable === 0);
 		$('#ash-nazg-endpoints-skipped-wrap').toggleClass('ash-nazg-hidden', skipped === 0);
 		$('#ash-nazg-endpoints-error-wrap').toggleClass('ash-nazg-hidden', errors === 0);
+
+		applyEndpointFilters();
 	}
 
 	// Rows rendered as "checking" are probed one request each, in order, so no
