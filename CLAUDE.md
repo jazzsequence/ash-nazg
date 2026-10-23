@@ -161,7 +161,7 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
   - Configurable via Settings page in WordPress admin
   - Suitable for local development or testing
   - Database contents never committed to git
-- **v0 session tokens** (internal only, not user-facing): the Personal Access Token above is exchanged for a short-lived v0 session token, used only by the small set of hybrid-fallback functions with no v1 equivalent
+- **v0 session tokens** (internal only, not user-facing): the Personal Access Token above is exchanged for a short-lived v0 session token, used by the small set of hybrid-fallback functions with no v1 equivalent, and by `get_addon_env_variables()` for `terminus.pantheon.io` (local/Lando only; live-verified that host rejects a raw PAT Bearer with a 401 and only accepts a session token)
   - Cached in WordPress transients, expires after 1 hour
   - Stored in database or Redis (not committed)
   - Auto-refreshed when expired
@@ -194,7 +194,7 @@ Site administrators want to log into one place. This plugin brings Pantheon Dash
 - `encrypt_token( $token )` - Encrypts a token with AES-256-CBC using WordPress AUTH_SALT
 - `decrypt_token( $encrypted_token )` - Decrypts a token from user meta
 - `get_api_token( $user_id = null )` - Resolves the v1 Bearer token via `get_user_access_token()`
-- `get_v0_session_token( $user_id = null )` - Exchanges the same Personal Access Token for a v0 session token (used only by the small set of hybrid-fallback functions with no v1 equivalent), cached per-user for 1 hour
+- `get_v0_session_token( $user_id = null )` - Exchanges the same Personal Access Token for a v0 session token (used by the hybrid-fallback functions with no v1 equivalent and by `get_addon_env_variables()` for `terminus.pantheon.io`), cached per-user for 1 hour
 - `clear_v0_session_token( $user_id = null )` - Clears the per-user cached v0 session token
 
 **API Resource Functions:**
