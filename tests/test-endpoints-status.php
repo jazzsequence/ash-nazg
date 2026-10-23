@@ -8,6 +8,19 @@
 use PHPUnit\Framework\TestCase;
 use Pantheon\AshNazg\API;
 
+// This suite runs outside WordPress; stub the one i18n function the probe code needs.
+if ( ! function_exists( '__' ) ) {
+	/**
+	 * Test stub for WordPress's __().
+	 *
+	 * @param string $text Text to translate.
+	 * @return string The text, untranslated.
+	 */
+	function __( $text ) {
+		return $text;
+	}
+}
+
 /**
  * Test the Dashboard's API Endpoints Status diagnostics.
  *
@@ -152,5 +165,89 @@ class Test_Endpoints_Status extends TestCase {
 		$this->assertSame( [], API\probe_endpoint_group( 'User', 'site-id', 'dev', null ) );
 		$this->assertSame( [], API\probe_endpoint_group( 'Authorization', 'site-id', 'dev', null ) );
 		$this->assertSame( [], API\probe_endpoint_group( 'Nonexistent', 'site-id', 'dev', 'user-id' ) );
+	}
+
+	/**
+	 * Load the registry's ABSPATH-guarded file safely outside WordPress.
+	 */
+	private function load_registry_dependencies() {
+		if ( ! defined( 'ABSPATH' ) ) {
+			define( 'ABSPATH', __DIR__ . '/' );
+		}
+
+		if ( ! defined( 'ASH_NAZG_PLUGIN_DIR' ) ) {
+			define( 'ASH_NAZG_PLUGIN_DIR', dirname( ASH_NAZG_PLUGIN_FILE ) . '/' );
+		}
+
+		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/endpoints-status.php';
+	}
+
+	/**
+	 * Test the registry's groups are unique and ordered.
+	 */
+	public function test_registry_groups_are_unique() {
+		$this->load_registry_dependencies();
+
+		$groups = API\get_endpoint_groups();
+
+		$this->assertSame( $groups, array_values( array_unique( $groups ) ) );
+		$this->assertContains( 'Backups', $groups );
+		$this->assertContains( 'Environments', $groups );
+	}
+
+	/**
+	 * Test placeholders are filled, URL-encoded, and unknown ones are reported.
+	 */
+	public function test_resolve_endpoint_path_fills_known_placeholders() {
+		$this->load_registry_dependencies();
+
+		$resolved = API\resolve_endpoint_path(
+			'/sites/{site_id}/environments/{env}/backups/{backup_id}',
+			[
+				'site_id' => 'abc-123',
+				'env' => 'multi dev',
+			]
+		);
+
+		$this->assertSame( '/sites/abc-123/environments/multi%20dev/backups/{backup_id}', $resolved['path'] );
+		$this->assertSame( [ '{backup_id}' ], $resolved['missing'] );
+	}
+
+	/**
+	 * Test writes are listed but never sent.
+	 *
+	 * Probing a POST, PUT or DELETE would change data on the site.
+	 */
+	public function test_writes_are_listed_not_probed() {
+		$this->load_registry_dependencies();
+
+		foreach ( [ 'POST', 'PUT', 'PATCH', 'DELETE' ] as $method ) {
+			$result = API\probe_registry_entry(
+				[ 'v1', $method, '/sites/{site_id}/wipe', 'Do something', 'Sites' ],
+				[ 'site_id' => 'abc-123' ]
+			);
+
+			$this->assertSame( 'skipped', $result['status'], $method );
+			$this->assertSame( 'Not probed: changes data', $result['error'], $method );
+			$this->assertSame( $method, $result['method'] );
+			$this->assertSame( '/v1/sites/abc-123/wipe', $result['path'] );
+		}
+	}
+
+	/**
+	 * Test a read needing an ID we can't supply is listed with the reason, and v0 paths are prefixed.
+	 */
+	public function test_unresolvable_reads_are_listed_with_reason() {
+		$this->load_registry_dependencies();
+
+		$result = API\probe_registry_entry(
+			[ 'v0', 'GET', '/sites/{site_id}/builds/{build_id}', 'Get a build', 'Builds & Logs' ],
+			[ 'site_id' => 'abc-123' ]
+		);
+
+		$this->assertSame( 'skipped', $result['status'] );
+		$this->assertSame( 'Not probed: needs {build_id}', $result['error'] );
+		$this->assertSame( '/v0/sites/abc-123/builds/{build_id}', $result['path'] );
+		$this->assertSame( 'v0', $result['version'] );
 	}
 }
