@@ -461,4 +461,28 @@ class Test_API extends TestCase {
 			'changing an addon should clear the endpoint group caches'
 		);
 	}
+
+	/**
+	 * Test endpoint probes are cached per endpoint, read without an API call, and gated on the user ID.
+	 */
+	public function test_endpoint_results_are_cached_per_entry() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+
+		preg_match( '/function get_cached_endpoint_results\(.*?\n\}\n/s', $file_contents, $reader );
+		$this->assertNotEmpty( $reader, 'get_cached_endpoint_results should exist' );
+		$this->assertStringContainsString( 'get_transient', $reader[0] );
+		$this->assertStringNotContainsString( 'probe_', $reader[0], 'the cache reader must never probe' );
+
+		$this->assertMatchesRegularExpression(
+			'/function probe_and_cache_endpoint_entry.*find_endpoint_entry\(.*probe_registry_entry\(.*if \( \$user_id \).*set_transient/s',
+			$file_contents,
+			'probe_and_cache_endpoint_entry should probe one entry and only cache once the user ID is known'
+		);
+
+		$this->assertMatchesRegularExpression(
+			'/function clear_endpoint_group_caches.*delete_transient\( get_endpoint_results_cache_key/s',
+			$file_contents,
+			'clear_endpoint_group_caches should clear the per-endpoint results too'
+		);
+	}
 }

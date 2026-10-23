@@ -1310,6 +1310,74 @@ function get_endpoint_group_cache_key( $group, $site_id, $env ) {
 }
 
 /**
+ * Get the transient key for one group's per-endpoint probe results.
+ *
+ * @param string $group   Group name.
+ * @param string $site_id Site UUID.
+ * @param string $env     Environment name.
+ * @return string Transient key.
+ */
+function get_endpoint_results_cache_key( $group, $site_id, $env ) {
+	return sprintf( 'ash_nazg_endpoint_results_%s_%s_%s', $site_id, $env, sanitize_key( $group ) );
+}
+
+/**
+ * Read a group's cached per-endpoint probe results, from cache only.
+ *
+ * Never makes an API request, so it is safe to call while rendering a page.
+ *
+ * @param string      $group   Group name.
+ * @param string|null $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @param string|null $env     Optional. Environment name. Auto-detected if not provided.
+ * @return array Map of entry ID => endpoint result (with a `cached_at` timestamp). Empty if nothing is cached.
+ */
+function get_cached_endpoint_results( $group, $site_id = null, $env = null ) {
+	$site_id = $site_id ? $site_id : get_pantheon_site_id();
+	$env = $env ? $env : get_pantheon_environment();
+
+	$results = get_transient( get_endpoint_results_cache_key( $group, $site_id, $env ) );
+
+	return is_array( $results ) ? $results : [];
+}
+
+/**
+ * Probe a single registry endpoint live, and cache the result.
+ *
+ * One endpoint per request keeps every request short: the slowest single
+ * read measured ~16s, whereas a whole group could take 30s or more.
+ *
+ * @param string      $id      Entry ID from get_endpoint_entry_id().
+ * @param string|null $site_id Optional. Site UUID. Auto-detected if not provided.
+ * @param string|null $env     Optional. Environment name. Auto-detected if not provided.
+ * @return array|null Endpoint result, or null if no registry entry has that ID.
+ */
+function probe_and_cache_endpoint_entry( $id, $site_id = null, $env = null ) {
+	$site_id = $site_id ? $site_id : get_pantheon_site_id();
+	$env = $env ? $env : get_pantheon_environment();
+
+	require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
+
+	$entry = find_endpoint_entry( $id );
+	if ( ! $entry ) {
+		return null;
+	}
+
+	$user_id = get_user_id();
+	$result = probe_registry_entry( $entry, get_endpoint_probe_context( $site_id, $env, $user_id ) );
+	$result['cached_at'] = time();
+
+	// Without a Pantheon user ID, user-scoped reads are listed as not probed - don't pin that for 24 hours.
+	if ( $user_id ) {
+		$key = get_endpoint_results_cache_key( $entry[4], $site_id, $env );
+		$results = get_cached_endpoint_results( $entry[4], $site_id, $env );
+		$results[ $id ] = $result;
+		set_transient( $key, $results, DAY_IN_SECONDS );
+	}
+
+	return $result;
+}
+
+/**
  * Clear every endpoint group's cached probe results for an environment.
  *
  * @param string $site_id Site UUID.
@@ -1321,6 +1389,7 @@ function clear_endpoint_group_caches( $site_id, $env ) {
 
 	foreach ( get_endpoint_groups() as $group ) {
 		delete_transient( get_endpoint_group_cache_key( $group, $site_id, $env ) );
+		delete_transient( get_endpoint_results_cache_key( $group, $site_id, $env ) );
 	}
 }
 

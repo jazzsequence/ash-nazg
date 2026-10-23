@@ -102,6 +102,64 @@ function get_endpoint_registry() {
 }
 
 /**
+ * Get a short, stable ID for a registry entry.
+ *
+ * Derived from the version, method and path so it survives regenerating the
+ * registry, unlike an array position.
+ *
+ * @param array $entry Registry entry: [ version, method, path, summary, group ].
+ * @return string 12-character ID.
+ */
+function get_endpoint_entry_id( $entry ) {
+	return substr( md5( $entry[0] . ' ' . $entry[1] . ' ' . $entry[2] ), 0, 12 );
+}
+
+/**
+ * Find a registry entry by its ID.
+ *
+ * @param string $id Entry ID from get_endpoint_entry_id().
+ * @return array|null The registry entry, or null if there is none with that ID.
+ */
+function find_endpoint_entry( $id ) {
+	foreach ( get_endpoint_registry() as $entry ) {
+		if ( get_endpoint_entry_id( $entry ) === $id ) {
+			return $entry;
+		}
+	}
+
+	return null;
+}
+
+/**
+ * List the placeholders the plugin can fill in on its own.
+ *
+ * @return string[] Placeholder names, matching the keys of get_endpoint_probe_context().
+ */
+function get_resolvable_placeholders() {
+	return [ 'site_id', 'env', 'user_id', 'workspace_id', 'upstream_id', 'site_name', 'multidev_name', 'start_time' ];
+}
+
+/**
+ * Say, without any API call, how a registry entry will be handled.
+ *
+ * Lets the page render every row immediately: only entries whose state is
+ * 'probe' need a request, and the rest can be shown as final straight away.
+ *
+ * @param array $entry Registry entry: [ version, method, path, summary, group ].
+ * @return string 'write' (changes data, never probed), 'needs-id' (a read needing an ID this
+ *                plugin can't supply), or 'probe' (a read that can be probed).
+ */
+function get_endpoint_entry_state( $entry ) {
+	if ( 'GET' !== $entry[1] ) {
+		return 'write';
+	}
+
+	preg_match_all( '/\{(\w+)\}/', $entry[2], $matches );
+
+	return array_diff( $matches[1], get_resolvable_placeholders() ) ? 'needs-id' : 'probe';
+}
+
+/**
  * Get the registry's groups, in display order.
  *
  * @return string[] Group names.

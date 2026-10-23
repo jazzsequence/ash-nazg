@@ -265,4 +265,51 @@ class Test_Endpoints_Status extends TestCase {
 		$this->assertSame( '/v0/sites/abc-123/builds/{build_id}', $result['path'] );
 		$this->assertSame( 'v0', $result['version'] );
 	}
+
+	/**
+	 * Test every registry entry has its own stable ID, and an ID finds its entry.
+	 */
+	public function test_entry_ids_are_unique_and_findable() {
+		$this->load_registry_dependencies();
+
+		$registry = API\get_endpoint_registry();
+		$ids = array_map( 'Pantheon\\AshNazg\\API\\get_endpoint_entry_id', $registry );
+
+		$this->assertCount( count( $registry ), array_unique( $ids ), 'IDs must not collide' );
+		$this->assertSame( $registry[0], API\find_endpoint_entry( $ids[0] ) );
+		$this->assertNull( API\find_endpoint_entry( 'does-not-exist' ) );
+	}
+
+	/**
+	 * Test how entries are classified without any API call.
+	 *
+	 * Writes are never probed, reads needing an ID we can't supply are listed, and only
+	 * reads whose placeholders the plugin can fill are probed.
+	 */
+	public function test_entry_state_classification() {
+		$this->load_registry_dependencies();
+
+		$this->assertSame( 'write', API\get_endpoint_entry_state( [ 'v1', 'DELETE', '/sites/{site_id}', 'x', 'g' ] ) );
+		$this->assertSame( 'write', API\get_endpoint_entry_state( [ 'v1', 'POST', '/sites/{site_id}/backups', 'x', 'g' ] ) );
+		$this->assertSame( 'needs-id', API\get_endpoint_entry_state( [ 'v1', 'GET', '/sites/{site_id}/builds/{build_id}', 'x', 'g' ] ) );
+		$this->assertSame( 'probe', API\get_endpoint_entry_state( [ 'v1', 'GET', '/sites/{site_id}/environments/{env}/backups', 'x', 'g' ] ) );
+		$this->assertSame( 'probe', API\get_endpoint_entry_state( [ 'v1', 'GET', '/current-user', 'x', 'g' ] ) );
+	}
+
+	/**
+	 * Test the plugin only ever probes reads whose placeholders it knows how to fill.
+	 *
+	 * Every registry read classified 'probe' must resolve completely given a full context.
+	 */
+	public function test_probe_state_matches_resolvable_placeholders() {
+		$this->load_registry_dependencies();
+
+		$context = array_fill_keys( API\get_resolvable_placeholders(), 'value' );
+
+		foreach ( API\get_endpoint_registry() as $entry ) {
+			if ( 'probe' === API\get_endpoint_entry_state( $entry ) ) {
+				$this->assertSame( [], API\resolve_endpoint_path( $entry[2], $context )['missing'], $entry[2] );
+			}
+		}
+	}
 }
