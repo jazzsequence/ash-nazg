@@ -54,39 +54,6 @@ function test_endpoint( $path, $name, $description = '', $use_v0 = false ) {
 }
 
 /**
- * Test the upstream update status lookup.
- *
- * Doesn't fit test_endpoint()'s single-GET pattern since the real check reads
- * the site's status from its workspace's sitesConnection, not a direct
- * per-site endpoint.
- *
- * @param string $site_id Site UUID.
- * @return array Endpoint status data, shaped like test_endpoint()'s return.
- */
-function test_upstream_status_endpoint( $site_id ) {
-	$endpoint = [
-		'name'        => __( 'Upstream Updates', 'ash-nazg' ),
-		'path'        => '/v1/workspaces/{workspaceId}',
-		'description' => __( 'Upstream update status for this site', 'ash-nazg' ),
-		'status'      => 'unknown',
-		'data'        => null,
-		'error'       => null,
-	];
-
-	$status = get_site_upstream_status( $site_id );
-
-	if ( is_wp_error( $status ) ) {
-		$endpoint['status'] = 'error';
-		$endpoint['error']  = $status->get_error_message();
-	} else {
-		$endpoint['status'] = 'success';
-		$endpoint['data']   = [ 'status' => $status ];
-	}
-
-	return $endpoint;
-}
-
-/**
  * Get the generated registry of every Pantheon API endpoint.
  *
  * @return array List of [ version, method, path, summary, group ] entries.
@@ -323,30 +290,4 @@ function probe_registry_entry( $entry, $context ) {
 	}
 
 	return build_skipped_endpoint_result( $entry, $resolved['path'], $resolved['missing'] );
-}
-
-/**
- * Probe every endpoint in a single registry group.
- *
- * Groups are probed one at a time so a caller can spread the live requests
- * across several page requests instead of running them all in one. Reads are
- * probed; everything else is listed as 'skipped' (see probe_registry_entry()).
- *
- * @param string      $group   Group name, one of get_endpoint_groups().
- * @param string|null $site_id Site UUID.
- * @param string|null $env     Environment name.
- * @param string|null $user_id Pantheon user ID.
- * @return array List of endpoint results shaped like test_endpoint()'s return. Empty for an unknown group.
- */
-function probe_endpoint_group( $group, $site_id = null, $env = null, $user_id = null ) {
-	$context = get_endpoint_probe_context( $site_id, $env, $user_id );
-	$endpoints = [];
-
-	foreach ( get_endpoint_registry() as $entry ) {
-		if ( $group === $entry[4] ) {
-			$endpoints[] = probe_registry_entry( $entry, $context );
-		}
-	}
-
-	return $endpoints;
 }

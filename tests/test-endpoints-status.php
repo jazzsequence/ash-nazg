@@ -133,50 +133,6 @@ class Test_Endpoints_Status extends TestCase {
 	}
 
 	/**
-	 * Upstream Updates should test the real status lookup, not the stale
-	 * pre-migration v0 endpoint.
-	 */
-	public function test_upstream_updates_uses_real_status_check() {
-		$file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/endpoints-status.php' );
-
-		$this->assertStringContainsString(
-			'test_upstream_status_endpoint(',
-			$file_contents,
-			'Upstream Updates should use the real workspace-based status check'
-		);
-		$this->assertStringNotContainsString(
-			"'/sites/%s/upstream-updates'",
-			$file_contents,
-			'Upstream Updates should no longer test the stale pre-migration v0 endpoint'
-		);
-	}
-
-	/**
-	 * Test that endpoints can be probed one group at a time.
-	 *
-	 * The dashboard loads groups separately so the live requests are spread
-	 * across several page requests instead of blocking one.
-	 */
-	public function test_groups_can_be_probed_individually() {
-		$this->load_registry_dependencies();
-
-		// Addons has no reads, so probing it sends no request: every endpoint is listed, none probed.
-		$addons = API\probe_endpoint_group( 'Addons', null, 'dev', 'user-id' );
-		$expected = array_filter(
-			API\get_endpoint_registry(),
-			function ( $entry ) {
-				return 'Addons' === $entry[4];
-			}
-		);
-
-		$this->assertCount( count( $expected ), $addons );
-		$this->assertNotEmpty( $addons );
-		$this->assertSame( [ 'skipped' ], array_values( array_unique( array_column( $addons, 'status' ) ) ) );
-
-		$this->assertSame( [], API\probe_endpoint_group( 'Nonexistent', null, 'dev', 'user-id' ) );
-	}
-
-	/**
 	 * Load the registry's ABSPATH-guarded file safely outside WordPress.
 	 */
 	private function load_registry_dependencies() {

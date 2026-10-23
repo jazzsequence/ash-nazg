@@ -2,14 +2,13 @@
 /**
  * One API endpoint group: heading and results table.
  *
- * Rendered inline for cached groups and by the AJAX handler for groups
- * probed on demand, so the markup stays identical.
+ * Each endpoint row comes from the shared endpoint-row.php partial.
  *
  * @package Pantheon\AshNazg
  *
  * @var string $group     Group name.
- * @var array  $endpoints List of endpoint results from probe_endpoint_group().
- * @var int    $cached_at Unix timestamp the group was probed.
+ * @var array  $endpoints List of endpoint results, one per endpoint in the group.
+ * @var int    $cached_at Fallback Unix timestamp for rows without their own.
  */
 
 // Exit if accessed directly.
