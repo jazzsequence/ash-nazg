@@ -425,4 +425,28 @@ class Test_API extends TestCase {
 		$this->assertSame( 'already-set', $normalized['name'] );
 		$this->assertSame( 'already-set', $normalized['framework'] );
 	}
+
+	/**
+	 * Test that endpoint groups are cached individually, and read from cache without an API call.
+	 */
+	public function test_endpoint_groups_are_cached_individually() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+
+		preg_match( '/function get_cached_endpoint_group\(.*?\n\}\n/s', $file_contents, $cached );
+		$this->assertNotEmpty( $cached, 'get_cached_endpoint_group should exist' );
+		$this->assertStringContainsString( 'get_transient', $cached[0] );
+		$this->assertStringNotContainsString( 'probe_endpoint_group', $cached[0], 'the cache reader must never probe' );
+
+		$this->assertMatchesRegularExpression(
+			'/function probe_and_cache_endpoint_group.*probe_endpoint_group\(.*if \( ! empty\( \$result\[\'endpoints\'\] \) \).*set_transient/s',
+			$file_contents,
+			'probe_and_cache_endpoint_group should only cache a non-empty probe result'
+		);
+
+		$this->assertMatchesRegularExpression(
+			'/function clear_cache.*get_endpoint_group_scopes.*delete_transient\( get_endpoint_group_cache_key/s',
+			$file_contents,
+			'clear_cache should clear every group cache'
+		);
+	}
 }
