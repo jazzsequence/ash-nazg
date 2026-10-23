@@ -6,6 +6,7 @@
  */
 
 use Pantheon\AshNazg\API;
+use Pantheon\AshNazg\Helpers;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -294,16 +295,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<th><?php esc_html_e( 'WordPress', 'ash-nazg' ); ?></th>
 						<td><code><?php echo esc_html( get_bloginfo( 'version' ) ); ?></code></td>
 					</tr>
+					<?php $db_server = Helpers\get_database_version(); ?>
 					<tr>
-						<th><?php esc_html_e( 'MySQL', 'ash-nazg' ); ?></th>
-						<td>
-							<code>
-								<?php
-								global $wpdb;
-								echo esc_html( $wpdb->db_version() );
-								?>
-							</code>
-						</td>
+						<th><?php echo esc_html( $db_server['name'] ); ?></th>
+						<td><code><?php echo esc_html( $db_server['version'] ); ?></code></td>
 					</tr>
 					<?php if ( defined( 'PANTHEON_MU_PLUGIN_VERSION' ) ) : ?>
 						<tr>

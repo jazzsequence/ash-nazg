@@ -292,3 +292,44 @@ function ensure_environment( $env = null ) {
 
 	return $env;
 }
+
+/**
+ * Parse a database server version string into a product name and version.
+ *
+ * @param string $raw Raw `SELECT VERSION()` output, e.g. "10.4.34-MariaDB-1:10.4.34+maria~ubu2004-log".
+ * @return array{name: string, version: string} Product name and numeric version.
+ */
+function parse_database_version( $raw ) {
+	// Older MariaDB releases prefix "5.5.5-" for replication compatibility.
+	$raw = preg_replace( '/^5\.5\.5-/', '', (string) $raw );
+
+	$name = false !== stripos( $raw, 'mariadb' ) ? 'MariaDB' : 'MySQL';
+
+	preg_match( '/^\d+(?:\.\d+){0,2}/', $raw, $matches );
+
+	return [
+		'name' => $name,
+		'version' => $matches[0] ?? $raw,
+	];
+}
+
+/**
+ * Get the real database server product and version.
+ *
+ * $wpdb->db_version() reads the connection handshake, and on Pantheon that
+ * comes from ProxySQL, which advertises a fixed emulated "5.5.30" regardless
+ * of the backend. `SELECT VERSION()` is answered by the actual database
+ * (live-verified: MariaDB 10.4.34 where db_version() reports 5.5.30).
+ *
+ * Falls back to $wpdb->db_version() only if the query returns nothing, which on
+ * Pantheon is ProxySQL's emulated 5.5.30 again.
+ *
+ * @return array{name: string, version: string} Product name and numeric version.
+ */
+function get_database_version() {
+	global $wpdb;
+
+	$raw = $wpdb->get_var( 'SELECT VERSION()' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Server version, not cacheable table data.
+
+	return parse_database_version( $raw ? $raw : $wpdb->db_version() );
+}
