@@ -76,23 +76,24 @@ class Test_Endpoints_Status extends TestCase {
 	 * live-tested via v0 on this page, not marked as a gap.
 	 */
 	public function test_v0_only_endpoints_are_live_tested() {
-		$file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/endpoints-status.php' );
+		$this->load_registry_dependencies();
 
-		$v0_tested_paths = [
-			'/sites/%s/available-plans',
-			'/sites/%s/code-tips',
-			'/sites/%s/environments/%s/domains',
-			'/sites/%s/environments/%s/domains/dns',
-			'/sites/%s/environments/%s/metrics',
-			'/users/%s/memberships/sites',
-		];
+		$v0_reads = [];
+		foreach ( API\get_endpoint_registry() as $entry ) {
+			if ( 'v0' === $entry[0] && 'GET' === $entry[1] ) {
+				$v0_reads[] = $entry[2];
+			}
+		}
 
-		foreach ( $v0_tested_paths as $path ) {
-			$this->assertStringContainsString(
-				$path,
-				$file_contents,
-				"Should test {$path} via test_endpoint()"
-			);
+		foreach ( [
+			'/sites/{site_id}/available-plans',
+			'/sites/{site_id}/code-tips',
+			'/sites/{site_id}/environments/{env}/domains',
+			'/sites/{site_id}/environments/{env}/domains/dns',
+			'/sites/{site_id}/environments/{env}/metrics',
+			'/users/{user_id}/memberships/sites',
+		] as $path ) {
+			$this->assertContains( $path, $v0_reads, "The registry should list v0 read {$path}, which is probed via the v0 client" );
 		}
 	}
 
@@ -114,18 +115,21 @@ class Test_Endpoints_Status extends TestCase {
 	 * removed v0 authorizations endpoint.
 	 */
 	public function test_user_permissions_uses_v1_memberships() {
-		$file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/endpoints-status.php' );
+		$this->load_registry_dependencies();
 
-		$this->assertStringContainsString(
-			'/sites/%s/users/%s/memberships',
-			$file_contents,
-			'User Permissions should test the v1 memberships endpoint'
+		$v1_reads = [];
+		foreach ( API\get_endpoint_registry() as $entry ) {
+			if ( 'v1' === $entry[0] && 'GET' === $entry[1] ) {
+				$v1_reads[] = $entry[2];
+			}
+		}
+
+		$this->assertContains(
+			'/sites/{site_id}/users/{user_id}/memberships?first=10',
+			$v1_reads,
+			'The registry should list the v1 memberships endpoint'
 		);
-		$this->assertStringNotContainsString(
-			'/sites/%s/authorizations',
-			$file_contents,
-			'User Permissions should no longer test the removed v0 authorizations endpoint'
-		);
+		$this->assertNotContains( '/sites/{site_id}/authorizations', $v1_reads, 'authorizations is a v0-only endpoint' );
 	}
 
 	/**
@@ -154,17 +158,22 @@ class Test_Endpoints_Status extends TestCase {
 	 * across several page requests instead of blocking one.
 	 */
 	public function test_groups_can_be_probed_individually() {
-		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/endpoints-status.php';
+		$this->load_registry_dependencies();
 
-		$scopes = API\get_endpoint_group_scopes();
+		// Addons has no reads, so probing it sends no request: every endpoint is listed, none probed.
+		$addons = API\probe_endpoint_group( 'Addons', null, 'dev', 'user-id' );
+		$expected = array_filter(
+			API\get_endpoint_registry(),
+			function ( $entry ) {
+				return 'Addons' === $entry[4];
+			}
+		);
 
-		$this->assertSame( 'site', $scopes['Sites'] );
-		$this->assertSame( 'user', $scopes['User'] );
+		$this->assertCount( count( $expected ), $addons );
+		$this->assertNotEmpty( $addons );
+		$this->assertSame( [ 'skipped' ], array_values( array_unique( array_column( $addons, 'status' ) ) ) );
 
-		// User-scoped groups without a user ID are empty, not an error, and make no API call.
-		$this->assertSame( [], API\probe_endpoint_group( 'User', 'site-id', 'dev', null ) );
-		$this->assertSame( [], API\probe_endpoint_group( 'Authorization', 'site-id', 'dev', null ) );
-		$this->assertSame( [], API\probe_endpoint_group( 'Nonexistent', 'site-id', 'dev', 'user-id' ) );
+		$this->assertSame( [], API\probe_endpoint_group( 'Nonexistent', null, 'dev', 'user-id' ) );
 	}
 
 	/**
@@ -179,6 +188,12 @@ class Test_Endpoints_Status extends TestCase {
 			define( 'ASH_NAZG_PLUGIN_DIR', dirname( ASH_NAZG_PLUGIN_FILE ) . '/' );
 		}
 
+		// A WordPress constant, absent when the suite runs outside WordPress.
+		if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
+			define( 'HOUR_IN_SECONDS', 3600 );
+		}
+
+		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
 		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/endpoints-status.php';
 	}
 

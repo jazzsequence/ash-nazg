@@ -438,9 +438,9 @@ class Test_API extends TestCase {
 		$this->assertStringNotContainsString( 'probe_endpoint_group', $cached[0], 'the cache reader must never probe' );
 
 		$this->assertMatchesRegularExpression(
-			'/function probe_and_cache_endpoint_group.*probe_endpoint_group\(.*if \( ! empty\( \$result\[\'endpoints\'\] \) \).*set_transient/s',
+			'/function probe_and_cache_endpoint_group.*probe_endpoint_group\(.*if \( \$user_id && ! empty\( \$result\[\'endpoints\'\] \) \).*set_transient/s',
 			$file_contents,
-			'probe_and_cache_endpoint_group should only cache a non-empty probe result'
+			'probe_and_cache_endpoint_group should only cache once the Pantheon user ID is known'
 		);
 
 		$this->assertMatchesRegularExpression(

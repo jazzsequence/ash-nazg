@@ -216,177 +216,39 @@ function probe_registry_entry( $entry, $context ) {
 }
 
 /**
- * Get the endpoint groups, in display order, and whether each is site- or user-scoped.
+ * Get the endpoint groups keyed by name.
  *
- * @return array<string, string> Group name => 'site' or 'user'.
+ * Compatibility shim for callers written when groups were hand-written and
+ * tagged site or user; the registry has no such scope. Callers move to
+ * get_endpoint_groups() in the next commit and this is then removed.
+ *
+ * @return array<string, string> Group name => 'api'.
  */
 function get_endpoint_group_scopes() {
-	return [
-		'Sites' => 'site',
-		'Authorization' => 'site',
-		'Code' => 'site',
-		'Backups' => 'site',
-		'Domains' => 'site',
-		'Metrics' => 'site',
-		'Workflows' => 'site',
-		'User' => 'user',
-	];
+	return array_fill_keys( get_endpoint_groups(), 'api' );
 }
 
 /**
- * Probe every endpoint in a single group.
+ * Probe every endpoint in a single registry group.
  *
  * Groups are probed one at a time so a caller can spread the live requests
- * across several page requests instead of running them all in one.
+ * across several page requests instead of running them all in one. Reads are
+ * probed; everything else is listed as 'skipped' (see probe_registry_entry()).
  *
- * @param string      $group   Group name, a key of get_endpoint_group_scopes().
+ * @param string      $group   Group name, one of get_endpoint_groups().
  * @param string|null $site_id Site UUID.
  * @param string|null $env     Environment name.
  * @param string|null $user_id Pantheon user ID.
- * @return array List of endpoint results shaped like test_endpoint()'s return. Empty when
- *               the group doesn't apply (e.g. a user-scoped group without a user ID).
+ * @return array List of endpoint results shaped like test_endpoint()'s return. Empty for an unknown group.
  */
 function probe_endpoint_group( $group, $site_id = null, $env = null, $user_id = null ) {
-	/*
-	 * Map local environment names to their Pantheon equivalents.
-	 * Local environments like 'lando' should query 'dev' environment from
-	 * Pantheon.
-	 */
-	$api_env = map_local_env_to_dev( $env );
+	$context = get_endpoint_probe_context( $site_id, $env, $user_id );
 	$endpoints = [];
 
-	switch ( $group ) {
-		case 'Sites':
-			if ( ! $site_id ) {
-				break;
-			}
-
-			$endpoints[] = test_endpoint(
-				sprintf( '/sites/%s', $site_id ),
-				__( 'Site Information', 'ash-nazg' ),
-				__( 'Basic site details, settings, and addons', 'ash-nazg' )
-			);
-
-			$endpoints[] = test_endpoint(
-				sprintf( '/sites/%s/environments', $site_id ),
-				__( 'Environments List', 'ash-nazg' ),
-				__( 'All environments (dev, test, live, multidevs), including commit log, diffstat, and env variables', 'ash-nazg' )
-			);
-
-			$endpoints[] = test_endpoint(
-				sprintf( '/sites/%s/users', $site_id ),
-				__( 'Team Members', 'ash-nazg' ),
-				__( 'Site team members and their roles', 'ash-nazg' )
-			);
-
-			$endpoints[] = test_endpoint(
-				sprintf( '/sites/%s/available-plans', $site_id ),
-				__( 'Available Plans', 'ash-nazg' ),
-				__( 'Plans available for upgrade/downgrade', 'ash-nazg' ),
-				true
-			);
-			break;
-
-		case 'Authorization':
-			if ( $site_id && $user_id ) {
-				$endpoints[] = test_endpoint(
-					sprintf( '/sites/%s/users/%s/memberships?first=10', $site_id, $user_id ),
-					__( 'User Permissions', 'ash-nazg' ),
-					__( 'Current user permissions on this site', 'ash-nazg' )
-				);
-			}
-			break;
-
-		case 'Code':
-			if ( ! $site_id ) {
-				break;
-			}
-
-			$endpoints[] = test_endpoint(
-				sprintf( '/sites/%s/code-tips', $site_id ),
-				__( 'Git Branches', 'ash-nazg' ),
-				__( 'Available Git branches and commits', 'ash-nazg' ),
-				true
-			);
-
-			$endpoints[] = test_upstream_status_endpoint( $site_id );
-			break;
-
-		case 'Backups':
-			if ( $site_id && $api_env ) {
-				$endpoints[] = test_endpoint(
-					sprintf( '/sites/%s/environments/%s/backups', $site_id, $api_env ),
-					__( 'Backups Catalog', 'ash-nazg' ),
-					__( 'All available backups', 'ash-nazg' )
-				);
-			}
-			break;
-
-		case 'Domains':
-			if ( ! $site_id || ! $api_env ) {
-				break;
-			}
-
-			$endpoints[] = test_endpoint(
-				sprintf( '/sites/%s/environments/%s/domains', $site_id, $api_env ),
-				__( 'Custom Domains', 'ash-nazg' ),
-				__( 'Domains associated with environment', 'ash-nazg' ),
-				true
-			);
-
-			$endpoints[] = test_endpoint(
-				sprintf( '/sites/%s/environments/%s/domains/dns', $site_id, $api_env ),
-				__( 'DNS Recommendations', 'ash-nazg' ),
-				__( 'DNS configuration recommendations', 'ash-nazg' ),
-				true
-			);
-			break;
-
-		case 'Metrics':
-			if ( $site_id && $api_env ) {
-				$endpoints[] = test_endpoint(
-					sprintf( '/sites/%s/environments/%s/metrics?duration=7d', $site_id, $api_env ),
-					__( 'Traffic Metrics', 'ash-nazg' ),
-					__( 'Pages served, visits, cache performance', 'ash-nazg' ),
-					true
-				);
-			}
-			break;
-
-		case 'Workflows':
-			if ( $site_id ) {
-				$endpoints[] = test_endpoint(
-					sprintf( '/sites/%s/workflows', $site_id ),
-					__( 'Site Workflows', 'ash-nazg' ),
-					__( 'All workflows for this site', 'ash-nazg' )
-				);
-			}
-			break;
-
-		case 'User':
-			if ( ! $user_id ) {
-				break;
-			}
-
-			$endpoints[] = test_endpoint(
-				'/current-user',
-				__( 'User Profile', 'ash-nazg' ),
-				__( 'Current user information and SSH keys', 'ash-nazg' )
-			);
-
-			$endpoints[] = test_endpoint(
-				sprintf( '/users/%s/memberships/sites', $user_id ),
-				__( 'User Sites', 'ash-nazg' ),
-				__( 'Sites where user has membership', 'ash-nazg' ),
-				true
-			);
-
-			$endpoints[] = test_endpoint(
-				sprintf( '/users/%s/upstreams', $user_id ),
-				__( 'Available Upstreams', 'ash-nazg' ),
-				__( 'Upstreams available to user', 'ash-nazg' )
-			);
-			break;
+	foreach ( get_endpoint_registry() as $entry ) {
+		if ( $group === $entry[4] ) {
+			$endpoints[] = probe_registry_entry( $entry, $context );
+		}
 	}
 
 	return $endpoints;

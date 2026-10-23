@@ -1358,13 +1358,15 @@ function probe_and_cache_endpoint_group( $group, $site_id = null, $env = null ) 
 
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
 
+	$user_id = get_user_id();
+
 	$result = [
-		'endpoints' => probe_endpoint_group( $group, $site_id, $env, get_user_id() ),
+		'endpoints' => probe_endpoint_group( $group, $site_id, $env, $user_id ),
 		'cached_at' => time(),
 	];
 
-	// An empty result means the group couldn't be probed yet (e.g. no Pantheon user ID) - don't pin that for 24 hours.
-	if ( ! empty( $result['endpoints'] ) ) {
+	// Without a Pantheon user ID the user-scoped endpoints are listed as not probed - don't pin that for 24 hours.
+	if ( $user_id && ! empty( $result['endpoints'] ) ) {
 		set_transient( get_endpoint_group_cache_key( $group, $site_id, $env ), $result, DAY_IN_SECONDS );
 	}
 
