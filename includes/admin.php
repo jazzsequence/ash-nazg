@@ -180,6 +180,21 @@ function asset_version( $relative_path ) {
 }
 
 /**
+ * Get the versioned URL for the Pantheon logo.
+ *
+ * The version query string gives the image its own edge-cache key. Without it,
+ * a stale cached redirect for the bare URL (from when the file was missing in a
+ * deploy) keeps the image broken for up to a week.
+ *
+ * @return string Logo URL.
+ */
+function get_logo_url() {
+	$path = 'assets/images/pantheon-logo-light-mode.png';
+
+	return add_query_arg( 'ver', asset_version( $path ), ASH_NAZG_PLUGIN_URL . $path );
+}
+
+/**
  * Enqueue admin assets.
  *
  * @param string $hook Current admin page hook.
@@ -537,7 +552,7 @@ function render_pantheon_header( $title ) {
 	?>
 	<div class="ash-nazg-header">
 		<div class="ash-nazg-logo">
-			<img src="<?php echo esc_url( ASH_NAZG_PLUGIN_URL . 'assets/images/pantheon-logo-light-mode.png' ); ?>" alt="<?php esc_attr_e( 'Pantheon', 'ash-nazg' ); ?>">
+			<img src="<?php echo esc_url( get_logo_url() ); ?>" alt="<?php esc_attr_e( 'Pantheon', 'ash-nazg' ); ?>">
 		</div>
 		<h1><?php echo esc_html( $title ); ?></h1>
 	</div>
@@ -558,7 +573,7 @@ function register_dashboard_widget() {
 		return;
 	}
 
-	$logo_url = ASH_NAZG_PLUGIN_URL . 'assets/images/pantheon-logo-light-mode.png';
+	$logo_url = get_logo_url();
 	$title = sprintf(
 		'<span class="ash-nazg-widget-title-wrap"><img src="%s" alt="%s" class="ash-nazg-widget-title-logo" /> %s</span>',
 		esc_url( $logo_url ),

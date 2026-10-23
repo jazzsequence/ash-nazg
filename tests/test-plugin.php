@@ -101,4 +101,37 @@ class Test_Plugin extends TestCase {
 		$this->assertTrue( function_exists( 'Pantheon\AshNazg\Settings\register_settings' ), 'register_settings function should exist' );
 		$this->assertTrue( function_exists( 'Pantheon\AshNazg\Settings\render_settings_page' ), 'render_settings_page function should exist' );
 	}
+
+	/**
+	 * Test that the Pantheon logo URL is versioned.
+	 *
+	 * A stale edge-cached 301 for the bare URL kept the logo broken after the
+	 * file was restored; the ?ver= query string gives it a fresh cache key.
+	 */
+	public function test_logo_url_is_versioned() {
+		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/admin.php';
+
+		$this->assertTrue( function_exists( 'Pantheon\AshNazg\Admin\get_logo_url' ), 'get_logo_url function should exist' );
+
+		$admin = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/admin.php' );
+
+		$this->assertMatchesRegularExpression(
+			"/function get_logo_url.*add_query_arg\( 'ver', asset_version\(/s",
+			$admin,
+			'get_logo_url should append a ver query string from asset_version()'
+		);
+
+		$this->assertSame(
+			1,
+			substr_count( $admin, 'pantheon-logo-light-mode.png' ),
+			'The logo filename should only appear inside get_logo_url()'
+		);
+
+		// One definition plus the header and dashboard widget call sites.
+		$this->assertSame(
+			3,
+			substr_count( $admin, 'get_logo_url()' ),
+			'The header and dashboard widget should both use get_logo_url()'
+		);
+	}
 }
