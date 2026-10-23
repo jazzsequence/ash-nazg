@@ -46,6 +46,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_refresh_metrics', __NAMESPACE__ . '\\ajax_refresh_metrics' );
 	add_action( 'wp_ajax_ash_nazg_save_primary_org', __NAMESPACE__ . '\\ajax_save_primary_org' );
 	add_action( 'wp_ajax_ash_nazg_probe_endpoint', __NAMESPACE__ . '\\ajax_probe_endpoint' );
+	add_action( 'wp_ajax_ash_nazg_load_workspaces', __NAMESPACE__ . '\\ajax_load_workspaces' );
 	add_action( 'wp_ajax_ash_nazg_copy_access_token', __NAMESPACE__ . '\\ajax_copy_access_token' );
 	add_action( 'load-toplevel_page_ash-nazg', __NAMESPACE__ . '\\dashboard_screen_options' );
 	add_action( 'load-ash-nazg_page_ash-nazg-addons', __NAMESPACE__ . '\\addons_screen_options' );
@@ -309,6 +310,7 @@ function enqueue_assets( $hook ) {
 				'updateLabelNonce' => wp_create_nonce( 'ash_nazg_update_site_label' ),
 				'workflowStatusNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
 				'probeEndpointNonce' => wp_create_nonce( 'ash_nazg_probe_endpoint' ),
+				'loadWorkspacesNonce' => wp_create_nonce( 'ash_nazg_load_workspaces' ),
 				'i18n' => [
 					'toggleError'       => __( 'Failed to switch connection mode.', 'ash-nazg' ),
 					'ajaxError'         => __( 'An error occurred while switching connection mode.', 'ash-nazg' ),
@@ -319,6 +321,7 @@ function enqueue_assets( $hook ) {
 					'clipboardError'    => __( 'Could not copy to clipboard. Check browser permissions.', 'ash-nazg' ),
 					'saveOrgError'      => __( 'Failed to save organization preference.', 'ash-nazg' ),
 					'endpointError' => __( 'Could not check this endpoint. Reload the page to try again.', 'ash-nazg' ),
+					'workspacesError' => __( 'Could not load workspaces. Reload the page to try again.', 'ash-nazg' ),
 				],
 			]
 		);
@@ -2950,6 +2953,75 @@ function ajax_refresh_metrics() {
 	API\clear_metrics_cache( null, $env );
 
 	wp_send_json_success( [ 'message' => __( 'Metrics cache cleared successfully.', 'ash-nazg' ) ] );
+}
+
+/**
+ * Render the dashboard's Workspace row.
+ *
+ * @param array      $user_organizations Org-shaped workspace memberships.
+ * @param string     $primary_org_id     The saved primary workspace ID, if any.
+ * @param string     $primary_org_name   The saved primary workspace name, if any.
+ * @param array|null $site_info          Site info, used to default to the site's workspace.
+ * @return string Row markup.
+ */
+function render_workspace_row( $user_organizations, $primary_org_id, $primary_org_name, $site_info ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter -- Consumed by the included partial via shared scope.
+	ob_start();
+	require ASH_NAZG_PLUGIN_DIR . 'includes/views/partials/workspace-row.php';
+	return ob_get_clean();
+}
+
+/**
+ * AJAX handler: load the user's workspaces one small page at a time.
+ *
+ * Resolving every workspace takes ~21s or more, which would time out a page
+ * load, so the dashboard asks for a couple at a time. The last page returns
+ * the finished Workspace row.
+ *
+ * @return void
+ */
+function ajax_load_workspaces() {
+	check_ajax_referer( 'ash_nazg_load_workspaces', 'nonce' );
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ], 403 );
+	}
+
+	$cursor = isset( $_POST['cursor'] ) ? sanitize_text_field( wp_unslash( $_POST['cursor'] ) ) : '';
+
+	$page = API\fetch_user_workspaces_page( $cursor );
+
+	if ( is_wp_error( $page ) ) {
+		wp_send_json_error(
+			[
+				'message' => $page->get_error_message(),
+				'code' => $page->get_error_code(),
+			],
+			502
+		);
+	}
+
+	if ( ! $page['done'] ) {
+		wp_send_json_success(
+			[
+				'done' => false,
+				'next' => $page['next'],
+			]
+		);
+	}
+
+	$site_info = API\get_site_info();
+
+	wp_send_json_success(
+		[
+			'done' => true,
+			'html' => render_workspace_row(
+				$page['memberships'],
+				get_user_meta( get_current_user_id(), 'ash_nazg_primary_org_id', true ),
+				get_user_meta( get_current_user_id(), 'ash_nazg_primary_org_name', true ),
+				is_array( $site_info ) ? $site_info : null
+			),
+		]
+	);
 }
 
 /**

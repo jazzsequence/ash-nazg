@@ -509,4 +509,38 @@ class Test_AJAX_Handlers extends TestCase {
 		$this->assertStringContainsString( 'ash-nazg-org-select', $partial );
 		$this->assertDoesNotMatchRegularExpression( '/echo \\$/', $partial, 'The partial should not echo a variable without escaping' );
 	}
+
+	/**
+	 * Test the workspace loader handler is registered and gated.
+	 *
+	 * It makes live API requests, so it needs a nonce and a capability check, and
+	 * it only passes a sanitised cursor to the API function.
+	 */
+	public function test_load_workspaces_handler_is_secured() {
+		$admin = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$this->assertStringContainsString( "add_action( 'wp_ajax_ash_nazg_load_workspaces'", $admin );
+
+		$this->assertMatchesRegularExpression(
+			"/function ajax_load_workspaces\\(\\).*check_ajax_referer\\( 'ash_nazg_load_workspaces', 'nonce' \\).*current_user_can\\( 'manage_options' \\).*sanitize_text_field\\(.*fetch_user_workspaces_page\\( \\\$cursor \\)/s",
+			$admin,
+			'The handler should verify the nonce and capability and sanitise the cursor before fetching'
+		);
+	}
+
+	/**
+	 * Test the loader pages through workspaces, restarts once if the partial result is lost,
+	 * and the organization controls are delegated so they survive the row being replaced.
+	 */
+	public function test_workspace_loader_pages_and_controls_are_delegated() {
+		$js = file_get_contents( __DIR__ . '/../assets/js/dashboard.js' );
+
+		$this->assertStringContainsString( "action: 'ash_nazg_load_workspaces'", $js );
+		$this->assertStringContainsString( 'next(response.data.next)', $js );
+		$this->assertStringContainsString( "code === 'partial_lost' && !restarted", $js );
+
+		foreach ( [ '#ash-nazg-org-edit', '#ash-nazg-org-cancel', '#ash-nazg-org-save' ] as $selector ) {
+			$this->assertStringContainsString( "\$(document).on('click', '{$selector}'", $js, $selector );
+		}
+	}
 }
