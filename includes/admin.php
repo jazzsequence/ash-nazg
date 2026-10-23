@@ -308,6 +308,7 @@ function enqueue_assets( $hook ) {
 				'toggleModeNonce' => wp_create_nonce( 'ash_nazg_toggle_connection_mode' ),
 				'updateLabelNonce' => wp_create_nonce( 'ash_nazg_update_site_label' ),
 				'workflowStatusNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
+				'probeEndpointGroupNonce' => wp_create_nonce( 'ash_nazg_probe_endpoint_group' ),
 				'i18n' => [
 					'toggleError'       => __( 'Failed to switch connection mode.', 'ash-nazg' ),
 					'ajaxError'         => __( 'An error occurred while switching connection mode.', 'ash-nazg' ),
@@ -317,6 +318,7 @@ function enqueue_assets( $hook ) {
 					'copyTokenError'    => __( 'Failed to retrieve machine token.', 'ash-nazg' ),
 					'clipboardError'    => __( 'Could not copy to clipboard. Check browser permissions.', 'ash-nazg' ),
 					'saveOrgError'      => __( 'Failed to save organization preference.', 'ash-nazg' ),
+					'endpointGroupError' => __( 'Could not check this group. Reload the page to try again.', 'ash-nazg' ),
 				],
 			]
 		);
@@ -715,27 +717,6 @@ function render_dashboard_page() {
 		if ( null !== $environment_info && null === $api_error ) {
 			API\sync_environment_state( $site_id, $environment );
 		}
-
-		/*
-		 * Get endpoints status if we can connect to the API.
-		 * We fetch endpoints even if the environment doesn't exist on Pantheon
-		 * (local dev).
-		 */
-		if ( null === $api_error ) {
-			$endpoints_data = API\get_endpoints_status( $site_id, $environment );
-			// Handle both old and new cache formats during transition.
-			if ( isset( $endpoints_data['all'] ) ) {
-				// New format with separate groups.
-				$endpoints_site = $endpoints_data['site'];
-				$endpoints_user = $endpoints_data['user'];
-				$endpoints_all = $endpoints_data['all'];
-			} else {
-				// Old cache format - data is the categories directly.
-				$endpoints_site = $endpoints_data;
-				$endpoints_user = [];
-				$endpoints_all = $endpoints_data;
-			}
-		}
 	}
 
 	/*
@@ -748,6 +729,25 @@ function render_dashboard_page() {
 	$hidden_groups  = get_user_meta( $_wp_user_id, 'ash_nazg_dashboard_hidden_groups', true );
 	$hidden_groups  = $hidden_groups ? array_filter( explode( ',', $hidden_groups ) ) : [];
 
+	/*
+	 * Endpoint groups to show. Only cached results are read here.
+	 * Uncached groups render as placeholders and are probed one at a
+	 * time over AJAX, so a cold cache never runs live API requests
+	 * during the page load.
+	 */
+	$endpoint_groups = [];
+	if ( $is_pantheon && $site_id && null === $api_error && $show_endpoints ) {
+		require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
+
+		foreach ( array_keys( API\get_endpoint_group_scopes() ) as $group ) {
+			if ( in_array( $group, $hidden_groups, true ) ) {
+				continue;
+			}
+
+			$endpoint_groups[ $group ] = API\get_cached_endpoint_group( $group, $site_id, $environment );
+		}
+	}
+
 	$pantheon_user      = API\get_current_pantheon_user();
 	$user_organizations = API\get_user_organizations();
 	$primary_org_id     = get_user_meta( get_current_user_id(), 'ash_nazg_primary_org_id', true );
@@ -756,12 +756,10 @@ function render_dashboard_page() {
 	// Get cache timestamps.
 	$site_info_cached_at = null;
 	$env_info_cached_at = null;
-	$endpoints_cached_at = null;
 
 	if ( $is_pantheon && $site_id ) {
 		$site_info_cached_at = API\get_cache_timestamp( 'ash_nazg_site_info_' . $site_id );
 		$env_info_cached_at = API\get_cache_timestamp( sprintf( 'ash_nazg_all_env_info_%s', $site_id ) );
-		$endpoints_cached_at = API\get_cache_timestamp( sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $environment ) );
 	}
 
 	require ASH_NAZG_PLUGIN_DIR . 'includes/views/dashboard.php';
@@ -2323,8 +2321,8 @@ function dashboard_screen_options() {
 /**
  * Add endpoint visibility checkboxes to the dashboard Screen Options panel.
  *
- * Group names are read from the cached endpoint data so they stay in sync
- * with whatever the API actually returns.
+ * Group names come from the static group list, not the API, so rendering
+ * Screen Options never triggers endpoint probes.
  *
  * @param string    $settings Existing screen settings HTML.
  * @param WP_Screen $screen   Current screen object.
@@ -2336,22 +2334,14 @@ function dashboard_screen_settings( $settings, $screen ) {
 	}
 
 	$user_id        = get_current_user_id();
-	$site_id        = API\get_pantheon_site_id();
-	$environment    = API\get_pantheon_environment();
 	$show_endpoints = get_user_meta( $user_id, 'ash_nazg_dashboard_show_endpoints', true );
 	$show_endpoints = '' === $show_endpoints ? true : (bool) $show_endpoints;
 	$hidden_groups  = get_user_meta( $user_id, 'ash_nazg_dashboard_hidden_groups', true );
 	$hidden_groups  = $hidden_groups ? array_filter( explode( ',', $hidden_groups ) ) : [];
 
-	// Get group names from cached endpoint data.
-	$group_names = [];
-	if ( $site_id && $environment ) {
-		$endpoints_data = API\get_endpoints_status( $site_id, $environment );
-		if ( is_array( $endpoints_data ) ) {
-			$all = isset( $endpoints_data['all'] ) ? $endpoints_data['all'] : $endpoints_data;
-			$group_names = array_keys( $all );
-		}
-	}
+	// Group names are static, so this never makes an API request.
+	require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
+	$group_names = array_keys( API\get_endpoint_group_scopes() );
 
 	ob_start();
 	?>

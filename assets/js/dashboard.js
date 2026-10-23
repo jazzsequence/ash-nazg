@@ -209,6 +209,64 @@ jQuery(document).ready(function($) {
 		}
 	});
 
+	// ── API Endpoints panel ───────────────────────────────────────────────────
+	// Groups that weren't cached when the page rendered are probed one at a time,
+	// so the live requests are spread out instead of all running before first paint.
+
+	function updateEndpointSummary() {
+		var $rows = $('.ash-nazg-endpoint-row');
+		var ok = $rows.filter('[data-status="success"]').length;
+		var unavailable = $rows.filter('[data-status="unavailable"]').length;
+		var errors = $rows.length - ok - unavailable;
+
+		$('#ash-nazg-endpoints-ok').text(ok);
+		$('#ash-nazg-endpoints-unavailable').text(unavailable);
+		$('#ash-nazg-endpoints-error').text(errors);
+		$('#ash-nazg-endpoints-total').text($rows.length);
+		$('#ash-nazg-endpoints-unavailable-wrap').toggleClass('ash-nazg-hidden', unavailable === 0);
+		$('#ash-nazg-endpoints-error-wrap').toggleClass('ash-nazg-hidden', errors === 0);
+	}
+
+	function loadPendingEndpointGroups() {
+		var $slots = $('.ash-nazg-endpoint-slot[data-pending]');
+
+		function next(index) {
+			if (index >= $slots.length) {
+				return;
+			}
+
+			var $slot = $slots.eq(index);
+
+			$.ajax({
+				url: ashNazgDashboard.ajaxUrl,
+				type: 'POST',
+				dataType: 'json',
+				data: {
+					action: 'ash_nazg_probe_endpoint_group',
+					nonce: ashNazgDashboard.probeEndpointGroupNonce,
+					group: $slot.data('group')
+				}
+			}).done(function(response) {
+				if (response.success) {
+					// Groups with nothing to probe (e.g. no Pantheon user yet) come back empty.
+					$slot.html(response.data.html).removeAttr('data-pending');
+					updateEndpointSummary();
+				} else {
+					$slot.text(ashNazgDashboard.i18n.endpointGroupError);
+				}
+			}).fail(function() {
+				$slot.text(ashNazgDashboard.i18n.endpointGroupError);
+			}).always(function() {
+				next(index + 1);
+			});
+		}
+
+		next(0);
+	}
+
+	updateEndpointSummary();
+	loadPendingEndpointGroups();
+
 	// ── Screen Options: endpoint visibility master toggle ───────────────────────
 	// Unchecking the master toggle unchecks all group checkboxes; re-checking restores all.
 	$('#ash_nazg_dashboard_show_endpoints').on('change', function() {

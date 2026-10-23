@@ -5,6 +5,7 @@
  * @package Pantheon\AshNazg
  */
 
+use Pantheon\AshNazg\Admin;
 use Pantheon\AshNazg\API;
 use Pantheon\AshNazg\Helpers;
 
@@ -458,168 +459,37 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</div>
 		<?php endif; ?>
 
-		<?php if ( $show_endpoints && ( ! empty( $endpoints_site ) || ! empty( $endpoints_user ) || ! empty( $endpoints_all ) ) ) : ?>
-			<?php
-			/*
-			 * Determine active tab.
-			 * Verify nonce if tab parameter is present.
-			 */
-			$active_tab = 'site';
-			if ( isset( $_GET['endpoints_tab'], $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'ash_nazg_tab' ) ) {
-				$active_tab = sanitize_text_field( wp_unslash( $_GET['endpoints_tab'] ) );
-			}
-			?>
+		<?php if ( ! empty( $endpoint_groups ) ) : ?>
 			<div id="endpoints" class="ash-nazg-card ash-nazg-card-full">
 				<div class="ash-nazg-flex-between ash-nazg-mb-10">
-					<h2 class="ash-nazg-m-0">
-						<?php esc_html_e( 'Available API Endpoints', 'ash-nazg' ); ?>
-						<?php if ( $endpoints_cached_at ) : ?>
-							<span class="ash-nazg-meta-text">
-								(Last checked: <?php echo esc_html( human_time_diff( $endpoints_cached_at ) ); ?> ago)
-							</span>
-						<?php endif; ?>
-					</h2>
+					<h2 class="ash-nazg-m-0"><?php esc_html_e( 'Available API Endpoints', 'ash-nazg' ); ?></h2>
 					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&refresh_cache=1' ), 'ash_nazg_refresh_cache' ) ); ?>" class="button button-secondary ash-nazg-editable">
 						<span class="dashicons dashicons-update"></span>
 						<span><?php esc_html_e( 'Refresh Data', 'ash-nazg' ); ?></span>
 					</a>
 				</div>
 
-				<?php
-				// Determine which tabs have at least one visible group.
-				$site_tab_visible = ! empty( array_diff( array_keys( $endpoints_site ), $hidden_groups ) );
-				$user_tab_visible = ! empty( array_diff( array_keys( $endpoints_user ), $hidden_groups ) );
-
-				// Fall back the active tab if its bucket has no visible content.
-				if ( 'user' === $active_tab && ! $user_tab_visible ) {
-					$active_tab = $site_tab_visible ? 'site' : 'all';
-				}
-				?>
-				<h2 class="nav-tab-wrapper">
-					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=site#endpoints' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'site' === $active_tab ? 'nav-tab-active' : ''; ?>">
-						<?php esc_html_e( 'Site Endpoints', 'ash-nazg' ); ?>
-					</a>
-					<?php if ( $user_tab_visible ) : ?>
-					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=user#endpoints' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'user' === $active_tab ? 'nav-tab-active' : ''; ?>">
-						<?php esc_html_e( 'User Endpoints', 'ash-nazg' ); ?>
-					</a>
-					<?php endif; ?>
-					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&endpoints_tab=all#endpoints' ), 'ash_nazg_tab' ) ); ?>" class="nav-tab <?php echo 'all' === $active_tab ? 'nav-tab-active' : ''; ?>">
-						<?php esc_html_e( 'All Endpoints', 'ash-nazg' ); ?>
-					</a>
-				</h2>
-
-				<?php if ( 'site' === $active_tab ) : ?>
-					<p><?php esc_html_e( 'Endpoints for managing this specific Pantheon site.', 'ash-nazg' ); ?></p>
-					<?php $endpoints_status = $endpoints_site; ?>
-				<?php elseif ( 'user' === $active_tab ) : ?>
-					<p><?php esc_html_e( 'Endpoints for the current user (authenticated via machine token).', 'ash-nazg' ); ?></p>
-					<?php $endpoints_status = $endpoints_user; ?>
-				<?php else : ?>
-					<p><?php esc_html_e( 'All available Pantheon API endpoints — shown in full regardless of Screen Options filters.', 'ash-nazg' ); ?></p>
-					<?php $endpoints_status = $endpoints_all; ?>
-				<?php endif; ?>
-
-				<?php
-				$total_endpoints = 0;
-				$successful = 0;
-				$unavailable = 0;
-				$endpoint_errors = 0;
-				foreach ( $endpoints_status as $category => $endpoints ) {
-					if ( 'all' !== $active_tab && in_array( $category, $hidden_groups, true ) ) {
-						continue;
-					}
-					foreach ( $endpoints as $endpoint ) {
-						++$total_endpoints;
-						if ( 'success' === $endpoint['status'] ) {
-							++$successful;
-						} elseif ( 'unavailable' === $endpoint['status'] ) {
-							++$unavailable;
-						} else {
-							++$endpoint_errors;
-						}
-					}
-				}
-				?>
-				<p class="ash-nazg-my-10">
+				<p class="ash-nazg-my-10" id="ash-nazg-endpoints-summary">
 					<strong><?php esc_html_e( 'Summary:', 'ash-nazg' ); ?></strong>
-					<span class="ash-nazg-text-success">✓ <?php echo esc_html( $successful ); ?> <?php esc_html_e( 'working', 'ash-nazg' ); ?></span>
-					<?php if ( $unavailable > 0 ) : ?>
-						<span class="ash-nazg-ml-10 ash-nazg-text-warning">⊘ <?php echo esc_html( $unavailable ); ?> <?php esc_html_e( 'unavailable', 'ash-nazg' ); ?></span>
-					<?php endif; ?>
-					<?php if ( $endpoint_errors > 0 ) : ?>
-						<span class="ash-nazg-ml-10 ash-nazg-text-error">✗ <?php echo esc_html( $endpoint_errors ); ?> <?php esc_html_e( 'errors', 'ash-nazg' ); ?></span>
-					<?php endif; ?>
-					<span class="ash-nazg-ml-10 ash-nazg-text-muted">
-						(<?php echo esc_html( $total_endpoints ); ?> <?php esc_html_e( 'total endpoints', 'ash-nazg' ); ?>)
-					</span>
+					<span class="ash-nazg-text-success">✓ <span id="ash-nazg-endpoints-ok">0</span> <?php esc_html_e( 'working', 'ash-nazg' ); ?></span>
+					<span class="ash-nazg-ml-10 ash-nazg-text-warning ash-nazg-hidden" id="ash-nazg-endpoints-unavailable-wrap">⊘ <span id="ash-nazg-endpoints-unavailable">0</span> <?php esc_html_e( 'unavailable', 'ash-nazg' ); ?></span>
+					<span class="ash-nazg-ml-10 ash-nazg-text-error ash-nazg-hidden" id="ash-nazg-endpoints-error-wrap">✗ <span id="ash-nazg-endpoints-error">0</span> <?php esc_html_e( 'errors', 'ash-nazg' ); ?></span>
+					<span class="ash-nazg-ml-10 ash-nazg-text-muted">(<span id="ash-nazg-endpoints-total">0</span> <?php esc_html_e( 'total endpoints', 'ash-nazg' ); ?>)</span>
 				</p>
 
-				<?php foreach ( $endpoints_status as $category => $endpoints ) : ?>
-					<?php if ( 'all' === $active_tab || ! in_array( $category, $hidden_groups, true ) ) : ?>
-					<h3 class="ash-nazg-section-header">
-						<?php echo esc_html( $category ); ?>
-						<span class="ash-nazg-label-text">
-							(<?php echo count( $endpoints ); ?> <?php echo esc_html( _n( 'endpoint', 'endpoints', count( $endpoints ), 'ash-nazg' ) ); ?>)
-						</span>
-					</h3>
-					<table class="widefat striped ash-nazg-table-mb">
-						<thead>
-							<tr>
-								<th class="ash-nazg-th-icon"></th>
-								<th class="ash-nazg-th-20"><?php esc_html_e( 'Endpoint', 'ash-nazg' ); ?></th>
-								<th class="ash-nazg-th-45"><?php esc_html_e( 'Path', 'ash-nazg' ); ?></th>
-								<th class="ash-nazg-th-10"><?php esc_html_e( 'Last Checked', 'ash-nazg' ); ?></th>
-								<th><?php esc_html_e( 'Status / Data', 'ash-nazg' ); ?></th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php foreach ( $endpoints as $endpoint ) : ?>
-								<tr>
-									<td class="ash-nazg-th-icon">
-										<?php if ( 'success' === $endpoint['status'] ) : ?>
-											<span class="dashicons dashicons-yes-alt ash-nazg-icon-success" title="<?php esc_attr_e( 'Available', 'ash-nazg' ); ?>"></span>
-										<?php elseif ( 'unavailable' === $endpoint['status'] ) : ?>
-											<span class="dashicons dashicons-minus ash-nazg-icon-warning" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Unavailable', 'ash-nazg' ) ); ?>"></span>
-										<?php else : ?>
-											<span class="dashicons dashicons-dismiss ash-nazg-icon-error" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Error', 'ash-nazg' ) ); ?>"></span>
-										<?php endif; ?>
-									</td>
-									<td>
-										<strong><?php echo esc_html( $endpoint['name'] ); ?></strong>
-										<?php if ( ! empty( $endpoint['description'] ) ) : ?>
-											<br><small class="ash-nazg-text-muted"><?php echo esc_html( $endpoint['description'] ); ?></small>
-										<?php endif; ?>
-									</td>
-									<td><code class="ash-nazg-tiny-text"><?php echo esc_html( $endpoint['path'] ); ?></code></td>
-									<td>
-										<?php if ( $endpoints_cached_at ) : ?>
-											<small class="ash-nazg-text-muted"><?php echo esc_html( human_time_diff( $endpoints_cached_at ) ); ?> ago</small>
-										<?php else : ?>
-											<small class="ash-nazg-text-light">—</small>
-										<?php endif; ?>
-									</td>
-									<td>
-										<?php if ( 'success' === $endpoint['status'] && ! empty( $endpoint['data'] ) ) : ?>
-											<?php foreach ( $endpoint['data'] as $data_key => $data_value ) : ?>
-												<?php if ( is_scalar( $data_value ) ) : ?>
-													<div class="ash-nazg-small-text">
-														<strong><?php echo esc_html( ucfirst( $data_key ) ); ?>:</strong>
-														<?php echo esc_html( $data_value ); ?>
-													</div>
-												<?php endif; ?>
-											<?php endforeach; ?>
-										<?php elseif ( 'success' !== $endpoint['status'] && ! empty( $endpoint['error'] ) ) : ?>
-											<small class="ash-nazg-text-error"><?php echo esc_html( $endpoint['error'] ); ?></small>
-										<?php else : ?>
-											<small class="ash-nazg-text-light">—</small>
-										<?php endif; ?>
-									</td>
-								</tr>
-							<?php endforeach; ?>
-						</tbody>
-					</table>
-				<?php endif; // hidden group check. ?>
+				<?php foreach ( $endpoint_groups as $group => $cached ) : ?>
+					<div class="ash-nazg-endpoint-slot" data-group="<?php echo esc_attr( $group ); ?>" <?php echo $cached ? '' : 'data-pending="1"'; ?>>
+						<?php if ( $cached ) : ?>
+							<?php echo Admin\render_endpoint_group( $group, $cached['endpoints'], $cached['cached_at'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup escaped in the partial. ?>
+						<?php else : ?>
+							<p class="ash-nazg-text-muted ash-nazg-endpoint-loading">
+								<?php
+								/* translators: %s: endpoint group name */
+								echo esc_html( sprintf( __( 'Checking %s endpoints…', 'ash-nazg' ), $group ) );
+								?>
+							</p>
+						<?php endif; ?>
+					</div>
 				<?php endforeach; ?>
 			</div>
 		<?php endif; ?>
