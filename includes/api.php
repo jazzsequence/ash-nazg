@@ -1298,18 +1298,6 @@ function get_user_id() {
 }
 
 /**
- * Get the transient key for one endpoint group's cached probe results.
- *
- * @param string $group   Group name, one of get_endpoint_groups().
- * @param string $site_id Site UUID.
- * @param string $env     Environment name.
- * @return string Transient key.
- */
-function get_endpoint_group_cache_key( $group, $site_id, $env ) {
-	return sprintf( 'ash_nazg_endpoints_group_%s_%s_%s', $site_id, $env, sanitize_key( $group ) );
-}
-
-/**
  * Get the transient key for one group's per-endpoint probe results.
  *
  * @param string $group   Group name.
@@ -1388,58 +1376,8 @@ function clear_endpoint_group_caches( $site_id, $env ) {
 	require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
 
 	foreach ( get_endpoint_groups() as $group ) {
-		delete_transient( get_endpoint_group_cache_key( $group, $site_id, $env ) );
 		delete_transient( get_endpoint_results_cache_key( $group, $site_id, $env ) );
 	}
-}
-
-/**
- * Read one endpoint group's probe results from cache only.
- *
- * Never makes an API request, so it is safe to call while rendering a page.
- *
- * @param string      $group   Group name.
- * @param string|null $site_id Optional. Site UUID. Auto-detected if not provided.
- * @param string|null $env     Optional. Environment name. Auto-detected if not provided.
- * @return array|false {endpoints: array, cached_at: int}, or false if not cached.
- */
-function get_cached_endpoint_group( $group, $site_id = null, $env = null ) {
-	$site_id = $site_id ? $site_id : get_pantheon_site_id();
-	$env = $env ? $env : get_pantheon_environment();
-
-	return get_transient( get_endpoint_group_cache_key( $group, $site_id, $env ) );
-}
-
-/**
- * Probe one endpoint group live, and cache the result.
- *
- * Meant to run in its own request (the dashboard calls it over AJAX, one
- * group at a time) so the cost of the live probes never lands on a page load.
- *
- * @param string      $group   Group name, one of get_endpoint_groups().
- * @param string|null $site_id Optional. Site UUID. Auto-detected if not provided.
- * @param string|null $env     Optional. Environment name. Auto-detected if not provided.
- * @return array {endpoints: array, cached_at: int}.
- */
-function probe_and_cache_endpoint_group( $group, $site_id = null, $env = null ) {
-	$site_id = $site_id ? $site_id : get_pantheon_site_id();
-	$env = $env ? $env : get_pantheon_environment();
-
-	require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
-
-	$user_id = get_user_id();
-
-	$result = [
-		'endpoints' => probe_endpoint_group( $group, $site_id, $env, $user_id ),
-		'cached_at' => time(),
-	];
-
-	// Without a Pantheon user ID the user-scoped endpoints are listed as not probed - don't pin that for 24 hours.
-	if ( $user_id && ! empty( $result['endpoints'] ) ) {
-		set_transient( get_endpoint_group_cache_key( $group, $site_id, $env ), $result, DAY_IN_SECONDS );
-	}
-
-	return $result;
 }
 
 /**

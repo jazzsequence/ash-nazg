@@ -45,7 +45,6 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_get_metrics', __NAMESPACE__ . '\\ajax_get_metrics' );
 	add_action( 'wp_ajax_ash_nazg_refresh_metrics', __NAMESPACE__ . '\\ajax_refresh_metrics' );
 	add_action( 'wp_ajax_ash_nazg_save_primary_org', __NAMESPACE__ . '\\ajax_save_primary_org' );
-	add_action( 'wp_ajax_ash_nazg_probe_endpoint_group', __NAMESPACE__ . '\\ajax_probe_endpoint_group' );
 	add_action( 'wp_ajax_ash_nazg_probe_endpoint', __NAMESPACE__ . '\\ajax_probe_endpoint' );
 	add_action( 'wp_ajax_ash_nazg_copy_access_token', __NAMESPACE__ . '\\ajax_copy_access_token' );
 	add_action( 'load-toplevel_page_ash-nazg', __NAMESPACE__ . '\\dashboard_screen_options' );
@@ -309,7 +308,6 @@ function enqueue_assets( $hook ) {
 				'toggleModeNonce' => wp_create_nonce( 'ash_nazg_toggle_connection_mode' ),
 				'updateLabelNonce' => wp_create_nonce( 'ash_nazg_update_site_label' ),
 				'workflowStatusNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
-				'probeEndpointGroupNonce' => wp_create_nonce( 'ash_nazg_probe_endpoint_group' ),
 				'probeEndpointNonce' => wp_create_nonce( 'ash_nazg_probe_endpoint' ),
 				'i18n' => [
 					'toggleError'       => __( 'Failed to switch connection mode.', 'ash-nazg' ),
@@ -320,7 +318,6 @@ function enqueue_assets( $hook ) {
 					'copyTokenError'    => __( 'Failed to retrieve machine token.', 'ash-nazg' ),
 					'clipboardError'    => __( 'Could not copy to clipboard. Check browser permissions.', 'ash-nazg' ),
 					'saveOrgError'      => __( 'Failed to save organization preference.', 'ash-nazg' ),
-					'endpointGroupError' => __( 'Could not check this group. Reload the page to try again.', 'ash-nazg' ),
 					'endpointError' => __( 'Could not check this endpoint. Reload the page to try again.', 'ash-nazg' ),
 				],
 			]
@@ -3013,57 +3010,6 @@ function render_endpoint_group( $group, $endpoints, $cached_at ) { // phpcs:igno
 	ob_start();
 	require ASH_NAZG_PLUGIN_DIR . 'includes/views/partials/endpoint-group.php';
 	return ob_get_clean();
-}
-
-/**
- * AJAX handler: probe one endpoint group and return its rendered table.
- *
- * The dashboard calls this once per group so the live probes are spread
- * across separate requests instead of all running during the page load.
- *
- * @return void
- */
-function ajax_probe_endpoint_group() {
-	check_ajax_referer( 'ash_nazg_probe_endpoint_group', 'nonce' );
-
-	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ], 403 );
-	}
-
-	require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
-
-	$group = isset( $_POST['group'] ) ? sanitize_text_field( wp_unslash( $_POST['group'] ) ) : '';
-
-	if ( ! in_array( $group, API\get_endpoint_groups(), true ) ) {
-		wp_send_json_error( [ 'message' => __( 'Unknown endpoint group.', 'ash-nazg' ) ], 400 );
-	}
-
-	$result = API\probe_and_cache_endpoint_group( $group );
-
-	$counts = [
-		'success' => 0,
-		'unavailable' => 0,
-		'skipped' => 0,
-		'error' => 0,
-	];
-	foreach ( $result['endpoints'] as $endpoint ) {
-		if ( 'success' === $endpoint['status'] ) {
-			++$counts['success'];
-		} elseif ( 'unavailable' === $endpoint['status'] ) {
-			++$counts['unavailable'];
-		} elseif ( 'skipped' === $endpoint['status'] ) {
-			++$counts['skipped'];
-		} else {
-			++$counts['error'];
-		}
-	}
-
-	wp_send_json_success(
-		[
-			'html' => empty( $result['endpoints'] ) ? '' : render_endpoint_group( $group, $result['endpoints'], $result['cached_at'] ),
-			'counts' => $counts,
-		]
-	);
 }
 
 /**

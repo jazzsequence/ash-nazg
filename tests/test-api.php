@@ -427,38 +427,27 @@ class Test_API extends TestCase {
 	}
 
 	/**
-	 * Test that endpoint groups are cached individually, and read from cache without an API call.
+	 * Test every cache layer for the endpoint panel is cleared on refresh and on addon changes.
 	 */
-	public function test_endpoint_groups_are_cached_individually() {
+	public function test_endpoint_caches_are_cleared_on_refresh() {
 		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
 
-		preg_match( '/function get_cached_endpoint_group\(.*?\n\}\n/s', $file_contents, $cached );
-		$this->assertNotEmpty( $cached, 'get_cached_endpoint_group should exist' );
-		$this->assertStringContainsString( 'get_transient', $cached[0] );
-		$this->assertStringNotContainsString( 'probe_endpoint_group', $cached[0], 'the cache reader must never probe' );
-
 		$this->assertMatchesRegularExpression(
-			'/function probe_and_cache_endpoint_group.*probe_endpoint_group\(.*if \( \$user_id && ! empty\( \$result\[\'endpoints\'\] \) \).*set_transient/s',
+			'/function clear_endpoint_group_caches.*get_endpoint_groups.*delete_transient\( get_endpoint_results_cache_key/s',
 			$file_contents,
-			'probe_and_cache_endpoint_group should only cache once the Pantheon user ID is known'
-		);
-
-		$this->assertMatchesRegularExpression(
-			'/function clear_endpoint_group_caches.*get_endpoint_groups.*delete_transient\( get_endpoint_group_cache_key/s',
-			$file_contents,
-			'clear_endpoint_group_caches should clear every group cache'
+			'clear_endpoint_group_caches should clear every group\'s per-endpoint results'
 		);
 
 		$this->assertMatchesRegularExpression(
 			'/function clear_cache.*clear_endpoint_group_caches\(/s',
 			$file_contents,
-			'clear_cache should clear the endpoint group caches'
+			'clear_cache should clear the endpoint caches'
 		);
 
 		$this->assertMatchesRegularExpression(
 			'/function clear_addon_endpoint_cache.*clear_endpoint_group_caches\(/s',
 			$file_contents,
-			'changing an addon should clear the endpoint group caches'
+			'changing an addon should clear the endpoint caches'
 		);
 	}
 
