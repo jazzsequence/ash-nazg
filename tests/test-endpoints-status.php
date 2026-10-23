@@ -312,4 +312,48 @@ class Test_Endpoints_Status extends TestCase {
 			}
 		}
 	}
+
+	/**
+	 * Test the row shown before any request: writes and ID-needing reads are final, reads are pending.
+	 *
+	 * Needs no API call, so the page can render every endpoint at once.
+	 */
+	public function test_row_placeholders_need_no_api_call() {
+		$this->load_registry_dependencies();
+
+		$write = API\get_endpoint_row_placeholder( [ 'v1', 'POST', '/sites/{site_id}/backups', 'Create a backup', 'Backups' ] );
+		$this->assertSame( 'skipped', $write['status'] );
+		$this->assertSame( 'Not probed: changes data', $write['error'] );
+
+		// Only the placeholder the plugin can't fill is reported, not {site_id}.
+		$needs_id = API\get_endpoint_row_placeholder( [ 'v0', 'GET', '/sites/{site_id}/builds/{build_id}', 'Get a build', 'Builds & Logs' ] );
+		$this->assertSame( 'skipped', $needs_id['status'] );
+		$this->assertSame( 'Not probed: needs {build_id}', $needs_id['error'] );
+		$this->assertSame( '/v0/sites/{site_id}/builds/{build_id}', $needs_id['path'] );
+
+		$read = API\get_endpoint_row_placeholder( [ 'v1', 'GET', '/sites/{site_id}/environments/{env}/backups', 'List backups', 'Backups' ] );
+		$this->assertSame( 'pending', $read['status'] );
+		$this->assertSame( 'GET', $read['method'] );
+
+		foreach ( [ $write, $needs_id, $read ] as $row ) {
+			$this->assertNotEmpty( $row['id'] );
+		}
+	}
+
+	/**
+	 * Test every registry entry gets a row, and only GET reads are ever pending.
+	 */
+	public function test_every_registry_entry_has_a_row_and_only_reads_are_pending() {
+		$this->load_registry_dependencies();
+
+		foreach ( API\get_endpoint_registry() as $entry ) {
+			$row = API\get_endpoint_row_placeholder( $entry );
+
+			if ( 'pending' === $row['status'] ) {
+				$this->assertSame( 'GET', $entry[1], $entry[2] );
+			} else {
+				$this->assertSame( 'skipped', $row['status'], $entry[2] );
+			}
+		}
+	}
 }

@@ -478,19 +478,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<span class="ash-nazg-ml-10 ash-nazg-text-muted">(<span id="ash-nazg-endpoints-total">0</span> <?php esc_html_e( 'total endpoints', 'ash-nazg' ); ?>)</span>
 				</p>
 
-				<?php foreach ( $endpoint_groups as $group => $cached ) : ?>
-					<div class="ash-nazg-endpoint-slot" data-group="<?php echo esc_attr( $group ); ?>" <?php echo $cached ? '' : 'data-pending="1"'; ?>>
-						<?php if ( $cached ) : ?>
-							<?php echo Admin\render_endpoint_group( $group, $cached['endpoints'], $cached['cached_at'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup escaped in the partial. ?>
-						<?php else : ?>
-							<p class="ash-nazg-text-muted ash-nazg-endpoint-loading">
-								<?php
-								/* translators: %s: endpoint group name */
-								echo esc_html( sprintf( __( 'Checking %s endpoints…', 'ash-nazg' ), $group ) );
-								?>
-							</p>
-						<?php endif; ?>
-					</div>
+				<?php foreach ( $endpoint_groups as $group => $endpoint_rows ) : ?>
+					<?php echo Admin\render_endpoint_group( $group, $endpoint_rows, 0 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup escaped in the partials. ?>
 				<?php endforeach; ?>
 			</div>
 		<?php endif; ?>

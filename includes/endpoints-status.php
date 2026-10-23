@@ -235,6 +235,70 @@ function resolve_endpoint_path( $template, $context ) {
 }
 
 /**
+ * Build the result for an endpoint that is listed but not probed.
+ *
+ * @param array  $entry   Registry entry: [ version, method, path, summary, group ].
+ * @param string $path    Path to show, with the placeholders that could be filled in.
+ * @param array  $missing Placeholders that couldn't be filled (reads only).
+ * @return array Endpoint result with status 'skipped'.
+ */
+function build_skipped_endpoint_result( $entry, $path, $missing ) {
+	return [
+		'name' => $entry[3],
+		'path' => ( 'v0' === $entry[0] ? '/v0' : '/v1' ) . $path,
+		'description' => '',
+		'status' => 'skipped',
+		'data' => null,
+		'error' => 'GET' === $entry[1]
+			/* translators: %s: comma-separated list of placeholders, e.g. {build_id} */
+			? sprintf( __( 'Not probed: needs %s', 'ash-nazg' ), implode( ', ', $missing ) )
+			: __( 'Not probed: changes data', 'ash-nazg' ),
+		'method' => $entry[1],
+		'version' => $entry[0],
+	];
+}
+
+/**
+ * Get the row to show for an endpoint before any request has been made.
+ *
+ * Needs no API call, so a page can render every row immediately: writes and
+ * reads needing an ID are already final, and probe-able reads show as
+ * 'pending' until the loader fills them in.
+ *
+ * @param array $entry Registry entry: [ version, method, path, summary, group ].
+ * @return array Endpoint result with an `id`.
+ */
+function get_endpoint_row_placeholder( $entry ) {
+	$state = get_endpoint_entry_state( $entry );
+
+	if ( 'probe' === $state ) {
+		$row = [
+			'name' => $entry[3],
+			'path' => ( 'v0' === $entry[0] ? '/v0' : '/v1' ) . $entry[2],
+			'description' => '',
+			'status' => 'pending',
+			'data' => null,
+			'error' => null,
+			'method' => $entry[1],
+			'version' => $entry[0],
+		];
+	} else {
+		preg_match_all( '/\{(\w+)\}/', $entry[2], $matches );
+
+		$missing = [];
+		foreach ( array_diff( $matches[1], get_resolvable_placeholders() ) as $name ) {
+			$missing[] = '{' . $name . '}';
+		}
+
+		$row = build_skipped_endpoint_result( $entry, $entry[2], $missing );
+	}
+
+	$row['id'] = get_endpoint_entry_id( $entry );
+
+	return $row;
+}
+
+/**
  * Probe one registry entry, or explain why it is only listed.
  *
  * Only GET requests are ever sent. Writes and deletes are listed with
@@ -249,28 +313,16 @@ function probe_registry_entry( $entry, $context ) {
 	list( $version, $method, $template, $summary ) = $entry;
 
 	$resolved = resolve_endpoint_path( $template, $context );
-	$prefix = 'v0' === $version ? '/v0' : '/v1';
 
 	if ( 'GET' === $method && empty( $resolved['missing'] ) ) {
 		$result = test_endpoint( $resolved['path'], $summary, '', 'v0' === $version );
-	} else {
-		$result = [
-			'name' => $summary,
-			'path' => $prefix . $resolved['path'],
-			'description' => '',
-			'status' => 'skipped',
-			'data' => null,
-			'error' => 'GET' === $method
-				/* translators: %s: comma-separated list of placeholders, e.g. {build_id} */
-				? sprintf( __( 'Not probed: needs %s', 'ash-nazg' ), implode( ', ', $resolved['missing'] ) )
-				: __( 'Not probed: changes data', 'ash-nazg' ),
-		];
+		$result['method'] = $method;
+		$result['version'] = $version;
+
+		return $result;
 	}
 
-	$result['method'] = $method;
-	$result['version'] = $version;
-
-	return $result;
+	return build_skipped_endpoint_result( $entry, $resolved['path'], $resolved['missing'] );
 }
 
 /**

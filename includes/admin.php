@@ -733,10 +733,10 @@ function render_dashboard_page() {
 	$hidden_groups  = $hidden_groups ? array_filter( explode( ',', $hidden_groups ) ) : [];
 
 	/*
-	 * Endpoint groups to show. Only cached results are read here.
-	 * Uncached groups render as placeholders and are probed one at a
-	 * time over AJAX, so a cold cache never runs live API requests
-	 * during the page load.
+	 * Every endpoint, grouped, built with no API calls. Cached results are
+	 * used where they exist; probe-able reads without one render as
+	 * "checking" rows that the loader fills in one request at a time, so a
+	 * cold cache never runs a live request during the page load.
 	 */
 	$endpoint_groups = [];
 	if ( $is_pantheon && $site_id && null === $api_error && $show_endpoints ) {
@@ -747,7 +747,19 @@ function render_dashboard_page() {
 				continue;
 			}
 
-			$endpoint_groups[ $group ] = API\get_cached_endpoint_group( $group, $site_id, $environment );
+			$cached_results = API\get_cached_endpoint_results( $group, $site_id, $environment );
+
+			foreach ( API\get_endpoint_registry() as $entry ) {
+				if ( $group !== $entry[4] ) {
+					continue;
+				}
+
+				$entry_id = API\get_endpoint_entry_id( $entry );
+
+				$endpoint_groups[ $group ][] = isset( $cached_results[ $entry_id ] )
+					? array_merge( $cached_results[ $entry_id ], [ 'id' => $entry_id ] )
+					: API\get_endpoint_row_placeholder( $entry );
+			}
 		}
 	}
 
