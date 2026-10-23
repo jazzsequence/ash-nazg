@@ -46,6 +46,7 @@ function init() {
 	add_action( 'wp_ajax_ash_nazg_refresh_metrics', __NAMESPACE__ . '\\ajax_refresh_metrics' );
 	add_action( 'wp_ajax_ash_nazg_save_primary_org', __NAMESPACE__ . '\\ajax_save_primary_org' );
 	add_action( 'wp_ajax_ash_nazg_probe_endpoint_group', __NAMESPACE__ . '\\ajax_probe_endpoint_group' );
+	add_action( 'wp_ajax_ash_nazg_probe_endpoint', __NAMESPACE__ . '\\ajax_probe_endpoint' );
 	add_action( 'wp_ajax_ash_nazg_copy_access_token', __NAMESPACE__ . '\\ajax_copy_access_token' );
 	add_action( 'load-toplevel_page_ash-nazg', __NAMESPACE__ . '\\dashboard_screen_options' );
 	add_action( 'load-ash-nazg_page_ash-nazg-addons', __NAMESPACE__ . '\\addons_screen_options' );
@@ -309,6 +310,7 @@ function enqueue_assets( $hook ) {
 				'updateLabelNonce' => wp_create_nonce( 'ash_nazg_update_site_label' ),
 				'workflowStatusNonce' => wp_create_nonce( 'ash_nazg_workflow_status' ),
 				'probeEndpointGroupNonce' => wp_create_nonce( 'ash_nazg_probe_endpoint_group' ),
+				'probeEndpointNonce' => wp_create_nonce( 'ash_nazg_probe_endpoint' ),
 				'i18n' => [
 					'toggleError'       => __( 'Failed to switch connection mode.', 'ash-nazg' ),
 					'ajaxError'         => __( 'An error occurred while switching connection mode.', 'ash-nazg' ),
@@ -319,6 +321,7 @@ function enqueue_assets( $hook ) {
 					'clipboardError'    => __( 'Could not copy to clipboard. Check browser permissions.', 'ash-nazg' ),
 					'saveOrgError'      => __( 'Failed to save organization preference.', 'ash-nazg' ),
 					'endpointGroupError' => __( 'Could not check this group. Reload the page to try again.', 'ash-nazg' ),
+					'endpointError' => __( 'Could not check this endpoint. Reload the page to try again.', 'ash-nazg' ),
 				],
 			]
 		);
@@ -2938,6 +2941,52 @@ function ajax_refresh_metrics() {
 	API\clear_metrics_cache( null, $env );
 
 	wp_send_json_success( [ 'message' => __( 'Metrics cache cleared successfully.', 'ash-nazg' ) ] );
+}
+
+/**
+ * Render one endpoint row.
+ *
+ * @param array $endpoint  Endpoint result.
+ * @param int   $cached_at Fallback Unix timestamp the endpoint was probed.
+ * @return string Row markup.
+ */
+function render_endpoint_row( $endpoint, $cached_at = 0 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter -- Consumed by the included partial via shared scope.
+	ob_start();
+	require ASH_NAZG_PLUGIN_DIR . 'includes/views/partials/endpoint-row.php';
+	return ob_get_clean();
+}
+
+/**
+ * AJAX handler: probe a single endpoint and return its rendered row.
+ *
+ * One endpoint per request keeps every request short. The slowest single
+ * read measured ~16s, while a whole group could take 30s or more.
+ *
+ * @return void
+ */
+function ajax_probe_endpoint() {
+	check_ajax_referer( 'ash_nazg_probe_endpoint', 'nonce' );
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'ash-nazg' ) ], 403 );
+	}
+
+	$id = isset( $_POST['entry'] ) ? sanitize_key( wp_unslash( $_POST['entry'] ) ) : '';
+
+	$result = API\probe_and_cache_endpoint_entry( $id );
+
+	if ( null === $result ) {
+		wp_send_json_error( [ 'message' => __( 'Unknown endpoint.', 'ash-nazg' ) ], 400 );
+	}
+
+	$result['id'] = $id;
+
+	wp_send_json_success(
+		[
+			'html' => render_endpoint_row( $result ),
+			'status' => $result['status'],
+		]
+	);
 }
 
 /**

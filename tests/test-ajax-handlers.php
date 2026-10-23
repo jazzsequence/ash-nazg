@@ -467,7 +467,7 @@ class Test_AJAX_Handlers extends TestCase {
 	 * we can't supply) get their own status instead of being reported as errors.
 	 */
 	public function test_skipped_endpoints_are_not_reported_as_errors() {
-		$partial = file_get_contents( __DIR__ . '/../includes/views/partials/endpoint-group.php' );
+		$partial = file_get_contents( __DIR__ . '/../includes/views/partials/endpoint-row.php' );
 		$admin = file_get_contents( __DIR__ . '/../includes/admin.php' );
 		$js = file_get_contents( __DIR__ . '/../assets/js/dashboard.js' );
 
@@ -475,5 +475,46 @@ class Test_AJAX_Handlers extends TestCase {
 		$this->assertStringContainsString( "++\$counts['skipped']", $admin );
 		$this->assertStringContainsString( 'data-status="skipped"', $js );
 		$this->assertMatchesRegularExpression( '/errors = \$rows\.length - ok - unavailable - skipped/', $js );
+	}
+
+	/**
+	 * Test the per-endpoint probe handler is registered and gated.
+	 *
+	 * It makes a live API request, so it needs a nonce and a capability check,
+	 * and it only accepts an ID that the registry knows.
+	 */
+	public function test_probe_endpoint_handler_is_secured() {
+		$admin = file_get_contents( __DIR__ . '/../includes/admin.php' );
+
+		$this->assertStringContainsString( "add_action( 'wp_ajax_ash_nazg_probe_endpoint'", $admin );
+
+		$this->assertMatchesRegularExpression(
+			"/function ajax_probe_endpoint\\(\\).*check_ajax_referer\\( 'ash_nazg_probe_endpoint', 'nonce' \\).*current_user_can\\( 'manage_options' \\).*sanitize_key\\(.*probe_and_cache_endpoint_entry\\( \\\$id \\).*null === \\\$result/s",
+			$admin,
+			'The handler should verify the nonce and capability, sanitise the ID, and reject IDs the registry does not know'
+		);
+	}
+
+	/**
+	 * Test the row partial escapes its output and the group partial reuses it.
+	 */
+	public function test_endpoint_row_partial_escapes_and_is_shared() {
+		$row = file_get_contents( __DIR__ . '/../includes/views/partials/endpoint-row.php' );
+		$group = file_get_contents( __DIR__ . '/../includes/views/partials/endpoint-group.php' );
+
+		$this->assertDoesNotMatchRegularExpression( '/echo \\$/', $row, 'The row partial should not echo a variable without escaping' );
+		$this->assertStringContainsString( 'partials/endpoint-row.php', $group, 'The group partial should reuse the row partial' );
+		$this->assertStringNotContainsString( 'dashicons-yes-alt', $group, 'Row markup should live only in the row partial' );
+	}
+
+	/**
+	 * Test the loader probes pending rows one request at a time, and pending rows are not counted as errors.
+	 */
+	public function test_row_loader_is_sequential_and_summary_ignores_pending() {
+		$js = file_get_contents( __DIR__ . '/../assets/js/dashboard.js' );
+
+		$this->assertStringContainsString( "action: 'ash_nazg_probe_endpoint'", $js );
+		$this->assertStringContainsString( 'next(index + 1)', $js );
+		$this->assertMatchesRegularExpression( '/errors = \\$rows\\.length - ok - unavailable - skipped - pending/', $js );
 	}
 }

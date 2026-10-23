@@ -218,7 +218,8 @@ jQuery(document).ready(function($) {
 		var ok = $rows.filter('[data-status="success"]').length;
 		var unavailable = $rows.filter('[data-status="unavailable"]').length;
 		var skipped = $rows.filter('[data-status="skipped"]').length;
-		var errors = $rows.length - ok - unavailable - skipped;
+		var pending = $rows.filter('[data-status="pending"]').length;
+		var errors = $rows.length - ok - unavailable - skipped - pending;
 
 		$('#ash-nazg-endpoints-ok').text(ok);
 		$('#ash-nazg-endpoints-unavailable').text(unavailable);
@@ -267,8 +268,49 @@ jQuery(document).ready(function($) {
 		next(0);
 	}
 
+	// Rows rendered as "checking" are probed one request each, in order, so no
+	// single request is longer than the slowest endpoint.
+	function loadPendingEndpointRows() {
+		var $rows = $('.ash-nazg-endpoint-pending');
+
+		function next(index) {
+			if (index >= $rows.length) {
+				return;
+			}
+
+			var $row = $rows.eq(index);
+
+			$.ajax({
+				url: ashNazgDashboard.ajaxUrl,
+				type: 'POST',
+				dataType: 'json',
+				data: {
+					action: 'ash_nazg_probe_endpoint',
+					nonce: ashNazgDashboard.probeEndpointNonce,
+					entry: $row.data('entry-id')
+				}
+			}).done(function(response) {
+				if (response.success) {
+					$row.replaceWith(response.data.html);
+				} else {
+					$row.find('td').last().text(ashNazgDashboard.i18n.endpointError);
+					$row.attr('data-status', 'error').removeClass('ash-nazg-endpoint-pending');
+				}
+			}).fail(function() {
+				$row.find('td').last().text(ashNazgDashboard.i18n.endpointError);
+				$row.attr('data-status', 'error').removeClass('ash-nazg-endpoint-pending');
+			}).always(function() {
+				updateEndpointSummary();
+				next(index + 1);
+			});
+		}
+
+		next(0);
+	}
+
 	updateEndpointSummary();
 	loadPendingEndpointGroups();
+	loadPendingEndpointRows();
 
 	// ── Screen Options: endpoint visibility master toggle ───────────────────────
 	// Unchecking the master toggle unchecks all group checkboxes; re-checking restores all.

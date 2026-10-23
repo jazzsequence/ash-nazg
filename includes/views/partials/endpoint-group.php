@@ -2,7 +2,7 @@
 /**
  * One API endpoint group: heading and results table.
  *
- * Rendered both inline for cached groups and by the AJAX handler for groups
+ * Rendered inline for cached groups and by the AJAX handler for groups
  * probed on demand, so the markup stays identical.
  *
  * @package Pantheon\AshNazg
@@ -35,52 +35,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</tr>
 		</thead>
 		<tbody>
-			<?php foreach ( $endpoints as $endpoint ) : ?>
-				<tr class="ash-nazg-endpoint-row" data-status="<?php echo esc_attr( $endpoint['status'] ); ?>">
-					<td class="ash-nazg-th-icon">
-						<?php if ( 'success' === $endpoint['status'] ) : ?>
-							<span class="dashicons dashicons-yes-alt ash-nazg-icon-success" title="<?php esc_attr_e( 'Available', 'ash-nazg' ); ?>"></span>
-						<?php elseif ( 'unavailable' === $endpoint['status'] ) : ?>
-							<span class="dashicons dashicons-minus ash-nazg-icon-warning" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Unavailable', 'ash-nazg' ) ); ?>"></span>
-						<?php elseif ( 'skipped' === $endpoint['status'] ) : ?>
-							<span class="dashicons dashicons-minus ash-nazg-icon-locked" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Not probed', 'ash-nazg' ) ); ?>"></span>
-						<?php else : ?>
-							<span class="dashicons dashicons-dismiss ash-nazg-icon-error" title="<?php echo esc_attr( $endpoint['error'] ?? __( 'Error', 'ash-nazg' ) ); ?>"></span>
-						<?php endif; ?>
-					</td>
-					<td>
-						<strong><?php echo esc_html( $endpoint['name'] ); ?></strong>
-						<?php if ( ! empty( $endpoint['description'] ) ) : ?>
-							<br><small class="ash-nazg-text-muted"><?php echo esc_html( $endpoint['description'] ); ?></small>
-						<?php endif; ?>
-					</td>
-					<td><code class="ash-nazg-tiny-text"><?php echo esc_html( trim( ( $endpoint['method'] ?? '' ) . ' ' . $endpoint['path'] ) ); ?></code></td>
-					<td>
-						<?php if ( $cached_at ) : ?>
-							<small class="ash-nazg-text-muted"><?php echo esc_html( human_time_diff( $cached_at ) ); ?> <?php esc_html_e( 'ago', 'ash-nazg' ); ?></small>
-						<?php else : ?>
-							<small class="ash-nazg-text-light">—</small>
-						<?php endif; ?>
-					</td>
-					<td>
-						<?php if ( 'success' === $endpoint['status'] && ! empty( $endpoint['data'] ) ) : ?>
-							<?php foreach ( $endpoint['data'] as $data_key => $data_value ) : ?>
-								<?php if ( is_scalar( $data_value ) ) : ?>
-									<div class="ash-nazg-small-text">
-										<strong><?php echo esc_html( ucfirst( $data_key ) ); ?>:</strong>
-										<?php echo esc_html( $data_value ); ?>
-									</div>
-								<?php endif; ?>
-							<?php endforeach; ?>
-						<?php elseif ( 'skipped' === $endpoint['status'] ) : ?>
-							<small class="ash-nazg-text-muted"><?php echo esc_html( $endpoint['error'] ?? '' ); ?></small>
-						<?php elseif ( 'success' !== $endpoint['status'] && ! empty( $endpoint['error'] ) ) : ?>
-							<small class="ash-nazg-text-error"><?php echo esc_html( $endpoint['error'] ); ?></small>
-						<?php else : ?>
-							<small class="ash-nazg-text-light">—</small>
-						<?php endif; ?>
-					</td>
-				</tr>
+			<?php foreach ( $endpoints as $endpoint ) : // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Consumed by the included row partial. ?>
+				<?php require ASH_NAZG_PLUGIN_DIR . 'includes/views/partials/endpoint-row.php'; ?>
 			<?php endforeach; ?>
 		</tbody>
 	</table>
