@@ -178,7 +178,7 @@ class Test_API extends TestCase {
 		$error_codes = array(
 			'authentication_failed'  => '401/403 errors',
 			'no_token'               => 'Missing Personal Access Token',
-			'no_v0_token'            => 'Missing legacy Machine Token for a hybrid-fallback call',
+			'invalid_token' => 'Rejected Personal Access Token during v0 session exchange',
 			'api_connection_failed'  => 'Connection failures',
 			'environment_not_found'  => 'Invalid environment',
 		);

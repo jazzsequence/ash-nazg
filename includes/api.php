@@ -59,7 +59,7 @@ function get_api_token( $user_id = null ) {
  *
  * Uses WordPress salts for encryption key and AES-256-CBC encryption.
  * Tokens stored in Pantheon Secrets are not encrypted (already secure).
- * Used for both the v1 personal access token and the legacy v0 machine token.
+ * Used for database-stored Personal Access Tokens.
  *
  * @param string $token Plain text token.
  * @return string Encrypted token (base64 encoded).
@@ -204,8 +204,8 @@ function get_v0_session_token( $user_id = null ) {
 	if ( ! $access_token ) {
 		Helpers\debug_log( sprintf( 'No Personal Access Token found for user %d', $user_id ) );
 		return new \WP_Error(
-			'no_v0_token',
-			__( 'This feature requires a Pantheon Personal Access Token. Please add one in Settings.', 'ash-nazg' )
+			'no_token',
+			__( 'No Personal Access Token configured. Please add one in Settings.', 'ash-nazg' )
 		);
 	}
 
@@ -227,7 +227,7 @@ function get_v0_session_token( $user_id = null ) {
 
 	if ( is_wp_error( $response ) ) {
 		$error_message = $response->get_error_message();
-		Helpers\debug_log( 'Failed to exchange legacy machine token: ' . $error_message );
+		Helpers\debug_log( 'Failed to exchange Personal Access Token for a v0 session: ' . $error_message );
 		return new \WP_Error(
 			'api_connection_failed',
 			sprintf(
@@ -242,15 +242,15 @@ function get_v0_session_token( $user_id = null ) {
 	$body = wp_remote_retrieve_body( $response );
 
 	if ( 401 === $status_code || 403 === $status_code ) {
-		Helpers\debug_log( 'Invalid legacy machine token (status ' . $status_code . ')' );
+		Helpers\debug_log( 'Invalid Personal Access Token for v0 exchange (status ' . $status_code . ')' );
 		return new \WP_Error(
-			'invalid_v0_token',
-			__( 'Invalid legacy machine token. Please check your Machine Token in Settings.', 'ash-nazg' )
+			'invalid_token',
+			__( 'Invalid Personal Access Token. Please check your token in Settings.', 'ash-nazg' )
 		);
 	}
 
 	if ( 200 !== $status_code ) {
-		Helpers\debug_log( 'Legacy v0 authentication failed with status ' . $status_code );
+		Helpers\debug_log( 'v0 session exchange failed with status ' . $status_code );
 		return new \WP_Error(
 			'api_error',
 			sprintf(
@@ -263,7 +263,7 @@ function get_v0_session_token( $user_id = null ) {
 
 	$data = json_decode( $body, true );
 	if ( empty( $data['session'] ) ) {
-		Helpers\debug_log( 'No session token in legacy v0 API response' );
+		Helpers\debug_log( 'No session token in v0 session exchange response' );
 		return new \WP_Error(
 			'invalid_response',
 			__( 'Invalid response from Pantheon API. No session token received.', 'ash-nazg' )
@@ -318,8 +318,8 @@ function api_request( $endpoint, $method = 'GET', $body = [] ) {
  * Make an authenticated legacy v0 API request.
  *
  * Only used by the hybrid-fallback functions that have no v1 equivalent.
- * Uses a completely separate credential (legacy machine token, exchanged
- * for a v0 session token) from the v1 personal access token used elsewhere.
+ * Uses the same Personal Access Token as v1, exchanged for a v0 session
+ * token via get_v0_session_token().
  *
  * @param string $endpoint API endpoint path, including the /v0 prefix (e.g., '/v0/sites/abc123').
  * @param string $method   HTTP method (GET, POST, PUT, DELETE).
@@ -338,7 +338,7 @@ function api_request_v0( $endpoint, $method = 'GET', $body = [] ) {
 		$data = $result->get_error_data();
 		if ( isset( $data['status'] ) && in_array( (int) $data['status'], [ 401, 403 ], true ) ) {
 			clear_v0_session_token();
-			Helpers\debug_log( 'Legacy v0 authentication failed, cleared cached session token' );
+			Helpers\debug_log( 'v0 authentication failed, cleared cached session token' );
 		}
 	}
 
@@ -798,7 +798,7 @@ function normalize_site_info( $site ) {
  * Update site label.
  *
  * V0 fallback: v1 has no PUT/PATCH on /sites/{id} yet - `label` is readable
- * but not writable via the public API. Requires a legacy machine token.
+ * but not writable via the public API. Uses the Personal Access Token via a v0 session.
  *
  * @param string $site_id Site UUID.
  * @param string $label   New site label.
@@ -1286,9 +1286,10 @@ function test_connection() {
  * which returns the full env var set including PANTHEON_INDEX_* for Solr.
  *
  * Note: terminus.pantheon.io is a separate internal service, not part of the
- * api.pantheon.io v0/v1 versioning. It's unverified whether it accepts a v1
- * personal access token the same way it accepted v0 session tokens - flagged
- * in TODO.md since this only affects local (Lando/ddev) development.
+ * api.pantheon.io v0/v1 versioning. Live-verified it rejects a Personal Access
+ * Token sent directly as the Bearer token (401 "Invalid or expired session
+ * header") and only accepts a v0 session token, so this uses
+ * get_v0_session_token() rather than get_api_token().
  *
  * @param string $site_id Optional. Site UUID.
  * @param string $env     Optional. Environment name.
@@ -1323,7 +1324,7 @@ function get_addon_env_variables( $site_id = null, $env = null ) {
 	}
 
 	// Local: call Terminus internal variables endpoint which returns full env var set.
-	$token = get_api_token();
+	$token = get_v0_session_token();
 	if ( is_wp_error( $token ) ) {
 		return $token;
 	}
@@ -1785,7 +1786,7 @@ function get_available_workflows() {
  *
  * V0 fallback: v1 has no generic `POST .../environments/{env}/workflows`
  * endpoint - only specific typed mutations (deploy, addon, domain, etc).
- * Requires a legacy machine token.
+ * Uses the Personal Access Token via a v0 session.
  *
  * @param string $site_id Site UUID.
  * @param string $env Environment name.
@@ -2262,7 +2263,8 @@ function clone_files( $site_id, $from_env, $to_env ) {
  * Get domains for an environment.
  *
  * V0 fallback: v1 has no domain-listing endpoint yet (only create/delete/
- * set-primary/verify). Requires a legacy machine token. Note: as of this
+ * set-primary/verify). Uses the Personal Access Token via a v0 session.
+ * Note: as of this
  * migration this function has no real callers in the admin UI - only
  * add_domain()/delete_domain() (used by Multisite automation) are exercised.
  *
@@ -3031,8 +3033,7 @@ function get_backup_download_url( $backup_id, $element, $site_id = null, $env = 
  * Get environment metrics for a specific time period.
  *
  * V0 fallback: v1 has no metrics endpoint yet - the TimeseriesMetricsPoint/
- * MetricsDuration schema types exist but nothing serves them. Requires a
- * legacy machine token.
+ * MetricsDuration schema types exist but nothing serves them. Uses the Personal Access Token via a v0 session.
  *
  * @param string $duration Time period: "7d", "28d", "12w", or "12m".
  * @param string $site_id Optional. Site UUID. Auto-detected if not provided.

@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- `get_addon_env_variables()` (local/Lando addon detection) sent the Personal Access Token directly to `terminus.pantheon.io`, which rejects it with a 401 — that service only accepts a v0 session token. Now uses `get_v0_session_token()`.
 - Removed the "Clear Session Token" Settings feature — meaningless under v1, which has no session tokens to clear.
 - Dashboard's API Endpoints Status diagnostics no longer hardcode ~15 rows as "unavailable" for v0-only features. They're now live-tested through the v0 client like the real hybrid-fallback functions already do, so the page reflects actual connectivity instead of a static assumption. Rows that were purely redundant with data already shown elsewhere (commit history, diffstat, env variables/settings, SSH keys, user organizations) were removed instead of faked.
 - `restore_backup()` switched to the v0 fallback — live testing found v1's restore endpoint fails unconditionally regardless of parameters (a Pantheon platform bug, not a client-side issue; confirmed v0 fails the same way right now too, so this is ready to work once Pantheon fixes it).
