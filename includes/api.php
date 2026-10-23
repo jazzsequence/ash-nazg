@@ -173,8 +173,9 @@ function get_access_token() {
  * Exchange a token for a v0 session token.
  *
  * V0-only. Cached per-user for 1 hour, same as the old exchange this
- * replaces. Only called by api_request_v0(), which is only used by the
- * handful of hybrid-fallback functions that have no v1 equivalent yet.
+ * replaces. Called by api_request_v0() (the handful of hybrid-fallback
+ * functions that have no v1 equivalent yet) and by
+ * get_addon_env_variables() for terminus.pantheon.io.
  * The Personal Access Token works as a v0 machine_token for the full v0
  * API surface, so it's the only credential used here.
  *
