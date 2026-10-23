@@ -6,6 +6,7 @@
  */
 
 use PHPUnit\Framework\TestCase;
+use Pantheon\AshNazg\API;
 
 /**
  * Test the Dashboard's API Endpoints Status diagnostics.
@@ -130,6 +131,39 @@ class Test_Endpoints_Status extends TestCase {
 			"'/sites/%s/upstream-updates'",
 			$file_contents,
 			'Upstream Updates should no longer test the stale pre-migration v0 endpoint'
+		);
+	}
+
+	/**
+	 * Test that endpoints can be probed one group at a time.
+	 *
+	 * The dashboard loads groups separately so the live requests are spread
+	 * across several page requests instead of blocking one.
+	 */
+	public function test_groups_can_be_probed_individually() {
+		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/endpoints-status.php';
+
+		$scopes = API\get_endpoint_group_scopes();
+
+		$this->assertSame( 'site', $scopes['Sites'] );
+		$this->assertSame( 'user', $scopes['User'] );
+
+		// User-scoped groups without a user ID are empty, not an error, and make no API call.
+		$this->assertSame( [], API\probe_endpoint_group( 'User', 'site-id', 'dev', null ) );
+		$this->assertSame( [], API\probe_endpoint_group( 'Authorization', 'site-id', 'dev', null ) );
+		$this->assertSame( [], API\probe_endpoint_group( 'Nonexistent', 'site-id', 'dev', 'user-id' ) );
+	}
+
+	/**
+	 * Test that get_all_endpoints_status() is assembled from the per-group probes.
+	 */
+	public function test_all_endpoints_status_uses_group_probes() {
+		$file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/endpoints-status.php' );
+
+		$this->assertMatchesRegularExpression(
+			'/function get_all_endpoints_status.*get_endpoint_group_scopes\(\).*probe_endpoint_group\(/s',
+			$file_contents,
+			'get_all_endpoints_status should loop the groups and probe each one'
 		);
 	}
 }
