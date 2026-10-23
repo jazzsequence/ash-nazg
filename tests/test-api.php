@@ -444,9 +444,21 @@ class Test_API extends TestCase {
 		);
 
 		$this->assertMatchesRegularExpression(
-			'/function clear_cache.*get_endpoint_group_scopes.*delete_transient\( get_endpoint_group_cache_key/s',
+			'/function clear_endpoint_group_caches.*get_endpoint_group_scopes.*delete_transient\( get_endpoint_group_cache_key/s',
 			$file_contents,
-			'clear_cache should clear every group cache'
+			'clear_endpoint_group_caches should clear every group cache'
+		);
+
+		$this->assertMatchesRegularExpression(
+			'/function clear_cache.*clear_endpoint_group_caches\(/s',
+			$file_contents,
+			'clear_cache should clear the endpoint group caches'
+		);
+
+		$this->assertMatchesRegularExpression(
+			'/function clear_addon_endpoint_cache.*clear_endpoint_group_caches\(/s',
+			$file_contents,
+			'changing an addon should clear the endpoint group caches'
 		);
 	}
 }

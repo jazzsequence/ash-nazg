@@ -1279,11 +1279,7 @@ function clear_cache() {
 		if ( $env ) {
 			delete_transient( 'ash_nazg_env_info_' . $site_id . '_' . $env );
 			delete_transient( sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $env ) );
-
-			require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
-			foreach ( array_keys( get_endpoint_group_scopes() ) as $group ) {
-				delete_transient( get_endpoint_group_cache_key( $group, $site_id, $env ) );
-			}
+			clear_endpoint_group_caches( $site_id, $env );
 			delete_transient( sprintf( 'ash_nazg_commits_%s_%s', $site_id, $env ) );
 		}
 	}
@@ -1312,6 +1308,21 @@ function get_user_id() {
  */
 function get_endpoint_group_cache_key( $group, $site_id, $env ) {
 	return sprintf( 'ash_nazg_endpoints_group_%s_%s_%s', $site_id, $env, sanitize_key( $group ) );
+}
+
+/**
+ * Clear every endpoint group's cached probe results for an environment.
+ *
+ * @param string $site_id Site UUID.
+ * @param string $env     Environment name.
+ * @return void
+ */
+function clear_endpoint_group_caches( $site_id, $env ) {
+	require_once ASH_NAZG_PLUGIN_DIR . 'includes/endpoints-status.php';
+
+	foreach ( array_keys( get_endpoint_group_scopes() ) as $group ) {
+		delete_transient( get_endpoint_group_cache_key( $group, $site_id, $env ) );
+	}
 }
 
 /**
@@ -1728,6 +1739,7 @@ function clear_addons_cache( $site_id ) {
 function clear_addon_endpoint_cache( $site_id, $env ) {
 	$cache_key = sprintf( 'ash_nazg_endpoints_status_%s_%s', $site_id, $env );
 	delete_transient( $cache_key );
+	clear_endpoint_group_caches( $site_id, $env );
 }
 
 /**
