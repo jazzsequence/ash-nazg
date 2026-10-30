@@ -630,8 +630,8 @@ function get_current_pantheon_user() {
 	/*
 	 * Deliberately no currentUser_workspacesConnection_first here. Live-timed,
 	 * first=50 takes ~21s (13 workspaces) versus ~2.5s without it, and this
-	 * call gates the whole dashboard. Workspaces are fetched separately, and
-	 * lazily, a page at a time, by fetch_user_workspaces_page().
+	 * call gates the whole dashboard. Nothing here needs the workspace list;
+	 * the site's own workspace comes from the site info.
 	 */
 	$result = api_request( '/current-user', 'GET' );
 
@@ -659,128 +659,6 @@ function get_current_pantheon_user() {
 	);
 
 	return $result;
-}
-
-/**
- * Reshape one workspace edge into the old organization-membership contract.
- *
- * @param array $edge A workspacesConnection edge.
- * @return array|null Org-shaped membership, or null if the edge has no workspace id.
- */
-function workspace_edge_to_membership( $edge ) {
-	$workspace = $edge['node']['workspace'] ?? null;
-	if ( empty( $workspace['id'] ) ) {
-		return null;
-	}
-
-	return [
-		'id' => $workspace['id'],
-		'organization' => [
-			'id' => $workspace['id'],
-			'profile' => [
-				'name' => $workspace['name'] ?? $workspace['id'],
-				'machine_name' => $workspace['id'],
-			],
-		],
-	];
-}
-
-/**
- * Get workspaces the current Pantheon user belongs to, from cache only.
- *
- * V1 replaces "organizations" with "workspaces", nested in the
- * /current-user response. Reshaped back into the old
- * [{id, organization: {id, profile: {name, machine_name}}}] contract so the
- * Dashboard page's rendering loop doesn't need to change.
- *
- * This never makes an API request: resolving all workspaces takes ~21s or
- * more, which would time out a page load on a cold cache. Warm it a page at a
- * time with fetch_user_workspaces_page() instead.
- *
- * @return array|false|null Org-shaped memberships, false if not cached yet, null if no user.
- */
-function get_user_organizations() {
-	$wp_user_id = get_current_user_id();
-	if ( ! $wp_user_id ) {
-		return null;
-	}
-
-	return get_transient( sprintf( 'ash_nazg_user_workspaces_%d', $wp_user_id ) );
-}
-
-/**
- * Fetch one page of the current user's workspaces and cache the result once complete.
- *
- * Live-timed: 3 workspaces per request took 3-20s, so the full list is loaded a
- * few at a time (by AJAX) instead of in one request that can exceed the PHP
- * time limit. Partial results are held in a short-lived transient until the
- * last page arrives, then promoted to the 24h cache read by
- * get_user_organizations().
- *
- * @param string $cursor Optional. The previous page's endCursor.
- * @return array|\WP_Error {done: bool, next: string, memberships: array|null}.
- */
-function fetch_user_workspaces_page( $cursor = '' ) {
-	$wp_user_id = get_current_user_id();
-	if ( ! $wp_user_id ) {
-		return new \WP_Error( 'no_user', __( 'Unable to authenticate - no user logged in.', 'ash-nazg' ) );
-	}
-
-	$endpoint = '/current-user?currentUser_workspacesConnection_first=2';
-	if ( '' !== $cursor ) {
-		$endpoint .= '&currentUser_workspacesConnection_after=' . rawurlencode( $cursor );
-	}
-
-	$user = api_request( $endpoint, 'GET' );
-	if ( is_wp_error( $user ) ) {
-		Helpers\debug_log( sprintf( 'Failed to get Pantheon workspaces page: %s', $user->get_error_message() ) );
-		return $user;
-	}
-
-	$partial_key = sprintf( 'ash_nazg_user_workspaces_partial_%d', $wp_user_id );
-	$memberships = [];
-
-	if ( '' !== $cursor ) {
-		$memberships = get_transient( $partial_key );
-
-		// Never promote only the tail of the list to the 24h cache; make the loader start over.
-		if ( ! is_array( $memberships ) ) {
-			return new \WP_Error( 'partial_lost', __( 'The workspace list was interrupted. Please reload to try again.', 'ash-nazg' ) );
-		}
-	}
-
-	foreach ( $user['workspacesConnection']['edges'] ?? [] as $edge ) {
-		$membership = workspace_edge_to_membership( $edge );
-		if ( $membership ) {
-			$memberships[] = $membership;
-		}
-	}
-
-	$page_info = $user['workspacesConnection']['pageInfo'] ?? [];
-	$next = ! empty( $page_info['hasNextPage'] ) && ! empty( $page_info['endCursor'] ) ? $page_info['endCursor'] : '';
-
-	if ( '' !== $next ) {
-		set_transient( $partial_key, $memberships, HOUR_IN_SECONDS );
-
-		return [
-			'done' => false,
-			'next' => $next,
-			'memberships' => null,
-		];
-	}
-
-	delete_transient( $partial_key );
-
-	// Don't pin an empty list for 24h.
-	if ( ! empty( $memberships ) ) {
-		set_transient( sprintf( 'ash_nazg_user_workspaces_%d', $wp_user_id ), $memberships, DAY_IN_SECONDS );
-	}
-
-	return [
-		'done' => true,
-		'next' => '',
-		'memberships' => $memberships,
-	];
 }
 
 /**
@@ -1265,8 +1143,6 @@ function clear_cache() {
 	$wp_user_id = get_current_user_id();
 	if ( $wp_user_id ) {
 		delete_transient( sprintf( 'ash_nazg_pantheon_user_%d', $wp_user_id ) );
-		delete_transient( sprintf( 'ash_nazg_user_workspaces_%d', $wp_user_id ) );
-		delete_transient( sprintf( 'ash_nazg_user_workspaces_partial_%d', $wp_user_id ) );
 	}
 
 	// Clear site-specific caches if we can detect site ID.

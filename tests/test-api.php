@@ -57,10 +57,6 @@ class Test_API extends TestCase {
 			function_exists( 'Pantheon\AshNazg\API\get_current_pantheon_user' ),
 			'get_current_pantheon_user function should exist'
 		);
-		$this->assertTrue(
-			function_exists( 'Pantheon\AshNazg\API\get_user_organizations' ),
-			'get_user_organizations function should exist'
-		);
 	}
 
 	/**
@@ -255,48 +251,6 @@ class Test_API extends TestCase {
 			'/function get_user_id.*get_current_pantheon_user/s',
 			$file_contents,
 			'get_user_id should resolve the ID via get_current_pantheon_user()'
-		);
-	}
-
-	/**
-	 * Test that get_user_organizations only reads the cache and never calls the API.
-	 *
-	 * Live-timed: resolving all 13 workspaces takes ~21s and exceeded 30s from the CLI,
-	 * so it can't run during a page load.
-	 */
-	public function test_get_user_organizations_is_cache_only() {
-		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
-
-		preg_match( '/function get_user_organizations\(\) \{(.*?)\n\}\n/s', $file_contents, $matches );
-
-		$this->assertNotEmpty( $matches, 'get_user_organizations should exist' );
-		$this->assertStringContainsString( 'get_transient', $matches[1] );
-		$this->assertStringNotContainsString( 'api_request', $matches[1], 'get_user_organizations must never call the API' );
-	}
-
-	/**
-	 * Test that workspaces are fetched a small page at a time and cached once complete.
-	 */
-	public function test_fetch_user_workspaces_page_pages_and_caches() {
-		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
-
-		$this->assertMatchesRegularExpression(
-			'/function fetch_user_workspaces_page.*workspacesConnection_first=2.*workspacesConnection_after.*set_transient.*DAY_IN_SECONDS/s',
-			$file_contents,
-			'fetch_user_workspaces_page should request a small page with a cursor and cache the full list when done'
-		);
-	}
-
-	/**
-	 * Test that a lost partial result restarts the load instead of caching a truncated list.
-	 */
-	public function test_fetch_user_workspaces_page_rejects_lost_partial() {
-		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
-
-		$this->assertMatchesRegularExpression(
-			"/function fetch_user_workspaces_page.*'partial_lost'.*set_transient/s",
-			$file_contents,
-			'fetch_user_workspaces_page should return partial_lost before it can cache a truncated list'
 		);
 	}
 
