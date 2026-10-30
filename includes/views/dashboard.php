@@ -219,7 +219,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 								?>
 							</td>
 						</tr>
-						<?php require ASH_NAZG_PLUGIN_DIR . 'includes/views/partials/workspace-row.php'; ?>
 					<tr>
 						<th><?php esc_html_e( 'Personal Access Token', 'ash-nazg' ); ?></th>
 						<td>

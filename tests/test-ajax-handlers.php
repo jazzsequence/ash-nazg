@@ -374,16 +374,11 @@ class Test_AJAX_Handlers extends TestCase {
 	}
 
 	/**
-	 * Test AJAX handlers for org selection and access token copy are registered.
+	 * Test the access token copy AJAX handler is registered.
 	 */
-	public function test_org_and_token_ajax_handlers_exist() {
+	public function test_token_ajax_handler_exists() {
 		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
 
-		$this->assertStringContainsString(
-			'ash_nazg_save_primary_org',
-			$admin_file_contents,
-			'save_primary_org AJAX action should be registered'
-		);
 		$this->assertStringContainsString(
 			'ash_nazg_copy_access_token',
 			$admin_file_contents,
@@ -406,24 +401,6 @@ class Test_AJAX_Handlers extends TestCase {
 			'/function ajax_copy_access_token.*current_user_can/s',
 			$admin_file_contents,
 			'ajax_copy_access_token must check capabilities'
-		);
-	}
-
-	/**
-	 * Test that primary org handler has nonce and capability checks.
-	 */
-	public function test_save_primary_org_security() {
-		$admin_file_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
-
-		$this->assertMatchesRegularExpression(
-			'/function ajax_save_primary_org.*check_ajax_referer/s',
-			$admin_file_contents,
-			'ajax_save_primary_org must verify nonce'
-		);
-		$this->assertMatchesRegularExpression(
-			'/function ajax_save_primary_org.*current_user_can/s',
-			$admin_file_contents,
-			'ajax_save_primary_org must check capabilities'
 		);
 	}
 
@@ -495,79 +472,6 @@ class Test_AJAX_Handlers extends TestCase {
 	}
 
 	/**
-	 * Test the Workspace row lives in its own partial, which the dashboard includes.
-	 *
-	 * The AJAX loader re-renders this row once workspaces have loaded, so both
-	 * must use one template.
-	 */
-	public function test_workspace_row_is_a_shared_partial() {
-		$dashboard = file_get_contents( __DIR__ . '/../includes/views/dashboard.php' );
-		$partial = file_get_contents( __DIR__ . '/../includes/views/partials/workspace-row.php' );
-
-		$this->assertStringContainsString( 'partials/workspace-row.php', $dashboard );
-		$this->assertStringNotContainsString( 'ash-nazg-org-select', $dashboard, 'Workspace markup should live only in the partial' );
-		$this->assertStringContainsString( 'ash-nazg-org-select', $partial );
-		$this->assertDoesNotMatchRegularExpression( '/echo \\$/', $partial, 'The partial should not echo a variable without escaping' );
-	}
-
-	/**
-	 * Test the workspace loader handler is registered and gated.
-	 *
-	 * It makes live API requests, so it needs a nonce and a capability check, and
-	 * it only passes a sanitised cursor to the API function.
-	 */
-	public function test_load_workspaces_handler_is_secured() {
-		$admin = file_get_contents( __DIR__ . '/../includes/admin.php' );
-
-		$this->assertStringContainsString( "add_action( 'wp_ajax_ash_nazg_load_workspaces'", $admin );
-
-		$this->assertMatchesRegularExpression(
-			"/function ajax_load_workspaces\\(\\).*check_ajax_referer\\( 'ash_nazg_load_workspaces', 'nonce' \\).*current_user_can\\( 'manage_options' \\).*sanitize_text_field\\(.*fetch_user_workspaces_page\\( \\\$cursor \\)/s",
-			$admin,
-			'The handler should verify the nonce and capability and sanitise the cursor before fetching'
-		);
-	}
-
-	/**
-	 * Test the loader pages through workspaces, restarts once if the partial result is lost,
-	 * and the organization controls are delegated so they survive the row being replaced.
-	 */
-	public function test_workspace_loader_pages_and_controls_are_delegated() {
-		$js = file_get_contents( __DIR__ . '/../assets/js/dashboard.js' );
-
-		$this->assertStringContainsString( "action: 'ash_nazg_load_workspaces'", $js );
-		$this->assertStringContainsString( 'next(response.data.next)', $js );
-		$this->assertStringContainsString( "code === 'partial_lost' && !restarted", $js );
-
-		foreach ( [ '#ash-nazg-org-edit', '#ash-nazg-org-cancel', '#ash-nazg-org-save' ] as $selector ) {
-			$this->assertStringContainsString( "\$(document).on('click', '{$selector}'", $js, $selector );
-		}
-	}
-
-	/**
-	 * Test a cold workspace cache renders a loading row for the loader instead of hiding the row.
-	 *
-	 * get_user_organizations() returns false when nothing is cached, and the partial
-	 * must tell that apart from "no workspaces" (empty) so the AJAX loader has a row to fill in.
-	 */
-	public function test_cold_workspace_cache_renders_a_loading_row() {
-		$partial = file_get_contents( __DIR__ . '/../includes/views/partials/workspace-row.php' );
-		$api = file_get_contents( __DIR__ . '/../includes/api.php' );
-
-		$this->assertMatchesRegularExpression(
-			'/if \( false === \$user_organizations \) : \?>\s*<tr id="ash-nazg-workspace-row" class="ash-nazg-workspace-pending">/',
-			$partial,
-			'A cold cache should render the pending Workspace row'
-		);
-		$this->assertMatchesRegularExpression( '/elseif \( \$user_organizations \) : \?>/', $partial, 'An empty list should still render nothing' );
-		$this->assertMatchesRegularExpression(
-			'/function get_user_organizations\(\).*return get_transient/s',
-			$api,
-			'get_user_organizations() must stay cache-only so the page never blocks on it'
-		);
-	}
-
-	/**
 	 * Test the status tabs and version filter are wired up.
 	 *
 	 * Rows carry their version, the view has the four tabs and the version select,
@@ -601,5 +505,27 @@ class Test_AJAX_Handlers extends TestCase {
 		$this->assertStringContainsString( 'announceEndpointFilter()', $js );
 		$this->assertMatchesRegularExpression( '/function updateEndpointSummary\\(\\).*applyEndpointFilters\\(\\);/s', $js, 'Filters should be re-applied as rows load' );
 		$this->assertMatchesRegularExpression( '/function applyEndpointFilters.*ash-nazg-endpoint-group.*ash-nazg-hidden/s', $js, 'Groups with no visible rows should be hidden' );
+	}
+
+	/**
+	 * Test the workspace selector and everything behind it is gone.
+	 *
+	 * There is no operation for moving a site between workspaces, so there was nothing to
+	 * select, and the site-info card already shows the site's workspace without an API call.
+	 */
+	public function test_workspace_selector_is_removed() {
+		$admin = file_get_contents( __DIR__ . '/../includes/admin.php' );
+		$view = file_get_contents( __DIR__ . '/../includes/views/dashboard.php' );
+		$js = file_get_contents( __DIR__ . '/../assets/js/dashboard.js' );
+
+		foreach ( [ 'ajax_load_workspaces', 'ajax_save_primary_org', 'render_workspace_row', 'get_user_organizations', 'primary_org' ] as $name ) {
+			$this->assertStringNotContainsString( $name, $admin, $name );
+		}
+
+		$this->assertStringNotContainsString( 'workspace-row.php', $view );
+		$this->assertStringNotContainsString( 'ash-nazg-org-', $js );
+		$this->assertStringNotContainsString( 'loadWorkspaces', $js );
+		$this->assertFileDoesNotExist( __DIR__ . '/../includes/views/partials/workspace-row.php' );
+		$this->assertStringContainsString( "esc_html( \$site_organization_name )", $view, 'The site-info card still shows the workspace' );
 	}
 }

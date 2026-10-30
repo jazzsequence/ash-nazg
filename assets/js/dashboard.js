@@ -209,63 +209,6 @@ jQuery(document).ready(function($) {
 		}
 	});
 
-	// ── Workspace row ─────────────────────────────────────────────────────────
-	// Workspaces take too long to resolve during a page load, so they are fetched
-	// a couple at a time and the row is replaced when the last page arrives.
-
-	function loadWorkspaces() {
-		var $row = $('.ash-nazg-workspace-pending');
-		var restarted = false;
-
-		if (!$row.length) {
-			return;
-		}
-
-		function fail() {
-			$row.find('td').text(ashNazgDashboard.i18n.workspacesError);
-			$row.removeClass('ash-nazg-workspace-pending');
-		}
-
-		function next(cursor) {
-			$.ajax({
-				url: ashNazgDashboard.ajaxUrl,
-				type: 'POST',
-				dataType: 'json',
-				data: {
-					action: 'ash_nazg_load_workspaces',
-					nonce: ashNazgDashboard.loadWorkspacesNonce,
-					cursor: cursor
-				}
-			}).done(function(response) {
-				if (!response.success) {
-					fail();
-					return;
-				}
-
-				if (response.data.done) {
-					$row.replaceWith(response.data.html);
-				} else {
-					next(response.data.next);
-				}
-			}).fail(function(xhr) {
-				var code = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.code : '';
-
-				// The partial results expired mid-load; start over once instead of caching a truncated list.
-				if (code === 'partial_lost' && !restarted) {
-					restarted = true;
-					next('');
-					return;
-				}
-
-				fail();
-			});
-		}
-
-		next('');
-	}
-
-	loadWorkspaces();
-
 	// ── API Endpoints panel ───────────────────────────────────────────────────
 	// Endpoints are listed immediately; the ones that can be probed are checked
 	// one request at a time after the page has loaded.
@@ -422,58 +365,6 @@ jQuery(document).ready(function($) {
 	// Unchecking the master toggle unchecks all group checkboxes; re-checking restores all.
 	$('#ash_nazg_dashboard_show_endpoints').on('change', function() {
 		$('input[name="ash_nazg_dashboard_visible_group[]"]').prop('checked', $(this).is(':checked'));
-	});
-
-	// ── Organization selector ────────────────────────────────────────────────
-
-	// Delegated: the Workspace row is replaced once workspaces have loaded.
-	$(document).on('click', '#ash-nazg-org-edit', function(e) {
-		e.preventDefault();
-		$('#ash-nazg-org-display').hide();
-		$('#ash-nazg-org-select-wrap').show();
-		$('#ash-nazg-org-select').trigger('focus');
-	});
-
-	$(document).on('click', '#ash-nazg-org-cancel', function() {
-		$('#ash-nazg-org-select-wrap').hide();
-		$('#ash-nazg-org-display').show();
-	});
-
-	$(document).on('click', '#ash-nazg-org-save', function() {
-		var $btn    = $(this);
-		var $select = $('#ash-nazg-org-select');
-		var orgId   = $select.val();
-		var orgName = $select.find('option:selected').data('name');
-		var nonce   = $btn.data('nonce');
-
-		$btn.prop('disabled', true);
-
-		$.ajax({
-			url: ashNazgDashboard.ajaxUrl,
-			type: 'POST',
-			dataType: 'json',
-			data: {
-				action:   'ash_nazg_save_primary_org',
-				nonce:    nonce,
-				org_id:   orgId,
-				org_name: orgName
-			},
-			success: function(response) {
-				if (response.success) {
-					$('#ash-nazg-org-display span:first').text(orgName);
-					$('#ash-nazg-org-select-wrap').hide();
-					$('#ash-nazg-org-display').show();
-				} else {
-					window.alert(response.data && response.data.message ? response.data.message : ashNazgDashboard.i18n.saveOrgError);
-				}
-			},
-			error: function() {
-				window.alert(ashNazgDashboard.i18n.saveOrgError);
-			},
-			complete: function() {
-				$btn.prop('disabled', false);
-			}
-		});
 	});
 
 	// ── Token copy (Personal Access Token + legacy Machine Token) ───────────
