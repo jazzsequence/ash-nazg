@@ -3078,6 +3078,24 @@ function display_legacy_machine_token_notice() {
 
 	$has_access_token = (bool) API\get_user_access_token( $user_id );
 	$site_name = isset( $_ENV['PANTHEON_SITE_NAME'] ) ? sanitize_text_field( wp_unslash( $_ENV['PANTHEON_SITE_NAME'] ) ) : '<site>';
+	$environment = API\get_pantheon_environment();
+
+	// Every place a Machine Token was found, so each one can be removed.
+	$secret_names = [];
+	if ( ! empty( $user_secret ) ) {
+		$secret_names[] = sprintf( 'ash_nazg_machine_token_%d', $user_id );
+	}
+	if ( ! empty( $global_secret ) ) {
+		$secret_names[] = 'ash_nazg_machine_token';
+	}
+
+	$db_locations = [];
+	if ( ! empty( $user_meta_token ) ) {
+		$db_locations[] = __( 'Your user settings (stored in the database)', 'ash-nazg' );
+	}
+	if ( ! empty( $global_db_token ) ) {
+		$db_locations[] = __( 'A site-wide setting (stored in the database)', 'ash-nazg' );
+	}
 
 	?>
 	<div class="notice notice-<?php echo esc_attr( $has_access_token ? 'warning' : 'info' ); ?> is-dismissible">
@@ -3091,6 +3109,25 @@ function display_legacy_machine_token_notice() {
 			}
 			?>
 		</p>
+		<p>
+			<?php
+			/* translators: %s: Pantheon environment name, e.g. dev */
+			echo esc_html( sprintf( __( 'Found on the %s environment:', 'ash-nazg' ), $environment ? $environment : __( 'current', 'ash-nazg' ) ) );
+			?>
+		</p>
+		<ul class="ul-disc">
+			<?php foreach ( $secret_names as $secret_name ) : ?>
+				<li>
+					<?php
+					/* translators: %s: Pantheon Secret name */
+					echo esc_html( sprintf( __( 'A Pantheon Secret named %s', 'ash-nazg' ), $secret_name ) );
+					?>
+				</li>
+			<?php endforeach; ?>
+			<?php foreach ( $db_locations as $db_location ) : ?>
+				<li><?php echo esc_html( $db_location ); ?></li>
+			<?php endforeach; ?>
+		</ul>
 		<?php if ( $has_access_token && $has_db_token ) : ?>
 			<p>
 				<a
@@ -3101,11 +3138,16 @@ function display_legacy_machine_token_notice() {
 				</a>
 			</p>
 		<?php endif; ?>
-		<?php if ( $has_access_token && $has_secret_token ) : ?>
+		<?php if ( $has_access_token && ! empty( $secret_names ) ) : ?>
 			<p>
-				<strong><?php esc_html_e( 'A Pantheon Secret also stores a Machine Token. Remove it from your local terminal:', 'ash-nazg' ); ?></strong>
+				<strong><?php esc_html_e( 'Pantheon Secrets can only be removed from your local terminal. Run each of these:', 'ash-nazg' ); ?></strong>
 			</p>
-			<pre class="ash-nazg-code-block">terminus secret:delete <?php echo esc_attr( $site_name ); ?> ash_nazg_machine_token<?php echo ! empty( $user_secret ) ? '_' . absint( $user_id ) : ''; ?></pre>
+			<?php foreach ( $secret_names as $secret_name ) : ?>
+				<pre class="ash-nazg-code-block">terminus secret:delete <?php echo esc_attr( $site_name ); ?> <?php echo esc_attr( $secret_name ); ?></pre>
+			<?php endforeach; ?>
+			<p class="description">
+				<?php esc_html_e( 'A deleted Secret can keep showing up here for a while after you delete it. Dismiss hides this notice in the meantime.', 'ash-nazg' ); ?>
+			</p>
 		<?php endif; ?>
 		<p>
 			<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=ash-nazg&ash_nazg_dismiss_machine_token_notice=1' ), 'ash_nazg_dismiss_machine_token_notice' ) ); ?>" class="button">

@@ -285,7 +285,7 @@ class Test_User_Tokens extends TestCase {
 		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
 
 		$func_pos = strpos( $admin_contents, 'function display_legacy_machine_token_notice' );
-		$func_content = substr( $admin_contents, $func_pos, 2500 );
+		$func_content = substr( $admin_contents, $func_pos, 7000 );
 
 		$this->assertStringContainsString(
 			'$has_access_token && $has_db_token',
@@ -389,5 +389,30 @@ class Test_User_Tokens extends TestCase {
 		$this->assertStringNotContainsString( 'ash_nazg_copy_machine_token', $admin_contents, 'copy-machine-token AJAX action should be deregistered' );
 		$this->assertStringNotContainsString( 'ash-nazg-copy-token"', $dashboard_contents, 'Dashboard should no longer render a copy-machine-token button' );
 		$this->assertStringNotContainsString( 'ash_nazg_copy_machine_token', $dashboard_js, 'Dashboard JS should no longer bind the copy-machine-token button' );
+	}
+
+	/**
+	 * Test the notice lists every place a Machine Token was found and gives a command for each Secret.
+	 *
+	 * It used to print a delete command for only one Secret (the user-specific one when it existed,
+	 * otherwise the global one), so a site with both would delete one and still see the notice.
+	 */
+	public function test_legacy_machine_token_notice_lists_every_source() {
+		$admin_contents = file_get_contents( __DIR__ . '/../includes/admin.php' );
+		$func_pos = strpos( $admin_contents, 'function display_legacy_machine_token_notice' );
+		$this->assertNotFalse( $func_pos );
+		$func = substr( $admin_contents, $func_pos, 6000 );
+
+		// Each Secret is collected separately and gets its own terminus command.
+		$this->assertStringContainsString( "\$secret_names[] = sprintf( 'ash_nazg_machine_token_%d', \$user_id );", $func );
+		$this->assertStringContainsString( "\$secret_names[] = 'ash_nazg_machine_token';", $func );
+		$this->assertMatchesRegularExpression( '/foreach \( \$secret_names as \$secret_name \) : \?>\s*<pre class="ash-nazg-code-block">terminus secret:delete/', $func );
+		$this->assertStringNotContainsString( "! empty( \$user_secret ) ? '_'", $func, 'One command must not stand in for both Secrets' );
+
+		// Database copies are named too, and the environment that was checked is stated.
+		$this->assertStringContainsString( 'Your user settings (stored in the database)', $func );
+		$this->assertStringContainsString( 'A site-wide setting (stored in the database)', $func );
+		$this->assertStringContainsString( 'Found on the %s environment:', $func );
+		$this->assertStringContainsString( 'A deleted Secret can keep showing up here for a while', $func );
 	}
 }
