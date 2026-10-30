@@ -428,4 +428,17 @@ class Test_API extends TestCase {
 			'clear_endpoint_group_caches should clear the per-endpoint results too'
 		);
 	}
+
+	/**
+	 * Test the user lookup's docblock does not promise data the function deliberately doesn't request.
+	 */
+	public function test_current_user_docblock_does_not_promise_workspaces() {
+		$file_contents = file_get_contents( __DIR__ . '/../includes/api.php' );
+
+		preg_match( '/\/\*\*(?:(?!\*\/).)*\*\/\s*function get_current_pantheon_user\(\)/s', $file_contents, $matches );
+
+		$this->assertNotEmpty( $matches, 'get_current_pantheon_user should have a docblock' );
+		$this->assertStringNotContainsString( '@return array|null User data (id, email, firstName, lastName, name, workspacesConnection)', $matches[0] );
+		$this->assertStringContainsString( 'The workspace list is deliberately not requested.', $matches[0] );
+	}
 }

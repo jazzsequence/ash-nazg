@@ -613,7 +613,7 @@ function get_environment_info_from_env() {
  * ID out of, so this (and get_user_id()) work from a single cached request
  * keyed by the WordPress user ID instead.
  *
- * @return array|null User data (id, email, firstName, lastName, name, workspacesConnection), or null on error.
+ * @return array|null User data (id, email, firstName, lastName, name), or null on error. The workspace list is deliberately not requested.
  */
 function get_current_pantheon_user() {
 	$wp_user_id = get_current_user_id();
