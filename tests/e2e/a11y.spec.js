@@ -62,3 +62,65 @@ test('Metrics page with data loaded has no a11y violations', async ({ page }, te
 
   await assertNoA11yViolations(page, testInfo);
 });
+
+test.describe('Dashboard endpoint status filters', () => {
+  test.beforeEach(async ({ page }) => {
+    // The hook's wait counts toward the test timeout (30s by default), so the limit has to be raised here, not in
+    // the test bodies, which only run after the hook: 180s for the rows to resolve plus headroom for the test.
+    test.setTimeout(300_000);
+
+    await goToPluginPage(page, 'ash-nazg');
+    // Endpoint rows are probed one request at a time after the page loads; wait until
+    // every row has resolved so the panel is scanned in its final state, not half-loaded.
+    await expect(page.locator('.ash-nazg-endpoint-pending')).toHaveCount(0, { timeout: 180_000 });
+  });
+
+  test('filters are real buttons in a labelled group, defaulting to Needs attention with All last', async ({ page }) => {
+    const group = page.getByRole('group', { name: 'Filter endpoints by status' });
+    await expect(group).toBeVisible();
+
+    const buttons = group.locator('button.nav-tab');
+    await expect(buttons).toHaveCount(4);
+    await expect(buttons.first()).toContainText('Needs attention');
+    await expect(buttons.first()).toHaveAttribute('aria-pressed', 'true');
+    await expect(buttons.last()).toContainText('All');
+    await expect(buttons.last()).toHaveAttribute('aria-pressed', 'false');
+
+    // The version filter has an associated visible label.
+    await expect(page.getByLabel('API version:')).toBeVisible();
+  });
+
+  test('Space and Enter activate a filter, aria-pressed follows, and the change is announced', async ({ page }) => {
+    const group = page.getByRole('group', { name: 'Filter endpoints by status' });
+    const needsAttention = group.getByRole('button', { name: /^Needs attention/ });
+    const working = group.getByRole('button', { name: /^Working/ });
+    const all = group.getByRole('button', { name: /^All/ });
+    const status = page.locator('#ash-nazg-endpoint-filter-status');
+
+    await working.focus();
+    await page.keyboard.press('Space');
+    await expect(working).toHaveAttribute('aria-pressed', 'true');
+    await expect(needsAttention).toHaveAttribute('aria-pressed', 'false');
+    await expect(status).toHaveText(/\d+ endpoints shown/);
+
+    await all.focus();
+    await page.keyboard.press('Enter');
+    await expect(all).toHaveAttribute('aria-pressed', 'true');
+    await expect(working).toHaveAttribute('aria-pressed', 'false');
+    await expect(status).toHaveText(/\d+ endpoints shown/);
+  });
+
+  test('every status filter and API version has no critical/serious a11y violations', async ({ page }, testInfo) => {
+    const buttons = page.getByRole('group', { name: 'Filter endpoints by status' }).locator('button.nav-tab');
+    const count = await buttons.count();
+    for (let i = 0; i < count; i++) {
+      await buttons.nth(i).click();
+      await assertNoA11yViolations(page, testInfo);
+    }
+
+    for (const version of ['v1', 'v0', '']) {
+      await page.locator('#ash-nazg-endpoint-version').selectOption(version);
+      await assertNoA11yViolations(page, testInfo);
+    }
+  });
+});

@@ -27,8 +27,9 @@ module.exports = defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'retain-on-failure',
-    actionTimeout: 30_000,
-    navigationTimeout: 30_000,
+    // Raise on a slow connection: E2E_ACTION_TIMEOUT=120000 npx playwright test ...
+    actionTimeout: Number( process.env.E2E_ACTION_TIMEOUT ) || 30_000,
+    navigationTimeout: Number( process.env.E2E_ACTION_TIMEOUT ) || 30_000,
   },
 
   projects: [
