@@ -420,18 +420,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</p>
 
 				<div class="nav-tab-wrapper ash-nazg-endpoint-tabs" role="group" aria-label="<?php esc_attr_e( 'Filter endpoints by status', 'ash-nazg' ); ?>">
-					<a href="#endpoints" class="nav-tab nav-tab-active" role="button" aria-pressed="true" data-filter="attention">
+					<button type="button" class="nav-tab nav-tab-active" aria-pressed="true" data-filter="attention">
 						<?php esc_html_e( 'Needs attention', 'ash-nazg' ); ?> <span class="ash-nazg-endpoint-tab-count" data-count="attention">0</span>
-					</a>
-					<a href="#endpoints" class="nav-tab" role="button" aria-pressed="false" data-filter="working">
+					</button>
+					<button type="button" class="nav-tab" aria-pressed="false" data-filter="working">
 						<?php esc_html_e( 'Working', 'ash-nazg' ); ?> <span class="ash-nazg-endpoint-tab-count" data-count="working">0</span>
-					</a>
-					<a href="#endpoints" class="nav-tab" role="button" aria-pressed="false" data-filter="skipped">
+					</button>
+					<button type="button" class="nav-tab" aria-pressed="false" data-filter="skipped">
 						<?php esc_html_e( 'No request sent', 'ash-nazg' ); ?> <span class="ash-nazg-endpoint-tab-count" data-count="skipped">0</span>
-					</a>
-					<a href="#endpoints" class="nav-tab" role="button" aria-pressed="false" data-filter="all">
+					</button>
+					<button type="button" class="nav-tab" aria-pressed="false" data-filter="all">
 						<?php esc_html_e( 'All', 'ash-nazg' ); ?> <span class="ash-nazg-endpoint-tab-count" data-count="all">0</span>
-					</a>
+					</button>
 				</div>
 				<div class="screen-reader-text" role="status" aria-live="polite" id="ash-nazg-endpoint-filter-status"></div>
 				<p class="ash-nazg-my-10">

@@ -493,7 +493,9 @@ class Test_AJAX_Handlers extends TestCase {
 
 		// Needs attention is the default tab, and All is the last one.
 		$this->assertStringContainsString( "var endpointFilter = 'attention';", $js );
-		$this->assertMatchesRegularExpression( '/nav-tab nav-tab-active" role="button" aria-pressed="true" data-filter="attention".*data-filter="all"/s', $view );
+		$this->assertMatchesRegularExpression( '/<button type="button" class="nav-tab nav-tab-active" aria-pressed="true" data-filter="attention".*data-filter="all"/s', $view );
+		$this->assertStringNotContainsString( 'role="button"', $view, 'The filters are real buttons, so Space activates them as well as Enter' );
+		$this->assertStringNotContainsString( '<a href="#endpoints"', $view );
 		$this->assertDoesNotMatchRegularExpression( '/data-filter="all".*data-filter="attention"/s', $view, 'All should be the last tab' );
 		$this->assertStringContainsString( 'id="ash-nazg-endpoints-empty"', $view );
 

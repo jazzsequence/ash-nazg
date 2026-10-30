@@ -44,7 +44,7 @@
 }
 
 
-/* API Endpoints tab links - remove underline */
+/* API Endpoints tabs - remove underline */
 .ash-nazg-card .nav-tab-wrapper {
 	margin-bottom: 0;
 
@@ -55,6 +55,13 @@
 		&:focus {
 			text-decoration: none;
 		}
+	}
+
+	/* The endpoint status filters are real buttons, so Space activates them as well as Enter; give them the link tabs' look. */
+	button.nav-tab {
+		border-radius: 0;
+		cursor: pointer;
+		font-family: inherit;
 	}
 }
 
