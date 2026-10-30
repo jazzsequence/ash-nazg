@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-30
+
 ### Changed
 
 - **Migrated from the Pantheon Public API v0 to v1**: `includes/api.php` now calls `https://api.pantheon.io/v1` directly. The biggest change is auth — v1 has no token-exchange step, so a Personal Access Token is now sent as the Bearer token on every request instead of being exchanged for a short-lived session token. All session-token caching/clearing machinery has been removed.
