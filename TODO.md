@@ -78,7 +78,7 @@ Live-verified items are dated and attributed where the verification was done in 
 
 - ✅ Dashboard no longer makes a slow API call while rendering: the Pantheon user lookup requests plain `/current-user` (~2.5s versus ~21s with 50 workspaces), and the endpoint panel and Screen Options make no API call during the render. Page load and reload verified fast on the deployed dev site by Chris (2026-10-30); the first load after a deliberate full cache clear is not yet timed.
 - ✅ API Endpoints panel lists every endpoint from a registry generated from the v0 and v1 specs (`bin/generate-endpoint-registry.py`, 190 operations in 15 groups); reads are probed one request at a time, and writes and ID-needing reads show a plain-words "No request sent" reason. Verified in a browser by Chris (2026-10-30): no probe-able row sticks on "Checking…", the AJAX probing works, five broken endpoints are shown. Chris also evaluated the endpoint rows in detail (2026-10-30).
-- ✅ Axe and keyboard Playwright tests for the endpoint status filters (b2fa11a). Run by Chris against the deployed dev site (2026-10-30): all 4 passed (login setup, real buttons in a labelled group with Needs attention first and pressed by default and All last, Space and Enter with `aria-pressed` and the live region announcing the count, and an axe scan after every status filter and API version with no critical or serious violations). Command: `E2E_ACTION_TIMEOUT=120000 npx playwright test tests/e2e/a11y.spec.js -g "endpoint status filters" --timeout=300000`.
+- ✅ Axe and keyboard Playwright tests for the endpoint status filters (f204ecf). Run by Chris against the deployed dev site (2026-10-30): all 4 passed (login setup, real buttons in a labelled group with Needs attention first and pressed by default and All last, Space and Enter with `aria-pressed` and the live region announcing the count, and an axe scan after every status filter and API version with no critical or serious violations). Command: `E2E_ACTION_TIMEOUT=120000 npx playwright test tests/e2e/a11y.spec.js -g "endpoint status filters" --timeout=300000`.
 - ✅ Status tabs (Needs attention by default, Working, No request sent, All) and an API version filter. Filters verified in a browser by Chris (2026-10-30); accessibility confirmed by the automated axe and keyboard tests above (no screen reader is available).
 - ✅ Removed the Environment Information card's editable Workspace row (and its 13-workspace background loader); the Site Information card's Workspace row is unchanged.
 - ✅ Dashboard shows the real database version (MariaDB, via `SELECT VERSION()`) instead of ProxySQL's emulated 5.5.30; live-verified on dev through `terminus wp`.
@@ -117,8 +117,8 @@ Live-verified items are dated and attributed where the verification was done in 
 - ✅ Add Playwright E2E tests — scaffolded with a11y (axe-core WCAG 2.1 AA) and functional tests
 - ✅ Multidev lifecycle: create e2e-{pr} on PR open, delete on PR close via Pantheon API
 - ✅ Update claude-code-reviewer config to verify it correctly skips the test suite for text/markdown-only changes — confirmed working, no changes needed
-- ✅ Endpoint status filters are real `<button>` elements, so Space activates them as well as Enter (f6947c9). The visual match to the link tabs is not yet checked in a browser: the active tab's bottom border, focus ring and hover colour.
-- ✅ Fixed the stale `@return` docblock on `get_current_pantheon_user()`, which still mentioned `workspacesConnection` (9c68801).
+- ✅ Endpoint status filters are real `<button>` elements, so Space activates them as well as Enter (018c675). The visual match to the link tabs is not yet checked in a browser: the active tab's bottom border, focus ring and hover colour.
+- ✅ Fixed the stale `@return` docblock on `get_current_pantheon_user()`, which still mentioned `workspacesConnection` (ae8ccd6).
 
 ### v0.6.0
 
