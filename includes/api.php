@@ -1974,6 +1974,22 @@ function get_site_upstream_status( $site_id ) {
 }
 
 /**
+ * Say whether there are upstream updates that can be applied to dev.
+ *
+ * Pantheon reports a status label per site: "Up to Date", "Updates in Dev",
+ * "Updates in Test" or "Updates in Live". Only dev having updates means there is
+ * something to apply; "Updates in Test" means dev already has them and test is
+ * waiting for a deploy.
+ *
+ * @param string $status               Upstream status label.
+ * @param bool   $has_dependency_updates Whether the environment reports pending composer dependency changes.
+ * @return bool True if there are updates to apply to dev.
+ */
+function upstream_updates_available( $status, $has_dependency_updates ) {
+	return false !== stripos( (string) $status, 'dev' ) || $has_dependency_updates;
+}
+
+/**
  * Get available upstream updates.
  *
  * @param string      $site_id Site UUID.
@@ -2037,11 +2053,19 @@ function get_upstream_updates( $site_id, $env = null ) {
 		$updated_deps
 	);
 
+	/*
+	 * Upstream updates are applied to dev (or a multidev). Test and live
+	 * only get them by deploying code forward from dev, so the update
+	 * block is irrelevant there, and so is a status such as "Updates in
+	 * Test" while dev is current.
+	 */
+	$can_apply_here = 'dev' === $api_env || $is_multidev;
+
 	$result = [
 		'status' => $status,
 		'dependency_updates' => $dependency_updates,
 		'behind' => count( $updated_deps ),
-		'has_code' => ( 'Up to Date' !== $status ) || ! empty( $updated_deps ),
+		'has_code' => $can_apply_here && upstream_updates_available( $status, ! empty( $updated_deps ) ),
 		'environments' => [],
 	];
 

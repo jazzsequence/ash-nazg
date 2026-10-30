@@ -6,6 +6,7 @@
  */
 
 use PHPUnit\Framework\TestCase;
+use Pantheon\AshNazg\API;
 
 /**
  * Test Git API functions.
@@ -498,5 +499,35 @@ class Test_Git_API extends TestCase {
 			$func_content,
 			'merge_dev_to_multidev should not send params in the request body'
 		);
+	}
+
+	/**
+	 * Test updates only count when dev has them.
+	 *
+	 * "Updates in Test" means dev already has the updates and test is waiting for a
+	 * deploy, so there is nothing to apply and the Upstream Updates block must not show.
+	 */
+	public function test_upstream_updates_only_available_when_dev_has_them() {
+		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
+
+		$this->assertTrue( API\upstream_updates_available( 'Updates in Dev', false ) );
+		$this->assertFalse( API\upstream_updates_available( 'Updates in Test', false ) );
+		$this->assertFalse( API\upstream_updates_available( 'Updates in Live', false ) );
+		$this->assertFalse( API\upstream_updates_available( 'Up to Date', false ) );
+		$this->assertFalse( API\upstream_updates_available( '', false ) );
+
+		// Pending composer dependency changes still count.
+		$this->assertTrue( API\upstream_updates_available( 'Up to Date', true ) );
+	}
+
+	/**
+	 * Test the Upstream Updates block is limited to environments that can apply updates.
+	 */
+	public function test_upstream_updates_block_is_limited_to_dev_and_multidev() {
+		$file_contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php' );
+
+		$this->assertStringContainsString( '$can_apply_here = \'dev\' === $api_env || $is_multidev;', $file_contents );
+		$this->assertStringContainsString( "'has_code' => \$can_apply_here && upstream_updates_available(", $file_contents, 'has_code should require dev or a multidev and an actual update' );
+		$this->assertStringNotContainsString( "'Up to Date' !== \$status", $file_contents, 'Any status other than Up to Date used to count as updates' );
 	}
 }
