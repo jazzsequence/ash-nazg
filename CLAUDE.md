@@ -534,7 +534,8 @@ This is a Hackathon 2026 project demonstrating the full capabilities of the Pant
 **CRITICAL: NEVER search the web for Pantheon API documentation.**
 
 - The ONLY sources of Pantheon API documentation are: **api.pantheon.io/docs** (v0, raw spec at `.../docs/swagger.json`) and **api.pantheon.io/v1/docs** (v1, raw spec at `.../v1/openapi.json`) — the v1 spec is also mirrored locally in `.pantheonapi-docs/` via the `pantheon-api-helper` tool; prefer reading those files over re-fetching
-- No other documentation exists online
+- **Also sanctioned: the Terminus-host API spec at `https://terminus.pantheon.io/swag/swagger.json`** (secrets, bot bypass, user-agent bypass, VRT). It is incomplete: it has no host, base path or security definitions (secrets actually answer under `/customer-secrets/v1/`, and the endpoints probed there accept a v0 session token but refused the raw PAT), and it omits endpoints the Terminus CLI itself calls (environment variables, builds, logs, VCS). Treat it as a starting point and verify live, like the others
+- No other API documentation exists online
 - We are creating the documentation through practice by building this plugin
 - Web searches for Pantheon API information are a waste of time
 

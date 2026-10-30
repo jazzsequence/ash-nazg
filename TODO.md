@@ -85,7 +85,6 @@ Live-verified items are dated and attributed where the verification was done in 
 - ✅ Pantheon logo URL is versioned to bypass a stale edge-cached 301; fixed on the deployed dev site.
 - ✅ Upstream Updates block only shows when dev has updates to apply; hidden on dev, verified by Chris (2026-10-30). The showing path can't be reproduced on demand; see "Not testable with the sites available".
 - ✅ Legacy Machine Token notice lists every source and a delete command per Secret; built and tested; no available site has a legacy Machine Token or Secret to check it against.
-- ✅ Gap analysis across v0, v1 and the Terminus API in `docs/PANTHEON-API-GAP-ANALYSIS.md`.
 - ✅ A v1 Personal Access Token authenticates directly as a Bearer token against `/v1/*` — confirmed (`GET /current-user` returns full profile + workspaces).
 - ✅ **A v1 Personal Access Token also fully works as a v0 `machine_token`** — confirmed against every v0 endpoint the hybrid-fallback functions use (`/v0/sites/{id}`, `.../metrics`, `.../code-tips`, `.../domains`, `/v0/users/{id}`), not just the exchange itself. This was the opposite of what we'd assumed. `get_v0_session_token()` exchanges the Personal Access Token for a v0 session; the separate Machine Token is no longer used for authentication.
 - ✅ Relay-connection pagination: `currentUser_workspacesConnection_first=N` works as documented. `pager[first]=N` (bracket notation) is **invalid** (HTTP 400) — removed; the environments endpoint already returns every environment with no pager param at all.

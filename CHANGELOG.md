@@ -63,6 +63,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Four features (`site label editing`, `Metrics`, `domain listing`, `Install Object Cache Pro`) have no v1 API equivalent yet and fall back to the legacy v0 API (via the same Personal Access Token in the common case).
 - `create_backup()` can no longer create a single-element (code/database/files-only) backup — v1 only supports full combo backups.
 - Backup restore (both v0 and v1) is currently broken platform-wide as of 2026-10-01 — see TODO.md.
+- `merge_multidev_to_dev()` (merging a multidev into `dev`) still fails on Pantheon's side (a 403 `MAS ... 400 Bad Request`, previously a 500) — see TODO.md. Five read endpoints in the API Endpoints panel also report as broken by Pantheon and are listed in TODO.md.
+- Released with two checks not yet done: the first dashboard load after a deliberate full cache clear has not been timed, and the "Refresh Data" button's clearing of the endpoint caches has not been confirmed. The page loads and reloads fast with warm caches.
+- The rewritten legacy Machine Token notice and the Upstream Updates block's showing path could not be tested on any available site; they are covered by tests only.
 - `get_upstream_updates()`'s v1 check endpoint is Composer-only, unlike v0's synchronous git-aware response — a real capability regression for standard git-mode sites; see TODO.md.
 
 This migration was initially built against the v1 OpenAPI spec without a live Personal Access Token, then live-verified against a real site once one became available — several corrections came out of that (removed an invalid `pager[first]=N` query param that returned HTTP 400, fixed `Backup.date` timestamp parsing, and backup `size`/`ttl`/filename fields turned out to be present after all, contrary to what the schema doc implied).
