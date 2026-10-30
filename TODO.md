@@ -30,6 +30,30 @@ The plugin was migrated to Pantheon's v1 Public API, built against the OpenAPI s
 - [x] Dashboard's API Endpoints Status diagnostics page was largely unmigrated: the v1/v0 path-prefix display used an empty string for v1 instead of `/v1`, 11 of 19 rows still called v0 endpoints that don't match what the real functions actually use (including "Upstream Updates," which used the old pre-migration v0 path), and a couple of rows were stale (bracket-notation `pager[first]` that's confirmed invalid; "Site Plan" duplicating a field already shown via "Site Information"; "Backup Schedule" testing a capability v1 only supports as a write, not a read; "Machine Tokens" testing a deprecated auth concept with no v1 equivalent, confirmed by full-text search of the schema - PAT management isn't an API capability at all, by design). Fixed the prefix bug, migrated "User Permissions" to the real v1 `/sites/{id}/users/{id}/memberships` endpoint (live-verified), wired "Upstream Updates" to the real `get_site_upstream_status()` check instead of removing it, and removed only the rows with no real v1 equivalent and no real feature backing them.
 - [x] Upgraded `@pantheon-systems/pds-design-tokens` from `1.2.0` (npm `latest` dist-tag) to `2.0.0-beta.0` (npm `next` dist-tag) — an actively-developed v2 (70+ alpha iterations) existed and had never been adopted. Cross-referenced this plugin's actual token usage (14 real `var(--pds-*)` references across all component SCSS, excluding the vendored tokens file) against Pantheon's own `codemods/v1-to-v2/mappings.json` migration data bundled in the v2 package; only 3 tokens were renamed (`--pds-color-badge-indicator-critical-{background,foreground}` → `--pds-color-badge-critical-{background,foreground}`, `--pds-color-text-default` → `--pds-color-foreground-default`), updated at all 4 call sites. Also updated the `copy:tokens` build script for v2's split file structure (separate global/light/dark/typography CSS files replacing v1's single file).
 
+### Still needs live verification
+Built and covered by pattern tests, but not yet exercised on a deployed site or in a browser. Per CLAUDE.md, none of this is "working" until it has been.
+- [ ] **Cold-cache deploy**: after a deploy that clears every cache, the dashboard loads (no request over Pantheon's ~30s PHP limit) and the endpoint rows fill in. Time the full load and note any row that stays on "Checking…".
+- [ ] **Endpoint panel, end to end**: all 190 endpoints list; `probe_and_cache_endpoint_entry()` / the `ash_nazg_probe_endpoint` handler return the right row for each probe-able read; cached results persist across reloads; "Refresh Data" clears them.
+- [ ] **Placeholder resolution**: `get_endpoint_probe_context()` takes `workspace_id`, `upstream_id` and `site_name` from site info (`organization`, `upstream.id`, `name`) — confirmed to exist on dev, but each resolved URL has only been checked by a separate simulation, not through the plugin.
+- [ ] **Status tabs and version filter**: in a real browser and with a screen reader; check a row finishing while a filter is active.
+- [ ] **Upstream Updates block gating**: `upstream_updates_available()` uses the status label. "Updates in Live" is inferred, not observed; check it and any combined labels on a site that has them.
+- [ ] **Legacy Machine Token notice**: against a site that really has both a user-specific and a global Secret.
+- [ ] **Terminus variables fix**: `get_addon_env_variables()` now sends a v0 session token to `terminus.pantheon.io` (curl-verified: raw PAT → 401, session → 200); not yet run through the plugin on Lando.
+
+### Endpoints the panel reports as broken (live, 2026-10-23)
+Found by probing every read in the registry. Not plugin bugs, but worth raising with Pantheon alongside the two platform bugs below.
+- [ ] `GET /v1/secrets` → 403 "Missing arguments" (the spec lists no parameters)
+- [ ] `GET /v1/sites/{id}/environments/{env}/deployment-summary` → 500
+- [ ] `GET /v1/sites/{id}/users/{userId}/membership` → 500 (the plural `.../memberships` works)
+- [ ] `GET /v0/sites/{id}/environments/{env}/build/updates` → 404
+- [ ] `GET /v0/sites/{id}/upstream-updates` → 404 (`GET .../upstream-updates/check` is a POST in v1)
+- [ ] Runtime logs and tenant runtime log (v1) each take ~16s, so they dominate the slowest page-load request.
+
+### Small follow-ups
+- [ ] Endpoint status filter buttons are anchors with `role="button"`, so Space doesn't activate them (Enter does); use real `<button>` elements.
+- [ ] `get_current_pantheon_user()`'s `@return` docblock still mentions `workspacesConnection`, which it deliberately no longer requests.
+- [ ] Add the Terminus-host endpoints (`https://terminus.pantheon.io/swag/swagger.json`, 18 operations) to the registry once their real base paths are confirmed; the spec has no host or base path and doesn't match the paths Terminus actually uses.
+
 ### Known platform bug (reported upstream, not fixable in this plugin) — HIGH PRIORITY, affects both API versions
 - [ ] **Backup restore appears broken platform-wide, on both v0 and v1, as of 2026-10-01 — not a v1-only issue.** Live-tested 7 ways against the real test site:
   - v1 (`POST /sites/{id}/backups/restore`): 5 parameter combinations (top-level `Backup.id`, per-element `id`, `folder` name; `new-multi` cross-env and same-env; `env` vs `environment` query param) — all accepted (`HTTP 200`) but failed asynchronously ~15–25s later with the same generic `"The operation failed to complete."`
