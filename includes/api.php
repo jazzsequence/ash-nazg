@@ -1149,7 +1149,7 @@ function clear_cache() {
 	$site_id = get_pantheon_site_id();
 	if ( $site_id ) {
 		delete_transient( 'ash_nazg_site_info_' . $site_id );
-		delete_transient( 'ash_nazg_upstream_updates_' . $site_id );
+		delete_transient( get_upstream_updates_cache_key( $site_id, get_effective_environment( $site_id ) ) );
 
 		$env = get_pantheon_environment();
 		if ( $env ) {
@@ -1990,6 +1990,21 @@ function upstream_updates_available( $status, $has_dependency_updates ) {
 }
 
 /**
+ * Get the transient key for an environment's cached upstream update check.
+ *
+ * Always includes the environment: the cached result says whether the update
+ * block applies, which depends on the environment (dev or a multidev, never
+ * test or live), so one environment's answer must not be served to another.
+ *
+ * @param string      $site_id Site UUID.
+ * @param string|null $env     Effective environment name. Null means dev.
+ * @return string Transient key.
+ */
+function get_upstream_updates_cache_key( $site_id, $env = null ) {
+	return sprintf( 'ash_nazg_upstream_updates_%s_%s', $site_id, $env ? $env : 'dev' );
+}
+
+/**
  * Get available upstream updates.
  *
  * @param string      $site_id Site UUID.
@@ -1997,11 +2012,8 @@ function upstream_updates_available( $status, $has_dependency_updates ) {
  * @return array|\WP_Error Array shaped like the old public API response, or WP_Error on failure.
  */
 function get_upstream_updates( $site_id, $env = null ) {
-	// Use an env-specific cache key for multidevs since their branch differs from master.
 	$is_multidev = $env && Helpers\is_multidev_environment( $env );
-	$cache_key = $is_multidev
-		? sprintf( 'ash_nazg_upstream_updates_%s_%s', $site_id, $env )
-		: sprintf( 'ash_nazg_upstream_updates_%s', $site_id );
+	$cache_key = get_upstream_updates_cache_key( $site_id, $env );
 	$cached = get_transient( $cache_key );
 
 	if ( false !== $cached ) {
@@ -2114,7 +2126,7 @@ function apply_upstream_updates( $site_id, $env, $updatedb = false, $xoption = f
 	}
 
 	/* Clear upstream updates cache after applying. */
-	delete_transient( sprintf( 'ash_nazg_upstream_updates_%s', $site_id ) );
+	delete_transient( get_upstream_updates_cache_key( $site_id, $env ) );
 
 	Helpers\debug_log( sprintf( 'Applied upstream updates on %s.%s - Response: %s', $site_id, $env, wp_json_encode( $result ) ) );
 

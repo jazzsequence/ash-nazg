@@ -530,4 +530,37 @@ class Test_Git_API extends TestCase {
 		$this->assertStringContainsString( "'has_code' => \$can_apply_here && upstream_updates_available(", $file_contents, 'has_code should require dev or a multidev and an actual update' );
 		$this->assertStringNotContainsString( "'Up to Date' !== \$status", $file_contents, 'Any status other than Up to Date used to count as updates' );
 	}
+
+	/**
+	 * Test the upstream update cache is keyed by environment, so one environment's answer isn't served to another.
+	 *
+	 * The cached result says whether the update block applies, which depends on the environment.
+	 */
+	public function test_upstream_updates_cache_key_includes_the_environment() {
+		require_once dirname( ASH_NAZG_PLUGIN_FILE ) . '/includes/api.php';
+
+		$dev = API\get_upstream_updates_cache_key( 'site-1', 'dev' );
+		$live = API\get_upstream_updates_cache_key( 'site-1', 'live' );
+		$multidev = API\get_upstream_updates_cache_key( 'site-1', 'my-multidev' );
+
+		$this->assertSame( 'ash_nazg_upstream_updates_site-1_dev', $dev );
+		$this->assertNotSame( $dev, $live );
+		$this->assertNotSame( $dev, $multidev );
+		$this->assertNotSame( API\get_upstream_updates_cache_key( 'site-2', 'dev' ), $dev, 'Different sites must not share a key' );
+
+		// No environment means dev, matching how get_upstream_updates() treats a null environment.
+		$this->assertSame( $dev, API\get_upstream_updates_cache_key( 'site-1' ) );
+	}
+
+	/**
+	 * Test every reader and clearer of the cache uses the one key helper.
+	 */
+	public function test_upstream_updates_cache_is_only_keyed_through_the_helper() {
+		foreach ( [ 'includes/api.php', 'includes/admin.php' ] as $file ) {
+			$contents = file_get_contents( dirname( ASH_NAZG_PLUGIN_FILE ) . '/' . $file );
+			$contents = preg_replace( '/function get_upstream_updates_cache_key.*?\n\}\n/s', '', $contents );
+
+			$this->assertStringNotContainsString( "'ash_nazg_upstream_updates_", $contents, "{$file} should build the key only through get_upstream_updates_cache_key()" );
+		}
+	}
 }
