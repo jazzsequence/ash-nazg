@@ -272,11 +272,17 @@ jQuery(document).ready(function($) {
 
 	// Client-side filters over the endpoint rows already on the page: a status tab
 	// and an API version, so no extra requests are needed.
-	var endpointFilter = 'all';
+	var endpointFilter = 'attention';
 	var endpointVersion = '';
 
 	function endpointRowMatchesFilter($row, filter) {
 		var status = $row.attr('data-status');
+
+		// Rows still being checked show everywhere except "No request sent", so the
+		// default tab isn't empty while the probes run.
+		if (status === 'pending') {
+			return filter !== 'skipped';
+		}
 
 		if (filter === 'working') {
 			return status === 'success';
@@ -316,6 +322,8 @@ jQuery(document).ready(function($) {
 			var $group = $(this);
 			$group.toggleClass('ash-nazg-hidden', $group.find('.ash-nazg-endpoint-row:not(.ash-nazg-hidden)').length === 0);
 		});
+
+		$('#ash-nazg-endpoints-empty').toggleClass('ash-nazg-hidden', $('.ash-nazg-endpoint-row:not(.ash-nazg-hidden)').length > 0);
 
 		$.each(counts, function(filter, count) {
 			$('.ash-nazg-endpoint-tab-count[data-count="' + filter + '"]').text(count);

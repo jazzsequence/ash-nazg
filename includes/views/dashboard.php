@@ -421,17 +421,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</p>
 
 				<div class="nav-tab-wrapper ash-nazg-endpoint-tabs" role="group" aria-label="<?php esc_attr_e( 'Filter endpoints by status', 'ash-nazg' ); ?>">
-					<a href="#endpoints" class="nav-tab nav-tab-active" role="button" aria-pressed="true" data-filter="all">
-						<?php esc_html_e( 'All', 'ash-nazg' ); ?> <span class="ash-nazg-endpoint-tab-count" data-count="all">0</span>
+					<a href="#endpoints" class="nav-tab nav-tab-active" role="button" aria-pressed="true" data-filter="attention">
+						<?php esc_html_e( 'Needs attention', 'ash-nazg' ); ?> <span class="ash-nazg-endpoint-tab-count" data-count="attention">0</span>
 					</a>
 					<a href="#endpoints" class="nav-tab" role="button" aria-pressed="false" data-filter="working">
 						<?php esc_html_e( 'Working', 'ash-nazg' ); ?> <span class="ash-nazg-endpoint-tab-count" data-count="working">0</span>
 					</a>
-					<a href="#endpoints" class="nav-tab" role="button" aria-pressed="false" data-filter="attention">
-						<?php esc_html_e( 'Needs attention', 'ash-nazg' ); ?> <span class="ash-nazg-endpoint-tab-count" data-count="attention">0</span>
-					</a>
 					<a href="#endpoints" class="nav-tab" role="button" aria-pressed="false" data-filter="skipped">
 						<?php esc_html_e( 'No request sent', 'ash-nazg' ); ?> <span class="ash-nazg-endpoint-tab-count" data-count="skipped">0</span>
+					</a>
+					<a href="#endpoints" class="nav-tab" role="button" aria-pressed="false" data-filter="all">
+						<?php esc_html_e( 'All', 'ash-nazg' ); ?> <span class="ash-nazg-endpoint-tab-count" data-count="all">0</span>
 					</a>
 				</div>
 				<div class="screen-reader-text" role="status" aria-live="polite" id="ash-nazg-endpoint-filter-status"></div>
@@ -443,6 +443,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<option value="v0"><?php esc_html_e( 'v0 (legacy)', 'ash-nazg' ); ?></option>
 					</select>
 				</p>
+
+				<p class="ash-nazg-text-muted ash-nazg-hidden" id="ash-nazg-endpoints-empty"><?php esc_html_e( 'No endpoints match this filter.', 'ash-nazg' ); ?></p>
 
 				<?php foreach ( $endpoint_groups as $group => $endpoint_rows ) : ?>
 					<?php echo Admin\render_endpoint_group( $group, $endpoint_rows, 0 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup escaped in the partials. ?>

@@ -587,6 +587,12 @@ class Test_AJAX_Handlers extends TestCase {
 
 		$this->assertStringContainsString( 'id="ash-nazg-endpoint-version"', $view );
 
+		// Needs attention is the default tab, and All is the last one.
+		$this->assertStringContainsString( "var endpointFilter = 'attention';", $js );
+		$this->assertMatchesRegularExpression( '/nav-tab nav-tab-active" role="button" aria-pressed="true" data-filter="attention".*data-filter="all"/s', $view );
+		$this->assertDoesNotMatchRegularExpression( '/data-filter="all".*data-filter="attention"/s', $view, 'All should be the last tab' );
+		$this->assertStringContainsString( 'id="ash-nazg-endpoints-empty"', $view );
+
 		// A group of toggle buttons with a live region, not the ARIA tabs pattern (which needs a tabpanel and arrow-key handling).
 		$this->assertStringContainsString( 'role="group"', $view );
 		$this->assertStringContainsString( 'aria-pressed=', $view );
